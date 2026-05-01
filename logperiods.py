@@ -5,13 +5,13 @@ from sage.interfaces.magma_free import magma_free
 from sage.interfaces.gp import *
 from sage.rings import real_mpfr
  
+import requests
+import pickle 
+
 import homology
 
-import requests
-
-
 # set arbitrary precision
-mp.dps = 500
+mp.dps = 1000
 
 # --- helpers ---
 def mp_polyval(f, x):
@@ -201,12 +201,7 @@ class HyperEllCurve:
         }
 
         response = requests.get(url, params)
-        print("Status:", response.status_code)
-        print("Content-Type:", response.headers.get("Content-Type"))
-
-        print(label)
         data = response.json()
-
         curve = data["data"][0]
 
         # Hyperelliptic equation coefficients
@@ -259,6 +254,15 @@ class PointedHyperEllCurve(HyperEllCurve):
                 str += f"\n {p}"
         return str
     
+    def save(self, name):
+        with open(f"{name}.pickle", 'wb') as file:
+            pickle.dump(self, file)
+    
+    @classmethod
+    def read(cls, name):
+        with open(f"{name}.pickle", 'rb') as file:
+            return pickle.load(file)
+    
     def logperiods(self):
         if self._logperiods is None:
             self._logperiods = []
@@ -281,12 +285,12 @@ class PointedHyperEllCurve(HyperEllCurve):
         
         entry = lambda v, w, i, j : hermitian_form(B, v[i], w[j]) + hermitian_form(B, v[j], w[i])
         pairs = [(0,0), (0,1), (1,1)]
-        mat = [[entry(self._periods, self._periods, i, j)/2/pi/mpc(1j) for i,j in pairs]]
+        mat = [[entry(self._periods, self._periods, i, j).imag/2/pi for i,j in pairs]]
         for k in range(len(self.points)):
             bilinear_term = [entry(self._logperiods[k], self._periods, i, j)/2/pi/mpc(1j) for i,j in pairs]
             pp = self._partialperiods[k]
             membrane_term = [pp[i]*conj(pp[j]) + conj(pp[i])*pp[j] for i,j in pairs ]
-            mat.append([b + m for b, m in zip(bilinear_term, membrane_term)])
+            mat.append([(b + m).real for b, m in zip(bilinear_term, membrane_term)])
   
         return mp.matrix(mat)
     
@@ -302,17 +306,19 @@ class PointedHyperEllCurve(HyperEllCurve):
             print("L'(1): ", lvalue)
             print("Vol: ", vol)
             print("Reg: ", beilinson_det)
-            a, b = gp.lindep([lvalue * vol * pi, beilinson_det], lindep_digits)
-            print("lindep [L'(1) * vol * pi, reg]: ", a, b)
-            print("lindep error: ", int(a)* lvalue * vol * pi + int(b) * beilinson_det )
+            for i in range(5, lindep_digits):
+                a, b = gp.lindep([lvalue * vol * pi, beilinson_det], i)
+                print("lindep [L'(1) * vol * pi, reg]: ", a, b)
+                print("lindep error: ", int(a)* lvalue * vol * pi + int(b) * beilinson_det )
         else:
             print("L(2): ", lvalue)
             print("Vol: ", vol)
             print("Reg: ", beilinson_det)
-            a, b = gp.lindep([lvalue * vol, pi**4 * beilinson_det], lindep_digits)
-            print("lindep [L(2) * vol, pi^4 * reg]: ", a, b)
-            print("lindep error: ", int(a)* lvalue * vol + int(b) * pi**4 * beilinson_det )
-            
+            for i in range(5, lindep_digits):
+                a, b = gp.lindep([lvalue * vol, pi**4 * beilinson_det], i)
+                print("lindep [L(2) * vol, pi^4 * reg]: ", a, b)
+                print("lindep error: ", int(a)* lvalue * vol + int(b) * pi**4 * beilinson_det )
+                
 def parse_mpc(s):
     """
     Parse a string like:
@@ -354,6 +360,8 @@ def test3125():
 
     #lvalue = mpf('0.35445162981482511890665852501155568022')
     C.test_beilinson(lvalue, 10, s = 2)
+    
+    C.save("Cond3125")
 
 # https://www.lmfdb.org/Genus2Curve/Q/394/a/3152/1
 def test394():
@@ -365,8 +373,9 @@ def test394():
     lvalue2 = mpf('0.85875464247178527993941189389477680680')
     lvalue1 = mpf('8.5704886281089963868641526976072444724') # lfuncheck = 1.9e-31
     
-    C.test_beilinson(lvalue1, 10)
+    C.test_beilinson(lvalue2, 20, s = 2)
     
+    C.save("394.a.3152.1")
 
 from regulator_integral_numpy import hyperell_integral, cplus, cminus
 
@@ -386,7 +395,6 @@ def testvolume():
     print("evaluate: ", int(a)* vol + int(b)*cplus(f)*cminus(f) )
 
 
-
 def testoldbeilinson():
     f = [-4, 0, 0, 1, 2, 1]
     C = PointedHyperEllCurve(f, [0, -1], inithomology=False)
@@ -396,19 +404,20 @@ def testoldbeilinson():
     print(C)
     print("Beilinson matrix: ")
     print(beilinson)
-    beilinson_det = mp.det(beilinson)
     
     integrands = [lambda z : 1, lambda z : z.real, lambda z : np.abs(z)**2]
     old_beilinson = [[hyperell_integral(f, om)[0]/np.pi for om in integrands]]
+    old_beilinson.append([hyperell_integral(f, lambda z : np.log(np.abs(z)) * om(z))[0]/np.pi for om in integrands])
     old_beilinson.append([hyperell_integral(f, lambda z : np.log(np.abs(z + 1)) * om(z))[0]/np.pi for om in integrands])
     print("Old Beilinson matrix: ")
     for row in old_beilinson:
         print(row)
         
 
-    
+#testoldbeilinson()
+
 #test394()
-test3125()
+#test3125()
 #testvolume()
 
 
