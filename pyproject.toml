@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hyperell-regulator"
+version = "0.1.0"
+description = "Beilinson regulators, standard L-functions and the component question for hyperelliptic curves, in SageMath"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "GPL-2.0-or-later" }
+authors = [{ name = "Lambert A'Campo", email = "acampo@ihes.fr" }]
+keywords = ["number theory", "hyperelliptic curves", "Beilinson conjecture",
+            "cluster pictures", "regulators", "sagemath"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+# SageMath itself is not installed by pip: install into an existing Sage with
+# ``sage -pip install git+<url>``.  sage_cluster_pictures is not on PyPI, and
+# the released 1.0 is not usable here (see README), so it is pulled from the
+# patched branch by direct reference -- which is why one command is enough.
+dependencies = [
+    "numpy",
+    "scipy",
+    "sage_cluster_pictures @ git+https://github.com/LAC1213/cluster-pictures@fix-red-and-dual-graph",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/LAC1213/regulator-genus2"
+
+[tool.setuptools.packages.find]
+include = ["hyperell_regulator*"]
+
+# the hypellfrob driver, compiled by setup.py and installed inside the package
+[tool.setuptools.package-data]
+hyperell_regulator = ["bin/euler"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

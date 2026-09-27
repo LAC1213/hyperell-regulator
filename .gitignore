@@ -1,0 +1,22 @@
+# Python/build products
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.vscode/
+
+# Local numerical caches, experiments, and compiler configuration.
+# Curated reports/ snapshots and their TeX sources are versioned.
+/results/
+/lmfdb_cache/
+config.mk
+/hyperell_regulator/bin/
+/reports/*.aux
+/reports/*.log
+/reports/*.out
+/reports/*.toc

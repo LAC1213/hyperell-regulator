@@ -1,0 +1,102 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,landscape,margin=15mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,longtable}
+\setlength{\tabcolsep}{5pt}
+\begin{document}
+\noindent\textbf{Successful Beilinson regulator computations.}
+$q=\det R/(2\pi c^+c^-L^{\prime\prime}(\mathrm{std},1))$, $r$ is the saved rational guess, and $\delta=|q-r|$. Values are rounded for display; errors use the full saved decimals. A successful regulator does not by itself certify a 100-digit comparison.
+\begin{longtable}{lrrrrr}
+\toprule
+Curve & $\det R$ & $L^{\prime\prime}(\mathrm{std},1)$ & $q$ & $r$ & $\delta$ \\
+\midrule\endhead
+249.a.249.1 & $16.743866$ & $5.0676270$ & $0.1428571429$ & $ \frac{1}{7} $ & $2.40\times 10^{-101}$ \\
+295.a.295.1 & $18.073194$ & $5.9105301$ & $0.1428571429$ & $ \frac{1}{7} $ & $8.72\times 10^{-102}$ \\
+349.a.349.1 & $17.168442$ & $5.1284122$ & $0.1538461538$ & $ \frac{2}{13} $ & $1.87\times 10^{-101}$ \\
+389.a.389.2 & $15.662048$ & $7.4665388$ & $-0.1000000000$ & $ -\frac{1}{10} $ & $1.02\times 10^{-101}$ \\
+523.a.523.1 & $18.372817$ & $11.043657$ & $0.1000000000$ & $ \frac{1}{10} $ & $6.00\times 10^{-102}$ \\
+603.a.603.1 & $-3.4278158\times 10^{-11}$ & $\text{--}$ & $\text{--}$ & $\text{--}$ & $\text{--}$ \\
+603.a.603.2 & $18.844617$ & $\text{--}$ & $\text{--}$ & $\text{--}$ & $\text{--}$ \\
+709.a.709.1 & $-15.735177$ & $9.2624788$ & $-0.1250000000$ & $ -\frac{1}{8} $ & $1.61\times 10^{-102}$ \\
+763.a.763.1 & $-17.429765$ & $11.530683$ & $-0.1000000000$ & $ -\frac{1}{10} $ & $4.28\times 10^{-102}$ \\
+925.a.925.1 & $15.812436$ & $2.0456044$ & $-0.5000000000$ & $ -\frac{1}{2} $ & $3.87\times 10^{-101}$ \\
+997.a.997.2 & $15.837891$ & $14.326885$ & $-0.06250000000$ & $ -\frac{1}{16} $ & $8.90\times 10^{-102}$ \\
+1051.b.1051.1 & $15.648421$ & $7.2163689$ & $0.1250000000$ & $ \frac{1}{8} $ & $4.34\times 10^{-102}$ \\
+1051.b.1051.2 & $3.9121053$ & $7.2163689$ & $0.1250000000$ & $ \frac{1}{8} $ & $6.87\times 10^{-102}$ \\
+1123.a.1123.1 & $15.615472$ & $23.514472$ & $0.04166666667$ & $ \frac{1}{24} $ & $1.38\times 10^{-102}$ \\
+1147.a.35557.2 & $1.3757891$ & $17.583840$ & $-0.06250000000$ & $ -\frac{1}{16} $ & $4.26\times 10^{-102}$ \\
+1717.a.1717.2 & $2.5355039$ & $\text{--}$ & $\text{--}$ & $\text{--}$ & $\text{--}$ \\
+\bottomrule\end{longtable}
+\noindent Missing comparisons: 603.a.603.1 (unsupported Frobenius action); 603.a.603.2 (unsupported Frobenius action); 1717.a.1717.2 (L-value computation failed).
+\smallskip
+\noindent $P,Q,R$ below are in the original cached model $y^2+h(x)y=f(x)$; $\infty_\epsilon$ retains the saved infinity label. The functions are in the integration model $v^2=G(u)$ shown on each row, and satisfy $(\phi_P)=n_P(P-R)$ and $(\phi_Q)=n_Q(Q-R)$ after the coordinate change. For $s=\text{--}$, $(u,v)=(x,2y+h(x))$; otherwise $(u,v)=((x-s)^{-1},d(2y+h(x))/(x-s)^3)$.
+\scriptsize
+\begin{longtable}{llllrr}
+\toprule
+Curve & $P$ & $Q$ & $R$ & $n_P$ & $n_Q$ \\
+\midrule\endhead
+249.a.249.1 & $(-1,0)$ & $\infty_{-1}$ & $(0,-1)$ & 7 & 14 \\*
+\multicolumn{6}{l}{$G(u)= u^{6} + 4 u^{5} + 4 u^{4} + 2 u^{3} + 1 ;\quad s= 0 ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=\left(\frac{1}{2}\right) \cdot u \cdot (u + 1)^{4} \cdot (u^{2} + 3 u + 1)+\left(\left(\frac{1}{2}\right) \cdot (u + 2) \cdot (u + 1)^{3}\right)v$} \\*
+\multicolumn{6}{l}{$\phi_Q=\left(-1\right) \cdot (u^{14} + 7 u^{13} + 18 u^{12} + 25 u^{11} + 30 u^{10} + 31 u^{9} + 24 u^{8} + 23 u^{7} + 13 u^{6} + 10 u^{5} + 7 u^{4} + u^{3} + 4 u^{2} - u + 1)+\left(\left(-1\right) \cdot (u^{5} + 2 u^{4} + u^{3} + 2 u^{2} + 1) \cdot (u^{6} + 3 u^{5} + u^{4} + u^{3} + 2 u^{2} - u + 1)\right)v$} \\ \addlinespace
+295.a.295.1 & $(0,0)$ & $(1,-1)$ & $\infty_{-1}$ & 14 & 7 \\*
+\multicolumn{6}{l}{$G(u)= u^{6} + 2 u^{3} - 4 u^{2} + 1 ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=\left(-\frac{81}{36992}\right) \cdot (u^{14} + 3 u^{13} + 6 u^{12} + 9 u^{11} + 7 u^{10} - 11 u^{8} - 17 u^{7} - 13 u^{6} + 10 u^{4} + 10 u^{3} + u^{2} - 3 u - 1)+\left(\left(-\frac{81}{36992}\right) \cdot (u + 1)^{2} \cdot (u^{3} + u - 1) \cdot (u^{6} + u^{5} + 2 u^{4} + u^{3} - 2 u - 1)\right)v$} \\*
+\multicolumn{6}{l}{$\phi_Q=\left(\frac{1}{2}\right) \cdot (u - 1)^{4} \cdot (u^{3} + u^{2} + u + 2)+\left(\left(\frac{1}{2}\right) \cdot u \cdot (u - 1)^{3}\right)v$} \\ \addlinespace
+349.a.349.1 & $(-1,0)$ & $\infty_{-1}$ & $(0,-1)$ & 13 & 13 \\*
+\multicolumn{6}{l}{$G(u)= u^{6} + 2 u^{5} - u^{4} + 3 u^{2} + 2 u + 1 ;\quad s= 0 ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=\left(\frac{1}{2}\right) \cdot u \cdot (u + 1)^{7} \cdot (u^{5} + 2 u^{4} - 2 u^{3} - u^{2} + 5 u - 1)+\left(\left(\frac{1}{2}\right) \cdot (u + 2) \cdot (u + 1)^{6} \cdot (u^{3} - u + 1)\right)v$} \\*
+\multicolumn{6}{l}{$\phi_Q=\left(\frac{2401}{242}\right) \cdot (u^{13} + 3 u^{12} + 2 u^{11} + 4 u^{10} + 9 u^{9} + 6 u^{8} + 11 u^{7} + 11 u^{6} + 9 u^{5} + 11 u^{4} + 6 u^{3} + 6 u^{2} + 2 u + 1)+\left(\left(\frac{2401}{242}\right) \cdot (u^{10} + 2 u^{9} + u^{8} + 4 u^{7} + 4 u^{6} + 3 u^{5} + 6 u^{4} + 2 u^{3} + 4 u^{2} + u + 1)\right)v$} \\ \addlinespace
+389.a.389.2 & $(-1,0)$ & $(0,-1)$ & $\infty_{0}$ & 2 & 10 \\*
+\multicolumn{6}{l}{$G(u)= 4 u^{5} + 8 u^{4} + 8 u^{3} + 5 u^{2} + 2 u + 1 ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u + 1)$} \\*
+\multicolumn{6}{l}{$\phi_Q=\left(2\right) \cdot (u^{5} + 2 u^{4} + 2 u^{3} + 2 u^{2} + \frac{1}{2} u + \frac{1}{2})+\left(\left(2\right) \cdot (u^{2} + \frac{1}{2})\right)v$} \\ \addlinespace
+523.a.523.1 & $(0,-1)$ & $(1,-1)$ & $\infty_{0}$ & 10 & 2 \\*
+\multicolumn{6}{l}{$G(u)= 4 u^{5} - 4 u^{4} - 4 u^{3} + u^{2} + 2 u + 1 ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=\left(-2\right) \cdot (u + 1) \cdot (u^{4} + u^{3} - u^{2} - u - \frac{1}{2})+\left(\left(2\right) \cdot (u^{2} + u + \frac{1}{2})\right)v$} \\*
+\multicolumn{6}{l}{$\phi_Q=(u - 1)$} \\ \addlinespace
+603.a.603.1 & $(0,-1)$ & $\infty_{0}$ & $(-\frac{1}{4},-\frac{17}{32})$ & 5 & 2 \\*
+\multicolumn{6}{l}{$G(u)= 64 u^{5} + 72704 u^{4} - 59392 u^{3} + 114688 u^{2} + 16384 u ;\quad s= -\frac{1}{4} ,\ d= 64 $} \\*
+\multicolumn{6}{l}{$\phi_P=\left(272\right) \cdot (u^{2} - \frac{8}{17} u + \frac{16}{17})+\left(1\right)v$} \\*
+\multicolumn{6}{l}{$\phi_Q=u$} \\ \addlinespace
+603.a.603.2 & $(-1,-1)$ & $(0,-1)$ & $\infty_{0}$ & 2 & 5 \\*
+\multicolumn{6}{l}{$G(u)= 4 u^{5} + u^{4} - 4 u^{3} + 2 u^{2} + 4 u + 1 ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u + 1)$} \\*
+\multicolumn{6}{l}{$\phi_Q=\left(-1\right) \cdot (u^{2} - 2 u - 1)+\left(1\right)v$} \\ \addlinespace
+709.a.709.1 & $(1,-1)$ & $\infty_{0}$ & $(0,0)$ & 8 & 2 \\*
+\multicolumn{6}{l}{$G(u)= 4 u^{5} - 7 u^{4} + 4 u ;\quad s= 0 ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=\left(\frac{1}{81}\right) \cdot (u^{4} + \frac{1}{2} u^{3} - 6 u^{2} + 4 u + 1)+\left(\left(-\frac{1}{54}\right) \cdot (u - \frac{4}{3})\right)v$} \\*
+\multicolumn{6}{l}{$\phi_Q=u$} \\ \addlinespace
+763.a.763.1 & $(1,-1)$ & $\infty_{0}$ & $(0,0)$ & 2 & 5 \\*
+\multicolumn{6}{l}{$G(u)= -4 u^{5} + 9 u^{4} - 6 u^{2} + 1 ;\quad s= 0 ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u - 1)$} \\*
+\multicolumn{6}{l}{$\phi_Q=\left(3\right) \cdot (u^{2} - \frac{1}{3})+\left(1\right)v$} \\ \addlinespace
+925.a.925.1 & $(0,-1)$ & $(1,-1)$ & $\infty_{0}$ & 8 & 2 \\*
+\multicolumn{6}{l}{$G(u)= -4 u^{5} + 8 u^{4} - 4 u^{3} - 3 u^{2} + 2 u + 1 ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=\left(\frac{1}{16}\right) \cdot (u^{4} - 2 u^{3} + \frac{3}{2} u + \frac{1}{2})+\left(\left(\frac{1}{16}\right) \cdot (u + \frac{1}{2})\right)v$} \\*
+\multicolumn{6}{l}{$\phi_Q=(u - 1)$} \\ \addlinespace
+997.a.997.2 & $(-1,0)$ & $(0,-1)$ & $\infty_{0}$ & 2 & 8 \\*
+\multicolumn{6}{l}{$G(u)= 4 u^{5} + 4 u^{4} + u^{2} + 2 u + 1 ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u + 1)$} \\*
+\multicolumn{6}{l}{$\phi_Q=\left(2\right) \cdot (u^{4} + \frac{1}{2} u + \frac{1}{2})+\left(1\right)v$} \\ \addlinespace
+1051.b.1051.1 & $(-1,0)$ & $(0,-1)$ & $\infty_{0}$ & 2 & 8 \\*
+\multicolumn{6}{l}{$G(u)= -4 u^{5} - 4 u^{4} + u^{2} + 2 u + 1 ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u + 1)$} \\*
+\multicolumn{6}{l}{$\phi_Q=\left(-2\right) \cdot (u - 1) \cdot (u^{3} + u^{2} + u + \frac{1}{2})+\left(1\right)v$} \\ \addlinespace
+1051.b.1051.2 & $(-4,2)$ & $(0,0)$ & $\infty_{0}$ & 2 & 2 \\*
+\multicolumn{6}{l}{$G(u)= 4 u^{5} + 32 u^{4} + 64 u^{3} + u^{2} + 4 u ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u + 4)$} \\*
+\multicolumn{6}{l}{$\phi_Q=u$} \\ \addlinespace
+1123.a.1123.1 & $(-1,1)$ & $\infty_{-1}$ & $(0,0)$ & 2 & 8 \\*
+\multicolumn{6}{l}{$G(u)= -4 u^{5} - 3 u^{4} - 2 u^{2} + 1 ;\quad s= 0 ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u + 1)$} \\*
+\multicolumn{6}{l}{$\phi_Q=(u^{4} - \frac{1}{2} u^{3} + \frac{1}{2} u^{2} + \frac{1}{2} u - \frac{1}{2})+\left(\left(\frac{1}{2}\right) \cdot (u - 1)\right)v$} \\ \addlinespace
+1147.a.35557.2 & $(-4,2)$ & $\infty_{0}$ & $(0,0)$ & 2 & 2 \\*
+\multicolumn{6}{l}{$G(u)= 4 u^{5} - 127 u^{4} + 24 u^{2} + 4 u ;\quad s= 0 ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u + \frac{1}{4})$} \\*
+\multicolumn{6}{l}{$\phi_Q=u$} \\ \addlinespace
+1717.a.1717.2 & $(-4,2)$ & $(0,0)$ & $\infty_{0}$ & 2 & 2 \\*
+\multicolumn{6}{l}{$G(u)= 4 u^{5} + 36 u^{4} + 96 u^{3} + 65 u^{2} + 4 u ;\quad s= \text{--} ,\ d= 1 $} \\*
+\multicolumn{6}{l}{$\phi_P=(u + 4)$} \\*
+\multicolumn{6}{l}{$\phi_Q=u$} \\ \addlinespace
+\bottomrule\end{longtable}
+\end{document}

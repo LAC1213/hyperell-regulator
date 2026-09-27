@@ -1,0 +1,12 @@
+# The bundled hypellfrob sources are GPL v2-or-later and must travel with any
+# distribution of this package. They are C++, built separately by their own
+# Makefile, so they are not a Python package; `packages.find` in
+# pyproject.toml already excludes them from the wheel.
+include README.md
+recursive-include tests *.py
+recursive-include reports *.tex *.json *.md
+recursive-include hypellfrob-threaded *.cpp *.h *.md *.example
+include hypellfrob-threaded/Makefile
+include hypellfrob-threaded/COPYING
+prune hypellfrob-threaded/build
+global-exclude *.pyc __pycache__
