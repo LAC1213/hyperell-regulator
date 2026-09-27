@@ -34,7 +34,7 @@ dependencies = [
 test = ["pytest"]
 
 [project.urls]
-Homepage = "https://github.com/LAC1213/regulator-genus2"
+Homepage = "https://github.com/LAC1213/hyperell-regulator"
 
 [tool.setuptools.packages.find]
 include = ["hyperell_regulator*"]

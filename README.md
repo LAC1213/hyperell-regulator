@@ -12,7 +12,7 @@ Regulators, periods and L-values support both float64 and arbitrary precision.
 Install into an existing SageMath environment:
 
 ```sh
-sage -pip install git+https://github.com/LAC1213/regulator-genus2.git
+sage -pip install git+https://github.com/LAC1213/hyperell-regulator.git
 ```
 
 From a checkout, use `sage -pip install .`, or
