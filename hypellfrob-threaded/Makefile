@@ -4,7 +4,7 @@
 # /usr/local, either copy config.mk.example to config.mk and edit it, or
 # pass the settings on the command line:
 #
-#   make NTL_INC=$HOME/ntl/include NTL_LIB=$HOME/ntl/src NTL_LINK=-l:ntl.a
+#   make NTL_INC=$HOME/ntl/include NTL_LIB=$HOME/ntl/src NTL_LINK=$HOME/ntl/src/ntl.a
 #
 # Threads need NTL built with NTL_THREADS and NTL_THREAD_BOOST; without them
 # use one thread (`euler 1`), which still batches.
@@ -16,7 +16,11 @@ NTL_INC  ?= /usr/local/include
 NTL_LIB  ?= /usr/local/lib
 NTL_LINK ?= -lntl
 
--include config.mk
+GMP_INC  ?= $(NTL_INC)
+GMP_LIB  ?= $(NTL_LIB)
+CONFIG_MK ?= config.mk
+
+-include $(CONFIG_MK)
 
 OBJS := $(BUILD)/hypellfrob.o $(BUILD)/recurrences_ntl.o $(BUILD)/even_degree.o
 
@@ -26,11 +30,12 @@ $(BUILD):
 	@mkdir -p $(BUILD)
 
 $(BUILD)/%.o: src/%.cpp | $(BUILD)
-	$(CXX) $(CXXFLAGS) -Isrc -I$(NTL_INC) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Isrc -I"$(NTL_INC)" -I"$(GMP_INC)" -c $< -o $@
 
 $(BUILD)/euler: euler.cpp $(OBJS) | $(BUILD)
-	$(CXX) $(CXXFLAGS) -Isrc -I$(NTL_INC) $^ \
-	    -L$(NTL_LIB) $(NTL_LINK) -lgmpxx -lgmp -lpthread -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Isrc -I"$(NTL_INC)" -I"$(GMP_INC)" $^ \
+	    $(LDFLAGS) -L"$(NTL_LIB)" -L"$(GMP_LIB)" \
+	    -Wl,-rpath,"$(NTL_LIB)" -Wl,-rpath,"$(GMP_LIB)" $(NTL_LINK) -lgmpxx -lgmp -lpthread -o $@
 
 # A smoke test only: it shows the driver runs and produces matrices. What
 # actually checks the arithmetic is tests/test_lfunction.py, which compares

@@ -44,15 +44,14 @@ def euler_binary():
     """
     env = os.environ.get("HYPELLFROB_EULER")
     if env:
-        return env if os.path.exists(env) else None
+        return env if os.path.isfile(env) and os.access(env, os.X_OK) else None
     here = os.path.dirname(os.path.abspath(__file__))
     # installed inside the package by setup.py; then the source tree, so a
     # checkout that has run ``make`` in hypellfrob-threaded works uninstalled
     for rel in (("bin", "euler"),
-                ("..", "hypellfrob-threaded", "build", "euler"),
-                ("..", "..", "harvey_gpu", "build", "euler")):
+                ("..", "hypellfrob-threaded", "build", "euler")):
         guess = os.path.normpath(os.path.join(here, *rel))
-        if os.path.exists(guess):
+        if os.path.isfile(guess) and os.access(guess, os.X_OK):
             return guess
     return None
 
@@ -225,3 +224,22 @@ def frobenius_polynomial(f, p):
         4
     """
     return frobenius_polynomials(f, [p])[int(p)]
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Check the installed Frobenius accelerator.")
+    parser.add_argument("--check", action="store_true", required=True)
+    parser.parse_args()
+    binary = euler_binary()
+    if binary is None:
+        parser.exit(1, "Frobenius accelerator not found; computations use Sage.\n")
+    try:
+        result = subprocess.run([binary, "1"], input="1 0 0 1 0 1\n101 3\n",
+                                text=True, capture_output=True, check=True, timeout=30)
+        if result.stdout.split()[:2] != ["101", "1"]:
+            raise RuntimeError("unexpected driver output: " + result.stdout)
+    except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
+        parser.exit(1, "Accelerator failed: %s\n%s\n" %
+                    (exc, getattr(exc, "stderr", "")))
+    print("Frobenius accelerator runs successfully: " + binary)

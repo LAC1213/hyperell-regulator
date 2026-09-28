@@ -25,19 +25,29 @@ import sys
 from setuptools import Distribution, setup
 from setuptools.command.build_py import build_py
 
-SRC = "hypellfrob-threaded"
+SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hypellfrob-threaded")
 INSIDE = os.path.join("hyperell_regulator", "bin")
 
 
 def _prefixes():
     """Where to look for NTL and GMP, best guess first."""
-    out = [sys.prefix]
+    out = []
     for var in ("SAGE_LOCAL", "CONDA_PREFIX"):
         if os.environ.get(var):
             out.append(os.environ[var])
-    out.append("/usr/local")
-    out.append("/usr")
-    return out
+    if os.environ.get("SAGE_ROOT"):
+        out.append(os.path.join(os.environ["SAGE_ROOT"], "local"))
+    for prefix in (sys.prefix, sys.base_prefix):
+        out.append(prefix)
+        # Sage's Python can live in local/var/lib/sage/venv-python*.
+        parent = prefix
+        while parent != os.path.dirname(parent):
+            parent = os.path.dirname(parent)
+            if os.path.basename(parent) == "local":
+                out.append(parent)
+    out.extend(("/opt/homebrew", "/usr/local", "/usr"))
+    return list(dict.fromkeys(out))
+
 
 
 class build_with_euler(build_py):
@@ -47,6 +57,8 @@ class build_with_euler(build_py):
         try:
             binary = self._make()
         except Exception as exc:                       # noqa: BLE001
+            if os.environ.get("HYPERELL_REGULATOR_REQUIRE_EULER") == "1":
+                raise
             print("hyperell-regulator: could not build the hypellfrob driver "
                   "(%s); falling back to Sage's Frobenius matrices" % exc)
             return
@@ -67,11 +79,21 @@ class build_with_euler(build_py):
             else:
                 raise RuntimeError("NTL headers not found in %s"
                                    % ", ".join(_prefixes()))
-        args = ["make", "-C", SRC, "NTL_INC=%s" % inc, "NTL_LIB=%s" % lib]
-        if os.environ.get("NTL_LINK"):
-            args.append("NTL_LINK=%s" % os.environ["NTL_LINK"])
+        # Ignore checkout-specific config.mk and never reuse its object files.
+        build = os.path.abspath(os.path.join(self.build_lib, "..", "euler-build"))
+        args = ["make", "-C", SRC, "CONFIG_MK=", "BUILD=" + build,
+                "NTL_INC=" + inc, "NTL_LIB=" + lib,
+                "NTL_LINK=" + os.environ.get("NTL_LINK", "-lntl"),
+                "GMP_INC=" + os.environ.get("GMP_INC", inc),
+                "GMP_LIB=" + os.environ.get("GMP_LIB", lib)]
         subprocess.run(args, check=True)
-        return os.path.join(SRC, "build", "euler")
+        binary = os.path.join(build, "euler")
+        result = subprocess.run([binary, "1"], input="1 0 0 1 0 1\n101 3\n",
+                                text=True, capture_output=True, check=True, timeout=30)
+        if result.stdout.split()[:2] != ["101", "1"]:
+            raise RuntimeError("Frobenius driver failed its smoke test: " + result.stdout)
+        return binary
+
 
 
 class binary_distribution(Distribution):

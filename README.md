@@ -21,6 +21,13 @@ The patched `sage_cluster_pictures` dependency is installed automatically.
 
 Installation also attempts to build the bundled Frobenius accelerator using
 NTL and GMP. If that build is unavailable, the package uses Sage's implementation.
+To require a working accelerator during installation and then check it:
+
+```sh
+HYPERELL_REGULATOR_REQUIRE_EULER=1 sage -pip install -v git+https://github.com/LAC1213/hyperell-regulator.git
+sage -python -m hyperell_regulator.frobenius --check
+```
+
 See [hypellfrob-threaded](hypellfrob-threaded/README.md) for manual build instructions.
 
 ## Python API

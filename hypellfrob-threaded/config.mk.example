@@ -1,4 +1,4 @@
 # Copy to config.mk and edit for your machine. config.mk is not tracked.
 NTL_INC  = $(HOME)/ntl/include
 NTL_LIB  = $(HOME)/ntl/src
-NTL_LINK = -l:ntl.a
+NTL_LINK = $(NTL_LIB)/ntl.a

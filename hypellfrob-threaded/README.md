@@ -44,11 +44,18 @@ whether it is built -- only the speed does.
 
 ```
 make                       # if NTL is under /usr/local
-make NTL_INC=$HOME/ntl/include NTL_LIB=$HOME/ntl/src NTL_LINK=-l:ntl.a
+make NTL_INC=$HOME/ntl/include NTL_LIB=$HOME/ntl/src NTL_LINK=$HOME/ntl/src/ntl.a
 make check
 ```
 
-or copy `config.mk.example` to `config.mk` and edit it. Threads need NTL
+The package installer discovers Sage's prefix (including `SAGE_LOCAL`),
+passes the include/library paths explicitly to Make, and installs the executable
+as `hyperell_regulator/bin/euler`. It ignores local `config.mk` settings.
+Set `NTL_INC`, `NTL_LIB`, `NTL_LINK`, and, if different, `GMP_INC`/`GMP_LIB`
+in the environment to override discovery. Library directories are also embedded
+as runtime search paths on Linux and macOS.
+
+For manual builds, copy `config.mk.example` to `config.mk` and edit it. Threads need NTL
 built with `NTL_THREADS` and `NTL_THREAD_BOOST`; without them pass `1` for
 the thread count, which still batches.
 
@@ -91,4 +98,5 @@ a curve with no rational Weierstrass point at all takes the slow route.
 
 `hyperell_regulator.frobenius` drives this and lifts the matrices to
 characteristic polynomials; it looks for the binary at `$HYPELLFROB_EULER`,
-then at `hypellfrob-threaded/build/euler` beside the package.
+then at `hyperell_regulator/bin/euler`, then at
+`hypellfrob-threaded/build/euler` beside the package.
