@@ -9,8 +9,6 @@ Submodules
 
    hyperell_regulator.experiments.beilinson
    hyperell_regulator.experiments.family_n
-   hyperell_regulator.experiments.latex_report
-   hyperell_regulator.experiments.profile_regulator
 
 Module contents
 ---------------

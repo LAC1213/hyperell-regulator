@@ -22,6 +22,7 @@ is the bug the arbitrary-precision path had to fix.
 
 import os
 import subprocess
+from unittest.mock import patch
 
 import pytest
 
@@ -36,7 +37,7 @@ from hyperell_regulator.frobenius import (
     odd_model,
 )
 from hyperell_regulator.lfunction import (CurveLFunction, StandardLFunction,
-                                          _real_field)
+                                          _pari_precision, _real_field)
 
 R = PolynomialRing(ZZ, "x")
 X = R.gen()
@@ -219,6 +220,32 @@ def test_arbitrary_precision_really_is():
 def test_real_field_is_wide_enough():
     for d in (10, 30, 60):
         assert _real_field(d).precision() >= int(d * 3.32)
+
+
+@pytest.mark.parametrize('cls', [CurveLFunction, StandardLFunction])
+def test_coefficient_expansion_matches_divisor_sums(cls):
+    """The Euler product for zeta(s)*zeta(s-1) has coefficients sigma_1(n)."""
+    L = cls(HyperellipticCurveWithReduction(F))
+    T = PolynomialRing(QQ, 'T').gen()
+    with patch.object(cls, 'precompute_h1'), patch.object(
+            cls, 'euler_factor', side_effect=lambda p: (1-T)*(1-p*T)):
+        coefficients = L.dirichlet_coefficients(40)
+    if cls is CurveLFunction:
+        assert coefficients[0] == 0
+        coefficients = coefficients[1:]
+    assert coefficients == [sum(ZZ(n).divisors()) for n in range(1, 41)]
+
+
+def test_pari_precision_restored_after_nested_failure():
+    previous = pari.get_real_precision()
+    with _pari_precision(30):
+        outer = pari.get_real_precision()
+        with pytest.raises(RuntimeError, match='failed'):
+            with _pari_precision(60):
+                assert pari.get_real_precision() > outer
+                raise RuntimeError('failed')
+        assert pari.get_real_precision() == outer
+    assert pari.get_real_precision() == previous
 
 
 @pytest.mark.parametrize("workers", [2, 4, 8, None])

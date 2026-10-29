@@ -45,6 +45,8 @@ conductor, functional equation check, `L''(\mathrm{std}, 1)` -- in one call,
 and is what the experiments use.
 """
 
+from contextlib import contextmanager
+
 from sage.all import (
     prime_range,
     GF,
@@ -68,14 +70,8 @@ def _bits(digits):
     r"""
     Bits for a PARI call asked for ``digits`` decimals, with room to spare.
 
-    ``pari.set_real_precision`` does **not** reach ``lfun`` or
-    ``lfuncheckfeq``: with it alone they answer at 64 bits whatever it is set
-    to, so a value asked for at 25 or 50 digits came back with 19 correct
-    ones and noise after them, and the functional equation checked to
-    `3.6\cdot10^{-15}` and no better however much precision was requested.
-    The precision has to be passed to the call itself, which is what this is
-    for.  (The same is true of ``lfuncost``, and
-    :meth:`StandardLFunction._coeffs_needed` says so.)
+    ``lfun`` and ``lfuncheckfeq`` need an explicit bit precision;
+    ``pari.set_real_precision`` alone leaves them at their default precision.
     """
     return int(3.33 * int(digits)) + 64
 
@@ -97,6 +93,86 @@ def _real_field(digits):
     from sage.all import RealField
 
     return RealField(int(RR(digits) * RR(10).log2()) + 12)
+
+
+@contextmanager
+def _pari_precision(digits):
+    """Temporarily set embedded PARI precision, restoring it on failure too."""
+    previous = pari.get_real_precision()
+    pari.set_real_precision(digits)
+    try:
+        yield
+    finally:
+        pari.set_real_precision(previous)
+
+
+def _coefficient_count(conductor, gamma, weight, digits, derivative):
+    """Ask GP for lfuncost at its own decimal working precision."""
+    previous = gp.eval('default(realprecision)')
+    gp.eval('default(realprecision, %d)' % int(digits))
+    try:
+        L = pari.lfuncreate([[QQ(0)], 0, gamma, weight, conductor, 1])
+        cost = gp.eval('lfuncost(%s, [1,0,0], %d)' % (L, int(derivative)))
+        return int(ZZ(str(cost).strip('[]').split(',')[0].strip()))
+    finally:
+        gp.eval('default(realprecision, %s)' % previous)
+
+
+def _dirichlet_coefficients(L, num, progress=None):
+    """Expand Euler factors once per prime; index zero is a sentinel."""
+    import sys
+    import time
+    if progress is True:
+        progress = max(500, num // 20)
+    a = [ZZ(0)] * (num + 1)
+    a[1] = ZZ(1)
+    t0 = time.time()
+    L.precompute_h1(prime_range(num + 1))
+
+    # Expand 1/P_p once per prime, up to the greatest power of p <= num.
+    inv = {}
+
+    def local(p, e):
+        if p not in inv:
+            depth = ZZ(num).exact_log(p)
+            RS = PowerSeriesRing(QQ, 'x', default_prec=depth + 1)
+            x = RS.gen()
+            inv[p] = (1 / RS(L.euler_factor(p)(x))).padded_list(depth + 1)
+        return inv[p][e]
+
+    for n in range(2, num + 1):
+        coeff = QQ(1)
+        for p, e in ZZ(n).factor():
+            coeff *= local(p, e)
+        a[n] = coeff
+        if progress and n % progress == 0:
+            el = time.time() - t0
+            # The fallback's Euler-factor cost grows with p; a linear
+            # extrapolation substantially underestimates the remaining time.
+            left = el * ((float(num) / n) ** 2.6 - 1.0)
+            sys.stdout.write(
+                "\r      Euler factors: %d/%d (%.0f%%)  %.0fs elapsed, "
+                "~%.0fs left   " % (n, num, 100.0 * n / num, el, left))
+            sys.stdout.flush()
+    if progress:
+        sys.stdout.write("\r      Euler factors: %d/%d done in %.0fs"
+                         "%s\n" % (num, num, time.time() - t0, " " * 20))
+        sys.stdout.flush()
+    return a
+
+
+def _precompute_h1(L, primes, nthreads):
+    """Batch good odd primes into either L-function's H1 cache."""
+    from .frobenius import frobenius_polynomials
+
+    bad = set(L.C.bad_primes())
+    todo = [int(p) for p in primes
+            if int(p) != 2 and ZZ(p).is_prime() and ZZ(p) not in bad
+            and ZZ(p) not in L._h1cache]
+    if not todo:
+        return
+    for p, cp in frobenius_polynomials(L.C.F, todo, nthreads).items():
+        L._h1cache[ZZ(p)] = L._RT(list(reversed(cp.list())))
 
 
 def wedge2_euler_factor(P):
@@ -352,16 +428,7 @@ class StandardLFunction(SageObject):
             sage: sorted(L._h1cache)
             [11, 13, 17]
         """
-        from .frobenius import frobenius_polynomials
-
-        bad = set(self.C.bad_primes())
-        todo = [int(p) for p in primes
-                if int(p) != 2 and ZZ(p).is_prime() and ZZ(p) not in bad
-                and ZZ(p) not in self._h1cache]
-        if not todo:
-            return
-        for p, cp in frobenius_polynomials(self.C.F, todo, nthreads).items():
-            self._h1cache[ZZ(p)] = self._RT(list(reversed(cp.list())))
+        _precompute_h1(self, primes, nthreads)
 
     def toric_factor(self, p):
         r"""
@@ -507,61 +574,11 @@ class StandardLFunction(SageObject):
         The first ``num`` Dirichlet coefficients of `L(\mathrm{std}, s)`,
         expanded from the Euler product.
 
-        ``progress`` is a number of coefficients between reports, or ``True``
-        for a sensible default.  Without one this looks like a hang: obtaining
-        the Euler factors dominates, at roughly 138 ms per prime on a
-        conductor 5497 curve, and the cost grows with `p` (about 10 ms at
-        `p \approx 250`, 456 ms at `p \approx 2750`), so a run over tens of
-        thousands of coefficients spends nearly all of its time here.
+        ``progress`` is the number of coefficients between reports, or
+        ``True`` for a default interval. Euler factors are batched before
+        expanding the product, and each local series is inverted once.
         """
-        import sys
-        import time
-        if progress is True:
-            progress = max(500, num // 20)
-        a = [ZZ(0)] * (num + 1)
-        a[1] = ZZ(1)
-        t0 = time.time()
-        self.precompute_h1(prime_range(num + 1))
-
-        # 1/P_p(x) expanded once per prime, to the greatest power of p below
-        # num, rather than re-inverted for every n divisible by p.  Measured on
-        # a conductor 5497 curve this is *not* where the time goes: with the
-        # Euler factors already cached the whole loop below runs in 0.1 s for
-        # 3000 coefficients, against 59 s to obtain the factors themselves
-        # (138 ms per prime, in PARI's lfuneuler).  Kept because it is free.
-        inv = {}
-
-        def local(p, e):
-            if p not in inv:
-                depth = ZZ(num).exact_log(p)
-                RS = PowerSeriesRing(QQ, 'x', default_prec=depth + 1)
-                x = RS.gen()
-                inv[p] = (1 / RS(self.euler_factor(p)(x))).padded_list(depth + 1)
-            return inv[p][e]
-
-        for n in range(2, num + 1):
-            coeff = QQ(1)
-            for p, e in ZZ(n).factor():
-                coeff *= local(p, e)
-            a[n] = coeff
-            if progress and n % progress == 0:
-                el = time.time() - t0
-                # the remaining primes are the *expensive* ones: the cost of a
-                # single Euler factor grows roughly like p^1.6, so the total to
-                # N scales about like N^2.6.  A linear extrapolation
-                # underestimates badly -- at the half way point of a 13842
-                # coefficient run it claimed 667 s left where the truth is
-                # nearer 3400 s.
-                left = el * ((float(num) / n) ** 2.6 - 1.0)
-                sys.stdout.write(
-                    "\r      Euler factors: %d/%d (%.0f%%)  %.0fs elapsed, "
-                    "~%.0fs left   " % (n, num, 100.0 * n / num, el, left))
-                sys.stdout.flush()
-        if progress:
-            sys.stdout.write("\r      Euler factors: %d/%d done in %.0fs"
-                             "%s\n" % (num, num, time.time() - t0, " " * 20))
-            sys.stdout.flush()
-        return a[1:]
+        return _dirichlet_coefficients(self, num, progress)[1:]
 
     def _coeffs_needed(self, digits, der=2):
         r"""
@@ -569,35 +586,12 @@ class StandardLFunction(SageObject):
         needed for `L^{(\mathrm{der})}(\mathrm{std}, 1)` at ``digits`` decimal
         digits of working precision.
 
-        Replaces a hand-tuned heuristic (`\sim\mathrm{digits}\cdot\sqrt N`)
-        that was checked to undershoot substantially: at `\mathrm{digits}=15`
-        on a conductor `3\times10^7` curve it supplied `20713`-`82555`
-        coefficients (depending on which version of the heuristic), while
-        ``lfuncost`` says `160925` are actually needed there, and PARI's own
-        runtime warning on the resulting ``lfun`` call
-        (``#an = ... < 160925, results may be imprecise``) confirms the
-        heuristic's count was not enough -- the requested ``digits`` was
-        recorded as achieved without actually being achieved.
-
-        Uses ``gp.eval('default(realprecision, ...)')`` to set the precision
-        context for this call, not :func:`pari.set_real_precision`: the
-        latter was found empirically *not* to move ``lfuncost``'s answer at
-        all across `\mathrm{digits}=5..60` on the same example, while the
-        former scales correctly and matches the coefficient count that live
-        ``lfun``/``lfuncheckfeq`` calls actually warn about needing. ``der=2``
-        (matching :meth:`value`'s default) is used regardless of the caller,
-        since a higher derivative needs more terms and :meth:`lfun`'s result
-        is shared between :meth:`value` and :meth:`check_functional_equation`.
+        GP's ``default(realprecision)`` must be set separately from embedded
+        PARI's precision. A heuristic count can undershoot substantially.
+        The default ``der=2`` covers both :meth:`value` and
+        :meth:`check_functional_equation`, which share :meth:`lfun`'s result.
         """
-        N = self.conductor()
-        prev = gp.eval('default(realprecision)')
-        gp.eval('default(realprecision, %d)' % int(digits))
-        try:
-            L0 = pari.lfuncreate([[QQ(0)], 0, [-1, -1, 0, 0, 1], 3, N, 1])
-            cost = gp.eval('lfuncost(%s, [1,0,0], %d)' % (L0, int(der)))
-            return int(ZZ(str(cost).strip('[]').split(',')[0].strip()))
-        finally:
-            gp.eval('default(realprecision, %s)' % prev)
+        return _coefficient_count(self.conductor(), [-1, -1, 0, 0, 1], 3, digits, der)
 
     def lfun(self, num_coeffs=None, digits=10, progress=None):
         r"""
@@ -605,12 +599,8 @@ class StandardLFunction(SageObject):
         weight 3 and root number `+1`, matching ``standardlfuntame.gp``.
 
         ``digits`` is the working precision in decimal digits. The number of
-        Dirichlet coefficients needed grows with it (and with the conductor);
-        it is taken from :meth:`_coeffs_needed`, PARI's own estimate, rather
-        than a hand-tuned formula -- see that method for why. Each coefficient
-        costs a Frobenius-polynomial evaluation, so this is genuinely more
-        expensive than the previous heuristic, not merely more careful: PARI's
-        own number can be several times larger.
+        Dirichlet coefficients needed grows with it and with the conductor;
+        :meth:`_coeffs_needed` supplies PARI's estimate for the default count.
         """
         key = ("lfun", num_coeffs, digits)          # progress is cosmetic
         if key in self._cache:
@@ -619,23 +609,11 @@ class StandardLFunction(SageObject):
         if num_coeffs is None:
             num_coeffs = max(200, self._coeffs_needed(digits))
         an = self.dirichlet_coefficients(num_coeffs, progress=progress)
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
+        with _pari_precision(digits):
             L = pari.lfuncreate([[QQ(c) for c in an], 0,
                                  [-1, -1, 0, 0, 1], 3, N, 1])
-        finally:
-            pari.set_real_precision(prev)
         self._cache[key] = L
         return L
-
-    def _at_precision(self, digits, fn):
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
-            return fn()
-        finally:
-            pari.set_real_precision(prev)
 
     def check_functional_equation(self, num_coeffs=None, digits=10):
         r"""
@@ -647,9 +625,8 @@ class StandardLFunction(SageObject):
         """
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
-        return self._at_precision(
-            digits,
-            lambda: K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits))))
+        with _pari_precision(digits):
+            return K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits)))
 
     def vanishing_order(self, s=1, max_order=4, num_coeffs=None, digits=10,
                         tol=None):
@@ -688,9 +665,8 @@ class StandardLFunction(SageObject):
         """
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
-        return self._at_precision(
-            digits,
-            lambda: K(pari.lfun(L, s, derivative, precision=_bits(digits))))
+        with _pari_precision(digits):
+            return K(pari.lfun(L, s, derivative, precision=_bits(digits)))
 
 
 def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
@@ -779,16 +755,7 @@ class CurveLFunction(SageObject):
 
     def precompute_h1(self, primes, nthreads=None):
         r"""Fill the cache for the good odd primes in one batched call."""
-        from .frobenius import frobenius_polynomials
-
-        bad = set(self.C.bad_primes())
-        todo = [int(p) for p in primes
-                if int(p) != 2 and ZZ(p).is_prime() and ZZ(p) not in bad
-                and ZZ(p) not in self._h1cache]
-        if not todo:
-            return
-        for p, cp in frobenius_polynomials(self.C.F, todo, nthreads).items():
-            self._h1cache[ZZ(p)] = self._RT(list(reversed(cp.list())))
+        _precompute_h1(self, primes, nthreads)
 
     def euler_factor(self, p):
         r"""
@@ -829,26 +796,8 @@ class CurveLFunction(SageObject):
         return ZZ(self.C.conductor())
 
     def dirichlet_coefficients(self, num):
-        r"""The first ``num`` Dirichlet coefficients, from the Euler product."""
-        self.precompute_h1(prime_range(num + 1))
-        a = [ZZ(0)] * (num + 1)
-        a[1] = ZZ(1)
-        inv = {}
-
-        def local(p, e):
-            if p not in inv:
-                depth = ZZ(num).exact_log(p)
-                RS = PowerSeriesRing(QQ, 'x', default_prec=depth + 1)
-                x = RS.gen()
-                inv[p] = (1 / RS(self.euler_factor(p)(x))).padded_list(depth + 1)
-            return inv[p][e]
-
-        for n in range(2, num + 1):
-            coeff = QQ(1)
-            for p, e in ZZ(n).factor():
-                coeff *= local(p, e)
-            a[n] = coeff
-        return a
+        r"""Dirichlet coefficients indexed 1 through ``num``, with a zero sentinel."""
+        return _dirichlet_coefficients(self, num)
 
     def root_number(self, num_coeffs=200, digits=10):
         r"""
@@ -864,9 +813,7 @@ class CurveLFunction(SageObject):
         an = self.dirichlet_coefficients(num_coeffs)[1:]
         N = self.conductor()
         best, score = 1, None
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
+        with _pari_precision(digits):
             for eps in (1, -1):
                 L = pari.lfuncreate([[QQ(c) for c in an], 0, [0, 0, 1, 1],
                                      2, N, eps])
@@ -874,8 +821,6 @@ class CurveLFunction(SageObject):
                 v = K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits)))
                 if score is None or v < score:
                     best, score = eps, v
-        finally:
-            pari.set_real_precision(prev)
         self._eps = best
         return best
 
@@ -889,15 +834,7 @@ class CurveLFunction(SageObject):
         A hand-rolled `\sqrt N` heuristic is not good enough -- it left the
         functional equation failing at `8\times10^{-3}`.
         """
-        N = self.conductor()
-        prev = gp.eval('default(realprecision)')
-        gp.eval('default(realprecision, %d)' % int(digits))
-        try:
-            L0 = pari.lfuncreate([[QQ(0)], 0, [0, 0, 1, 1], 2, N, 1])
-            cost = gp.eval('lfuncost(%s, [1,0,0], %d)' % (L0, int(der)))
-            return int(ZZ(str(cost).strip('[]').split(',')[0].strip()))
-        finally:
-            gp.eval('default(realprecision, %s)' % prev)
+        return _coefficient_count(self.conductor(), [0, 0, 1, 1], 2, digits, der)
 
     def lfun(self, num_coeffs=None, digits=10, der=2):
         r"""
@@ -911,13 +848,9 @@ class CurveLFunction(SageObject):
             return self._cache[key]
         an = self.dirichlet_coefficients(num_coeffs)[1:]
         eps = self.root_number(min(num_coeffs, 400), digits)
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
+        with _pari_precision(digits):
             L = pari.lfuncreate([[QQ(c) for c in an], 0, [0, 0, 1, 1],
                                  2, self.conductor(), eps])
-        finally:
-            pari.set_real_precision(prev)
         self._cache[key] = L
         return L
 
@@ -925,12 +858,8 @@ class CurveLFunction(SageObject):
         r"""``2^lfuncheckfeq``: small is good."""
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
+        with _pari_precision(digits):
             return K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits)))
-        finally:
-            pari.set_real_precision(prev)
 
     def value(self, s=1, derivative=0, num_coeffs=None, digits=10):
         r"""
@@ -949,12 +878,8 @@ class CurveLFunction(SageObject):
         """
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
+        with _pari_precision(digits):
             return K(pari.lfun(L, s, derivative, precision=_bits(digits)))
-        finally:
-            pari.set_real_precision(prev)
 
 
 def curve_lvalue(C, s=1, derivative=0, num_coeffs=None, digits=10,

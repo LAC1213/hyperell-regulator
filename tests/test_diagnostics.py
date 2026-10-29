@@ -137,3 +137,24 @@ def test_nested_monitor_contexts_restore_the_parent():
             checkpoint("walk_attempts")
     assert outer.records[0]["steps"] == 2
     assert inner.records[0]["steps"] == 2
+
+
+def test_experiment_failure_retains_edge_statistics():
+    from hyperell_regulator.experiments import beilinson as b
+
+    clock = Clock()
+    monitor = IntegrationMonitor(clock=clock)
+    result = dict(label='test')
+    with patch('hyperell_regulator.regulator.IntegrationMonitor', return_value=monitor), \
+            patch.object(b.time, 'monotonic', clock):
+        with b._monitored_result(result, False, 15, 100000):
+            with monitor.edge('finite', degree=2):
+                checkpoint('walk_attempts')
+                clock.now = 1.5
+                raise ValueError('preparation failed')
+    assert result['status'] == 'preparation_error'
+    assert result['error'] == 'ValueError: preparation failed'
+    assert result['edges_attempted'] == 1
+    assert result['seconds'] == result['slowest_edge_seconds'] == 1.5
+    # A failed experiment must release its monitor before the next run.
+    checkpoint('walk_attempts', amount=100001)

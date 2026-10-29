@@ -50,18 +50,9 @@ Three caption corrections are needed in the torsion/integrality table:
 
 The experiment checks geometrical simplicity through the cached `is_simple_geom` flag. It does not independently establish the stronger endomorphism-ring assertion `End(Jac(C)_Qbar) = Z` in the table caption.
 
-Reproduce the primary run from the repository root with [the checker](reproduce_paper_tables.py):
-
-```sh
-export DOT_SAGE=/tmp/hyperell-paper-audit-sage
-sage -python -m reports.reproduce_paper_tables \
-  --paper '/path/to/the/supplied/manuscript.tex' \
-  --prec 100 --digits 100 --edge-seconds 180 --jobs 8
-sage -python -m reports.reproduce_paper_tables --components-only
-sage -python -m reports.reproduce_paper_tables --summarize
-```
-
-In this workspace, Sage is `/home/lambert/anaconda3/envs/sage/bin/sage`. The default output directory is `results/paper_reproducibility_20261027`. To run a separate lower-precision survey, use `--prec 30 --digits 30 --out-dir results/paper_reproduction_30`. Use a distinct output directory to retain the 100-digit evidence.
+This report and its JSON evidence are retained as an archived audit. The
+one-off checker used for the primary run has been removed. Its output was
+saved under `results/paper_reproducibility_20261027`.
 
 The longer retry was:
 

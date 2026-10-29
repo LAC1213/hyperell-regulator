@@ -1,17 +1,13 @@
 r"""
 Where the cached data files live.
 
-The modules of this package keep their results in JSON files: the LMFDB rows
-they work from, the component answers, the `L`-values, the Beilinson
-determinants.  As scripts these paths were relative to the current directory;
-as a package they are relative to a *data directory*, which is
+LMFDB rows, component answers, `L`-values and Beilinson determinants are
+cached in JSON files relative to
 
 * ``$HYPERELL_REGULATOR_DATA`` if that is set, else
 * the current working directory,
 
-so the default behaviour is the one the scripts had.  Writers call
-:func:`ensure_parent` first, so a missing ``lmfdb_cache/`` is created rather
-than raising, which the scripts did not do.
+Writers call :func:`ensure_parent` to create missing directories.
 
 EXAMPLES::
 

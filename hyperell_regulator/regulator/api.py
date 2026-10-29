@@ -1,22 +1,15 @@
 r"""
-The four things this package computes, each by two independent routes.
+Periods and regulators by plane quadrature or Stokes integration.
 
 `F` is a polynomial over `\QQ` and a function on `C : y^2 = F(x)` is a pair
 ``phi = (A, B)`` of rational functions of `x`, standing for
 `\varphi = A(x) + B(x)\,y`; :func:`~.functions.function_with_divisor` returns
 one in that form.
 
-The two routes are the plane integrator --- adaptive quadrature over
-`\mathbf{C}` --- and Stokes' theorem on the sheets of `\varphi`.  They are tied
-together by
-
-.. math:: \operatorname{Im}\int_C \rho\,\omega_a \wedge \bar\omega_b
-          = -4 \int_{\mathbf{C}} \rho\,\frac{G_{ab}}{|F|}\,dA ,
-          \qquad G_{ab} = \operatorname{Re}(x^a \bar x^{\,b}),
-
-with `\rho = 1` for the periods and `\rho = \log|\varphi|` for the regulator.
-The second needs `\log|\varphi|` as a function of `x` alone, which it is after
-pushing down: `\varphi\,\iota(\varphi) = \operatorname{N}(\varphi) = A^2 - B^2F`
+See :mod:`hyperell_regulator.regulator` for the plane and Stokes methods
+and their shared normalization. For the plane regulator, push the weight
+down to a function of `x` using the norm:
+`\varphi\,\iota(\varphi) = \operatorname{N}(\varphi) = A^2 - B^2F`,
 and `\iota` fixes `\omega_a\wedge\bar\omega_b`, so
 
 .. math:: \int_C \log|\varphi|\,\omega_a\wedge\bar\omega_b
@@ -34,6 +27,7 @@ from .cover import Cover
 from .stokes import _assemble, _assemble_both
 
 __all__ = [
+    "c_invariants",
     "periods_plane",
     "periods_stokes",
     "periods_and_regulator_stokes",
@@ -114,7 +108,7 @@ def c_invariants(F, prec=None):
         True
     """
     if prec is None:
-        return float(plane.cplus(F)), float(plane.cminus(F))
+        return plane._c_invariants(F)
     from .precision import c_invariants_mp
     return c_invariants_mp(F, prec)
 
@@ -146,9 +140,8 @@ def regulator_plane(F, phi, **kwds):
         True
     """
     cov = Cover(F, *phi)
-    out = np.zeros(3 if cov.g == 2 else cov.g * (cov.g + 1) // 2)
     lead = cov.norm_num[0] / cov.norm_den[0]
-    out = out + 0.5 * np.log(abs(lead)) * periods_plane(F, **kwds)
+    out = 0.5 * np.log(abs(lead)) * periods_plane(F, **kwds)
     zeros, poles = cov.norm_factors()
     for terms, sign in ((zeros, +1.0), (poles, -1.0)):
         for r, m in terms:

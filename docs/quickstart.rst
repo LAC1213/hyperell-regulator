@@ -33,6 +33,21 @@ The returned period and regulator vectors have entries indexed by
 :math:`(1,1), (1,2), (2,2)` in genus 2. The :math:`c^+` and :math:`c^-`
 invariants come from minors of the period matrix.
 
+Period conventions
+------------------
+
+For ``c_invariants``, finite branch points are ordered by increasing argument
+about a perturbed centroid, starting at the root of largest absolute value
+(ties by real, then imaginary part). Period paths use the regulator's
+semilunar detours and embeddedness checks. The period matrix contains full
+cycle integrals, twice the integrals along the lifted paths; ``c_plus`` and
+``c_minus`` are signed pivoted minors of its real and imaginary parts.
+
+For genus two, full periods multiply each minor by four relative to
+half-periods on the same paths. Different paths can also change signs and
+rational normalizations. Saved reports retain their original conventions;
+experiment caches are invalidated automatically when rerun.
+
 Integration methods
 -------------------
 

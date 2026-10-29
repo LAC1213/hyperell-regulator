@@ -16,11 +16,7 @@ integration model `v^2=G(u)`; the table gives its coordinate shift and scale.
 The scalar normalization of each exact function is the package's normalization.
 The normalized regulator includes the corresponding norm correction.
 
-Regenerate without any LMFDB cache or numerical integration:
-
-```sh
-sage -python -m hyperell_regulator.experiments.latex_report reports/beilinson_100_digits.json --out reports/beilinson_100_digits.tex
-```
+The saved TeX and JSON are retained as an archived snapshot.
 
 The TeX uses `amsmath`, `amssymb`, `booktabs`, `longtable`, and `geometry`.
 It is a standalone landscape document. Compile with `pdflatex` twice where

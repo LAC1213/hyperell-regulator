@@ -3,7 +3,7 @@
 A SageMath package for numerical tests of Beilinson's conjecture for the
 standard motive of genus 2 curves over the rationals. This is the rank-5
 submotive of the wedge-square of h^1(C) given by the kernel of the cup
-product. This packages computes regulator
+product. The package computes regulator
 integrals, periods, standard L-values, and reduction/component data.
 Regulators, periods and L-values support both float64 and arbitrary precision.
 
@@ -28,26 +28,11 @@ From a checkout, use `sage -pip install .`, or
 `sage -pip install -e '.[test]'` for development and tests.
 The patched `sage_cluster_pictures` dependency is installed automatically.
 
-Installation downloads the [NTL 11.6.0 GitHub release](https://github.com/libntl/ntl/releases/tag/v11.6.0),
-verifies its SHA-256, and builds a private
-static copy with `NTL_THREADS=on` and `NTL_THREAD_BOOST=on` for the Frobenius
-accelerator. Sage's installed NTL is untouched; GMP comes from Sage. This
-requires network access, a C++17 compiler, Perl, and Make. Build parallelism
-defaults to the logical CPU count (`HYPERELL_REGULATOR_BUILD_JOBS` overrides it).
-Set `GMP_INC` and `GMP_LIB` if GMP is outside Sage's prefix.
-If the build is unavailable, the package uses Sage's implementation.
-
-Euler-factor computation defaults to one worker per logical CPU; use
-`frobenius_polynomials(f, primes, nthreads=4)` to override the worker count.
-The build checks serial, four-worker, and CPU-count results against each other.
-To require a working accelerator during installation and then check it:
-
-```sh
-HYPERELL_REGULATOR_REQUIRE_EULER=1 sage -pip install -v git+https://github.com/LAC1213/hyperell-regulator.git
-sage -python -m hyperell_regulator.frobenius --check
-```
-
-See [hypellfrob-threaded](hypellfrob-threaded/README.md) for manual build instructions.
+Installation builds an optional Frobenius accelerator using a private,
+checksum-verified NTL 11.6.0. It needs network access, a C++17 compiler, Perl,
+and Make; if unavailable, computations fall back to Sage.
+See the [installation guide](docs/installation.rst) for build settings and
+[manual native build instructions](hypellfrob-threaded/README.md).
 
 ## Python API
 
@@ -69,18 +54,11 @@ c_plus, c_minus = c_invariants(F, prec=30)
 ```
 
 Use exact rational coefficients for arbitrary precision. `prec` is a decimal
-accuracy target and convergence failures raise exceptions. 
+accuracy target and convergence failures raise exceptions.
 
-For `c_invariants`, the finite branch points are ordered by increasing argument
-about a perturbed centroid, starting at the root of largest absolute value
-(ties by real, then imaginary part). Period paths share the regulator's
-semilunar detours and embeddedness checks. The period matrix contains full
-cycle integrals, twice the integrals along the lifted paths; `c_plus` and
-`c_minus` are signed pivoted minors of its real and imaginary parts.
-For genus two, using full periods multiplies each minor by four relative to
-half-periods on the same paths. The new paths can also change signs and rational
-normalisations. Existing saved reports use their original conventions;
-experiment caches are invalidated automatically when rerun.
+`c_invariants` uses signed minors of **full cycle periods** along validated
+semilunar paths. See the [period conventions](docs/quickstart.rst#period-conventions)
+when comparing saved reports or other normalizations.
 
 ## Beilinson experiments
 
@@ -95,10 +73,9 @@ sage -python -m hyperell_regulator.experiments.beilinson 250 --prec 30 --digits 
 sage -python -m hyperell_regulator.experiments.family_n 2 --no-lvalue
 ```
 
-Both experiments support `--prec`, `--digits`, `--no-lvalue`, `--verbose`,
-`--edge-seconds`, `--force`, and `--out`; use `--help` for all options.
-The default edge limit is 15 seconds. For `family_n`, `--max-conductor`
-bounds the standard motive's conductor, rather than the curve conductor.
+Both commands use float64 regulators and a 15-second edge limit by default.
+Use `--help` or the [experiment guide](docs/experiments.rst) for precision,
+budget, conductor, and cache options.
 
 Reports compare `q = det / (2*pi*c_plus*c_minus*L''(std,1))` with a rational
 guess. Data and results are cached under

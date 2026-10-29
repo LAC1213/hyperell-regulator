@@ -96,6 +96,7 @@ strictly below N=1000. Use --help for comparison, cache and progress options.
 
 import json
 import time
+from contextlib import contextmanager
 
 from sage.all import (
     RealField,
@@ -133,7 +134,7 @@ RESULTS_OUT = data_path("results", "beilinson_results.json")
 
 def _parse_point(v):
     r"""
-    Undo :func:`same_component_enumeration._jsonable` on a point: a list
+    Undo :func:`hyperell_regulator.components._jsonable` on a point: a list
     ``[x, y]`` of rationals-as-strings, or ``["infinity", Y]``.
     """
     if v is None:
@@ -903,7 +904,7 @@ def analyse(record, cache=CACHE, allow_undecided=False, verbose=True,
     span/gap. Only ``tries`` triples are integrated, best first; the default
     is one.
     """
-    rows = {r["label"]: r for r in json.load(open(cache))}
+    rows = {r["label"]: r for r in load_results(cache)}
     row = rows.get(record["label"])
     if row is None:
         return {"label": record["label"], "status": "not in the curve cache"}
@@ -1030,6 +1031,32 @@ def _report_row(result, stored=False):
             print("  %s: %s" % (key, result[key]), flush=True)
 
 
+@contextmanager
+def _monitored_result(result, verbose, max_edge_seconds, max_edge_steps):
+    """Record progress, preparation failures and edge costs for either runner."""
+    from hyperell_regulator.regulator import IntegrationMonitor
+
+    def progress(event):
+        if verbose and event["event"] != "start":
+            print("  %s edge %d %s: %.1fs, %s" %
+                  (result["label"], event["index"], event["event"],
+                   event["seconds"], event["phase"]), flush=True)
+
+    monitor = IntegrationMonitor(max_edge_seconds=max_edge_seconds,
+                                 max_edge_steps=max_edge_steps,
+                                 callback=progress, progress_interval=5)
+    started = time.monotonic()
+    try:
+        with monitor:
+            yield
+    except Exception as exc:
+        result.update(status="preparation_error",
+                      error="%s: %s" % (type(exc).__name__, exc))
+    result.update(seconds=time.monotonic()-started,
+                  edges_attempted=len(monitor.records),
+                  slowest_edge_seconds=max((e["seconds"] for e in monitor.records), default=0))
+
+
 def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         out=RESULTS_OUT, force=False, digits=15, reg_digits=None,
         allow_undecided=False, geom_simple=True, fetch=False,
@@ -1044,7 +1071,6 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
     are saved with their reasons but retried on the next run.
     """
     from collections import Counter
-    from hyperell_regulator.regulator import IntegrationMonitor
 
     max_cond = int(max_cond)
     if max_cond < 1 or int(digits) < 1 or int(tries) < 1:
@@ -1069,30 +1095,16 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
             results.append(old)
             _report_row(old, stored=True)
             continue
-        def progress(event):
-            if verbose and event["event"] != "start":
-                print("  %s edge %d %s: %.1fs, %s" %
-                      (label, event["index"], event["event"],
-                       event["seconds"], event["phase"]), flush=True)
-        started = time.monotonic()
-        monitor = IntegrationMonitor(max_edge_seconds=max_edge_seconds,
-                                     max_edge_steps=max_edge_steps,
-                                     callback=progress, progress_interval=5)
         if verbose:
             print("Computing %s ..." % label, flush=True)
-        try:
-            with monitor:
-                res = analyse(record, cache=cache,
-                              allow_undecided=allow_undecided, verbose=verbose,
-                              with_periods=with_lvalue, with_lvalue=with_lvalue,
-                              digits=digits, geom_simple=geom_simple,
-                              reg_digits=reg_digits, tries=tries)
-        except Exception as exc:
-            res = dict(label=label, cond=record["cond"],
-                       status="preparation_error", error="%s: %s" % (type(exc).__name__, exc))
-        res.update(settings=settings, seconds=time.monotonic()-started,
-                   edges_attempted=len(monitor.records),
-                   slowest_edge_seconds=max((e["seconds"] for e in monitor.records), default=0))
+        res = dict(label=label, cond=record["cond"])
+        with _monitored_result(res, verbose, max_edge_seconds, max_edge_steps):
+            res.update(analyse(record, cache=cache,
+                               allow_undecided=allow_undecided, verbose=verbose,
+                               with_periods=with_lvalue, with_lvalue=with_lvalue,
+                               digits=digits, geom_simple=geom_simple,
+                               reg_digits=reg_digits, tries=tries))
+        res["settings"] = settings
         results.append(res)
         have[label] = res
         if out is not None:
@@ -1111,6 +1123,19 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
     return results
 
 
+def _add_report_arguments(parser, out):
+    """Shared numerical, progress and output options for experiment commands."""
+    parser.add_argument("--force", action="store_true", help="recompute saved successful regulators")
+    parser.add_argument("--no-lvalue", action="store_true", help="only compute regulator determinants")
+    parser.add_argument("--verbose", action="store_true", help="show triples and per-edge progress")
+    parser.add_argument("--digits", type=int, default=15, help="L-value precision (default: 15 digits)")
+    parser.add_argument("--reg-digits", "--prec", type=int, default=None,
+                        help="explicit arbitrary-precision regulator (default: float64)")
+    parser.add_argument("--edge-seconds", type=float, default=15, help="time limit per edge (default: 15 seconds)")
+    parser.add_argument("--edge-steps", type=int, default=100000, help="continuation step limit per edge")
+    parser.add_argument("--out", default=out, help="JSON report path")
+
+
 def main(argv=None):
     """Command line: beilinson [N], with conductor strictly below N."""
     import argparse
@@ -1118,18 +1143,10 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("The construction")[0])
     parser.add_argument("N", nargs="?", type=int, default=DEFAULT_CONDUCTOR_BOUND,
                         help="exclusive conductor bound (default: 1000)")
-    parser.add_argument("--force", action="store_true", help="recompute saved successful regulators")
+    _add_report_arguments(parser, RESULTS_OUT)
     parser.add_argument("--fetch", action="store_true", help="extend the curve cache from LMFDB")
-    parser.add_argument("--no-lvalue", action="store_true", help="only compute regulator determinants")
-    parser.add_argument("--verbose", action="store_true", help="show triples and per-edge progress")
     parser.add_argument("--allow-undecided", action="store_true")
-    parser.add_argument("--digits", type=int, default=15, help="L-value precision (default: 15 digits)")
-    parser.add_argument("--reg-digits", "--prec", type=int, default=None,
-                        help="explicit arbitrary-precision regulator (default: float64)")
-    parser.add_argument("--edge-seconds", type=float, default=15, help="time limit per edge (default: 15 seconds)")
-    parser.add_argument("--edge-steps", type=int, default=100000, help="continuation step limit per edge")
     parser.add_argument("--tries", type=int, default=1, help="number of ranked triples to try per curve")
-    parser.add_argument("--out", default=RESULTS_OUT, help="JSON report path")
     args = parser.parse_args(argv)
     if args.N < 1 or args.digits < 1 or args.tries < 1 or (args.reg_digits is not None and args.reg_digits < 5):
         parser.error("N, digits and tries must be positive; regulator precision must be at least 5")

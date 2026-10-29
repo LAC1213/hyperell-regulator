@@ -122,3 +122,13 @@ def test_277_period_pivot_sign_is_stable_under_quadrature_refinement():
     for pair in values[:-1]:
         for low, high in zip(pair, values[-1]):
             assert abs(float(low)-float(high)) < 1e-10
+
+
+def test_c_invariants_integrates_period_matrix_once():
+    from hyperell_regulator.regulator import plane
+
+    F = ring().gen()**5 + 1
+    expected = (float(plane.cplus(F)), float(plane.cminus(F)))
+    with patch.object(plane, 'period_matrix', wraps=plane.period_matrix) as integrate:
+        assert c_invariants(F) == expected
+    integrate.assert_called_once_with(F, 1.49e-8, 1.49e-8)

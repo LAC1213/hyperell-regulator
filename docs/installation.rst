@@ -35,7 +35,8 @@ a C++17 compiler, Perl and Make. Sage's own NTL installation is untouched;
 GMP comes from Sage. If the build is unavailable, the package uses Sage's
 Frobenius implementation.
 
-Set ``HYPERELL_REGULATOR_BUILD_JOBS`` to control build parallelism, and
+Build parallelism defaults to the logical CPU count. Set
+``HYPERELL_REGULATOR_BUILD_JOBS`` to override it, and
 ``GMP_INC`` and ``GMP_LIB`` if GMP is outside Sage's prefix. To require the
 accelerator and check the installed binary:
 
@@ -47,3 +48,8 @@ accelerator and check the installed binary:
 See the `native build instructions
 <https://github.com/LAC1213/hyperell-regulator/tree/main/hypellfrob-threaded>`_
 for more detail.
+
+Euler-factor computation also defaults to one worker per logical CPU. Use
+``frobenius_polynomials(f, primes, nthreads=4)`` to choose a worker count.
+The native build checks serial, four-worker and CPU-count results against
+each other before installing the binary.
