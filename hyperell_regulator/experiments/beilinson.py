@@ -19,7 +19,7 @@ points are kept affine instead. The logarithmic weight is then
 `m_P = (x-x(P))/(x-x(R))`, and similarly for `Q`.
 
 The construction (infinity normalization)
-=======================================
+============================================================
 
 With `\O^+ := R` moved to `[0:1:0]`, a torsion point `P^+ \in C(\QQ)` of order
 `n` gives `n P^+ - n \O^+ = \div(f^+)`; applying the hyperelliptic involution
