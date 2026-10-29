@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explore hyperelliptic cut systems, regulator pairings and individual line integrals.">
   <title>Cut system explorer · hyperell-regulator</title>
-  <link rel="stylesheet" href="explorer.css">
+  <link rel="stylesheet" href="explorer.css?v=surfaces-1">
   <script defer src="plotly.min.js"></script>
-  <script defer src="explorer.js"></script>
+  <script defer src="explorer.js?v=surfaces-1"></script>
 </head>
 <body>
   <header>
@@ -42,9 +42,13 @@
           <p class="caption">Select a cut edge. Polygonal detours follow the integration code.</p>
         </section>
         <section class="panel">
-          <div class="section-label"><h2>Lifted paths on C</h2><span>drag to rotate</span></div>
+          <div class="section-label"><h2>Sheets &amp; lifted paths on C</h2><span>drag to rotate</span></div>
+          <div class="surface-controls">
+            <label>Display sheets<select id="visible-sheet"><option value="0">All sheets</option></select></label>
+            <label class="check-control"><input id="show-mesh" type="checkbox" checked> Surface mesh</label>
+          </div>
           <div id="lift-plot" class="plot" aria-label="Interactive three-dimensional projection of the lifted paths"></div>
-          <p class="caption">Select a colored lift. This is a projection of the curve; projection crossings can occur.</p>
+          <p class="caption" id="mesh-caption">Select a colored lift. A single-sheet view includes both banks of its boundary. This is a projection of the curve; projection crossings can occur.</p>
         </section>
       </div>
       <div class="analysis">

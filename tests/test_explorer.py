@@ -1,6 +1,7 @@
 """Numerical/export checks independent of the browser's plot rendering."""
 
 import json
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -107,3 +108,29 @@ def test_complete_paper_catalog_reassembles_all_pairings():
                 expected = [float(p[key]) for p in data['pairings']]
                 np.testing.assert_allclose(actual, expected, rtol=1e-10, atol=1e-10,
                                            err_msg=curve['label']+' '+f['name'])
+
+
+def test_all_surface_meshes_match_the_unchanged_integral_data():
+    site = Path(__file__).resolve().parents[1]/'docs/_extra/explorer'
+    catalog = json.loads((site/'catalog.json').read_text())
+    for curve in catalog['curves']:
+        for function in curve['functions']:
+            integral_bytes = (site/function['file']).read_bytes()
+            mesh = json.loads((site/function['mesh']).read_text())
+            assert hashlib.sha256(integral_bytes).hexdigest() == mesh['integral_data_sha256']
+            assert mesh['degree'] == function['order']
+            assert len(mesh['sheets']) == function['order']
+            triangles = np.array(mesh['triangles'])
+            assert len(triangles) > 100 and triangles.shape[1] == 3
+            for index, sheet in enumerate(mesh['sheets']):
+                assert sheet['sheet'] == index+1
+                vertices = np.array(sheet['vertices'])
+                assert vertices.ndim == 2 and vertices.shape[1] == 3
+                assert np.isfinite(vertices).all()
+                assert triangles.min() >= 0 and triangles.max() < len(vertices)
+            checks = mesh['validation']
+            assert checks['checked_continuation_cycles'] >= 80
+            assert checks['triangles_per_sheet'] == len(triangles)
+            for key in ('max_relative_sheet_cycle_defect', 'max_relative_sheet_boundary_defect',
+                        'max_relative_curve_residual', 'max_relative_function_residual'):
+                assert checks[key] < 1e-6, (curve['label'], function['name'], key)

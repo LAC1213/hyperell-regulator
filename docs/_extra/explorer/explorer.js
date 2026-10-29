@@ -5,7 +5,10 @@ const COLORS = ["#bd5034", "#267f91", "#9267af", "#45956b", "#c28b24", "#3865a4"
 const $ = (id) => document.getElementById(id);
 let catalog = null, current = null, selectedCurve = null, loadVersion = 0;
 let edgeIndex = 0, sheetIndex = 0;
+let selectionFrame = null;
+let currentMesh = null;
 const cache = new Map();
+const meshCache = new Map();
 
 function decimal(value) {
   const n = Number(value);
@@ -69,6 +72,24 @@ function validate(data) {
   return data;
 }
 
+function validateMesh(mesh, data) {
+  if (!mesh || mesh.schema_version !== 1 || mesh.degree !== data.degree ||
+      !Array.isArray(mesh.sheets) || mesh.sheets.length !== data.degree ||
+      !Array.isArray(mesh.triangles) || !mesh.triangles.length || mesh.triangles.length > 30000) {
+    throw new Error("Unsupported surface mesh");
+  }
+  const count = mesh.sheets[0]?.vertices?.length;
+  if (!count || count > 100000 || !mesh.triangles.every(t => Array.isArray(t) && t.length === 3 &&
+      t.every(i => Number.isInteger(i) && i >= 0 && i < count))) throw new Error("Invalid mesh triangles");
+  mesh.sheets.forEach((sheet, i) => {
+    if (sheet.sheet !== i + 1 || !Array.isArray(sheet.vertices) || sheet.vertices.length !== count ||
+        !sheet.vertices.every(p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite))) {
+      throw new Error("Invalid mesh vertices or sheet labels");
+    }
+  });
+  return mesh;
+}
+
 async function fetchJSON(path) {
   const response = await fetch(path);
   if (!response.ok) throw new Error(`Could not load ${path} (HTTP ${response.status})`);
@@ -119,9 +140,21 @@ async function loadFunction() {
   try {
     let data = cache.get(f.file);
     if (!data) { data = validate(await fetchJSON(f.file)); cache.set(f.file, data); }
+    let mesh = null, meshError = null;
+    if (f.mesh) {
+      try {
+        mesh = meshCache.get(f.mesh);
+        if (!mesh) {
+          mesh = validateMesh(await fetchJSON(f.mesh), data);
+          meshCache.set(f.mesh, mesh);
+          while (meshCache.size > 3) meshCache.delete(meshCache.keys().next().value);
+        }
+      } catch (error) { meshError = error; }
+    }
     if (version !== loadVersion) return;
-    await show(data, curve, f);
+    await show(data, curve, f, mesh);
     if (version !== loadVersion) return;
+    if (meshError) status(`Integrals loaded. Surface mesh unavailable: ${meshError.message}`, true);
     const url = new URL(location.href);
     url.hash = `${curve.label}/${f.name}`;
     history.replaceState(null, "", url);
@@ -130,8 +163,11 @@ async function loadFunction() {
   }
 }
 
-async function show(data, curve = null, f = null) {
+async function show(data, curve = null, f = null, mesh = null) {
+  if (selectionFrame !== null) cancelAnimationFrame(selectionFrame);
+  selectionFrame = null;
   current = data;
+  currentMesh = mesh;
   edgeIndex = sheetIndex = 0;
   $("results").hidden = false;
   $("export").disabled = false;
@@ -144,6 +180,13 @@ async function show(data, curve = null, f = null) {
   data.edges.forEach((e, i) => option($("edge"), i, `σ_${e.index}${e.infinite ? " → ∞" : ""}`));
   $("sheet").replaceChildren();
   for (let s = 0; s < data.degree; s++) option($("sheet"), s, `S_${s + 1}`);
+  $("visible-sheet").replaceChildren();
+  option($("visible-sheet"), 0, "All sheets");
+  for (let s = 1; s <= data.degree; s++) option($("visible-sheet"), s, `Only S_${s}`);
+  $("show-mesh").disabled = !mesh;
+  $("mesh-caption").textContent = mesh ?
+    "Select a colored lift. A single-sheet view includes both banks of its boundary. Projection crossings can occur; surface triangles approach cut endpoints." :
+    "Select a colored lift. A single-sheet view includes both banks of its boundary. This result has no surface mesh.";
   $("pairings").replaceChildren();
   data.pairings.forEach(p => {
     const row = document.createElement("tr");
@@ -185,6 +228,11 @@ function renderIntegrals() {
 const plotConfig = {responsive: true, displaylogo: false, scrollZoom: true, modeBarButtonsToRemove: ["toImage"]};
 const axes = {zerolinecolor: "#d5dcd2", gridcolor: "#e8ebe3", tickformat: ".4g", titlefont: {size: 11}};
 
+function pathVisible(lift) {
+  const sheet = Number($("visible-sheet").value);
+  return sheet === 0 || lift.sheet === sheet || lift.minus_sheet === sheet;
+}
+
 async function renderPlots() {
   const data = current;
   const base = data.edges.map((edge, i) => ({
@@ -198,10 +246,18 @@ async function renderPlots() {
     marker: {size: 7, color: "#183e3b"},
     customdata: data.edges.map((_, i) => i), hovertemplate: critical.map((_, i) => `z_${i + 1}<br>Re w = %{x:.10g}<br>Im w = %{y:.10g}<extra></extra>`), showlegend: false});
   const lifts = [];
+  if (currentMesh) currentMesh.sheets.forEach(sheet => {
+    lifts.push({type: "mesh3d", x: sheet.vertices.map(p => p[0]), y: sheet.vertices.map(p => p[1]), z: sheet.vertices.map(p => p[2]),
+      i: currentMesh.triangles.map(t => t[0]), j: currentMesh.triangles.map(t => t[1]), k: currentMesh.triangles.map(t => t[2]),
+      color: COLORS[(sheet.sheet - 1) % COLORS.length], opacity: 0.2, flatshading: true,
+      name: `Surface S_${sheet.sheet}`, hoverinfo: "skip", showlegend: false,
+      visible: $("show-mesh").checked, meta: {kind: "surface", sheet: sheet.sheet}});
+  });
   data.edges.forEach((edge, i) => edge.lifts.forEach((lift, s) => {
     const chosen = i === edgeIndex && s === sheetIndex;
     lifts.push({type: "scatter3d", mode: "lines", x: lift.xyz.map(p => p && p[0]), y: lift.xyz.map(p => p && p[1]), z: lift.xyz.map(p => p && p[2]),
       line: {color: COLORS[s % COLORS.length], width: chosen ? 8 : 3}, opacity: chosen ? 1 : 0.65,
+      visible: pathVisible(lift), meta: {kind: "path", edge: i, sheet: lift.sheet, minus_sheet: lift.minus_sheet},
       customdata: lift.xyz.map(() => [i, s]), name: `e⁺_${s + 1},${edge.index}`, showlegend: false,
       hovertemplate: `e⁺_${s + 1},${edge.index} = e⁻_${lift.minus_sheet},${edge.index}<br>Re w = %{x:.10g}<br>Im w = %{y:.10g}<br>height = %{z:.10g}<extra></extra>`});
   }));
@@ -214,27 +270,127 @@ async function renderPlots() {
   $("base-plot").on("plotly_click", event => {
     if (typeof event.points[0].customdata === "number") selectPath(event.points[0].customdata, sheetIndex);
   });
-  $("lift-plot").on("plotly_click", event => {
-    const path = event.points[0].customdata;
-    if (Array.isArray(path)) selectPath(path[0], path[1]);
-  });
 }
 
+function pickLift(clientX, clientY) {
+  const plot = $("lift-plot"), scene = plot._fullLayout?.scene?._scene;
+  if (!scene?.glplot?.cameraParams) return null;
+  // Project the actual displayed polylines. GL's surface picking otherwise
+  // intercepts clicks on paths visible through a translucent mesh. These
+  // matrices belong to the pinned, bundled Plotly version.
+  const rect = plot.getBoundingClientRect(), camera = scene.glplot.cameraParams;
+  if (![camera.model, camera.view, camera.projection].every(m => m?.length === 16)) return null;
+  const multiply = (matrix, vector) => [0, 1, 2, 3].map(i =>
+    vector.reduce((sum, value, j) => sum + matrix[j * 4 + i] * value, 0));
+  const project = point => {
+    if (!point) return null;
+    let v = [...point.map((x, i) => x * scene.dataScale[i]), 1];
+    for (const matrix of [camera.model, camera.view, camera.projection]) v = multiply(matrix, v);
+    if (v[3] <= 0 || Math.abs(v[2] / v[3]) > 1) return null;
+    return [rect.left + (v[0] / v[3] + 1) * rect.width / 2,
+      rect.top + (1 - v[1] / v[3]) * rect.height / 2, v[2] / v[3]];
+  };
+  let best = null, distance = 8 * 8, depth = Infinity;
+  current.edges.forEach((edge, e) => edge.lifts.forEach((lift, s) => {
+    if (!pathVisible(lift)) return;
+    let previous = null;
+    for (const point of lift.xyz) {
+      const next = project(point);
+      if (previous && next) {
+        const dx = next[0] - previous[0], dy = next[1] - previous[1];
+        const length = dx * dx + dy * dy;
+        const t = length ? Math.max(0, Math.min(1,
+          ((clientX - previous[0]) * dx + (clientY - previous[1]) * dy) / length)) : 0;
+        const d = (clientX - previous[0] - t * dx) ** 2 + (clientY - previous[1] - t * dy) ** 2;
+        const z = previous[2] + t * (next[2] - previous[2]);
+        if (d < distance - .1 || (d <= distance && z < depth)) {
+          distance = d; depth = z; best = [e, s];
+        }
+      }
+      previous = next;
+    }
+  }));
+  return best;
+}
+
+let pointerStart = null;
+$("lift-plot").addEventListener("pointerdown", event => {
+  if (event.button !== 0 || event.target.closest(".modebar")) return;
+  pointerStart = {id: event.pointerId, x: event.clientX, y: event.clientY, dragged: false};
+}, true);
+$("lift-plot").addEventListener("pointermove", event => {
+  if (pointerStart && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 5) pointerStart.dragged = true;
+}, true);
+$("lift-plot").addEventListener("pointercancel", () => { pointerStart = null; }, true);
+$("lift-plot").addEventListener("pointerup", event => {
+  const start = pointerStart;
+  pointerStart = null;
+  if (!start || start.id !== event.pointerId || start.dragged || !current) return;
+  const data = current, x = event.clientX, y = event.clientY;
+  requestAnimationFrame(() => {
+    if (current !== data) return;
+    const path = pickLift(x, y);
+    if (path) selectPath(path[0], path[1]);
+  });
+}, true);
+
 function selectPath(edge, sheet) {
+  if (!current || !current.edges[edge]?.lifts[sheet]) return;
   edgeIndex = edge; sheetIndex = sheet;
+  let visibleSheet = Number($("visible-sheet").value);
+  const lift = current.edges[edge].lifts[sheet];
+  if (visibleSheet && lift.sheet !== visibleSheet && lift.minus_sheet !== visibleSheet) {
+    visibleSheet = lift.sheet;
+    $("visible-sheet").value = String(visibleSheet);
+  }
+  if (visibleSheet) {
+    $("bank").value = lift.sheet === visibleSheet ? "plus" : "minus";
+  }
   $("edge").value = edge; $("sheet").value = sheet;
   renderIntegrals();
   if (typeof Plotly !== "undefined") {
-    const trace = edgeIndex * current.degree + sheetIndex;
-    const count = current.degree * current.edges.length;
-    Plotly.restyle($("base-plot"), {"line.width": current.edges.map((_, i) => i === edgeIndex ? 4 : 2), "line.color": current.edges.map((_, i) => i === edgeIndex ? "#bc542e" : "#44736a")}, current.edges.map((_, i) => i));
-    Plotly.restyle($("lift-plot"), {"line.width": Array.from({length: count}, (_, i) => i === trace ? 8 : 3), opacity: Array.from({length: count}, (_, i) => i === trace ? 1 : 0.65)});
+    if (selectionFrame !== null) cancelAnimationFrame(selectionFrame);
+    // Rebuilding a GL scene inside plotly_click interrupts the browser's
+    // mouse-release processing. Defer all redraws until the event unwinds.
+    selectionFrame = requestAnimationFrame(() => {
+      selectionFrame = null;
+      Plotly.restyle($("base-plot"), {"line.width": current.edges.map((_, i) => i === edgeIndex ? 4 : 2), "line.color": current.edges.map((_, i) => i === edgeIndex ? "#bc542e" : "#44736a")}, current.edges.map((_, i) => i));
+      const plot = $("lift-plot");
+      const indices = [], widths = [], opacities = [];
+      plot.data.forEach((trace, i) => {
+        if (trace.meta?.kind !== "path") return;
+        const chosen = trace.meta.edge === edgeIndex && trace.meta.sheet === sheetIndex + 1;
+        indices.push(i); widths.push(chosen ? 8 : 3); opacities.push(chosen ? 1 : .65);
+      });
+      Plotly.restyle(plot, {"line.width": widths, opacity: opacities}, indices);
+      updateSheetView();
+    });
   }
 }
 
+function updateSheetView() {
+  if (!current || typeof Plotly === "undefined" || !$("lift-plot").data) return;
+  const plot = $("lift-plot"), sheet = Number($("visible-sheet").value);
+  const visible = plot.data.map(trace => trace.meta.kind === "surface" ?
+    $("show-mesh").checked && (!sheet || trace.meta.sheet === sheet) :
+    !sheet || trace.meta.sheet === sheet || trace.meta.minus_sheet === sheet);
+  if (visible.some((value, i) => value !== (plot.data[i].visible !== false))) Plotly.restyle(plot, {visible});
+}
+
+$("visible-sheet").addEventListener("change", () => {
+  if (!current) return;
+  const sheet = Number($("visible-sheet").value);
+  const lift = current.edges[edgeIndex].lifts[sheetIndex];
+  selectPath(edgeIndex, sheet && lift.sheet !== sheet && lift.minus_sheet !== sheet ? sheet - 1 : sheetIndex);
+});
+$("show-mesh").addEventListener("change", () => requestAnimationFrame(updateSheetView));
 $("curve-select").addEventListener("change", () => chooseCurve($("curve-select").value));
 $("function-select").addEventListener("change", loadFunction);
-$("edge").addEventListener("change", () => selectPath(Number($("edge").value), sheetIndex));
+$("edge").addEventListener("change", () => {
+  const edge = Number($("edge").value), sheet = Number($("visible-sheet").value);
+  const lift = current.edges[edge].lifts[sheetIndex];
+  selectPath(edge, sheet && lift.sheet !== sheet && lift.minus_sheet !== sheet ? sheet - 1 : sheetIndex);
+});
 $("sheet").addEventListener("change", () => selectPath(edgeIndex, Number($("sheet").value)));
 $("bank").addEventListener("change", renderIntegrals);
 $("orientation").addEventListener("change", renderIntegrals);

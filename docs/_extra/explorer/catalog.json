@@ -64,7 +64,8 @@
             "1"
           ],
           "file": "data/249.a.249.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/249.a.249.1-P.json"
         },
         {
           "name": "Q",
@@ -74,7 +75,8 @@
             "0"
           ],
           "file": "data/249.a.249.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/249.a.249.1-Q.json"
         }
       ],
       "determinant": "-16.743865756332140189517906871",
@@ -133,7 +135,8 @@
             "1"
           ],
           "file": "data/277.a.277.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/277.a.277.1-P.json"
         },
         {
           "name": "Q",
@@ -143,7 +146,8 @@
             "0"
           ],
           "file": "data/277.a.277.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/277.a.277.1-Q.json"
         }
       ],
       "determinant": "-17.930817340916944991099081784",
@@ -202,7 +206,8 @@
             "1"
           ],
           "file": "data/295.a.295.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/295.a.295.1-P.json"
         },
         {
           "name": "Q",
@@ -212,7 +217,8 @@
             "0"
           ],
           "file": "data/295.a.295.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/295.a.295.1-Q.json"
         }
       ],
       "determinant": "18.073194215771727290178043806",
@@ -271,7 +277,8 @@
             "1"
           ],
           "file": "data/349.a.349.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/349.a.349.1-P.json"
         },
         {
           "name": "Q",
@@ -281,7 +288,8 @@
             "0"
           ],
           "file": "data/349.a.349.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/349.a.349.1-Q.json"
         }
       ],
       "determinant": "-17.168441916163399616479538058",
@@ -340,7 +348,8 @@
             "1"
           ],
           "file": "data/388.a.776.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/388.a.776.1-P.json"
         },
         {
           "name": "Q",
@@ -350,7 +359,8 @@
             "1"
           ],
           "file": "data/388.a.776.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/388.a.776.1-Q.json"
         }
       ],
       "determinant": "-13.196343154704949143724390823",
@@ -409,7 +419,8 @@
             "0"
           ],
           "file": "data/389.a.389.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/389.a.389.1-P.json"
         },
         {
           "name": "Q",
@@ -419,7 +430,8 @@
             "0"
           ],
           "file": "data/389.a.389.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/389.a.389.1-Q.json"
         }
       ],
       "determinant": "1.9577559702776841985098378009",
@@ -478,7 +490,8 @@
             "0"
           ],
           "file": "data/389.a.389.2-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/389.a.389.2-P.json"
         },
         {
           "name": "Q",
@@ -488,7 +501,8 @@
             "-1"
           ],
           "file": "data/389.a.389.2-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/389.a.389.2-Q.json"
         }
       ],
       "determinant": "15.662047762221214631314162540",
@@ -547,7 +561,8 @@
             "-1"
           ],
           "file": "data/523.a.523.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/523.a.523.1-P.json"
         },
         {
           "name": "Q",
@@ -557,7 +572,8 @@
             "0"
           ],
           "file": "data/523.a.523.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/523.a.523.1-Q.json"
         }
       ],
       "determinant": "18.372816641979816740263401130",
@@ -616,7 +632,8 @@
             "-1"
           ],
           "file": "data/709.a.709.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/709.a.709.1-P.json"
         },
         {
           "name": "Q",
@@ -626,7 +643,8 @@
             "0"
           ],
           "file": "data/709.a.709.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/709.a.709.1-Q.json"
         }
       ],
       "determinant": "-15.735177330107291898564583262",
@@ -685,7 +703,8 @@
             "0"
           ],
           "file": "data/763.a.763.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/763.a.763.1-P.json"
         },
         {
           "name": "Q",
@@ -695,7 +714,8 @@
             "1"
           ],
           "file": "data/763.a.763.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/763.a.763.1-Q.json"
         }
       ],
       "determinant": "-17.429764831571900843509486615",
@@ -754,7 +774,8 @@
             "-1"
           ],
           "file": "data/925.a.925.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/925.a.925.1-P.json"
         },
         {
           "name": "Q",
@@ -764,7 +785,8 @@
             "0"
           ],
           "file": "data/925.a.925.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/925.a.925.1-Q.json"
         }
       ],
       "determinant": "15.812436007526216061017334511",
@@ -823,7 +845,8 @@
             "0"
           ],
           "file": "data/997.a.997.2-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/997.a.997.2-P.json"
         },
         {
           "name": "Q",
@@ -833,7 +856,8 @@
             "-1"
           ],
           "file": "data/997.a.997.2-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/997.a.997.2-Q.json"
         }
       ],
       "determinant": "15.837891465976813324910395214",
@@ -892,7 +916,8 @@
             "0"
           ],
           "file": "data/1051.b.1051.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/1051.b.1051.1-P.json"
         },
         {
           "name": "Q",
@@ -902,7 +927,8 @@
             "-1"
           ],
           "file": "data/1051.b.1051.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/1051.b.1051.1-Q.json"
         }
       ],
       "determinant": "15.648421030249265485928522314",
@@ -961,7 +987,8 @@
             "0"
           ],
           "file": "data/1051.b.1051.2-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/1051.b.1051.2-P.json"
         },
         {
           "name": "Q",
@@ -971,7 +998,8 @@
             "0"
           ],
           "file": "data/1051.b.1051.2-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/1051.b.1051.2-Q.json"
         }
       ],
       "determinant": "3.9121052575625957971828893797",
@@ -1030,7 +1058,8 @@
             "0"
           ],
           "file": "data/1123.a.1123.1-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/1123.a.1123.1-P.json"
         },
         {
           "name": "Q",
@@ -1040,7 +1069,8 @@
             "-1"
           ],
           "file": "data/1123.a.1123.1-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/1123.a.1123.1-Q.json"
         }
       ],
       "determinant": "15.615472128959048672112597437",
@@ -1099,7 +1129,8 @@
             "0"
           ],
           "file": "data/1147.a.35557.2-P.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/1147.a.35557.2-P.json"
         },
         {
           "name": "Q",
@@ -1109,7 +1140,8 @@
             "0"
           ],
           "file": "data/1147.a.35557.2-Q.json",
-          "warnings": []
+          "warnings": [],
+          "mesh": "meshes/1147.a.35557.2-Q.json"
         }
       ],
       "determinant": "1.3757890909346185308431222069",

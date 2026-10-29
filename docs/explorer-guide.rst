@@ -13,6 +13,10 @@ Choose a curve and either marked torsion function. Click an edge in the
 :math:`w=\varphi` plane, then a lift in the three-dimensional projection.
 The selectors provide the same choices without using the plot. Drag the
 lifted plot to rotate, and use its toolbar to zoom and reset the view.
+The **Display sheets** selector shows all sheets or isolates one surface
+with both banks of its boundary. The **Surface mesh** checkbox hides or
+shows the surface while retaining the lifted paths. Path selection preserves
+the camera and zoom.
 
 The path table shows, for every holomorphic form
 :math:`\omega_a=x^{a-1}dx/y`,
@@ -56,8 +60,13 @@ the endpoints. Three-dimensional paths are the projection
      \operatorname{arsinh}(\operatorname{Re}(e^{-0.55i}q))),
 
 with :math:`q=y` for functions of :math:`x` alone and :math:`q=x` otherwise.
-Projection crossings need not be intersections on the curve. These are
-lifted cut paths; they are not a triangulated surface model.
+Projection crossings need not be intersections on the curve. Surface meshes
+cover a finite window of the slit :math:`w`-plane. Their sheet labels are
+continued from the same initial fibre as the integrator, without crossing
+the cut. Both boundary labels are independently checked against the saved
+paths. Triangle vertices approach cuts and branch points by tiny insets to
+avoid singular display coordinates; the mesh is an approximation of the
+projected surface. It does not change any integral.
 
 Pairings and the paper's determinant
 ------------------------------------
@@ -92,6 +101,18 @@ From the repository root, with the package installed in SageMath:
 .. code-block:: sh
 
    sage -python -m hyperell_regulator.experiments.paper_explorer --jobs 4
+
+Then generate the display meshes (this step does not reintegrate any edge):
+
+.. code-block:: sh
+
+   sage -pip install '.[visualization]'
+   sage -python -m hyperell_regulator.experiments.paper_surfaces --jobs 4
+
+The optional visualization dependency is `Triangle
+<https://rufat.be/triangle/>`_, used to enforce all cut segments in the
+triangulation even when critical values cluster closely. The published
+viewer needs only the exported JSON files and the bundled JavaScript.
 
 The inputs in ``reports/paper_explorer_inputs.json`` preserve the sixteen
 manuscript rows, including their models, marked points and torsion orders.
