@@ -7,6 +7,8 @@ product. This packages computes regulator
 integrals, periods, standard L-values, and reduction/component data.
 Regulators, periods and L-values support both float64 and arbitrary precision.
 
+[Documentation](https://lac1213.github.io/hyperell-regulator/)
+
 ## Installation
 
 Install into an existing SageMath environment:
