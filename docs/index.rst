@@ -38,4 +38,4 @@ reference generated from the package's docstrings.
 * :ref:`search`
 
 `Open the interactive cut-system explorer <explorer/index.html>`_ for all
-sixteen curves and thirty-two torsion functions in the paper.
+sixteen genus 2 curves of small conductor and thirty-two torsion functions.

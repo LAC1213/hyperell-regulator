@@ -31,17 +31,19 @@
         "1"
       ],
       "file": "data/249.a.249.1-P.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/249.a.249.1-P.json"
     },
     {
-      "name": "Q",
+      "name": "R",
       "order": 14,
       "point": [
         "-1",
         "0"
       ],
       "file": "data/249.a.249.1-Q.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/249.a.249.1-Q.json"
     }
   ],
   "determinant": "-16.743865756332140189517906871",

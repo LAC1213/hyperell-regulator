@@ -5,25 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explore hyperelliptic cut systems, regulator pairings and individual line integrals.">
   <title>Cut system explorer · hyperell-regulator</title>
-  <link rel="stylesheet" href="explorer.css?v=surfaces-1">
+  <link rel="stylesheet" href="explorer.css?v=labels-1">
   <script defer src="plotly.min.js"></script>
-  <script defer src="explorer.js?v=surfaces-1"></script>
+  <script defer src="explorer.js?v=labels-1"></script>
 </head>
 <body>
   <header>
-    <a class="wordmark" href="../index.html">hyperell<span> / </span>regulator</a>
+    <a class="wordmark" href="../index.html">hyperell-regulator</a>
     <nav><a href="../explorer-guide.html">Guide &amp; conventions</a><a href="https://github.com/LAC1213/hyperell-regulator">Source ↗</a></nav>
   </header>
   <main>
     <section class="intro">
-      <p class="eyebrow">THE PAPER / 16 CURVES · 32 TORSION FUNCTIONS</p>
+      <p class="eyebrow">GENUS 2 CURVES OF SMALL CONDUCTOR</p>
       <h1>Follow the cuts.</h1>
-      <p>Explore the paper’s hyperelliptic curves through the sheets of φ. Select a lifted path to inspect its ordinary and logarithmic integrals, displayed to 10 significant digits.</p>
+      <p>Explore genus 2 curves of small conductor through the sheets of φ. Select a lifted path to inspect its ordinary and logarithmic integrals, displayed to 10 significant digits.</p>
     </section>
     <section class="workspace" aria-label="Choose a curve and torsion function">
       <div class="section-label"><h2>Curve &amp; torsion function</h2><span>computed locally in SageMath</span></div>
       <div class="catalog-controls">
-        <label>Curve in the paper<select id="curve-select" disabled><option>Loading curves…</option></select></label>
+        <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
         <label>Torsion function<select id="function-select" disabled><option>Loading functions…</option></select></label>
         <button type="button" class="secondary" id="export" disabled>↓ Export full data</button>
         <label class="file-button" for="import">Import local result<input type="file" id="import" accept="application/json,.json"></label>
@@ -32,7 +32,7 @@
       <details><summary>Exact curve &amp; function</summary><pre id="exact-inputs"></pre></details>
       <p class="hint">All calculations are precomputed. Choosing a curve or path runs entirely in your browser. <a href="../explorer-guide.html">Compute and import another curve</a></p>
     </section>
-    <p id="status" role="status" aria-live="polite">Loading the paper’s curve catalog…</p>
+    <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
     <section id="results" hidden>
       <div class="result-heading"><div><p class="eyebrow" id="result-source"></p><h2 id="result-model"></h2></div><p id="metadata"></p></div>
       <div class="plots">
@@ -67,15 +67,15 @@
         <section class="panel pairing-panel">
           <div class="section-label"><h2>Regulator pairings</h2><span>ωₐ = xᵃ⁻¹ dx/y</span></div>
           <div class="table-scroll"><table><thead><tr><th>(a, b)</th><th>Pairing −4Rₐᵦ/π</th><th>Package Rₐᵦ</th><th>Period Pₐᵦ</th></tr></thead><tbody id="pairings"></tbody></table></div>
-          <p class="caption">Rₐᵦ = −¼ Im ∫<sub>C</sub> log|φ| ωₐ ∧ ω̄ᵦ, after symmetrization. The period column uses weight 1. These pairings use the exact function shown above; the paper’s determinant uses the normalized columns described in the guide.</p>
+          <p class="caption">Rₐᵦ = −¼ Im ∫<sub>C</sub> log|φ| ωₐ ∧ ω̄ᵦ, after symmetrization. The period column uses weight 1. These pairings use the exact function shown above; the determinant uses the normalized columns described in the guide.</p>
         </section>
       </div>
       <details class="notes"><summary>Numerical conventions &amp; display limits</summary><p id="geometry"></p><p>Values retain the decimal strings exported by SageMath. The digit target is checked by the integrator; it is not a certified error bound. Cut topology and display continuation use float64.</p><p>Both banks use the selected geometric orientation. To traverse a sheet boundary, use the positive bank toward ∞ and the negative bank toward 0.</p><p id="divisor"></p><p id="warnings"></p></details>
     </section>
-    <section class="panel paper-table">
-      <div class="section-label"><h2>All curves in the paper</h2><span>select a row to explore</span></div>
-      <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>Q</th><th>n<sub>P</sub></th><th>n<sub>Q</sub></th><th>Computed determinant</th><th>Paper q</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
-      <p class="caption">Points use the manuscript’s models y² = F(x). Orders are relative to O⁺ in even degree and the unique point at infinity in odd degree.</p>
+    <section class="panel curve-table">
+      <div class="section-label"><h2>Genus 2 curves of small conductor</h2><span>select a row to explore</span></div>
+      <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>R</th><th>n<sub>P</sub></th><th>n<sub>R</sub></th><th>Computed determinant</th><th>q</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
+      <p class="caption">Points use the models y² = F(x). The orders of P and R are relative to the common pole Q at infinity.</p>
     </section>
   </main>
   <footer><span>hyperell-regulator</span><span>Exact inputs. Numerical integrals. Visible paths.</span></footer>

@@ -31,17 +31,19 @@
         "0"
       ],
       "file": "data/997.a.997.2-P.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/997.a.997.2-P.json"
     },
     {
-      "name": "Q",
+      "name": "R",
       "order": 8,
       "point": [
         "0",
         "-1"
       ],
       "file": "data/997.a.997.2-Q.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/997.a.997.2-Q.json"
     }
   ],
   "determinant": "15.837891465976813324910395214",

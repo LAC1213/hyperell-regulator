@@ -1,8 +1,8 @@
 Interactive cut-system explorer
 ===============================
 
-`Open the explorer <explorer/index.html>`_. It contains all sixteen curves
-and thirty-two marked torsion functions from the manuscript's tables.
+`Open the explorer <explorer/index.html>`_. It contains sixteen genus 2
+curves of small conductor and thirty-two marked torsion functions.
 Calculations run locally in SageMath before publication; the published
 GitHub Pages site serves only static files.
 
@@ -68,17 +68,19 @@ paths. Triangle vertices approach cuts and branch points by tiny insets to
 avoid singular display coordinates; the mesh is an approximation of the
 projected surface. It does not change any integral.
 
-Pairings and the paper's determinant
-------------------------------------
+Pairings and the determinant
+----------------------------
 
 The pairing panel shows the package regulator :math:`R_{ab}`, its associated
 pairing :math:`-4R_{ab}/\pi`, and the unweighted period :math:`P_{ab}`. These
 values belong to the exact function in the expanded curve/function panel.
 
 For each marked point :math:`T` of order :math:`N`, the exported function
-satisfies :math:`(\varphi_T)=N(T-O^+)` in even degree, or :math:`N(T-O)`
-in odd degree. The pole is specifically :math:`O^+`, where
-:math:`y/x^3\to+1`, on the manuscript's even-degree models.
+satisfies :math:`(\varphi_T)=N(T-Q)`, where :math:`Q` is the common pole
+at infinity. In degree six, :math:`Q` is the point where
+:math:`y/x^3\to1`; in odd degree it is the unique point at infinity.
+The two marked zeros are labelled :math:`P` and :math:`R`, so the function
+selector lists :math:`\varphi_P` and :math:`\varphi_R` with their orders.
 
 If :math:`(x-x(T))^N=c\operatorname{Norm}(\varphi_T)`, its normalized
 regulator column is
@@ -87,10 +89,10 @@ regulator column is
 
    \frac{2R_{ab}(\varphi_T)+\log|c|P_{ab}}{N}.
 
-The catalog determinant uses the columns for the paper's :math:`P`, its
-:math:`Q`, and the ordinary periods, in that order. It is checked against
-the determinant printed in the paper. The catalog's exact :math:`q` is the
-paper's factor :math:`2\pi c^+c^-L''(\mathrm{std},1)/\det`, not its reciprocal.
+The catalog determinant uses the columns for :math:`P`, :math:`R`, and
+the ordinary periods, in that order. It is checked against the stored
+reference determinant. The catalog's exact comparison factor is
+:math:`q=2\pi c^+c^-L''(\mathrm{std},1)/\det`.
 L-values are not recomputed by the viewer or exporter.
 
 Recompute the complete catalog
@@ -100,28 +102,27 @@ From the repository root, with the package installed in SageMath:
 
 .. code-block:: sh
 
-   sage -python -m hyperell_regulator.experiments.paper_explorer --jobs 4
+   sage -python -m hyperell_regulator.experiments.small_conductor_explorer --jobs 4
 
 Then generate the display meshes (this step does not reintegrate any edge):
 
 .. code-block:: sh
 
    sage -pip install '.[visualization]'
-   sage -python -m hyperell_regulator.experiments.paper_surfaces --jobs 4
+   sage -python -m hyperell_regulator.experiments.small_conductor_surfaces --jobs 4
 
 The optional visualization dependency is `Triangle
 <https://rufat.be/triangle/>`_, used to enforce all cut segments in the
 triangulation even when critical values cluster closely. The published
 viewer needs only the exported JSON files and the bundled JavaScript.
 
-The inputs in ``reports/paper_explorer_inputs.json`` preserve the sixteen
-manuscript rows, including their models, marked points and torsion orders.
-They were extracted from the existing manuscript reproducibility snapshot;
-the manuscript hash and provenance are recorded with the inputs.
+The inputs in ``reports/small_conductor_explorer_inputs.json`` preserve the
+sixteen models, their marked points and torsion orders, and the reference
+values used for numerical checks.
 The exporter constructs the exact functions by Riemann--Roch and integrates
 each cover once, retaining both ordinary and logarithmic edge integrals.
 It checks sheet closure, edge traces, agreement of the periods from the two
-covers, display continuation residuals and the printed determinants.
+covers, display continuation residuals and the reference determinants.
 Completed curve/function exports are reused when resuming with identical
 inputs, precision and algorithm source hashes.
 

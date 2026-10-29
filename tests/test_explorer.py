@@ -79,11 +79,11 @@ def _assemble_export(data, logarithmic):
     return np.array([-matrix[a, b]/4 for a in range(g) for b in range(a, g)])
 
 
-def test_complete_paper_catalog_reassembles_all_pairings():
+def test_complete_small_conductor_catalog_reassembles_all_pairings():
     root = Path(__file__).resolve().parents[1]
     site = root/'docs/_extra/explorer'
     catalog = json.loads((site/'catalog.json').read_text())
-    inputs = json.loads((root/'reports/paper_explorer_inputs.json').read_text())
+    inputs = json.loads((root/'reports/small_conductor_explorer_inputs.json').read_text())
     assert [c['label'] for c in catalog['curves']] == [c['label'] for c in inputs['curves']]
     assert len(catalog['curves']) == 16 and catalog['display_digits'] == 10
     assert catalog['source_sha256']
@@ -91,9 +91,12 @@ def test_complete_paper_catalog_reassembles_all_pairings():
     for curve in catalog['curves']:
         assert curve['validation']['determinant_rounds_as_printed']
         assert len(curve['functions']) == 2
+        assert [f['name'] for f in curve['functions']] == ['P', 'R']
         for f in curve['functions']:
             data = json.loads((site/f['file']).read_text())
             assert data['degree'] == f['order']
+            assert data['collection']['pole'] == 'Q'
+            assert data['collection']['function'] == f['name']
             assert data['source_sha256'] == catalog['source_sha256']
             assert not data['warnings'], (curve['label'], f['name'], data['warnings'])
             for edge in data['edges']:

@@ -1,6 +1,7 @@
 /* Static viewer: computations and full precision stay in the exported JSON. */
 "use strict";
 const DIGITS = 10;
+const DATA_VERSION = "labels-1";
 const COLORS = ["#bd5034", "#267f91", "#9267af", "#45956b", "#c28b24", "#3865a4", "#b65787"];
 const $ = (id) => document.getElementById(id);
 let catalog = null, current = null, selectedCurve = null, loadVersion = 0;
@@ -121,11 +122,12 @@ function renderCatalog() {
 }
 
 function chooseCurve(label, functionName = "P") {
+  if (functionName === "Q") functionName = "R"; // Preserve older saved links.
   selectedCurve = catalog.curves.find(c => c.label === label);
-  if (!selectedCurve) { status("This curve is not in the paper catalog.", true); return; }
+  if (!selectedCurve) { status("This curve is not in the catalog.", true); return; }
   $("curve-select").value = label;
   $("function-select").replaceChildren();
-  selectedCurve.functions.forEach(f => option($("function-select"), f.name, `φ_${f.name} · N = ${f.order} · (${f.point.join(", ")})`));
+  selectedCurve.functions.forEach(f => option($("function-select"), f.name, `φ_${f.name} of order ${f.order}`));
   $("function-select").value = selectedCurve.functions.some(f => f.name === functionName) ? functionName : "P";
   $("function-select").disabled = false;
   for (const row of $("catalog-rows").children) row.classList.toggle("selected", row.dataset.label === label);
@@ -139,13 +141,13 @@ async function loadFunction() {
   status(`Loading ${curve.label}, φ_${f.name}…`);
   try {
     let data = cache.get(f.file);
-    if (!data) { data = validate(await fetchJSON(f.file)); cache.set(f.file, data); }
+    if (!data) { data = validate(await fetchJSON(`${f.file}?v=${DATA_VERSION}`)); cache.set(f.file, data); }
     let mesh = null, meshError = null;
     if (f.mesh) {
       try {
         mesh = meshCache.get(f.mesh);
         if (!mesh) {
-          mesh = validateMesh(await fetchJSON(f.mesh), data);
+          mesh = validateMesh(await fetchJSON(`${f.mesh}?v=${DATA_VERSION}`), data);
           meshCache.set(f.mesh, mesh);
           while (meshCache.size > 3) meshCache.delete(meshCache.keys().next().value);
         }
@@ -175,7 +177,7 @@ async function show(data, curve = null, f = null, mesh = null) {
   $("result-model").textContent = `y² = ${data.input.F}`;
   $("metadata").textContent = `genus ${data.genus} · ${data.degree} sheets · ${data.edges.length} edges · 10 digits shown`;
   $("exact-inputs").textContent = `F(x) = ${data.input.F}\nA(x) = ${data.input.A}\nB(x) = ${data.input.B}\nφ = A(x) + B(x)y`;
-  $("point-info").textContent = curve ? `div(φ_${f.name}) = ${f.order} (${f.name} − ${data.paper.pole}), with ${f.name} = (${f.point.join(", ")}). Fresh normalized determinant: ${decimal(curve.determinant)}; agrees with the printed paper value.` : "An imported result computed locally with hyperell-regulator.";
+  $("point-info").textContent = curve ? `div(φ_${f.name}) = ${f.order} (${f.name} − Q), with ${f.name} = (${f.point.join(", ")}) and Q the common pole at infinity. Normalized determinant: ${decimal(curve.determinant)}.` : "An imported result computed locally with hyperell-regulator.";
   $("edge").replaceChildren();
   data.edges.forEach((e, i) => option($("edge"), i, `σ_${e.index}${e.infinite ? " → ∞" : ""}`));
   $("sheet").replaceChildren();
@@ -195,7 +197,7 @@ async function show(data, curve = null, f = null, mesh = null) {
     $("pairings").append(row);
   });
   $("geometry").textContent = data.conventions?.geometry || "The ray is truncated for display. Its integral includes the complete ray to infinity.";
-  $("divisor").textContent = data.divisor ? `Verified divisor: N = ${data.divisor.N}; zero: ${data.divisor.P}; pole: ${data.divisor.Q}.` : "";
+  $("divisor").textContent = data.divisor ? `Verified divisor: N = ${data.divisor.N}; zero: ${data.divisor.P}; pole Q: ${data.divisor.Q}.` : "";
   $("warnings").textContent = (data.warnings || []).join(" ");
   renderIntegrals();
   if (typeof Plotly === "undefined") {
@@ -398,7 +400,7 @@ $("export").addEventListener("click", () => {
   if (!current) return;
   const url = URL.createObjectURL(new Blob([JSON.stringify(current, null, 2)], {type: "application/json"}));
   const a = document.createElement("a");
-  a.href = url; a.download = current.paper ? `${current.paper.entry.label}-${current.paper.function}.json` : "cut-system.json";
+  a.href = url; a.download = current.collection ? `${current.collection.entry.label}-${current.collection.function}.json` : "cut-system.json";
   a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 $("import").addEventListener("change", async event => {
@@ -419,12 +421,12 @@ $("import").addEventListener("change", async event => {
 
 async function initialize() {
   try {
-    catalog = await fetchJSON("catalog.json");
+    catalog = await fetchJSON(`catalog.json?v=${DATA_VERSION}`);
     if (catalog.schema_version !== 1 || !Array.isArray(catalog.curves)) throw new Error("Unsupported curve catalog");
     renderCatalog();
     const hash = decodeURIComponent(location.hash.slice(1)).split("/");
     const label = catalog.curves.some(c => c.label === hash[0]) ? hash[0] : "763.a.763.1";
-    await chooseCurve(label, hash[1] || "Q");
+    await chooseCurve(label, hash[1] || "R");
   } catch (error) { status(error.message + ". Serve this folder over HTTP when viewing locally.", true); }
 }
 initialize();

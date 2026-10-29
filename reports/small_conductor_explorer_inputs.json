@@ -1,10 +1,12 @@
 {
   "source": {
-    "title": "On Beilinson's conjecture for the square of a genus 2 curve",
-    "table": "tab:torsion-integrality",
-    "manuscript_sha256": "b75d9671ded5f062a78541129e119c07ae1cb7ad12a3aeffd4c8db5eb38b44f2",
-    "input_snapshot": "reports/paper_reproducibility_20261027.json",
-    "pole_convention": "O+ for even degree; the unique point at infinity for odd degree"
+    "title": "Genus 2 curves of small conductor",
+    "input_snapshot": "reports/small_conductor_explorer_inputs.json",
+    "pole_convention": "Q is the common pole at infinity; in degree six y/x^3 tends to 1 at Q.",
+    "marked_points": [
+      "P",
+      "R"
+    ]
   },
   "curves": [
     {

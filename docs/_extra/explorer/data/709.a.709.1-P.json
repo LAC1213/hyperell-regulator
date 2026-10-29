@@ -9588,7 +9588,26 @@
     "max_relative_curve_residual": 4.74326953086081e-15,
     "max_relative_function_residual": 3.4795976819474904e-16
   },
-  "paper": {
+  "source_sha256": {
+    "hyperell_regulator/regulator/__init__.py": "4d3d92dedc8379056e292309e64c0b7f46beeddcfa67fb63fdf522f787b5b94f",
+    "hyperell_regulator/regulator/_legs.py": "6a7c72d5a87dc630a476b6dbf248ee5bc63b2561639173f166cfc4dc6c512357",
+    "hyperell_regulator/regulator/_mp_continuation.py": "af62e349151add0d50db5176d698edb29e9c0c403086b3d6acc149c7d4ad2f0b",
+    "hyperell_regulator/regulator/_mp_stokes.py": "1d5351d3132dfdc26ddae48ddb38be0d2cd71fa22b7b9c28ed266f2e5a6a8002",
+    "hyperell_regulator/regulator/_paths.py": "f228956ea823d32ec1ca851b3755b34b2ccc40f3b71da75142fa2d56a73454c8",
+    "hyperell_regulator/regulator/_periods.py": "3037b298eefb45fc45aa6f1878d8636798ff65b89aed105f362c7526e6b1a1f0",
+    "hyperell_regulator/regulator/api.py": "908cefe2ad4e4d6219343e54366d03fa9e4a814f55456ceae24cfd8ef6b3aa10",
+    "hyperell_regulator/regulator/cover.py": "20f5e4a9d6a2752fce84ab668b1ffcf896d943ac553ace8d230944c31f2685f7",
+    "hyperell_regulator/regulator/diagnostics.py": "1066a9f5946353771aeb0f93641a78e7135075324c280c27fef4f5625118ab21",
+    "hyperell_regulator/regulator/explorer.py": "bd37838feb88fc2f353b178772de2a1ff5eb17ccda7e4f330c569236a646690e",
+    "hyperell_regulator/regulator/functions.py": "7615069d15e6863f4036e11f244233bbcafd6e96c1c18e12479203a960ecbbc4",
+    "hyperell_regulator/regulator/plane.py": "1793e59c2a4b3f0e612cfcacb10997567e6030030772799a31d5fc60fda44ff7",
+    "hyperell_regulator/regulator/plots.py": "bea1e4666a3b122f6a2314fade833dd8b059b46fb5215878ed720d470e9a3de5",
+    "hyperell_regulator/regulator/polynomials.py": "4a55ee0afe66d13d501af62c7984a29887eca072f13e9261e4f60f4695c2b9a7",
+    "hyperell_regulator/regulator/precision.py": "b488d7b2e53289af536fada44e1cd697731a85b025652d1eaf05894ffffb0a8c",
+    "hyperell_regulator/regulator/stokes.py": "1460abb86545381ad86e9d3ff62e12c0c8da4e638f091b2278700d03769eabd9",
+    "hyperell_regulator/regulator/walks.py": "4fc176ca5ae1feec02200c0b056549b3b68e654f04d214ce58fa91653e8baf6a"
+  },
+  "collection": {
     "entry": {
       "label": "709.a.709.1",
       "F": "4*x^5-7*x^4+4*x",
@@ -9620,28 +9639,9 @@
       "-1"
     ],
     "order": 8,
-    "pole": "O",
+    "pole": "Q",
     "norm_c": "6561",
     "normalization": "normalized_regulator = (2*regulator + log|c|*period)/N; (x-x(P))^N = c*Norm(phi)"
   },
-  "source_sha256": {
-    "hyperell_regulator/regulator/__init__.py": "4d3d92dedc8379056e292309e64c0b7f46beeddcfa67fb63fdf522f787b5b94f",
-    "hyperell_regulator/regulator/_legs.py": "6a7c72d5a87dc630a476b6dbf248ee5bc63b2561639173f166cfc4dc6c512357",
-    "hyperell_regulator/regulator/_mp_continuation.py": "af62e349151add0d50db5176d698edb29e9c0c403086b3d6acc149c7d4ad2f0b",
-    "hyperell_regulator/regulator/_mp_stokes.py": "1d5351d3132dfdc26ddae48ddb38be0d2cd71fa22b7b9c28ed266f2e5a6a8002",
-    "hyperell_regulator/regulator/_paths.py": "f228956ea823d32ec1ca851b3755b34b2ccc40f3b71da75142fa2d56a73454c8",
-    "hyperell_regulator/regulator/_periods.py": "3037b298eefb45fc45aa6f1878d8636798ff65b89aed105f362c7526e6b1a1f0",
-    "hyperell_regulator/regulator/api.py": "908cefe2ad4e4d6219343e54366d03fa9e4a814f55456ceae24cfd8ef6b3aa10",
-    "hyperell_regulator/regulator/cover.py": "20f5e4a9d6a2752fce84ab668b1ffcf896d943ac553ace8d230944c31f2685f7",
-    "hyperell_regulator/regulator/diagnostics.py": "1066a9f5946353771aeb0f93641a78e7135075324c280c27fef4f5625118ab21",
-    "hyperell_regulator/regulator/explorer.py": "bd37838feb88fc2f353b178772de2a1ff5eb17ccda7e4f330c569236a646690e",
-    "hyperell_regulator/regulator/functions.py": "7615069d15e6863f4036e11f244233bbcafd6e96c1c18e12479203a960ecbbc4",
-    "hyperell_regulator/regulator/plane.py": "1793e59c2a4b3f0e612cfcacb10997567e6030030772799a31d5fc60fda44ff7",
-    "hyperell_regulator/regulator/plots.py": "bea1e4666a3b122f6a2314fade833dd8b059b46fb5215878ed720d470e9a3de5",
-    "hyperell_regulator/regulator/polynomials.py": "4a55ee0afe66d13d501af62c7984a29887eca072f13e9261e4f60f4695c2b9a7",
-    "hyperell_regulator/regulator/precision.py": "b488d7b2e53289af536fada44e1cd697731a85b025652d1eaf05894ffffb0a8c",
-    "hyperell_regulator/regulator/stokes.py": "1460abb86545381ad86e9d3ff62e12c0c8da4e638f091b2278700d03769eabd9",
-    "hyperell_regulator/regulator/walks.py": "4fc176ca5ae1feec02200c0b056549b3b68e654f04d214ce58fa91653e8baf6a",
-    "hyperell_regulator/experiments/paper_explorer.py": "d50a0e4891ec63c65233287484ff693504024f624660b1cc3675288dbc267dde"
-  }
+  "exporter_source_sha256": "d50a0e4891ec63c65233287484ff693504024f624660b1cc3675288dbc267dde"
 }

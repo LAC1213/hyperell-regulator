@@ -10,7 +10,7 @@ Regulators, periods and L-values support both float64 and arbitrary precision.
 [Documentation](https://lac1213.github.io/hyperell-regulator/)
 
 The [interactive cut-system explorer](https://lac1213.github.io/hyperell-regulator/explorer/)
-shows the paper's sixteen curves and thirty-two torsion functions, with
+shows sixteen genus 2 curves of small conductor and thirty-two torsion functions, with
 clickable lifted paths, ordinary/logarithmic integrals and regulator pairings
 displayed to ten significant digits. Its data is computed locally with Sage;
 the viewer runs entirely on GitHub Pages. See the

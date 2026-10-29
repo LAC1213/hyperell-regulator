@@ -31,17 +31,19 @@
         "-1"
       ],
       "file": "data/523.a.523.1-P.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/523.a.523.1-P.json"
     },
     {
-      "name": "Q",
+      "name": "R",
       "order": 2,
       "point": [
         "1",
         "0"
       ],
       "file": "data/523.a.523.1-Q.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/523.a.523.1-Q.json"
     }
   ],
   "determinant": "18.372816641979816740263401130",

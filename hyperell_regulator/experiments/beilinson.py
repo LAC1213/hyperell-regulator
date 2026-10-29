@@ -3,38 +3,42 @@ Beilinson regulator determinants from torsion points.
 
 For each curve in ``same_component_results.json`` (written by
 :mod:`hyperell_regulator.components`) this looks for a triple of
-distinct rational points `P, Q, R` such that
+distinct rational points `P, R, Q` such that
 
-1. `[P] - [R]` and `[Q] - [R]` are torsion in the Jacobian,
-2. `(P, R)` and `(Q, R)` each reduce to a smooth point of the *same*
+1. `[P] - [Q]` and `[R] - [Q]` are torsion in the Jacobian,
+2. `(P, Q)` and `(R, Q)` each reduce to a smooth point of the *same*
    irreducible component of the special fibre at *every* prime, and
-3. no two of `P, Q, R` are hyperelliptic conjugates,
+3. no two of `P, R, Q` are hyperelliptic conjugates,
 
 then ranks the triples by the sum of integration orders, breaking ties by cut conditioning,
 and evaluates the
-`3 \times 3` regulator determinant of Corollary "3x3 matrix".
+`3 \times 3` regulator determinant.
 
-When moving `R` to infinity would also move `P` or `Q` there, all three
+When moving the common pole `Q` to infinity would also move `P` or `R` there, all three
 points are kept affine instead. The logarithmic weight is then
-`m_P = (x-x(P))/(x-x(R))`, and similarly for `Q`.
+`m_P = (x-x(P))/(x-x(Q))`, and similarly for `R`.
+
+The serialized API retains its legacy triple keys: ``P`` and ``Q`` store
+the two marked zeros, and ``R`` stores the common pole. In the mathematical
+notation here these points are called `P`, `R`, and `Q`, respectively.
 
 The construction (infinity normalization)
 ============================================================
 
-With `\O^+ := R` moved to `[0:1:0]`, a torsion point `P^+ \in C(\QQ)` of order
-`n` gives `n P^+ - n \O^+ = \div(f^+)`; applying the hyperelliptic involution
-`F` gives `f^- := f^+ \circ F` with `\div(f^-) = n P^- - n \O^-`.  Setting
+With the common pole `Q` at infinity, a torsion point `P \in C(\QQ)` of order
+`n` gives `n P - n Q = \div(f^+)`; applying the hyperelliptic involution
+`F` gives `f^- := f^+ \circ F` with `\div(f^-) = n F(P) - n F(Q)`. Setting
 `\varphi := f^+ f^-`, so that
-`\div(\varphi) = n(P^+ + P^- - \O^+ - \O^-)`, the cycle
+`\div(\varphi) = n(P + F(P) - Q - F(Q))`, the cycle
 
 .. MATH::
 
     \alpha_P = (\Delta C, \varphi \circ \pi_1) - (\Gamma_F, \varphi \circ \pi_1)
-      - (\{P^+\} \times C, \psi \circ \pi_2) + (\{P^-\} \times C, \psi \circ \pi_2)
-      - (C \times \{\O^+\}, \psi \circ \pi_1) + (C \times \{\O^-\}, \psi \circ \pi_1)
+      - (\{P\} \times C, \psi \circ \pi_2) + (\{F(P)\} \times C, \psi \circ \pi_2)
+      - (C \times \{Q\}, \psi \circ \pi_1) + (C \times \{F(Q)\}, \psi \circ \pi_1)
 
 with `\psi := f^+/f^-` defines a class in `\CH^2(C \times C, 1)`.  Since
-`\div(x - x(P)) = P^+ + P^- - \O^+ - \O^-`, one has
+`\div(x - x(P)) = P + F(P) - Q - F(Q)`, one has
 `(x - x(P))^n = c\,\varphi` for some `c \in \QQ^\times`, whence the regulator
 
 .. MATH::
@@ -56,14 +60,14 @@ For `d_{11} = 1`, `d_{12} = \Re(z)`, `d_{22} = |z|^2`, the matrix
 .. MATH::
 
     \begin{pmatrix}
-      \int \frac{\log|m_P|}{|f|} d_{11} & \int \frac{\log|m_Q|}{|f|} d_{11} & \int \frac{d_{11}}{|f|} \\
-      \int \frac{\log|m_P|}{|f|} d_{12} & \int \frac{\log|m_Q|}{|f|} d_{12} & \int \frac{d_{12}}{|f|} \\
-      \int \frac{\log|m_P|}{|f|} d_{22} & \int \frac{\log|m_Q|}{|f|} d_{22} & \int \frac{d_{22}}{|f|}
+      \int \frac{\log|m_P|}{|f|} d_{11} & \int \frac{\log|m_R|}{|f|} d_{11} & \int \frac{d_{11}}{|f|} \\
+      \int \frac{\log|m_P|}{|f|} d_{12} & \int \frac{\log|m_R|}{|f|} d_{12} & \int \frac{d_{12}}{|f|} \\
+      \int \frac{\log|m_P|}{|f|} d_{22} & \int \frac{\log|m_R|}{|f|} d_{22} & \int \frac{d_{22}}{|f|}
     \end{pmatrix}
 
 and its determinant, by the Stokes regulator
 (:func:`hyperell_regulator.regulator.regulator_stokes`): the columns at `P`
-and `Q` come from functions with divisor `n P - n\O`, the third is the period
+and `R` come from functions with divisors `n(P-Q)` and `m(R-Q)`; the third is the period
 vector.  A curve whose cut system the Stokes method cannot build is reported
 and skipped -- nothing here integrates over `\CC`.
 If the determinant is non-zero, Beilinson's conjecture predicts it is a
@@ -77,8 +81,8 @@ Caveats
   cannot answer at `p = 2`.
   A triple whose pairs are *undecided* at 2 is reported as such and skipped by
   default; pass ``allow_undecided=True`` to use it anyway.
-* Triples are pairwise non-conjugate: conjugate `P,Q` give equal weights,
-  while a point conjugate to `R` gives the constant weight 1.
+* Triples are pairwise non-conjugate: conjugate `P,R` give equal weights,
+  while a point conjugate to the pole `Q` gives the constant weight 1.
 * Integrality of `\alpha_P` -- the existence of a suitable `c` -- is exactly
   what condition 2 is a proxy for.  It is not verified independently here.
 
@@ -203,8 +207,8 @@ def lmfdb_rank(row):
 
 def find_triples(record, C, row=None, allow_undecided=False):
     r"""
-    All triples `(P, Q, R)` of distinct points of ``record`` meeting the three
-    conditions, as dictionaries.  ``R`` is the common point of the two pairs.
+    All triples of distinct points meeting the three conditions, as
+    dictionaries. The legacy key ``R`` stores the common pole `Q`.
 
     A pair counts if its verdict is ``True`` (or ``None`` when
     ``allow_undecided``) and the order of the difference is finite.
@@ -267,15 +271,16 @@ def find_triples(record, C, row=None, allow_undecided=False):
 
 def model_with_R_at_infinity(C, R, points):
     r"""
-    An isomorphic model `v^2 = G(u)` on which ``R`` is a point at infinity,
+    An isomorphic model `v^2 = G(u)` on which the common pole `Q` (argument
+    ``R``) is a point at infinity,
     together with the images of ``points``.
 
-    If ``R`` is already at infinity the square model `Y^2 = F(x)` is returned
-    unchanged.  Otherwise `u = 1/(x - x(R))`, `v = Y/(x - x(R))^{g+1}` with
-    `Y = 2y + h(x)`, giving `G(u) = u^{2g+2} F(x(R) + 1/u)`; then `x = x(R)`
-    goes to `u = \infty`, so `R` and its involution image are the points at
-    infinity, and `\deg G = 2g+2` minus the multiplicity of `x(R)` as a root of
-    `F` -- degree 5 exactly when `R` is a rational Weierstrass point.
+    If the pole is already at infinity the square model `Y^2 = F(x)` is returned
+    unchanged. Otherwise `u = 1/(x - x(Q))`, `v = Y/(x - x(Q))^{g+1}` with
+    `Y = 2y + h(x)`, giving `G(u) = u^{2g+2} F(x(Q) + 1/u)`; then `x = x(Q)`
+    goes to `u = \infty`, so `Q` and its involution image are the points at
+    infinity, and `\deg G = 2g+2` minus the multiplicity of `x(Q)` as a root of
+    `F` -- degree 5 exactly when `Q` is a rational Weierstrass point.
 
     Returns ``(G, images, xR)`` with ``G`` in `\ZZ[u]` and ``images`` a list
     parallel to ``points``, each an affine `(u, v)` or ``"infinity"``.
@@ -381,7 +386,7 @@ def _resolve_triple_orders(G, images, pole, t):
 def cut_conditioning(G, point, n, pole="infinity"):
     r"""
     ``(N, nodes, span, gap, detour)`` for the cut system of the `\varphi` with
-    `\operatorname{div}(\varphi) = nP - n\O` on `v^2 = G(u)`.
+    `\operatorname{div}(\varphi) = nP - nQ` on `v^2 = G(u)`, with pole `Q`.
 
     Everything the Stokes legs do is measured in ``span`` and ``gap`` --- the
     largest and smallest distance between two nodes --- so their ratio is what
@@ -469,8 +474,8 @@ def regulator_column_stokes(f, point, order, digits=None, pole="infinity"):
     Stokes regulator rather than by quadrature over `\CC`.
 
     The Stokes method needs a function whose divisor is `N A - N B`, and
-    `x - x(P)` instead has divisor `P^+ + P^- - \O^+ - \O^-`.
-    We use `f^+` with `\div(f^+) = n P^+ - n\O^+`, the function defining
+    `x - x(P)` instead has divisor `P + \iota(P) - Q - \iota(Q)`.
+    We use `f^+` with `\div(f^+) = nP - nQ`, the function defining
     the cycle `\alpha_P`, and `f^- = f^+ \circ \iota`.  Pointwise,
 
     .. math:: \log|f^+| + \log|f^-|
@@ -486,9 +491,9 @@ def regulator_column_stokes(f, point, order, digits=None, pole="infinity"):
     put it in and makes this column equal the plane integrator's outright.
 
     ``point`` is `(x(P), y(P))` on `y^2 = f(x)` and ``order`` is `n`.
-    ``pole`` is the common pole `R`, either ``"infinity"`` (default) or an
-    affine pair. For finite `R`, replace `x-x(P)` throughout by
-    `(x-x(P))/(x-x(R))`. The same exact norm identity fixes the constant.
+    ``pole`` is the common pole `Q`, either ``"infinity"`` (default) or an
+    affine pair. For finite `Q`, replace `x-x(P)` throughout by
+    `(x-x(P))/(x-x(Q))`. The same exact norm identity fixes the constant.
     ``digits`` asks for that many decimal digits; ``None`` is float64.
     """
     return _regulator_column_and_periods(f, point, order, digits=digits, pole=pole)[0]
@@ -569,8 +574,9 @@ def beilinson_determinant_stokes(G, imP, nP, imQ, nQ, digits=None, pole="infinit
     r"""
     The `3\times 3` determinant by the Stokes regulator.
 
-    Columns one and two are :func:`regulator_column_stokes` at `P` and `Q`;
-    the third is the period vector `\int d_{ij}/|f|`.  In float64 each of
+    Columns one and two are :func:`regulator_column_stokes` at the marked
+    points `P` and `R`; the legacy argument names are ``imP`` and ``imQ``.
+    The third is the period vector `\int d_{ij}/|f|`. In float64 each of
     the two covers is integrated once, reusing its ordinary edge periods.
     ``digits`` selects the existing arbitrary-precision implementation.
 
@@ -777,7 +783,7 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
         print("  model  v^2 = %s   (deg %s%s)   u(P) = %s  u(Q) = %s"
               % (G, G.degree(),
                  "" if xR is None else ", u = 1/(x - %s)" % xR, uP, uQ))
-        print("  common pole R = %s" % (pole,))
+        print("  common pole Q = %s" % (pole,))
         for who, im, n in (("P", imP, nP), ("Q", imQ, nQ)):
             if str(n).isdigit() or isinstance(n, (int, Integer)):
                 print("  phi_%s = %s" % (who, phi_string(G, im, int(n), pole=pole)))
@@ -786,7 +792,7 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
                  (isinstance(n, str) and n.isdigit()) for n in (nP, nQ))
     if not usable:
         # the Stokes route needs the order of each torsion point, to build a
-        # function with divisor n P - n O
+        # function with divisor n P - n Q
         res["status"] = "no order for P or Q, so no function with that divisor"
         if verbose:
             print("   skipped: %s" % res["status"])
@@ -880,7 +886,7 @@ def analyse(record, cache=CACHE, allow_undecided=False, verbose=True,
     determinant.  Returns a dictionary, with ``"status"`` saying what happened.
 
     The regulator is the Stokes one throughout.  It needs the order of each
-    torsion point, to build a function with divisor `n P - n\O`; a curve
+    torsion point, to build a function with divisor `n P - nQ`; a curve
     without one, or whose cut system will not close, is reported in
     ``"status"`` and skipped rather than integrated over `\CC`.
 
