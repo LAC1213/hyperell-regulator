@@ -16,6 +16,13 @@ does: reduce `a_g, \dots, a_0` into the symmetric range mod `p^N`, with `N`
 Kedlaya's bound, and recover `a_{2g},\dots,a_{g+1}` from the functional
 equation `a_{2g-i} = a_i q^{g-i}`.
 
+The optional ``remainder`` backend implements Harvey's simultaneous
+algorithm (arXiv:1210.8239) in C++, sharing reduction products across
+primes with an accumulating remainder tree. Select it with the ``backend``
+keyword or ``HYPELLFROB_BACKEND=remainder`` for L-function computations.
+The existing per-prime backend remains the default pending a demonstrated
+performance advantage on the package's workloads.
+
 The program is built from ``hypellfrob-threaded`` and ships with this
 package: ``sage -pip install`` compiles it and puts it in
 ``hyperell_regulator/bin/euler``, and in a checkout ``make`` in that
@@ -137,8 +144,11 @@ def _lift(M, p, g, N):
     return ZZ["x"](a)
 
 
-def _run(fcoeffs, jobs, nthreads):
+def _run(fcoeffs, jobs, nthreads, backend=None):
     """One call to the program: (ascending Q, [(p, N)]) -> {p: matrix}."""
+    backend = backend or os.environ.get("HYPELLFROB_BACKEND", "legacy")
+    if backend not in ("legacy", "remainder"):
+        raise ValueError("backend must be 'legacy' or 'remainder'")
     binary = euler_binary()
     if binary is None or not jobs:
         return {}
@@ -146,6 +156,8 @@ def _run(fcoeffs, jobs, nthreads):
     inp += "".join("%d %d\n" % (p, N) for p, N in jobs)
     workers = (os.cpu_count() or 1) if nthreads is None else max(1, int(nthreads))
     args = [binary, str(workers)]
+    if backend != "legacy":
+        args.append(backend)
     try:
         out = subprocess.run(args, input=inp, capture_output=True, text=True,
                              check=True).stdout
@@ -162,13 +174,22 @@ def _run(fcoeffs, jobs, nthreads):
     return got
 
 
-def frobenius_polynomials(f, primes, nthreads=None):
+def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     r"""
     `\{p : \text{charpoly of Frobenius on } y^2 = f(x) \bmod p\}`.
 
     ``f`` is a polynomial over `\QQ` with integral coefficients; ``primes``
     are the primes to do, which must be of good reduction.  Any prime the
     batched program declines falls back to Sage.
+
+    ``backend='remainder'`` selects Harvey's simultaneous accumulating
+    remainder tree algorithm (arXiv:1210.8239). It applies to monic odd
+    degree models; unsupported primes use the existing native backend.
+    ``backend='legacy'`` selects the per-prime algorithm. The default is
+    ``$HYPELLFROB_BACKEND`` or ``'legacy'``. The remainder implementation
+    is experimental: its asymptotic bound does not guarantee a speedup at
+    the bounds used by this package. Both L-function classes honour this
+    environment variable.
 
     An even degree ``f`` is replaced by :func:`odd_model` where one exists,
     since only odd degree has the `O(\sqrt p)` path; without a rational
@@ -204,7 +225,7 @@ def frobenius_polynomials(f, primes, nthreads=None):
     # what gets sent. Without one the even degree model goes as it is, which
     # is correct but linear in p.
     model = odd_model(fz)
-    got = _run((model if model is not None else fz).list(), jobs, nthreads)
+    got = _run((model if model is not None else fz).list(), jobs, nthreads, backend)
 
     out = {}
     for p, N in jobs:
@@ -216,7 +237,7 @@ def frobenius_polynomials(f, primes, nthreads=None):
     return out
 
 
-def frobenius_polynomial(f, p):
+def frobenius_polynomial(f, p, *, backend=None):
     r"""
     One prime's charpoly of Frobenius; a convenience over
     :func:`frobenius_polynomials`.
@@ -229,7 +250,7 @@ def frobenius_polynomial(f, p):
         sage: frobenius_polynomial(x**5 + x**3 + 1, 37).degree()
         4
     """
-    return frobenius_polynomials(f, [p])[int(p)]
+    return frobenius_polynomials(f, [p], backend=backend)[int(p)]
 
 
 def _check_binary(binary):
@@ -252,6 +273,23 @@ def _check_binary(binary):
     return workers
 
 
+def _check_remainder_binary(binary, workers):
+    """Compare the new backend's full matrices; fallback is prohibited."""
+    batch = "1 0 0 1 0 1\n101 3\n103 3\n107 3\n109 3\n"
+    reference = subprocess.run([binary, "1", "legacy"], input=batch,
+                               text=True, capture_output=True, check=True,
+                               timeout=30).stdout
+    for count in workers:
+        # 31 satisfies the old algorithm's p>25 precondition at N=3,
+        # but fails the new path's p-admissibility test. This also detects
+        # stale binaries which silently ignore the backend argument.
+        result = subprocess.run([binary, str(count), "remainder-only"],
+                                input=batch + "31 3\n", text=True, capture_output=True,
+                                check=True, timeout=30)
+        if result.stdout != reference + "31 0\n":
+            raise RuntimeError("remainder-tree matrices differ from legacy")
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Check the installed Frobenius accelerator.")
@@ -263,8 +301,9 @@ if __name__ == "__main__":
         parser.exit(1, "Frobenius accelerator not found; computations use Sage.\n")
     try:
         workers = _check_binary(binary)
+        _check_remainder_binary(binary, workers)
     except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
         parser.exit(1, "Accelerator failed: %s\n%s\n" %
                     (exc, getattr(exc, "stderr", "")))
-    print("Frobenius accelerator runs successfully with worker counts %s: %s" %
+    print("Both Frobenius backends agree with worker counts %s: %s" %
           (", ".join(map(str, workers)), binary))

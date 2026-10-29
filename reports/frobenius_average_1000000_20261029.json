@@ -1,0 +1,493 @@
+{
+  "bound": 1000000,
+  "coefficients": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    1
+  ],
+  "jobs": 78495,
+  "workers": 4,
+  "repeats": 1,
+  "binary": "/home/lambert/hyperell-regulator/hypellfrob-threaded/build/euler",
+  "binary_sha256": "0d4cbd04faca067965f396f4c1ff2631a9f839fa5f2c39f155f7b5edd28d93c0",
+  "input_sha256": "07a7bf110b67940502f7b1162e03183d397d438ba612ba4d81161914376edcff",
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+  "cpu_count": 16,
+  "timing_scope": "Native processes, identical input; strict remainder declines exceptional primes without fallback; excludes Sage lifting and L-function evaluation",
+  "runs": [
+    {
+      "backend": "legacy",
+      "returncode": 0,
+      "elapsed_seconds": 752.1399771189899,
+      "metrics": {
+        "wall_seconds": 751.86,
+        "user_seconds": 3001.39,
+        "system_seconds": 0.43,
+        "peak_rss_kib": 134652,
+        "exit_status": 0
+      },
+      "stderr": "",
+      "output_bytes": 16053409
+    },
+    {
+      "backend": "remainder-only",
+      "returncode": 134,
+      "elapsed_seconds": 660.1200219349994,
+      "metrics": {
+        "wall_seconds": 660.08,
+        "user_seconds": 2290.53,
+        "system_seconds": 33.97,
+        "peak_rss_kib": 20190012,
+        "signal": 6
+      },
+      "stderr": "out of memory\n",
+      "output_bytes": 0,
+      "virtual_memory_limit_bytes": 21474836480,
+      "failure": "out of memory after virtual-memory cap was applied to protect the shared machine"
+    },
+    {
+      "backend": "remainder-only",
+      "workers": 1,
+      "returncode": 143,
+      "metrics": {
+        "wall_seconds": 12718.11,
+        "user_seconds": 2477.15,
+        "system_seconds": 5.76,
+        "peak_rss_kib": 7187840,
+        "signal": 15
+      },
+      "virtual_memory_limit_bytes": 21474836480,
+      "stderr": "",
+      "output_bytes": 0,
+      "outcome": "stopped to replace implementation after identifying quadratic threshold-copy overhead"
+    },
+    {
+      "backend": "remainder-only",
+      "implementation": "cached threshold and unused-product release",
+      "workers": 4,
+      "binary_sha256": "d83029385285b7a4e7d6652c574aad3d9435c4c701aa8816dd955e81eef43dc6",
+      "returncode": 0,
+      "monotonic_elapsed_seconds": 882.2030573670054,
+      "metrics": {
+        "wall_seconds": 881.97,
+        "user_seconds": 2606.44,
+        "system_seconds": 11.13,
+        "peak_rss_kib": 13619076,
+        "exit_status": 0
+      },
+      "virtual_memory_limit_bytes": 21474836480,
+      "stderr": "",
+      "output_bytes": 16053097,
+      "memory_samples": [
+        {
+          "elapsed_seconds": 30.0,
+          "VmSize": "7959164 kB",
+          "VmHWM": "7767020 kB",
+          "VmRSS": "7767020 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 60.0,
+          "VmSize": "8607060 kB",
+          "VmHWM": "8497780 kB",
+          "VmRSS": "8466952 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 90.0,
+          "VmSize": "9849168 kB",
+          "VmHWM": "9702752 kB",
+          "VmRSS": "9702752 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 120.0,
+          "VmSize": "10407572 kB",
+          "VmHWM": "10419632 kB",
+          "VmRSS": "10271756 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 150.0,
+          "VmSize": "10997396 kB",
+          "VmHWM": "10890180 kB",
+          "VmRSS": "10890180 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 180.0,
+          "VmSize": "11390612 kB",
+          "VmHWM": "11259664 kB",
+          "VmRSS": "11259664 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 210.0,
+          "VmSize": "11420296 kB",
+          "VmHWM": "11471632 kB",
+          "VmRSS": "11353228 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 240.1,
+          "VmSize": "11551368 kB",
+          "VmHWM": "11471632 kB",
+          "VmRSS": "11468968 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 270.1,
+          "VmSize": "11485832 kB",
+          "VmHWM": "11471632 kB",
+          "VmRSS": "11403724 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 300.1,
+          "VmSize": "11551368 kB",
+          "VmHWM": "11471632 kB",
+          "VmRSS": "11464920 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 330.1,
+          "VmSize": "11682440 kB",
+          "VmHWM": "11574664 kB",
+          "VmRSS": "11574664 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 360.1,
+          "VmSize": "11944584 kB",
+          "VmHWM": "11830976 kB",
+          "VmRSS": "11830976 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 390.1,
+          "VmSize": "12018436 kB",
+          "VmHWM": "11908948 kB",
+          "VmRSS": "11908948 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 420.1,
+          "VmSize": "11821828 kB",
+          "VmHWM": "11907992 kB",
+          "VmRSS": "11752356 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 450.1,
+          "VmSize": "11756292 kB",
+          "VmHWM": "11907992 kB",
+          "VmRSS": "11702060 kB",
+          "VmSwap": "0 kB",
+          "Threads": "5"
+        },
+        {
+          "elapsed_seconds": 480.1,
+          "VmSize": "11551368 kB",
+          "VmHWM": "11907992 kB",
+          "VmRSS": "11500164 kB",
+          "VmSwap": "0 kB",
+          "Threads": "4"
+        },
+        {
+          "elapsed_seconds": 510.1,
+          "VmSize": "11944584 kB",
+          "VmHWM": "11907992 kB",
+          "VmRSS": "11826020 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 540.1,
+          "VmSize": "12447696 kB",
+          "VmHWM": "12358048 kB",
+          "VmRSS": "12358048 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 570.1,
+          "VmSize": "12932268 kB",
+          "VmHWM": "12810104 kB",
+          "VmRSS": "12804772 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 600.1,
+          "VmSize": "13128876 kB",
+          "VmHWM": "13065044 kB",
+          "VmRSS": "13065044 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 630.1,
+          "VmSize": "13258336 kB",
+          "VmHWM": "13204412 kB",
+          "VmRSS": "13204412 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 660.2,
+          "VmSize": "13558028 kB",
+          "VmHWM": "13503352 kB",
+          "VmRSS": "13503352 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 690.2,
+          "VmSize": "13641852 kB",
+          "VmHWM": "13552548 kB",
+          "VmRSS": "13552548 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 720.2,
+          "VmSize": "13641852 kB",
+          "VmHWM": "13587256 kB",
+          "VmRSS": "13587256 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 750.2,
+          "VmSize": "13641852 kB",
+          "VmHWM": "13587256 kB",
+          "VmRSS": "13587256 kB",
+          "VmSwap": "0 kB",
+          "Threads": "3"
+        },
+        {
+          "elapsed_seconds": 780.2,
+          "VmSize": "13052028 kB",
+          "VmHWM": "13619076 kB",
+          "VmRSS": "12999684 kB",
+          "VmSwap": "0 kB",
+          "Threads": "2"
+        },
+        {
+          "elapsed_seconds": 810.2,
+          "VmSize": "13052028 kB",
+          "VmHWM": "13619076 kB",
+          "VmRSS": "12999684 kB",
+          "VmSwap": "0 kB",
+          "Threads": "2"
+        },
+        {
+          "elapsed_seconds": 840.2,
+          "VmSize": "13052028 kB",
+          "VmHWM": "13619076 kB",
+          "VmRSS": "12999684 kB",
+          "VmSwap": "0 kB",
+          "Threads": "2"
+        },
+        {
+          "elapsed_seconds": 870.2,
+          "VmSize": "13052028 kB",
+          "VmHWM": "13619076 kB",
+          "VmRSS": "12999684 kB",
+          "VmSwap": "0 kB",
+          "Threads": "2"
+        }
+      ]
+    }
+  ],
+  "status": "complete",
+  "memory_samples": [
+    {
+      "timestamp_utc": "2026-10-29T15:01:50Z",
+      "VmPeak": "20927888 kB",
+      "VmSize": "20857480 kB",
+      "VmHWM": "20190012 kB",
+      "VmRSS": "19432220 kB",
+      "VmSwap": "1343380 kB",
+      "Threads": "3"
+    },
+    {
+      "timestamp_utc": "2026-10-29T15:02:20Z",
+      "VmPeak": "20927888 kB",
+      "VmSize": "20857480 kB",
+      "VmHWM": "20190012 kB",
+      "VmRSS": "19550420 kB",
+      "VmSwap": "1225180 kB",
+      "Threads": "3"
+    },
+    {
+      "timestamp_utc": "2026-10-29T15:02:50Z",
+      "VmPeak": "20927888 kB",
+      "VmSize": "20857480 kB",
+      "VmHWM": "20190012 kB",
+      "VmRSS": "19658800 kB",
+      "VmSwap": "1116800 kB",
+      "Threads": "3"
+    }
+  ],
+  "complexity_audit": {
+    "issue": "root_modulus/2 was recomputed at every product node, introducing quadratic bit-work",
+    "fix": "cache the threshold once per tree; free right-child products after their last use",
+    "corrected_binary": "/home/lambert/hyperell-regulator/hypellfrob-threaded/build/average-threshold-fix/euler",
+    "corrected_binary_sha256": "d83029385285b7a4e7d6652c574aad3d9435c4c701aa8816dd955e81eef43dc6"
+  },
+  "independent_sage_euler_checks": [
+    {
+      "prime": 104773,
+      "characteristic_polynomial_coefficients": [
+        10977381529,
+        37508734,
+        147260,
+        358,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 224797,
+      "characteristic_polynomial_coefficients": [
+        50533691209,
+        -99135477,
+        13309,
+        -441,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 350429,
+      "characteristic_polynomial_coefficients": [
+        122800484041,
+        99872265,
+        38508,
+        285,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 479957,
+      "characteristic_polynomial_coefficients": [
+        230358721849,
+        8159269,
+        205308,
+        17,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 611993,
+      "characteristic_polynomial_coefficients": [
+        374535432049,
+        -626680832,
+        457776,
+        -1024,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 746807,
+      "characteristic_polynomial_coefficients": [
+        557720695249,
+        462273533,
+        1006662,
+        619,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 882439,
+      "characteristic_polynomial_coefficients": [
+        778698588721,
+        147367313,
+        249849,
+        167,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 951277,
+      "characteristic_polynomial_coefficients": [
+        904927930729,
+        1551532787,
+        2146933,
+        1631,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 993197,
+      "characteristic_polynomial_coefficients": [
+        986440280809,
+        -1311020040,
+        1742176,
+        -1320,
+        1
+      ],
+      "matches_sage": true
+    },
+    {
+      "prime": 999983,
+      "characteristic_polynomial_coefficients": [
+        999966000289,
+        -422992809,
+        153729,
+        -423,
+        1
+      ],
+      "matches_sage": true
+    }
+  ],
+  "compared_matrices": 78485,
+  "compared_entries": 1255760,
+  "mismatch_count": 0,
+  "mismatch_primes": [],
+  "legacy_only_primes": [
+    17,
+    19,
+    23,
+    29,
+    31
+  ],
+  "both_declined_primes": [
+    3,
+    5,
+    7,
+    11,
+    13
+  ],
+  "corrected_speedup": 0.8525701320553144,
+  "initial_executable_archive": "/home/lambert/hyperell-regulator/hypellfrob-threaded/build/euler-before-threshold-fix",
+  "corrected_total_cpu_seconds": 2617.57,
+  "baseline_total_cpu_seconds": 3001.8199999999997,
+  "corrected_cpu_reduction_fraction": 0.12800567655622241,
+  "default_corrected_executable": "/home/lambert/hyperell-regulator/hypellfrob-threaded/build/euler",
+  "default_corrected_executable_sha256": "d83029385285b7a4e7d6652c574aad3d9435c4c701aa8816dd955e81eef43dc6"
+}

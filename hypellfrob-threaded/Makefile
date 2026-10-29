@@ -23,7 +23,7 @@ CONFIG_MK ?= config.mk
 
 -include $(CONFIG_MK)
 
-OBJS := $(BUILD)/hypellfrob.o $(BUILD)/recurrences_ntl.o $(BUILD)/even_degree.o
+OBJS := $(BUILD)/hypellfrob.o $(BUILD)/recurrences_ntl.o $(BUILD)/even_degree.o $(BUILD)/average.o
 
 all: $(BUILD)/euler
 
@@ -33,8 +33,10 @@ $(BUILD):
 $(BUILD)/%.o: src/%.cpp | $(BUILD)
 	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread -c $< -o $@
 
-$(BUILD)/euler: euler.cpp $(OBJS) | $(BUILD)
-	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread $^ \
+$(BUILD)/average.o: src/average.h
+
+$(BUILD)/euler: euler.cpp $(OBJS) src/average.h | $(BUILD)
+	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread euler.cpp $(OBJS) \
 	    $(LDFLAGS) -L"$(NTL_LIB)" -L"$(GMP_LIB)" \
 	    $(NTL_RPATH) -Wl,-rpath,"$(GMP_LIB)" $(NTL_LINK) -lgmpxx -lgmp -lpthread -o $@
 

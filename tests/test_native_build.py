@@ -85,6 +85,17 @@ def test_accelerator_check_includes_cpu_count():
             ['/euler', '1'], ['/euler', '4'], ['/euler', '16']]
 
 
+def test_remainder_check_rejects_declined_matrices():
+    from types import SimpleNamespace
+    from hyperell_regulator import frobenius
+    with patch.object(frobenius.subprocess, 'run') as run:
+        run.side_effect = [SimpleNamespace(stdout=smoke_output()),
+                           SimpleNamespace(stdout='101 0\n103 0\n107 0\n109 0\n')]
+        with pytest.raises(RuntimeError, match='remainder-tree matrices differ'):
+            frobenius._check_remainder_binary('/euler', (1,))
+    assert run.call_args.args[0] == ['/euler', '1', 'remainder-only']
+
+
 @pytest.mark.parametrize('cpus, override, expected', [
     (16, None, 16), (None, None, 1), (16, '3', 3), (16, '0', 1),
 ])

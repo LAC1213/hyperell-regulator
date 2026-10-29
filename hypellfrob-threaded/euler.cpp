@@ -1,6 +1,8 @@
 // Frobenius matrices for one curve at many primes, in parallel.
 //
-// Usage: euler [nthreads]
+// Usage: euler [nthreads] [legacy|remainder|remainder-only]
+// remainder: Harvey 2013 simultaneous algorithm, with legacy fallback.
+// remainder-only: decline unsupported jobs, useful for arithmetic comparisons.
 //
 // Reads a job from stdin:
 //   line 1:  the coefficients of Q, ascending, whitespace separated
@@ -23,6 +25,7 @@
 // primes run concurrently.
 #include "hypellfrob.h"
 #include "even_degree.h"
+#include "average.h"
 #include <NTL/ZZX.h>
 #include <NTL/mat_ZZ.h>
 #include <iostream>
@@ -45,6 +48,11 @@ struct Job {
 int main(int argc, char** argv) {
     int nthreads = argc > 1 ? atoi(argv[1]) : (int)std::thread::hardware_concurrency();
     if (nthreads < 1) nthreads = 1;
+    std::string backend = argc > 2 ? argv[2] : "legacy";
+    if (backend != "legacy" && backend != "remainder" && backend != "remainder-only") {
+        std::cerr << "euler: backend must be legacy, remainder, or remainder-only\n";
+        return 2;
+    }
 
     std::string line;
     ZZX Q;
@@ -77,12 +85,26 @@ int main(int argc, char** argv) {
         jobs.push_back(j);
     }
 
+    if (backend != "legacy") {
+        std::vector<AverageJob> average;
+        for (const auto& j : jobs) average.push_back({j.p, j.N});
+        try {
+            matrices_average(average, Q, nthreads);
+        } catch (const std::exception& e) {
+            std::cerr << "euler: remainder tree failed: " << e.what() << '\n';
+            return 1;
+        }
+        for (size_t k = 0; k < jobs.size(); ++k)
+            if (average[k].ok) { jobs[k].ok = 1; jobs[k].M = std::move(average[k].matrix); }
+    }
+
     std::atomic<size_t> next_index(0);
     auto worker = [&]() {
         for (;;) {
             size_t k = next_index.fetch_add(1);
             if (k >= jobs.size()) break;
             Job& j = jobs[k];
+            if (j.ok || backend == "remainder-only") continue;
             ZZ pz = to_ZZ(j.p);
             try {
                 j.ok = (deg % 2 == 1) ? matrix(j.M, pz, j.N, Q)

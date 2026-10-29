@@ -7,6 +7,7 @@ recursive-include tests *.py
 recursive-include reports *.tex *.json *.md
 recursive-include hypellfrob-threaded *.cpp *.h *.md *.example
 include hypellfrob-threaded/Makefile
+include hypellfrob-threaded/benchmark.py
 include hypellfrob-threaded/COPYING
 prune hypellfrob-threaded/build
 global-exclude *.pyc __pycache__
