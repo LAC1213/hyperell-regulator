@@ -320,6 +320,37 @@ class FunctionSamples:
     def __call__(self,t): return self.function(t),None
 
 
+class LogFunctionSamples:
+    """Continue an endpoint logarithm along the quadrature's ordered nodes.
+
+    A straight local-uniformizer tail can carry phi across the principal
+    logarithm's cut even though phi never vanishes before its endpoint.
+    Cache/restore the continued branch, just as WalkSamples does, rather
+    than introducing a jump into an otherwise smooth integrand.
+    """
+    def __init__(self, ar, function, lam):
+        self.ar,self.function,self.initial=ar,function,lam
+        self.reset()
+    def reset(self):
+        self.prev,self.log=self.ar.R(0),self.initial
+    def restore(self,t,state):
+        self.prev,self.log=state
+    def __call__(self,t):
+        step=self.ar.R(1)/32
+        # Extra branch samples keep coarse quadrature levels from skipping
+        # a turn; these values are not included in the quadrature sum.
+        while t-self.prev>step:
+            self.advance(self.prev+step)
+        values=self.advance(t)
+        return values+[self.log*v for v in values],(t,self.log)
+    def advance(self,t):
+        values,lam=self.function(t)
+        period=2*self.ar.R.pi()
+        lam+=self.ar.C.gen()*period*((self.log.imag()-lam.imag())/period).round()
+        self.prev,self.log=t,lam
+        return values
+
+
 class WalkSamples:
     def __init__(self,ch,coord,rate,points,lam,wof=None,logarithmic=False):
         self.ch,self.coord,self.rate,self.initial,self.lam=ch,coord,rate,points,lam

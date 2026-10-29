@@ -25,6 +25,7 @@ reference generated from the package's docstrings.
    installation
    quickstart
    experiments
+   explorer-guide
 
 .. toctree::
    :maxdepth: 2
@@ -35,3 +36,6 @@ reference generated from the package's docstrings.
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+`Open the interactive cut-system explorer <explorer/index.html>`_ for all
+sixteen curves and thirty-two torsion functions in the paper.

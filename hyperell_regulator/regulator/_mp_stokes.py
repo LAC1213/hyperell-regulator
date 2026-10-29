@@ -5,7 +5,7 @@ from .cover import Cover
 from . import _legs
 from .diagnostics import checkpoint, phase, _active
 from .stokes import cut_data, cut_scale, hold_radii, boundary_walks
-from ._mp_continuation import Arithmetic, Chart, Walker, WalkSamples, FunctionSamples, quadrature
+from ._mp_continuation import Arithmetic, Chart, Walker, WalkSamples, FunctionSamples, LogFunctionSamples, quadrature
 
 
 class Integrator:
@@ -146,11 +146,22 @@ class Integrator:
             return [row[0] for row in I]+[row[0] for row in L]
         M=self.global_chart
         S=M.F.parent();u=S.gen()
-        F=M.F(u+xt)
+        # Preserve exact vanishing at rational endpoints before conversion
+        # to C. Shifting the already numerical polynomials can leave a tiny
+        # constant beside (x-xt)^k; for high torsion orders it overwhelms
+        # the endpoint as tanh-sinh approaches it.
+        exact=self.cov.exact
+        candidates=exact[0].roots(QQ,multiplicities=False) if chart=='y' else []
+        center=next((r for r in candidates if self.C(r)==xt),None)
+        if center is not None:
+            shifted=exact[0].parent().gen()+center
+            F,a,ad,b,bd=[S(q(shifted)) for q in exact]
+        else:
+            F=M.F(u+xt)
+            a,ad,b,bd=[q(u+xt) for q in (M.a,M.ad,M.b,M.bd)]
         if chart=='y':
             F-=F[0]
         Fp=F.derivative()
-        a,ad,b,bd=[q(u+xt) for q in (M.a,M.ad,M.b,M.bd)]
         factors=[]
         for sign,part in ((1,M.norm_factors[0]),(-1,M.norm_factors[1])):
             for root,m in part:
@@ -179,7 +190,7 @@ class Integrator:
                 else: raise _legs.LegFailure('MP Weierstrass endpoint Newton failed')
                 ll=lam+(phi(v,y)/phi0).log()
                 values=[-2*(xt+v)**j*y0/Fp(v) for j in range(self.g)]
-                return values+[ll*r for r in values]
+                return values,ll
         else:
             F0=F(u0)
             def evaluate(t):
@@ -188,8 +199,8 @@ class Integrator:
                 for root in M.roots:y*=((xt+v-root)/(x0-root)).sqrt()
                 ll=lam+(phi(v,y)/phi0).log()
                 values=[-(xt+v)**j*u0/y for j in range(self.g)]
-                return values+[ll*r for r in values]
-        return quadrature(self.ar,FunctionSamples(evaluate),2*self.g)
+                return values,ll
+        return quadrature(self.ar,LogFunctionSamples(self.ar,evaluate,lam),2*self.g)
 
     def tau(self,point,lam):
         M=self.global_chart;x0,y0=point
@@ -320,7 +331,7 @@ def stokes_sum(ar,W,u,ell,dl,tolerance):
     return H
 
 
-def compute(F,phi,prec,check_tol=1e-6):
+def compute(F,phi,prec,check_tol=1e-6,*,details=None):
     ar=Arithmetic(prec);C,R=ar.C,ar.R
     cov=Cover(F,*phi)
     engine=Integrator(cov,ar)
@@ -363,4 +374,7 @@ def compute(F,phi,prec,check_tol=1e-6):
             extra=dl.imag()/2*sum((u[a][i][s]*u[b][i][s].conjugate()).real() for i in range(r) for s in range(n))
             per.append(ar.output(-(H0[a][b].imag()+H0[b][a].imag())/8))
             reg.append(ar.output(-((H[a][b].imag()+H[b][a].imag())/2+extra)/4))
+    if details is not None:
+        details.update(ar=ar, cover=cov, nodes=zh, kinds=kinds, direction=dh,
+                       upper=upper, lower=lower, u=u, ell=ell, jump=dl)
     return per,reg
