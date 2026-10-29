@@ -30,3 +30,26 @@ Source: `results/beilinson_results.json` (kept locally, excluded from Git).
 Source SHA-256: `9179b3d7e7155adf507acae7b58da77a8c932454c6ef72e9086437e07340db31`.
 The source was read without modification; numerical failures at 100 digits
 were not rerun or suppressed.
+
+## Manuscript tables with full cycle periods
+
+`paper_full_periods.tex` contains replacements for the manuscript's torsion,
+model and numerical tables using the current `c_invariants` convention.
+The script produces this single LaTeX file, with all three table environments.
+All sixteen updated paper factors
+`q = 2*pi*c_plus*c_minus*L_second_derivative/D` are integers.
+
+Regenerate from the repository root:
+
+```sh
+sage -python -m reports.remake_paper_tables
+# Choose another output file:
+sage -python -m reports.remake_paper_tables --out /tmp/paper_tables.tex
+```
+
+The script reads the portable `paper_full_periods_input.json`, so it does not
+need the attachment, LMFDB caches or local experiment results. It computes
+periods at 50 and 110 digits and reuses the saved determinants and L-values.
+The table captions identify the lower precision available for two rows and
+the unverified L-value/integrality claim for `388.a.776.1`; unavailable errors
+are left blank. The LaTeX uses `amsmath`, `booktabs` and `hyperref`.

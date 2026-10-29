@@ -1,0 +1,1211 @@
+{
+  "schema_version": 1,
+  "description": "Manuscript models and numerical inputs for regeneration with full semilunar cycle periods. Coefficients are in ascending order. Regulators and L-values are saved inputs; only periods are freshly computed.",
+  "manuscript_sha256": "b75d9671ded5f062a78541129e119c07ae1cb7ad12a3aeffd4c8db5eb38b44f2",
+  "sources": {
+    "paper_reproducibility_20261027.json": "f6fc1288a631200525fecddf9f92c4465d9e895467d1ce4f9125389849c8fde2",
+    "beilinson_100_digits.json": "e5fbf9e7da16f7874921b7ba7a63aba779fe0365d8426080f3616edcebad569b"
+  },
+  "rows": [
+    {
+      "label": "249.a.249.1",
+      "polynomial_coefficients": [
+        1,
+        4,
+        4,
+        2,
+        0,
+        0,
+        1
+      ],
+      "polynomial_latex": "x^{6} + 2x^{3} + 4x^{2} + 4x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "0",
+          "1"
+        ],
+        [
+          "-1",
+          "0"
+        ]
+      ],
+      "orders": [
+        14,
+        14
+      ],
+      "old_paper_q": "-7",
+      "old_c_plus": "3.222962921781229600728332903798293886986170143713945719241603365262379750665830827177463581858388767491140260724",
+      "old_c_minus": "1.142125823280364374760575151792338469229855184461923882138027009210974003877275918444794251439082776563713242914",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "-16.74386576",
+        "c_plus": "3.222962922",
+        "c_minus": "1.142125823",
+        "L_second_derivative": "5.067627040"
+      },
+      "original_reported_error": "1.7\\times10^{-100}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "0",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "3": true,
+            "83": true
+          }
+        },
+        {
+          "point": [
+            "-1",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "3": true,
+            "83": true
+          }
+        }
+      ],
+      "determinant": "-16.74386575633227993228641363938174661180230212768869407948653934042461195132625748791401614316952845117514200",
+      "L_second_derivative": "5.06762704034705871364207594097049216336594195849737784294811770002876721938488077496057805002146863473935",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "negate saved determinant"
+    },
+    {
+      "label": "277.a.277.1",
+      "polynomial_coefficients": [
+        1,
+        -2,
+        -1,
+        4,
+        3,
+        2,
+        1
+      ],
+      "polynomial_latex": "x^{6} + 2x^{5} + 3x^{4} + 4x^{3} - x^{2} - 2x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "0",
+          "1"
+        ],
+        [
+          "-1",
+          "0"
+        ]
+      ],
+      "orders": [
+        3,
+        15
+      ],
+      "old_paper_q": "-15/2",
+      "old_c_plus": "2.012859288998599080314745140517885378138679261610957912086407083361071880084822423033702814721582728519096877168",
+      "old_c_minus": "1.624076686095177071181171038306504259855925892504081310057667819166126274205154671216348904370591669980408004771",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "-17.93081734",
+        "c_plus": "2.012859289",
+        "c_minus": "1.624076686",
+        "L_second_derivative": "6.547289332"
+      },
+      "original_reported_error": "2.2\\times10^{-109}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "0",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "277": true
+          }
+        },
+        {
+          "point": [
+            "-1",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "277": true
+          }
+        }
+      ],
+      "determinant": "-17.9308173409172519013770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "L_second_derivative": "6.54728933245413772778419177127670",
+      "determinant_digits": 15,
+      "lvalue_digits": 30,
+      "numerical_source": "paper_reproducibility_20261027.json: display_precision_comparison and fresh_lvalues"
+    },
+    {
+      "label": "295.a.295.1",
+      "polynomial_coefficients": [
+        1,
+        0,
+        -4,
+        2,
+        0,
+        0,
+        1
+      ],
+      "polynomial_latex": "x^{6} + 2x^{3} - 4x^{2} + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "0",
+          "1"
+        ],
+        [
+          "1",
+          "0"
+        ]
+      ],
+      "orders": [
+        14,
+        7
+      ],
+      "old_paper_q": "7",
+      "old_c_plus": "1.828537518819423060970553745270294355805467891638256929839747972732015422508063959521228531403338646428612145351",
+      "old_c_minus": "1.863042555946214301164176213188405564348439915406815390021230566165792050860448823096918331821148023871333177413",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "18.07319422",
+        "c_plus": "1.828537519",
+        "c_minus": "1.863042556",
+        "L_second_derivative": "5.910530138"
+      },
+      "original_reported_error": "6.1\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "0",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "5": true,
+            "59": true
+          }
+        },
+        {
+          "point": [
+            "1",
+            "-1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "5": true,
+            "59": true
+          }
+        }
+      ],
+      "determinant": "18.07319421577275932316908404565130086894184802258167506208732903200729449250750791117276310305722016376807076",
+      "L_second_derivative": "5.91053013805730563916299237996863580664930868241757712778463057345867868007048107544989513189385516807217",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "349.a.349.1",
+      "polynomial_coefficients": [
+        1,
+        2,
+        -1,
+        0,
+        3,
+        2,
+        1
+      ],
+      "polynomial_latex": "x^{6} + 2x^{5} + 3x^{4} - x^{2} + 2x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "0",
+          "1"
+        ],
+        [
+          "-1",
+          "0"
+        ]
+      ],
+      "orders": [
+        13,
+        13
+      ],
+      "old_paper_q": "-13/2",
+      "old_c_plus": "3.498560515578865382810512655419983568483370158450448691193170545178066865994481555106167401939502457285375756561",
+      "old_c_minus": "0.9899016753108720095504970998913306960323149367292845601583154323029589779753205688608724824114782973944690247521",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "-17.16844192",
+        "c_plus": "3.498560516",
+        "c_minus": "0.9899016753",
+        "L_second_derivative": "5.128412170"
+      },
+      "original_reported_error": "1.2\\times10^{-100}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "0",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "349": true
+          }
+        },
+        {
+          "point": [
+            "-1",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "349": true
+          }
+        }
+      ],
+      "determinant": "-17.16844191616422616387200013700034886886107327530837218378438940094549260603850538727755028942442828707938024",
+      "L_second_derivative": "5.12841217003379587289942801928720352503633279953021058838959906061240397144054809800964105609346539201015",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "negate saved determinant"
+    },
+    {
+      "label": "388.a.776.1",
+      "polynomial_coefficients": [
+        1,
+        6,
+        9,
+        2,
+        -2,
+        0,
+        1
+      ],
+      "polynomial_latex": "x^{6} - 2x^{4} + 2x^{3} + 9x^{2} + 6x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "0",
+          "1"
+        ],
+        [
+          "-1",
+          "1"
+        ]
+      ],
+      "orders": [
+        7,
+        7
+      ],
+      "old_paper_q": "-7/2",
+      "old_c_plus": "1.820968830911844410168172947526668792703093982509386992704155078599320834482545409029386818187609643680016603462",
+      "old_c_minus": "1.542521721797654422980681204898774021148406171918589023762653106455846509597103019769730965509804439894266632520",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "-13.19634315",
+        "c_plus": "1.820968831",
+        "c_minus": "1.542521722",
+        "L_second_derivative": "2.617025628"
+      },
+      "original_reported_error": "1.8\\times10^{-109}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "0",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": null,
+          "per_prime": {
+            "2": null,
+            "97": true
+          }
+        },
+        {
+          "point": [
+            "-1",
+            "1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": null,
+          "per_prime": {
+            "2": null,
+            "97": true
+          }
+        }
+      ],
+      "determinant": "-13.196343154704181847207",
+      "L_second_derivative": null,
+      "determinant_digits": 15,
+      "lvalue_digits": null,
+      "numerical_source": "paper_reproducibility_20261027.json: regulator_only_388_at_15_digits",
+      "lvalue_note": "Only the manuscript's displayed L-value is retained; an independent L-value was not reproduced. The rational factor is transported from the manuscript identity."
+    },
+    {
+      "label": "389.a.389.1",
+      "polynomial_coefficients": [
+        28,
+        64,
+        1,
+        -32,
+        -6,
+        4,
+        1
+      ],
+      "polynomial_latex": "x^{6} + 4x^{5} - 6x^{4} - 32x^{3} + x^{2} + 64x + 28",
+      "reciprocal": false,
+      "points": [
+        [
+          "-2",
+          "0"
+        ],
+        [
+          "2",
+          "0"
+        ]
+      ],
+      "orders": [
+        10,
+        5
+      ],
+      "old_paper_q": "-20",
+      "old_c_plus": "1.237413758130458331468881236488296889340802239610688648676953712039466775369005779305978685692206632459668891024",
+      "old_c_minus": "-0.6744882914287728803181538265364456174914665704227968473748363906067065929581554688748312420281433504104401027044",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "1.957755970",
+        "c_plus": "1.237413758",
+        "c_minus": "-0.6744882914",
+        "L_second_derivative": "7.466538845"
+      },
+      "original_reported_error": "1.3\\times10^{-104}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "-2",
+            "5"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "389": true
+          }
+        },
+        {
+          "point": [
+            "2",
+            "-5"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "389": true
+          }
+        }
+      ],
+      "determinant": "1.95775597027762580898151110279734651487000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "L_second_derivative": "7.46653884514066607600258562377968",
+      "determinant_digits": 30,
+      "lvalue_digits": 30,
+      "numerical_source": "paper_reproducibility_20261027.json: lower_precision_comparisons and fresh_lvalues"
+    },
+    {
+      "label": "389.a.389.2",
+      "polynomial_coefficients": [
+        1,
+        2,
+        5,
+        8,
+        8,
+        4
+      ],
+      "polynomial_latex": "4 x^{5} + 8 x^{4} + 8 x^{3} + 5 x^{2} + 2 x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "-1",
+          "0"
+        ],
+        [
+          "0",
+          "-1"
+        ]
+      ],
+      "orders": [
+        2,
+        10
+      ],
+      "old_paper_q": "-10",
+      "old_c_plus": "-1.237413758130458331468881236488296889340802239610688648676953712039466775369005779305978685692206632459668891024",
+      "old_c_minus": "2.697953165715091521272615306145782469965866281691187389499345562426826371832621875499324968112573401641760410818",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "15.66204776",
+        "c_plus": "-1.237413758",
+        "c_minus": "2.697953166",
+        "L_second_derivative": "7.466538845"
+      },
+      "original_reported_error": "1.0\\times10^{-100}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "-1",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "389": true
+          }
+        },
+        {
+          "point": [
+            "0",
+            "-1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "389": true
+          }
+        }
+      ],
+      "determinant": "15.66204776222100647185208882235281299999658948303083796116965893984983432775948552333949649522042959986275018",
+      "L_second_derivative": "7.46653884514066607600258562377968135226414695230975425020060127850803050214059540474206558921630526453772",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "523.a.523.1",
+      "polynomial_coefficients": [
+        1,
+        2,
+        1,
+        -4,
+        -4,
+        4
+      ],
+      "polynomial_latex": "4 x^{5} - 4 x^{4} - 4 x^{3} + x^{2} + 2 x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "0",
+          "-1"
+        ],
+        [
+          "1",
+          "0"
+        ]
+      ],
+      "orders": [
+        10,
+        2
+      ],
+      "old_paper_q": "10",
+      "old_c_plus": "-1.551244007923482268775732090048671610804292622970643741168047271289264029124263638877288537481849146535424765443",
+      "old_c_minus": "-1.706879450100363674246152356065737988258122078394125027231992466355912983779889353797047359224446582275621513617",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "18.37281664",
+        "c_plus": "-1.551244008",
+        "c_minus": "-1.706879450",
+        "L_second_derivative": "11.04365690"
+      },
+      "original_reported_error": "6.0\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "0",
+            "-1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "523": true
+          }
+        },
+        {
+          "point": [
+            "1",
+            "-1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "523": true
+          }
+        }
+      ],
+      "determinant": "18.37281664197998402796784923738931326219208924757847761797357647887851917312454100422956535909179522263600103",
+      "L_second_derivative": "11.0436569031179508177682973923522506551618222604905236816091852013959799878430734361039716921533769646554",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "709.a.709.1",
+      "polynomial_coefficients": [
+        0,
+        4,
+        0,
+        0,
+        -7,
+        4
+      ],
+      "polynomial_latex": "4 x^{5} - 7 x^{4} + 4 x",
+      "reciprocal": true,
+      "points": [
+        [
+          "1",
+          "-1"
+        ],
+        [
+          "0",
+          "0"
+        ]
+      ],
+      "orders": [
+        8,
+        2
+      ],
+      "old_paper_q": "-8",
+      "old_c_plus": "-2.295145204057018185046637639699650782723177622170774592031305563976033039884897588044538832305754424395927619542",
+      "old_c_minus": "-0.9424197243286908578970711957801382265717093513643300095137790615389339605310170074430274232689072727671637557900",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "-15.73517733",
+        "c_plus": "-2.295145204",
+        "c_minus": "-0.9424197243",
+        "L_second_derivative": "9.262478789"
+      },
+      "original_reported_error": "1.3\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "1",
+            "-1"
+          ],
+          "base": [
+            "0",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "709": true
+          }
+        },
+        {
+          "point": [
+            "infinity",
+            "0"
+          ],
+          "base": [
+            "0",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "709": true
+          }
+        }
+      ],
+      "determinant": "-15.73517733010638915488817714099408817539727214138245426535135513109673598620614186258257110786764969958810313",
+      "L_second_derivative": "9.26247878935721513032298306910953620903815564119739667271208149164287660316819633297052655771668560641010",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "763.a.763.1",
+      "polynomial_coefficients": [
+        1,
+        0,
+        -6,
+        0,
+        9,
+        -4
+      ],
+      "polynomial_latex": "-4 x^{5} + 9 x^{4} - 6 x^{2} + 1",
+      "reciprocal": true,
+      "points": [
+        [
+          "1",
+          "0"
+        ],
+        [
+          "0",
+          "1"
+        ]
+      ],
+      "orders": [
+        2,
+        5
+      ],
+      "old_paper_q": "-10",
+      "old_c_plus": "1.905359377826584950053282188691022844065290054529122896136488692475755501645087926183921824427255141994310375630",
+      "old_c_minus": "1.262640543016950966462151327119304788514636232559716239236249869555106656804982838043069479635125837222537991172",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "-17.42976483",
+        "c_plus": "1.905359378",
+        "c_minus": "1.262640543",
+        "L_second_derivative": "11.53068285"
+      },
+      "original_reported_error": "4.3\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "1",
+            "-1"
+          ],
+          "base": [
+            "0",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "7": true,
+            "109": true
+          }
+        },
+        {
+          "point": [
+            "infinity",
+            "0"
+          ],
+          "base": [
+            "0",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "7": true,
+            "109": true
+          }
+        }
+      ],
+      "determinant": "-17.42976483157154292569253839134201536889714809273740295656353351691851877856951968527381353872206760397769348",
+      "L_second_derivative": "11.5306828480650435105721686101671063027770502557734703092071478000224609248346709201891885777762794160496",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "925.a.925.1",
+      "polynomial_coefficients": [
+        1,
+        2,
+        -3,
+        -4,
+        8,
+        -4
+      ],
+      "polynomial_latex": "-4 x^{5} + 8 x^{4} - 4 x^{3} - 3 x^{2} + 2 x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "0",
+          "-1"
+        ],
+        [
+          "1",
+          "0"
+        ]
+      ],
+      "orders": [
+        8,
+        2
+      ],
+      "old_paper_q": "-2",
+      "old_c_plus": "1.304933374786089657236634546212553752053204335190281667466505652265558825744040767449539006940907660422877754539",
+      "old_c_minus": "-1.885553784687735966534500859798566062318750709998655650952998626329214018967239717652392176932568797020415968717",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "15.81243601",
+        "c_plus": "1.304933375",
+        "c_minus": "-1.885553785",
+        "L_second_derivative": "2.045604378"
+      },
+      "original_reported_error": "7.7\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "0",
+            "-1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "5": true,
+            "37": true
+          }
+        },
+        {
+          "point": [
+            "1",
+            "-1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "5": true,
+            "37": true
+          }
+        }
+      ],
+      "determinant": "15.81243600752711520862245016753828970626263226997627691515826195209374888571582039475271763084099610383683699",
+      "L_second_derivative": "2.04560437815951103997024852815309109529115912882767080291475888040455132415269095066652044075884613032740",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "997.a.997.2",
+      "polynomial_coefficients": [
+        1,
+        2,
+        1,
+        0,
+        4,
+        4
+      ],
+      "polynomial_latex": "4 x^{5} + 4 x^{4} + x^{2} + 2 x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "-1",
+          "0"
+        ],
+        [
+          "0",
+          "-1"
+        ]
+      ],
+      "orders": [
+        2,
+        8
+      ],
+      "old_paper_q": "-16",
+      "old_c_plus": "-1.349351315973533998426675226577168324665935274509805569255282327356915088977739456103339134602489253694863580924",
+      "old_c_minus": "2.086222682349202209519372962863572090624979474209893158519515742545519105085445150755071599239971555400424810794",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "15.83789147",
+        "c_plus": "-1.349351316",
+        "c_minus": "2.086222682",
+        "L_second_derivative": "14.32688507"
+      },
+      "original_reported_error": "1.4\\times10^{-100}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "-1",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "997": true
+          }
+        },
+        {
+          "point": [
+            "0",
+            "-1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "997": true
+          }
+        }
+      ],
+      "determinant": "15.83789146597611137231556010980118617892033662930638312320903320213725238302364725265730167067410358958527498",
+      "L_second_derivative": "14.3268850674319755633383170923525025689897074990059429146703353672494883239784009225897266996948907971603",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "1051.b.1051.1",
+      "polynomial_coefficients": [
+        1,
+        2,
+        1,
+        0,
+        -4,
+        -4
+      ],
+      "polynomial_latex": "-4 x^{5} - 4 x^{4} + x^{2} + 2 x + 1",
+      "reciprocal": false,
+      "points": [
+        [
+          "-1",
+          "0"
+        ],
+        [
+          "0",
+          "-1"
+        ]
+      ],
+      "orders": [
+        2,
+        8
+      ],
+      "old_paper_q": "8",
+      "old_c_plus": "1.458232469113679553578416872962584281783171453415543316881731882922202823663471205024840764156873202378041277977",
+      "old_c_minus": "1.893368511055267827197698856889471023117764108337644141575028641406844242670632156799652551651818071041554447451",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "15.64842103",
+        "c_plus": "1.458232469",
+        "c_minus": "1.893368511",
+        "L_second_derivative": "7.216368916"
+      },
+      "original_reported_error": "3.5\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "-1",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "1051": true
+          }
+        },
+        {
+          "point": [
+            "0",
+            "-1"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "1051": true
+          }
+        }
+      ],
+      "determinant": "15.64842103024875282035263655675472937003210868257435236814281874357768963232521127081684011563204640958647350",
+      "L_second_derivative": "7.21636891575606779050049186264349470537987335565110442276317225169321206749287278921218776481760093302695",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "1051.b.1051.2",
+      "polynomial_coefficients": [
+        0,
+        4,
+        1,
+        64,
+        32,
+        4
+      ],
+      "polynomial_latex": "4 x^{5} + 32 x^{4} + 64 x^{3} + x^{2} + 4 x",
+      "reciprocal": false,
+      "points": [
+        [
+          "-4",
+          "0"
+        ],
+        [
+          "0",
+          "0"
+        ]
+      ],
+      "orders": [
+        2,
+        2
+      ],
+      "old_paper_q": "8",
+      "old_c_plus": "-0.3645581172784198883946042182406460704457928633538858292204329707305507059158678012562101910392183005945103194943",
+      "old_c_minus": "-1.893368511055267827197698856889471023117764108337644141575028641406844242670632156799652551651818071041554447451",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "3.912105258",
+        "c_plus": "-0.3645581173",
+        "c_minus": "-1.893368511",
+        "L_second_derivative": "7.216368916"
+      },
+      "original_reported_error": "5.5\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "-4",
+            "2"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "1051": true
+          }
+        },
+        {
+          "point": [
+            "0",
+            "0"
+          ],
+          "base": [
+            "infinity",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "1051": true
+          }
+        }
+      ],
+      "determinant": "3.912105257562188205088159139188682342508027170643588092035704685894422408081302817704210028908011602747368531",
+      "L_second_derivative": "7.21636891575606779050049186264349470537987335565110442276317225169321206749287278921218776481760093302695",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "1123.a.1123.1",
+      "polynomial_coefficients": [
+        1,
+        0,
+        -2,
+        0,
+        -3,
+        -4
+      ],
+      "polynomial_latex": "-4 x^{5} - 3 x^{4} - 2 x^{2} + 1",
+      "reciprocal": true,
+      "points": [
+        [
+          "-1",
+          "0"
+        ],
+        [
+          "0",
+          "-1"
+        ]
+      ],
+      "orders": [
+        2,
+        8
+      ],
+      "old_paper_q": "24",
+      "old_c_plus": "1.343240281358818895792064692201367217673678285527124265147678115625792808523230984591097662267482770975536202957",
+      "old_c_minus": "1.888415470536029988695855454418101281270504997607254147249694496721734994968897706123167725191625301698560724619",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "15.61547213",
+        "c_plus": "1.343240281",
+        "c_minus": "1.888415471",
+        "L_second_derivative": "23.51447226"
+      },
+      "original_reported_error": "3.3\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "-1",
+            "1"
+          ],
+          "base": [
+            "0",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "1123": true
+          }
+        },
+        {
+          "point": [
+            "infinity",
+            "-1"
+          ],
+          "base": [
+            "0",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "1123": true
+          }
+        }
+      ],
+      "determinant": "15.61547212895893195717516812921549620932269715336287371387802929935116720153603071561776464858805550531424045",
+      "L_second_derivative": "23.5144722571731947517484379960407862617153026108935153383263744375245471924545140558700767213152195661625",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    },
+    {
+      "label": "1147.a.35557.2",
+      "polynomial_coefficients": [
+        0,
+        4,
+        24,
+        0,
+        -127,
+        4
+      ],
+      "polynomial_latex": "4 x^{5} - 127 x^{4} + 24 x^{2} + 4 x",
+      "reciprocal": true,
+      "points": [
+        [
+          "-1/4",
+          "0"
+        ],
+        [
+          "0",
+          "0"
+        ]
+      ],
+      "orders": [
+        2,
+        2
+      ],
+      "old_paper_q": "-16",
+      "old_c_plus": "-0.1790401318700916418494624720254314986808216057221333286942283897652161612327535214645096575160629247501591936459",
+      "old_c_minus": "1.112827535035240379263082962318902688437121553497572719800858009207974001594291833983321126559749852311404158613",
+      "old_period_digits": 110,
+      "original_display": {
+        "det": "1.375789091",
+        "c_plus": "-0.1790401319",
+        "c_minus": "1.112827535",
+        "L_second_derivative": "17.58384002"
+      },
+      "original_reported_error": "6.8\\times10^{-101}",
+      "integrality_component_verdicts": [
+        {
+          "point": [
+            "-4",
+            "2"
+          ],
+          "base": [
+            "0",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "31": true,
+            "37": true
+          }
+        },
+        {
+          "point": [
+            "infinity",
+            "0"
+          ],
+          "base": [
+            "0",
+            "0"
+          ],
+          "same_component_everywhere": true,
+          "per_prime": {
+            "31": true,
+            "37": true
+          }
+        }
+      ],
+      "determinant": "1.375789090934702254655078652380372787857112041763358816314674939263876901252842635193971820705641250402334922",
+      "L_second_derivative": "17.5838400150293913187377393495430000472543808010676696573595189897152473450730574687314725656547228993692",
+      "determinant_digits": 100,
+      "lvalue_digits": 100,
+      "numerical_source": "beilinson_100_digits.json",
+      "determinant_coordinate_conversion": "same manuscript model and column order"
+    }
+  ]
+}
