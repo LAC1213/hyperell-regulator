@@ -33,58 +33,45 @@ def regulator_stokes_mp(F,phi,prec,check_tol=1e-6):
 
 
 def period_matrix_mp(F,prec):
-    """Branch-segment periods with endpoint singularities removed analytically.
+    """Full cycle periods on the shared, validated semilunar paths.
 
-    Set x=a+(b-a)*sin(pi*t/2)^2. Factoring out the two endpoint
-    roots cancels the square-root singularities exactly, and continuing
-    each remaining linear factor fixes the square-root branch on the segment.
+    The first root has largest absolute value, with real and imaginary parts
+    breaking ties at working precision. Endpoint singularities are removed
+    analytically, and the square root is continued through detour corners.
     """
+    from ._periods import period_paths, segment_differential
+
     ar=Arithmetic(prec);C,R=ar.C,ar.R
     exact=polynomial(F)
     if exact is None:
         raise ValueError('arbitrary precision requires exact polynomial coefficients')
     p=PolynomialRing(C,'x')(exact)
     g=(p.degree()-1)//2
-    roots=sorted(p.roots(C,multiplicities=False),key=lambda z:(float(z.real()),float(z.imag())))
+    roots=p.roots(C,multiplicities=False)
     if len(roots)!=p.degree():raise ValueError('the curve polynomial must be squarefree')
     output=[]
-    for j in range(2*g):
-        a,b=roots[j],roots[j+1];delta=b-a;mid=(a+b)/2
-        others=[v for k,v in enumerate(roots) if k not in (j,j+1)]
-        qmid=-delta**2*p.leading_coefficient()
-        for v in others:qmid*=mid-v
-        ymid=qmid.sqrt()
-        # Conjugate endpoints make qmid real. Tiny rounding errors on the
-        # negative real axis must not reverse this period's orientation.
-        if abs(ymid.real())<=ar.newton_tol*abs(ymid) and ymid.imag()<0:
-            ymid=-ymid
-        def evaluate(t):
-            x=a+delta*(R.pi()*t/2).sin()**2
-            y=ymid
-            for v in others:y*=((x-v)/(mid-v)).sqrt()
-            return [R.pi()*delta*x**i/y for i in range(g)]
-        row=quadrature(ar,FunctionSamples(evaluate),g)
-        output.append(row)
+    for path in period_paths(roots,g,root_tol=ar.newton_tol):
+        row=[C(0) for _ in range(g)]
+        previous_y=None
+        for (a,ia),(b,ib) in zip(path[:-1],path[1:]):
+            evaluate,previous_y=segment_differential(
+                roots,p.leading_coefficient(),C(a),C(b),ia,ib,g,
+                sqrt=lambda v:v.sqrt(),sin=lambda v:v.sin(),
+                cos=lambda v:v.cos(),pi=R.pi(),sign_tol=ar.newton_tol,
+                previous_y=previous_y)
+            part=quadrature(ar,FunctionSamples(evaluate),g)
+            row=[u+v for u,v in zip(row,part)]
+        output.append([2*v for v in row])
     return output
 
 
-def _pivot_det(rows):
-    a=[list(row) for row in rows]
-    n,m=len(a),len(a[0]);det=a[0][0].parent()(1)
-    for k in range(m):
-        p=max(range(k,n),key=lambda i:abs(a[i][k]))
-        if p!=k:a[k],a[p]=a[p],a[k];det=-det
-        if not a[k][k]:return det.parent()(0)
-        det*=a[k][k]
-        for i in range(k+1,n):
-            factor=a[i][k]/a[k][k]
-            for j in range(k+1,m):a[i][j]-=factor*a[k][j]
-    return det
-
-
 def c_invariants_mp(F,prec):
-    """Pivoted real and imaginary period minors at the requested precision."""
+    """Signed pivoted minors of full cycle periods at the requested precision."""
+    from ._periods import pivoted_minor
+
     ar=Arithmetic(prec)
     P=period_matrix_mp(F,prec)
-    return tuple(ar.output(_pivot_det([[part(v) for v in row] for row in P]))
+    # Equal period pivots can differ by the quadrature error, which is much
+    # larger than Newton's tolerance. Use the integration accuracy for ties.
+    return tuple(ar.output(pivoted_minor([[part(v) for v in row] for row in P],ar.tol))
                  for part in (lambda z:z.real(),lambda z:z.imag()))

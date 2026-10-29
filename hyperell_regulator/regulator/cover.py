@@ -28,6 +28,7 @@ cancellation when `w` is small, and how the plane integrator is given a
 import numpy as np
 
 from .polynomials import evaluate as _eval
+from ._paths import angular_order, semilunar_path, check_path_embedded
 
 from .polynomials import array as _poly, arrays as _ratio, polynomial, rational
 
@@ -1230,10 +1231,9 @@ class Cover:
         v = self.critical_values()
         if min(abs(v)) > 1e-12:
             raise ValueError("0 is not a critical value: phi is not N P - N Q")
-        c = v.mean() + eps * (np.pi + np.e * 1j)
-        order = sorted(range(len(v)), key=lambda i: np.angle(v[i] - c))
-        k = min(range(len(v)), key=lambda j: abs(v[order[j]]))
-        return v[order[k:] + order[:k]], c, k
+        start = min(range(len(v)), key=lambda i: abs(v[i]))
+        order, c, k = angular_order(v, start, eps)
+        return v[order], c, k
 
     def ordered_critical_values(self, eps=1e-13):
         r"""
@@ -1307,82 +1307,15 @@ class Cover:
             sage: bool(len(n) > 5), 'none' in k, bool(abs(d + 1j) < 1e-12)
             (True, True, True)
         """
-        z, c, k = self._angular_order(eps)
-        r = len(z)
-        nodes = list(z)
-        kinds = ["P"] + ["simple"] * (r - 1)
-        d = self._pick_ray(nodes, kinds, c, fan)
-        if d is not None:
-            return np.array(nodes), kinds, d
-        if k == 0:
-            raise NotImplementedError(
-                "no embedded cut system: the critical values are in general "
-                "position but no ray escapes")
-        j = r - 1 - k                       # the closing edge, put back by the
-        R = radius * max(np.abs(z - c))     # rotation, is the one to route round
-        bend = _detour(nodes[j], nodes[j + 1], c, R, arc)
-        nodes = nodes[:j + 1] + bend + nodes[j + 1:]
-        kinds = kinds[:j + 1] + ["none"] * len(bend) + kinds[j + 1:]
-        d = self._pick_ray(nodes, kinds, c, fan)
-        if d is None:
-            raise NotImplementedError(
-                "no embedded cut system even with the closing edge routed "
-                "round: no ray escapes")
-        return np.array(nodes), kinds, d
-
-    def _pick_ray(self, nodes, kinds, c, fan):
-        r"""
-        The direction in which the ray to `\infty` leaves the last vertex,
-        or ``None`` if none keeps `\Gamma` embedded.
-
-        """
-        a = np.array(nodes)
-        last = a[-1]
-        scale = max(np.abs(a - c).max(), 1.0)
-        crit = a[[i for i, t in enumerate(kinds) if t != "none"]]
-        if abs(last - c) > 0:                  # radial: right whenever it works
-            d = (last - c) / abs(last - c)
-            try:
-                check_path_embedded(a, d, crit)
-                return d
-            except NotImplementedError:
-                pass
-        best, room = None, -1.0
-        for d in [np.exp(2j * np.pi * m / fan) for m in range(fan)]:
-            try:
-                check_path_embedded(a, d, crit)
-            except NotImplementedError:
-                continue
-            probe = last + d * np.linspace(0.02, 6.0, 60) * scale
-            gap = min(_dist_to_path(p, a[:-1]) for p in probe)
-            if gap > room:
-                best, room = d, gap
-        return best
-
-
-def _dist_to_path(p, nodes):
-    """Distance from `p` to the polyline through `nodes`."""
-    best = np.inf
-    for i in range(len(nodes) - 1):
-        u, v = nodes[i], nodes[i + 1]
-        t = np.clip(((p - u) * np.conj(v - u)).real / abs(v - u) ** 2, 0.0, 1.0)
-        best = min(best, abs(u + t * (v - u) - p))
-    return best
-
-
-def _detour(a, b, c, R, n):
-    r"""
-    Vertices routing the step from `a` to `b` out round radius `R` about `c`.
-
-    The sweep runs in the direction of increasing argument, which is the gap
-    the cyclic order leaves empty, so the detour stays outside everything.
-    The first and last vertices sit radially outward from `a` and `b`, so the
-    segments joining them to `a` and `b` are radial.
-    """
-    ta, tb = np.angle(a - c), np.angle(b - c)
-    sweep = np.mod(tb - ta, 2 * np.pi)
-    t = np.linspace(0.0, 1.0, n)
-    return list(c + R * np.exp(1j * (ta + sweep * t)))
+        v = self.critical_values()
+        if min(abs(v)) > 1e-12:
+            raise ValueError("0 is not a critical value: phi is not N P - N Q")
+        start = min(range(len(v)), key=lambda i: abs(v[i]))
+        nodes, labels, direction = semilunar_path(
+            v, start, eps=eps, radius=radius, arc=arc, fan=fan)
+        kinds = ["none" if i is None else "P" if i == start else "simple"
+                 for i in labels]
+        return nodes, kinds, direction
 
 
 def _shift_poly(p, c):
@@ -1395,69 +1328,3 @@ def _shift_poly(p, c):
         out.append(complex(rem[-1]) if len(rem) else 0.0)
     out.append(complex(r[0]) if len(r) else 0.0)
     return np.array(out[::-1], complex)
-
-
-def check_path_embedded(e, ray=None, crit=None, tol=1e-9):
-    r"""
-    Check that `\Gamma = [z_1,z_2] \cup \dots \cup [z_r,\infty]` is embedded.
-
-    The derivation needs `\mathbf{P}^1 \smallsetminus \Gamma` to be a disc, so
-    `\Gamma` must not meet itself and must not run through a critical value
-    other than at its ends.  Sorting by argument about the centroid makes the
-    `z_i` the vertices of a star-shaped polygon, but the rotation that brings
-    `\varphi(P)` to the front deletes the edge `z_r z_1` and replaces it by the
-    ray, and the result need not stay embedded -- for collinear critical values
-    it typically does not.
-
-    EXAMPLES::
-
-        sage: from hyperell_regulator.regulator.cover import check_path_embedded
-        sage: import numpy as np
-        sage: check_path_embedded(np.array([-2., -1., 0., 1., 2.]))
-        sage: check_path_embedded(np.array([0., 1., 2., -2., -1.]))
-        Traceback (most recent call last):
-        ...
-        NotImplementedError: ...
-    """
-    e = np.asarray(e, complex)
-    scale = max(np.abs(e).max(), 1.0)
-    if ray is None:
-        ray = e[-1] - e.mean()
-        if abs(ray) < tol * scale:
-            raise NotImplementedError(
-                "the last critical value sits at the centroid")
-    ray = ray / abs(ray)
-    if crit is None:
-        crit = e
-    crit = np.asarray(crit, complex)
-    pts = list(e) + [e[-1] + ray * 10.0 * scale]
-    segs = [(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
-
-    def side(a, b, c):
-        return ((b - a).conjugate() * (c - a)).imag
-
-    for i, (a, b) in enumerate(segs):
-        for c in crit:
-            if abs(c - a) < tol * scale or abs(c - b) < tol * scale:
-                continue
-            t = ((c - a).conjugate() * (b - a)).real / abs(b - a) ** 2
-            if -tol < t < 1 + tol and abs(a + t * (b - a) - c) < tol * scale:
-                raise NotImplementedError(
-                    "the critical value %r lies on the segment %r--%r" % (c, a, b))
-        for j in range(i + 2, len(segs)):
-            c, d = segs[j]
-            if (side(a, b, c) * side(a, b, d) < 0
-                    and side(c, d, a) * side(c, d, b) < 0):
-                raise NotImplementedError(
-                    "the segments %r--%r and %r--%r cross" % (a, b, c, d))
-            # collinear segments never register as crossing, but they can lie
-            # on top of one another, which is just as fatal
-            if (abs(side(a, b, c)) < tol * scale
-                    and abs(side(a, b, d)) < tol * scale):
-                u = (b - a) / abs(b - a)
-                s0, s1 = 0.0, abs(b - a)
-                t0 = ((c - a) / u).real
-                t1 = ((d - a) / u).real
-                if min(max(t0, t1), s1) - max(min(t0, t1), s0) > tol * scale:
-                    raise NotImplementedError(
-                        "the segments %r--%r and %r--%r overlap" % (a, b, c, d))

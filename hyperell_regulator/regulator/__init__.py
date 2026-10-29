@@ -44,8 +44,9 @@ What this package exports:
 * :func:`function_with_divisor` -- `\varphi` from `P`, `Q` and `N`, via the
   Riemann-Roch space `L(NQ - NP)`; and :func:`torsion_order`, the least `N`
   for which that space is nonzero;
-* :func:`c_invariants` -- `(c^+, c^-)`, the pivoted minors of the real and
-  imaginary parts of the period matrix.
+* :func:`c_invariants` -- `(c^+, c^-)`, signed pivoted minors of the real and
+  imaginary parts of the full cycle period matrix, using semilunar paths
+  starting at the finite root of largest absolute value.
 
 EXAMPLES::
 

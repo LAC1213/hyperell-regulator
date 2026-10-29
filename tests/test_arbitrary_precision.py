@@ -85,6 +85,7 @@ def test_regular_inverse_coordinate_zero_is_crossed():
 def test_709_periods_continue_across_principal_sqrt_cut():
     x=ring().gen();F=4*x**5-7*x**4+4*x
     cp,cm=c_invariants(F,prec=35)
-    assert abs(cp-cp.parent()('-2.2951452040570181850466376396996508'))<cp.parent()('1e-32')
+    # Full periods on the semilunar chain, starting at the largest modulus.
+    assert abs(cp-cp.parent()('-4.5902904081140363700932752793993016'))<cp.parent()('1e-32')
     for lo,hi in zip(c_invariants(F),(cp,cm)):
         assert abs(lo-float(hi))<1e-10

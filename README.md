@@ -64,6 +64,17 @@ c_plus, c_minus = c_invariants(F, prec=30)
 Use exact rational coefficients for arbitrary precision. `prec` is a decimal
 accuracy target and convergence failures raise exceptions. 
 
+For `c_invariants`, the finite branch points are ordered by increasing argument
+about a perturbed centroid, starting at the root of largest absolute value
+(ties by real, then imaginary part). Period paths share the regulator's
+semilunar detours and embeddedness checks. The period matrix contains full
+cycle integrals, twice the integrals along the lifted paths; `c_plus` and
+`c_minus` are signed pivoted minors of its real and imaginary parts.
+For genus two, using full periods multiplies each minor by four relative to
+half-periods on the same paths. The new paths can also change signs and rational
+normalisations. Existing saved reports use their original conventions;
+experiment caches are invalidated automatically when rerun.
+
 ## Beilinson experiments
 
 ```sh

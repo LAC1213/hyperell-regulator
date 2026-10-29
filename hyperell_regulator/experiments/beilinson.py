@@ -117,7 +117,7 @@ from hyperell_regulator.paths import data_path, ensure_parent
 from hyperell_regulator.regulator import c_invariants
 
 DEFAULT_CONDUCTOR_BOUND = 1000
-REPORT_VERSION = 6  # minimize the sum of integration orders before conditioning
+REPORT_VERSION = 8  # full semilunar periods; pivot ties at quadrature accuracy
 
 LVALUES = data_path("results", "lvalue_cache.json")
 RESULTS_OUT = data_path("results", "beilinson_results.json")

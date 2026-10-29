@@ -16,7 +16,6 @@ for the determinant and the weight rows, and :func:`period_matrix`,
 
 import scipy.integrate as spyint
 import numpy as np
-import scipy as sp
 from scipy.special import psi
 
 # ============================================================
@@ -364,67 +363,59 @@ def regulator_vector_2(f, cluster_threshold=0.4):
 
 # f : a list of rational numbers, corresponding to the polynomial f[0] * x**n + ... + f[n]
 # Compute the period matrix of the hyperelliptic curve y^2 = f(x)
-# returns 2g x g matrix, where the ith row is given by the integrals of x^i dx/y over the line segments joining the first 2g + 1 roots of f.
-#
-# (unaffected by the box trick -- this is a 1D contour integral
-# between consecutive roots, not a 2D plane integral.)
 def period_matrix(f, epsabs=1.49e-8, epsrel=1.49e-8):
     r"""
-    ``epsabs``/``epsrel`` are forwarded to ``quad``; scipy's own defaults
-    (``1.49e-8``, kept here so old callers see no change) cap the result at
-    about 8 correct digits -- tighten them (e.g. to ``1e-15``, the practical
-    floor of float64) for a period matrix good to more digits.
+    Full cycle periods along a validated semilunar branch-point chain.
+
+    Start at the finite root of largest absolute value (ties by real then
+    imaginary part), then follow increasing argument about a perturbed
+    centroid. Detours use the same path builder and validation as regulator
+    cuts. Each row is twice the integral along one lifted branch-to-branch
+    path, for the differentials ``x^i dx/y``, ``0 <= i < g``.
+
+    ``epsabs``/``epsrel`` are forwarded to SciPy's ``quad``. Its defaults
+    give roughly eight digits; tighten them for more float64 accuracy.
     """
+    from ._periods import period_paths, segment_differential
+
     f = _coeffs(f)
-    deg = len(f) - 1
-    g = int((deg - 1) / 2)
-
-    # np.roots returns a real (float64) array when every root happens to be
-    # real; the path between two consecutive real roots is then real too, and
-    # since f alternates sign between consecutive real roots, np.sqrt of a
-    # negative *real* returns nan rather than an imaginary number -- which
-    # makes quad raise "array must not contain infs or NaNs". Casting to
-    # complex keeps the whole computation in C, where the square root is fine.
+    g = (len(f) - 2) // 2
     roots = np.roots(f).astype(complex)
-    roots.sort()
-
-    periods = np.full((2 * g, g), 1j)
-
-    for i in range(g):
-        for j in range(2 * g):
-            a, b = roots[j], roots[j + 1]
-            delta, mid = b - a, (a + b) / 2
-            others = np.delete(roots, [j, j + 1])
-            ymid = np.sqrt(-delta**2 * f[0] * np.prod(mid - others))
-            if abs(ymid.real)<=128*np.finfo(float).eps*abs(ymid) and ymid.imag<0:
-                ymid=-ymid
-            def integrand(t):
-                # Cancel the endpoint square roots analytically. Continuing
-                # each remaining factor avoids principal-sqrt sign jumps.
-                z = a + delta * np.sin(np.pi * t / 2)**2
-                y = ymid * np.prod(np.sqrt((z - others) / (mid - others)))
-                return np.pi * delta * z**i / y
-            resre, _ = spyint.quad(lambda t: integrand(t).real, 0, 1,
-                                   epsabs=epsabs, epsrel=epsrel)
-            resim, _ = spyint.quad(lambda t: integrand(t).imag, 0, 1,
-                                   epsabs=epsabs, epsrel=epsrel)
-            periods[j, i] = resre + resim * 1j
-
-    return periods
+    periods = []
+    for path in period_paths(roots, g, root_tol=128*np.finfo(float).eps):
+        row = np.zeros(g, complex)
+        previous_y = None
+        for (a, ia), (b, ib) in zip(path[:-1], path[1:]):
+            evaluate, previous_y = segment_differential(
+                roots, complex(f[0]), a, b, ia, ib, g,
+                sqrt=np.sqrt, sin=np.sin, cos=np.cos, pi=np.pi,
+                sign_tol=128*np.finfo(float).eps, previous_y=previous_y)
+            for i in range(g):
+                re, _ = spyint.quad(lambda t: evaluate(t)[i].real, 0, 1,
+                                    epsabs=epsabs, epsrel=epsrel)
+                im, _ = spyint.quad(lambda t: evaluate(t)[i].imag, 0, 1,
+                                    epsabs=epsabs, epsrel=epsrel)
+                row[i] += re + 1j * im
+        periods.append(2 * row)
+    return np.asarray(periods, complex)
 
 
 def cplus(f, epsabs=1.49e-8, epsrel=1.49e-8):
+    """Signed real minor of full cycle periods, with deterministic pivot ties."""
+    from ._periods import pivoted_minor
+
     f = _coeffs(f)
     periods = period_matrix(f, epsabs=epsabs, epsrel=epsrel)
-    P, L, U = sp.linalg.lu(periods.real)
-    return np.linalg.det(P) * np.linalg.det(U)
+    return pivoted_minor(periods.real, max(epsabs, epsrel, 128*np.finfo(float).eps))
 
 
 def cminus(f, epsabs=1.49e-8, epsrel=1.49e-8):
+    """Signed imaginary minor of full cycle periods, with deterministic pivot ties."""
+    from ._periods import pivoted_minor
+
     f = _coeffs(f)
     periods = period_matrix(f, epsabs=epsabs, epsrel=epsrel)
-    P, L, U = sp.linalg.lu(periods.imag)
-    return np.linalg.det(P) * np.linalg.det(U)
+    return pivoted_minor(periods.imag, max(epsabs, epsrel, 128*np.finfo(float).eps))
 
 # ============================================================
 # Generalization: log|g(z)| in place of log|z - a|

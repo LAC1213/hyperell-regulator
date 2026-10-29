@@ -94,8 +94,9 @@ def periods_stokes(F, phi, prec=None, check_tol=1e-6, verbose=False):
 
 def c_invariants(F, prec=None):
     r"""
-    `(c^+, c^-)`: the pivoted minors of the real and imaginary parts of the
-    curve's period matrix.
+    `(c^+, c^-)`: signed pivoted minors of the real and imaginary parts of
+    the full cycle period matrix (not half-periods). Paths follow a validated
+    semilunar ordering starting at the finite root of largest absolute value.
 
     ``prec`` is the number of decimal digits; ``None`` is the float64
     quadrature of :mod:`~hyperell_regulator.regulator.plane`, whose default
