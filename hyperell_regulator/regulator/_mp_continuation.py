@@ -23,6 +23,9 @@ class Arithmetic:
         self.output = RealField(int(math.ceil(self.digits*math.log2(10))))
         self.tol = self.R(10)**(-self.digits-3)
         self.newton_tol = self.R(10)**(-self.digits-20)
+        self.polynomial_tol = self.R('1e-8')
+        self.stagnation_tol = self.tol*self.polynomial_tol
+        self.coordinate_floor = self.R('1e-100000')
         self._rules = {}
 
     def rule(self, level):
@@ -70,7 +73,13 @@ class Chart:
         S = PolynomialRing(self.C,'u')
         self.F,self.a,self.ad,self.b,self.bd = [S(q) for q in (F,a,ad,b,bd)]
         self.Fp = self.F.derivative()
-        self.da,self.dad,self.db,self.dbd = [q.derivative() for q in (self.a,self.ad,self.b,self.bd)]
+        # Form rational derivative numerators exactly, once per chart.
+        self.dA = S(a.derivative()*ad-a*ad.derivative())
+        self.dB = S(b.derivative()*bd-b*bd.derivative())
+        self.ad_one,self.bd_one = ad==1,bd==1
+        self.b_constant = self.b[0] if self.bd_one and b.degree()<=0 else None
+        self.b_one = b==bd
+        self.zero = self.C(0)
         # Use the exact, cancelled fibre polynomial, never float64 arrays.
         ps = [b*b*ad*ad*F-bd*bd*a*a,2*bd*bd*ad*a,-(bd*ad)**2]
         common = ps[0].gcd(ps[1]).gcd(ps[2])
@@ -82,7 +91,14 @@ class Chart:
         self.norm_factors = self.local.norm_factors_hp(ar.bits+16)
         self.norm_factors = [[(self.C(r),int(m)) for r,m in part] for part in self.norm_factors]
         self.norm_lead = self.C(self.local.norm_leading())
+        self.norm_terms = [(r,sign*m) for sign,part in ((1,self.norm_factors[0]),(-1,self.norm_factors[1])) for r,m in part]
         self.g,self.N,self.pure = cov.g,cov.N,cov.pure_x
+        self.affine = self.pure and a.degree()==1 and ad.degree()==0 and not self.sigma
+        self.regular_radius = None
+        if self.F[0] and (not self.ad[0] or not self.bd[0]):
+            self.regular_radius = self.R('1e-6')*min([self.R(1)]+[abs(r) for r in self.roots if r])
+            self.regular_root = self.F[0].sqrt()
+        self._regular_zero = {}
 
     def norm(self,u):
         value = self.norm_lead
@@ -95,14 +111,11 @@ class Chart:
         return sum(sign*m/(u-r) for sign,part in ((1,self.norm_factors[0]),(-1,self.norm_factors[1])) for r,m in part)
 
     def values(self,u,eta):
-        a,ad,b,bd = self.a(u),self.ad(u),self.b(u),self.bd(u)
-        if (self.F[0] and (not self.ad[0] or not self.bd[0])
-                and abs(u)<self.R('1e-6')*min([self.R(1)]+[abs(r) for r in self.roots if r])):
+        if self.regular_radius is not None and abs(u)<self.regular_radius:
             # Extend a cancelling branch analytically through infinity.
             # Near u=0, subtracting logarithmic derivatives of poles also
             # loses precision, so use the same local series in a small disk.
-            key=1 if abs(eta-self.F[0].sqrt())<=abs(eta+self.F[0].sqrt()) else -1
-            if not hasattr(self,'_regular_zero'):self._regular_zero={}
+            key=1 if abs(eta-self.regular_root)<=abs(eta+self.regular_root) else -1
             if key not in self._regular_zero:
                 depth=self.ar.digits+max(self.ad.degree(),self.bd.degree())+20
                 exactF,a0,ad0,b0,bd0=self.local.exact
@@ -110,22 +123,40 @@ class Chart:
                 S=LaurentSeriesRing(base,'s',default_prec=depth)
                 root=S(PowerSeriesRing(base,'s',default_prec=depth)(exactF).sqrt())*key
                 value=S(a0)/S(ad0)+S(b0)/S(bd0)*root
-                self._regular_zero[key]=(None if value.valuation()<0 else
-                    self.F.parent()([self.C(value[k]) for k in range(value.prec())]))
+                if value.valuation()<0:
+                    self._regular_zero[key]=None
+                else:
+                    regular=self.F.parent()([self.C(value[k]) for k in range(value.prec())])
+                    self._regular_zero[key]=regular,regular.derivative()
             regular=self._regular_zero[key]
-            if regular is not None:return regular(u),eta*regular.derivative()(u)
+            if regular is not None:return regular[0](u),eta*regular[1](u)
             if not u:raise LegFailure('coordinate zero is a pole on this sheet')
-        A,B = a/ad,b/bd
-        da = eta*(self.da(u)*ad-a*self.dad(u))/ad**2
-        db = eta**2*(self.db(u)*bd-b*self.dbd(u))/bd**2
-        bf = B*self.Fp(u)/2
-        small,big = A+B*eta,A-B*eta
-        den = da+db+bf
-        if not self.pure and big and abs(small) <= abs(big):
-            value = self.norm(u)/big
-            den = value*(eta*self.dlognorm(u)-(da-db-bf)/big)
+        A,da = self.a(u),eta*self.dA(u)
+        if not self.ad_one:
+            ad=self.ad(u)
+            A/=ad;da/=ad**2
+        if self.pure:return A,da
+        if self.b_constant is not None:
+            B,db=self.b_constant,self.zero
+        else:
+            B,db = self.b(u),eta**2*self.dB(u)
+            if not self.bd_one:
+                bd=self.bd(u)
+                B/=bd;db/=bd**2
+        by=eta if self.b_one else B*eta
+        bf=self.Fp(u)/2 if self.b_one else B*self.Fp(u)/2
+        small,big = A+by,A-by
+        if big and abs(small) <= abs(big):
+            norm,dlog = self.norm_lead,self.zero
+            for root,m in self.norm_terms:
+                delta=u-root
+                norm*=delta**m
+                dlog+=m/delta
+            value = norm/big
+            den = value*(eta*dlog-(da-db-bf)/big)
         else:
             value = small
+            den = da+db+bf
         return value,den
 
     def polynomial(self,z):
@@ -149,6 +180,12 @@ class Chart:
 
     def solve(self,z,u,eta,poly=None,derivative=None):
         p = self.polynomial(z) if poly is None else poly
+        if self.affine:
+            # An affine x-map has a linear fibre equation.
+            u=-p[0]/p[1]
+            error=abs(p(u)/p[1])
+            if error<=self.ar.newton_tol*max(abs(u),self.ar.coordinate_floor):
+                return u,self.eta(u,eta,z),error,0
         dp = p.derivative() if derivative is None else derivative
         # The polynomial identifies the sheet; the factored norm polishes it.
         for k in range(10):
@@ -156,7 +193,7 @@ class Chart:
             if not den: break
             step = p(u)/den
             u -= step
-            if abs(step) < self.R('1e-8')*max(abs(u),self.R('1e-100000')): break
+            if abs(step) < self.ar.polynomial_tol*max(abs(u),self.ar.coordinate_floor): break
         eta = self.eta(u,eta,z)
         last = self.R(float('inf'))
         for k in range(16):
@@ -171,9 +208,10 @@ class Chart:
             r = self.F(u).sqrt()
             eta = r if abs(r-eta)<=abs(r+eta) else -r
             error = abs(step)
-            if error <= self.ar.newton_tol*max(abs(u),self.R('1e-100000')):
+            magnitude=abs(u)
+            if error <= self.ar.newton_tol*max(magnitude,self.ar.coordinate_floor):
                 return (*self.refine_point(z,u,eta),error,k+1)
-            if error >= last and error <= self.ar.tol*self.R('1e-8')*max(1,abs(u)):
+            if error >= last and error <= self.ar.stagnation_tol*max(1,magnitude):
                 return (*self.refine_point(z,u,eta),error,k+1)
             last = error
         raise LegFailure('Newton did not attain the working precision')
@@ -221,12 +259,19 @@ class Walker:
         self.ch,self.coord,self.ar = chart,coord,chart.ar
         self.points = [chart.to_local(*p) for p in points]
         self.t,self.h = self.ar.R(0),self.ar.R(1)/16
-        self.points = [chart.solve(coord(self.t),u,e)[:2] for u,e in self.points]
+        self.z,self.previous = coord(self.t),None
+        self.points = [chart.solve(self.z,u,e)[:2] for u,e in self.points]
         # For pure x maps two curve points deliberately share each x root.
         self.partners = []
         for i,(u,e) in enumerate(self.points):
             self.partners.append({j for j,(v,f) in enumerate(self.points)
                                   if i==j or (chart.pure and abs(u-v)<self.ar.tol*max(1,abs(u)))})
+
+    def restore(self,t,points):
+        # A cached quadrature node is also a verified continuation sample.
+        # Keep a secant only when restoring forward along the same path.
+        self.previous=(self.z,self.points) if t>self.t else None
+        self.t,self.z,self.points=t,self.coord(t),list(points)
 
     def to(self,end):
         R = self.ar.R
@@ -240,11 +285,20 @@ class Walker:
                 try:
                     p = self.ch.polynomial(z)
                     dp = p.derivative()
-                    new = [self.ch.solve(z,u,e,p,dp) for u,e in self.points]
+                    guesses=self.points
+                    # Predict from verified samples in the base coordinate.
+                    # Acceptance still measures movement from the old point.
+                    if not self.ch.affine and self.previous is not None and self.z!=self.previous[0]:
+                        ratio=(z-self.z)/(self.z-self.previous[0])
+                        if abs(ratio)<=2:
+                            guesses=[(u+ratio*(u-old[0]),e) for (u,e),old in zip(self.points,self.previous[1])]
+                    new = [self.ch.solve(z,u,e,p,dp) for u,e in guesses]
                     for i,((u,e),(v,f,error,_)) in enumerate(zip(self.points,new)):
                         others = [abs(v-q[0]) for j,q in enumerate(new) if j not in self.partners[i]]
                         if others:
                             gap=min(others)
+                        elif p.degree()==1:
+                            gap=1+abs(v)
                         else:
                             # Taylor coefficients give a root-separation
                             # radius even when an ordinary lift crosses u=0.
@@ -269,7 +323,8 @@ class Walker:
                 h /= 2;cut=True
                 if h < R('1e-14')*(end-self.t) or self.t+h==self.t:
                     raise LegFailure('arbitrary-precision continuation stalled at %s' % z)
-            self.points = [(q[0],q[1]) for q in new]
+            self.previous=self.z,self.points
+            self.z,self.points = z,[(q[0],q[1]) for q in new]
             self.t += h
             checkpoint('walk_accepted')
             if cut: self.h=h
@@ -362,7 +417,7 @@ class WalkSamples:
         self.prev=self.ch.ar.R(0);self.log=self.lam
     def restore(self,t,state):
         parameter,points,lam=state
-        self.walk.t,self.walk.points=parameter,list(points)
+        self.walk.restore(parameter,points)
         self.prev,self.log=parameter,lam
     def __call__(self,t):
         parameter=-(1-t).log() if self.logarithmic else t
