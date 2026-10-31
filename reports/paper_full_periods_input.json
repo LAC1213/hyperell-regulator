@@ -4,7 +4,8 @@
   "manuscript_sha256": "b75d9671ded5f062a78541129e119c07ae1cb7ad12a3aeffd4c8db5eb38b44f2",
   "sources": {
     "paper_reproducibility_20261027.json": "f6fc1288a631200525fecddf9f92c4465d9e895467d1ce4f9125389849c8fde2",
-    "beilinson_100_digits.json": "e5fbf9e7da16f7874921b7ba7a63aba779fe0365d8426080f3616edcebad569b"
+    "beilinson_100_digits.json": "e5fbf9e7da16f7874921b7ba7a63aba779fe0365d8426080f3616edcebad569b",
+    "conductor_388_lvalue.json": "f9d7b394282cf1cad45dfe3fce16c97d8a0cbf4290804cc6b1e74fe5867813c7"
   },
   "rows": [
     {
@@ -381,11 +382,12 @@
         }
       ],
       "determinant": "-13.196343154704181847207",
-      "L_second_derivative": null,
+      "L_second_derivative": "2.61702562836175902",
       "determinant_digits": 15,
-      "lvalue_digits": null,
+      "lvalue_digits": 15,
       "numerical_source": "paper_reproducibility_20261027.json: regulator_only_388_at_15_digits",
-      "lvalue_note": "Only the manuscript's displayed L-value is retained; an independent L-value was not reproduced. The rational factor is transported from the manuscript identity."
+      "lvalue_note": "Fresh 15-digit standard L-value with the split nodal-model factor at 2; functional-equation error 6.62e-24. The component condition at 2 remains undecided.",
+      "lvalue_source": "conductor_388_lvalue.json"
     },
     {
       "label": "389.a.389.1",

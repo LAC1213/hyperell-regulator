@@ -11,7 +11,7 @@
       "R"
     ]
   },
-  "input_sha256": "1354c6feb7ff7b1f885723941d0ed479da025e67e4ee42e5abcc5899bc5b0193",
+  "input_sha256": "86bf8706357cca714e9904e916f18a447b34e8a13fa1ae5437848f1bc42e2ca0",
   "source_sha256": {
     "hyperell_regulator/regulator/__init__.py": "4d3d92dedc8379056e292309e64c0b7f46beeddcfa67fb63fdf522f787b5b94f",
     "hyperell_regulator/regulator/_legs.py": "6a7c72d5a87dc630a476b6dbf248ee5bc63b2561639173f166cfc4dc6c512357",
@@ -19,17 +19,32 @@
     "hyperell_regulator/regulator/_mp_stokes.py": "1d5351d3132dfdc26ddae48ddb38be0d2cd71fa22b7b9c28ed266f2e5a6a8002",
     "hyperell_regulator/regulator/_paths.py": "f228956ea823d32ec1ca851b3755b34b2ccc40f3b71da75142fa2d56a73454c8",
     "hyperell_regulator/regulator/_periods.py": "3037b298eefb45fc45aa6f1878d8636798ff65b89aed105f362c7526e6b1a1f0",
-    "hyperell_regulator/regulator/api.py": "908cefe2ad4e4d6219343e54366d03fa9e4a814f55456ceae24cfd8ef6b3aa10",
+    "hyperell_regulator/regulator/api.py": "8c2ee7d2dd8065bdac0df66a94ef02ee7387650c63bd8a08a6adc80384d9e4f8",
     "hyperell_regulator/regulator/cover.py": "20f5e4a9d6a2752fce84ab668b1ffcf896d943ac553ace8d230944c31f2685f7",
     "hyperell_regulator/regulator/diagnostics.py": "1066a9f5946353771aeb0f93641a78e7135075324c280c27fef4f5625118ab21",
     "hyperell_regulator/regulator/explorer.py": "bd37838feb88fc2f353b178772de2a1ff5eb17ccda7e4f330c569236a646690e",
     "hyperell_regulator/regulator/functions.py": "7615069d15e6863f4036e11f244233bbcafd6e96c1c18e12479203a960ecbbc4",
-    "hyperell_regulator/regulator/plane.py": "1793e59c2a4b3f0e612cfcacb10997567e6030030772799a31d5fc60fda44ff7",
+    "hyperell_regulator/regulator/plane.py": "4f0e77a2512ed2e47463b548a3bb47a38573e1114c39b1f3e2e154266fdc521f",
     "hyperell_regulator/regulator/plots.py": "bea1e4666a3b122f6a2314fade833dd8b059b46fb5215878ed720d470e9a3de5",
     "hyperell_regulator/regulator/polynomials.py": "4a55ee0afe66d13d501af62c7984a29887eca072f13e9261e4f60f4695c2b9a7",
     "hyperell_regulator/regulator/precision.py": "b488d7b2e53289af536fada44e1cd697731a85b025652d1eaf05894ffffb0a8c",
     "hyperell_regulator/regulator/stokes.py": "1460abb86545381ad86e9d3ff62e12c0c8da4e638f091b2278700d03769eabd9",
-    "hyperell_regulator/regulator/walks.py": "4fc176ca5ae1feec02200c0b056549b3b68e654f04d214ce58fa91653e8baf6a"
+    "hyperell_regulator/regulator/surfaces.py": "fcf54a45f12f5376b34725377b39c594083ce367909c4d4779233d2327eb7343",
+    "hyperell_regulator/regulator/walks.py": "4fc176ca5ae1feec02200c0b056549b3b68e654f04d214ce58fa91653e8baf6a",
+    "hyperell_regulator/experiments/small_conductor_explorer.py": "7b333b73eed46dad90aae03c7f29ef87b8049e08911d3ae2c906fd5823eb12b5"
+  },
+  "normalization_source_sha256": {
+    "hyperell_regulator/experiments/small_conductor_explorer.py": "7b333b73eed46dad90aae03c7f29ef87b8049e08911d3ae2c906fd5823eb12b5",
+    "hyperell_regulator/experiments/beilinson.py": "f7b58e33e3a68ef0bbeded6dcdb1bb3ddf661b2e15ffff8f96666d974d0be9f3"
+  },
+  "conventions": {
+    "determinant_weights": [
+      1,
+      2,
+      1
+    ],
+    "quotient": "q = pi*c_plus*c_minus*L_second_derivative/D",
+    "periods": "full cycle periods"
   },
   "curves": [
     {
@@ -49,13 +64,15 @@
         14,
         14
       ],
-      "q": "-7",
+      "q": "-14",
       "numerical": {
-        "det": "-16.74386576",
-        "c_plus": "3.222962922",
-        "c_minus": "1.142125823",
+        "det": "-33.48773151",
+        "c_plus": "-6.445925844",
+        "c_minus": "-4.568503293",
         "L_second_derivative": "5.067627040"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -80,7 +97,7 @@
           "mesh": "meshes/249.a.249.1-Q.json"
         }
       ],
-      "determinant": "-16.743865756332140189517906871",
+      "determinant": "-33.487731512664280379035813743",
       "normalized_matrix": [
         [
           "-1.5476867914348162546686834517",
@@ -88,9 +105,9 @@
           "4.2862629348822000000000000000"
         ],
         [
-          "0.41729504844549273319804025275",
-          "2.0109979868500999219665399854",
-          "-1.5591868247962000000000000000"
+          "0.83459009689098546639608050551",
+          "4.0219959737001998439330799708",
+          "-3.1183736495924000000000000000"
         ],
         [
           "1.1415824404630707882059232610",
@@ -100,7 +117,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "2.7184285075709759664891098832e-11"
       }
     },
     {
@@ -120,13 +138,15 @@
         3,
         15
       ],
-      "q": "-15/2",
+      "q": "15",
       "numerical": {
-        "det": "-17.93081734",
-        "c_plus": "2.012859289",
-        "c_minus": "1.624076686",
+        "det": "-35.86163468",
+        "c_plus": "-8.051437156",
+        "c_minus": "3.248153372",
         "L_second_derivative": "6.547289332"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -151,7 +171,7 @@
           "mesh": "meshes/277.a.277.1-Q.json"
         }
       ],
-      "determinant": "-17.930817340916944991099081784",
+      "determinant": "-35.861634681833889982198163568",
       "normalized_matrix": [
         [
           "-1.1053817096258712450340803665",
@@ -159,9 +179,9 @@
           "3.5407113161936000000000000000"
         ],
         [
-          "-0.54743960233012766749584804394",
-          "1.7984909081696944665008303912",
-          "-0.98360847357547000000000000000"
+          "-1.0948792046602553349916960879",
+          "3.5969818163393889330016607824",
+          "-1.9672169471509400000000000000"
         ],
         [
           "1.5424142071844641199251764065",
@@ -171,7 +191,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "1.2725147216432900766217505273e-10"
       }
     },
     {
@@ -191,13 +212,15 @@
         14,
         7
       ],
-      "q": "7",
+      "q": "-28",
       "numerical": {
-        "det": "18.07319422",
-        "c_plus": "1.828537519",
-        "c_minus": "1.863042556",
+        "det": "36.14638843",
+        "c_plus": "7.314150075",
+        "c_minus": "-7.452170224",
         "L_second_derivative": "5.910530138"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -222,7 +245,7 @@
           "mesh": "meshes/295.a.295.1-Q.json"
         }
       ],
-      "determinant": "18.073194215771727290178043806",
+      "determinant": "36.146388431543454580356087612",
       "normalized_matrix": [
         [
           "-1.2807621923136433013531028590",
@@ -230,9 +253,9 @@
           "3.8333101052653000000000000000"
         ],
         [
-          "-0.15374522065714538015733588103",
-          "-2.1397634414005714285714285714",
-          "0.88200901563029000000000000000"
+          "-0.30749044131429076031467176206",
+          "-4.2795268828011428571428571429",
+          "1.7640180312605800000000000000"
         ],
         [
           "1.1847563801519724041785175313",
@@ -242,7 +265,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "1.8735035872755476731318356143e-11"
       }
     },
     {
@@ -262,13 +286,15 @@
         13,
         13
       ],
-      "q": "-13/2",
+      "q": "13",
       "numerical": {
-        "det": "-17.16844192",
-        "c_plus": "3.498560516",
-        "c_minus": "0.9899016753",
+        "det": "-34.33688383",
+        "c_plus": "6.997121031",
+        "c_minus": "-3.959606701",
         "L_second_derivative": "5.128412170"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -293,7 +319,7 @@
           "mesh": "meshes/349.a.349.1-Q.json"
         }
       ],
-      "determinant": "-17.168441916163399616479538058",
+      "determinant": "-34.336883832326799232959076117",
       "normalized_matrix": [
         [
           "-1.3442131141214156003400937181",
@@ -301,9 +327,9 @@
           "3.9569736549484000000000000000"
         ],
         [
-          "0.013871279037478856793996763010",
-          "1.8380548543547692307692307692",
-          "-1.3506179108660000000000000000"
+          "0.027742558074957713587993526019",
+          "3.6761097087095384615384615385",
+          "-2.7012358217320000000000000000"
         ],
         [
           "1.3364138094976916419275223409",
@@ -313,7 +339,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "9.0577009147403681253278029723e-11"
       }
     },
     {
@@ -333,13 +360,15 @@
         7,
         7
       ],
-      "q": "-7/2",
+      "q": "-7",
       "numerical": {
-        "det": "-13.19634315",
-        "c_plus": "1.820968831",
-        "c_minus": "1.542521722",
+        "det": "-26.39268631",
+        "c_plus": "7.283875324",
+        "c_minus": "3.085043444",
         "L_second_derivative": "2.617025628"
       },
+      "comparison_verified": true,
+      "integrality_verified": false,
       "functions": [
         {
           "name": "P",
@@ -364,7 +393,7 @@
           "mesh": "meshes/388.a.776.1-Q.json"
         }
       ],
-      "determinant": "-13.196343154704949143724390823",
+      "determinant": "-26.392686309409898287448781647",
       "normalized_matrix": [
         [
           "-1.8193095488681876473125217236",
@@ -372,9 +401,9 @@
           "4.1252099517299000000000000000"
         ],
         [
-          "0.49632438970823668906370062372",
-          "1.8483699016179714285714285714",
-          "-1.9579883159261000000000000000"
+          "0.99264877941647337812740124744",
+          "3.6967398032359428571428571429",
+          "-3.9159766318522000000000000000"
         ],
         [
           "1.1398892058893063429989219858",
@@ -384,7 +413,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "4.1301379177653589758325930820e-11"
       }
     },
     {
@@ -404,13 +434,15 @@
         10,
         5
       ],
-      "q": "-20",
+      "q": "-80",
       "numerical": {
-        "det": "1.957755970",
-        "c_plus": "1.237413758",
-        "c_minus": "-0.6744882914",
+        "det": "3.915511941",
+        "c_plus": "4.949655033",
+        "c_minus": "-2.697953166",
         "L_second_derivative": "7.466538845"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -435,7 +467,7 @@
           "mesh": "meshes/389.a.389.1-Q.json"
         }
       ],
-      "determinant": "1.9577559702776841985098378009",
+      "determinant": "3.9155119405553683970196756019",
       "normalized_matrix": [
         [
           "-0.78638807231406000000000000000",
@@ -443,9 +475,9 @@
           "1.0894857026212000000000000000"
         ],
         [
-          "2.7149940229500000000000000000",
-          "-3.1205797621495143232234555566",
-          "-1.2761544980260000000000000000"
+          "5.4299880459000000000000000000",
+          "-6.2411595242990286464469111132",
+          "-2.5523089960520000000000000000"
         ],
         [
           "-3.0696097674478000000000000000",
@@ -455,7 +487,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "1.8333842083485342549872236204e-10"
       }
     },
     {
@@ -475,13 +508,15 @@
         2,
         10
       ],
-      "q": "-10",
+      "q": "20",
       "numerical": {
-        "det": "15.66204776",
-        "c_plus": "-1.237413758",
-        "c_minus": "2.697953166",
+        "det": "31.32409552",
+        "c_plus": "4.949655033",
+        "c_minus": "5.395906331",
         "L_second_derivative": "7.466538845"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -506,7 +541,7 @@
           "mesh": "meshes/389.a.389.2-Q.json"
         }
       ],
-      "determinant": "15.662047762221214631314162540",
+      "determinant": "31.324095524442429262628325080",
       "normalized_matrix": [
         [
           "-1.5753577009831000000000000000",
@@ -514,9 +549,9 @@
           "4.3579428104847000000000000000"
         ],
         [
-          "1.6994638524294000000000000000",
-          "0.075645720571489097940547057635",
-          "-1.8056338144327000000000000000"
+          "3.3989277048588000000000000000",
+          "0.15129144114297819588109411527",
+          "-3.6112676288654000000000000000"
         ],
         [
           "-0.030132184677024000000000000000",
@@ -526,7 +561,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "1.9707232800687880976621481373e-12"
       }
     },
     {
@@ -546,13 +582,15 @@
         10,
         2
       ],
-      "q": "10",
+      "q": "20",
       "numerical": {
-        "det": "18.37281664",
-        "c_plus": "-1.551244008",
-        "c_minus": "-1.706879450",
+        "det": "36.74563328",
+        "c_plus": "-6.204976032",
+        "c_minus": "-3.413758900",
         "L_second_derivative": "11.04365690"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -577,7 +615,7 @@
           "mesh": "meshes/523.a.523.1-Q.json"
         }
       ],
-      "determinant": "18.372816641979816740263401130",
+      "determinant": "36.745633283959633480526802259",
       "normalized_matrix": [
         [
           "-1.4282894037653289294968576878",
@@ -585,9 +623,9 @@
           "3.4413835643767000000000000000"
         ],
         [
-          "0.44028802545134681886395306535",
-          "-1.8926879995529000000000000000",
-          "0.31391775425385000000000000000"
+          "0.88057605090269363772790613069",
+          "-3.7853759991058000000000000000",
+          "0.62783550850770000000000000000"
         ],
         [
           "1.3695096203801839038838749725",
@@ -597,7 +635,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "2.9179327702992040678298858571e-10"
       }
     },
     {
@@ -619,11 +658,13 @@
       ],
       "q": "-8",
       "numerical": {
-        "det": "-15.73517733",
-        "c_plus": "-2.295145204",
-        "c_minus": "-0.9424197243",
+        "det": "-31.47035466",
+        "c_plus": "-4.590290408",
+        "c_minus": "-1.884839449",
         "L_second_derivative": "9.262478789"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -648,7 +689,7 @@
           "mesh": "meshes/709.a.709.1-Q.json"
         }
       ],
-      "determinant": "-15.735177330107291898564583262",
+      "determinant": "-31.470354660214583797129166525",
       "normalized_matrix": [
         [
           "-1.1127275416792271178554202245",
@@ -656,9 +697,9 @@
           "2.9616050125416000000000000000"
         ],
         [
-          "-1.8584828112577337079972402510",
-          "0.46751456330184000000000000000",
-          "1.4797996692197000000000000000"
+          "-3.7169656225154674159944805021",
+          "0.93502912660368000000000000000",
+          "2.9595993384394000000000000000"
         ],
         [
           "-0.48180635510031448304299805881",
@@ -668,7 +709,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "1.1830969667983379207449200851e-10"
       }
     },
     {
@@ -688,13 +730,15 @@
         2,
         5
       ],
-      "q": "-10",
+      "q": "-40",
       "numerical": {
-        "det": "-17.42976483",
-        "c_plus": "1.905359378",
-        "c_minus": "1.262640543",
+        "det": "-34.85952966",
+        "c_plus": "7.621437511",
+        "c_minus": "5.050562172",
         "L_second_derivative": "11.53068285"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -719,7 +763,7 @@
           "mesh": "meshes/763.a.763.1-Q.json"
         }
       ],
-      "determinant": "-17.429764831571900843509486615",
+      "determinant": "-34.859529663143801687018973230",
       "normalized_matrix": [
         [
           "-1.2406398309162000000000000000",
@@ -727,9 +771,9 @@
           "3.3709549500594000000000000000"
         ],
         [
-          "-1.8135134948261000000000000000",
-          "0.31480634689389897370740282965",
-          "1.0160487602577000000000000000"
+          "-3.6270269896522000000000000000",
+          "0.62961269378779794741480565930",
+          "2.0320975205154000000000000000"
         ],
         [
           "0.070125630019435000000000000000",
@@ -739,7 +783,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "1.1416931898645659649309897946e-10"
       }
     },
     {
@@ -759,13 +804,15 @@
         8,
         2
       ],
-      "q": "-2",
+      "q": "-4",
       "numerical": {
-        "det": "15.81243601",
-        "c_plus": "1.304933375",
-        "c_minus": "-1.885553785",
+        "det": "31.62487202",
+        "c_plus": "5.219733499",
+        "c_minus": "-3.771107569",
         "L_second_derivative": "2.045604378"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -790,7 +837,7 @@
           "mesh": "meshes/925.a.925.1-Q.json"
         }
       ],
-      "determinant": "15.812436007526216061017334511",
+      "determinant": "31.624872015052432122034669021",
       "normalized_matrix": [
         [
           "-1.2743295697025077637527810578",
@@ -798,9 +845,9 @@
           "3.3575105007092000000000000000"
         ],
         [
-          "0.39710751222834208531436988898",
-          "-1.7485030130005000000000000000",
-          "1.1631566044945000000000000000"
+          "0.79421502445668417062873977796",
+          "-3.4970060260010000000000000000",
+          "2.3263132089890000000000000000"
         ],
         [
           "1.5406717942754362724727615099",
@@ -810,7 +857,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "2.0514234789461294231421814125e-10"
       }
     },
     {
@@ -830,13 +878,15 @@
         2,
         8
       ],
-      "q": "-16",
+      "q": "32",
       "numerical": {
-        "det": "15.83789147",
-        "c_plus": "-1.349351316",
-        "c_minus": "2.086222682",
+        "det": "31.67578293",
+        "c_plus": "5.397405264",
+        "c_minus": "4.172445365",
         "L_second_derivative": "14.32688507"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -861,7 +911,7 @@
           "mesh": "meshes/997.a.997.2-Q.json"
         }
       ],
-      "determinant": "15.837891465976813324910395214",
+      "determinant": "31.675782931953626649820790429",
       "normalized_matrix": [
         [
           "-1.8089055323959000000000000000",
@@ -869,9 +919,9 @@
           "4.0825601544661000000000000000"
         ],
         [
-          "2.0004327303993000000000000000",
-          "0.29458622263354598249182964018",
-          "-1.4595473104434000000000000000"
+          "4.0008654607986000000000000000",
+          "0.58917244526709196498365928036",
+          "-2.9190946208868000000000000000"
         ],
         [
           "0.022929644718367000000000000000",
@@ -881,7 +931,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "2.7109737480783308383893860827e-10"
       }
     },
     {
@@ -901,13 +952,15 @@
         2,
         8
       ],
-      "q": "8",
+      "q": "16",
       "numerical": {
-        "det": "15.64842103",
-        "c_plus": "1.458232469",
-        "c_minus": "1.893368511",
+        "det": "31.29684206",
+        "c_plus": "5.832929876",
+        "c_minus": "3.786737022",
         "L_second_derivative": "7.216368916"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -932,7 +985,7 @@
           "mesh": "meshes/1051.b.1051.1-Q.json"
         }
       ],
-      "determinant": "15.648421030249265485928522314",
+      "determinant": "31.296842060498530971857044628",
       "normalized_matrix": [
         [
           "-1.8080907231533000000000000000",
@@ -940,9 +993,9 @@
           "4.0252537903452000000000000000"
         ],
         [
-          "1.9897968580526000000000000000",
-          "0.29275244219795320629987903340",
-          "-1.4010663544231000000000000000"
+          "3.9795937161052000000000000000",
+          "0.58550488439590641259975806680",
+          "-2.8021327088462000000000000000"
         ],
         [
           "0.066291518773639000000000000000",
@@ -952,7 +1005,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "7.3377434044345685513575404821e-11"
       }
     },
     {
@@ -972,13 +1026,15 @@
         2,
         2
       ],
-      "q": "8",
+      "q": "16",
       "numerical": {
-        "det": "3.912105258",
-        "c_plus": "-0.3645581173",
-        "c_minus": "-1.893368511",
+        "det": "7.824210515",
+        "c_plus": "1.458232469",
+        "c_minus": "3.786737022",
         "L_second_derivative": "7.216368916"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -1003,7 +1059,7 @@
           "mesh": "meshes/1051.b.1051.2-Q.json"
         }
       ],
-      "determinant": "3.9121052575625957971828893797",
+      "determinant": "7.8242105151251915943657787594",
       "normalized_matrix": [
         [
           "0.79516118976601000000000000000",
@@ -1011,9 +1067,9 @@
           "1.0063134475863000000000000000"
         ],
         [
-          "1.4042919736567000000000000000",
-          "-0.90684275914351000000000000000",
-          "-0.70053317721156000000000000000"
+          "2.8085839473134000000000000000",
+          "-1.8136855182870200000000000000",
+          "-1.4010663544231200000000000000"
         ],
         [
           "-4.5084605095940000000000000000",
@@ -1023,7 +1079,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "7.3448859960148470307733177089e-11"
       }
     },
     {
@@ -1043,13 +1100,15 @@
         2,
         8
       ],
-      "q": "24",
+      "q": "48",
       "numerical": {
-        "det": "15.61547213",
-        "c_plus": "1.343240281",
-        "c_minus": "1.888415471",
+        "det": "31.23094426",
+        "c_plus": "5.372961125",
+        "c_minus": "3.776830941",
         "L_second_derivative": "23.51447226"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -1074,7 +1133,7 @@
           "mesh": "meshes/1123.a.1123.1-Q.json"
         }
       ],
-      "determinant": "15.615472128959048672112597437",
+      "determinant": "31.230944257918097344225194873",
       "normalized_matrix": [
         [
           "-1.3900266632973000000000000000",
@@ -1082,9 +1141,9 @@
           "3.5809051986389000000000000000"
         ],
         [
-          "1.9474917368802000000000000000",
-          "0.043804995727367500000000000000",
-          "-0.87423871435453000000000000000"
+          "3.8949834737604000000000000000",
+          "0.087609991454735000000000000000",
+          "-1.7484774287090600000000000000"
         ],
         [
           "0.23182216090976000000000000000",
@@ -1094,7 +1153,8 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "2.0116361373090151333126206912e-11"
       }
     },
     {
@@ -1114,13 +1174,15 @@
         2,
         2
       ],
-      "q": "-16",
+      "q": "-64",
       "numerical": {
-        "det": "1.375789091",
-        "c_plus": "-0.1790401319",
-        "c_minus": "1.112827535",
+        "det": "2.751578182",
+        "c_plus": "0.7161605275",
+        "c_minus": "-4.451310140",
         "L_second_derivative": "17.58384002"
       },
+      "comparison_verified": true,
+      "integrality_verified": true,
       "functions": [
         {
           "name": "P",
@@ -1145,7 +1207,7 @@
           "mesh": "meshes/1147.a.35557.2-Q.json"
         }
       ],
-      "determinant": "1.3757890909346185308431222069",
+      "determinant": "2.7515781818692370616862444139",
       "normalized_matrix": [
         [
           "-10.129483230338000000000000000",
@@ -1153,9 +1215,9 @@
           "2.3827265613686000000000000000"
         ],
         [
-          "2.4116996374376000000000000000",
-          "0.63004133858990000000000000000",
-          "-0.44096321109002000000000000000"
+          "4.8233992748752000000000000000",
+          "1.2600826771798000000000000000",
+          "-0.88192642218004000000000000000"
         ],
         [
           "-0.051154935868348000000000000000",
@@ -1165,9 +1227,9 @@
       ],
       "validation": {
         "period_agreement": "0.00000000000000000000000000000",
-        "determinant_rounds_as_printed": true
+        "determinant_rounds_as_printed": true,
+        "quotient_relative_error": "2.7848878151852095434379301500e-10"
       }
     }
-  ],
-  "exporter_source_sha256": "d50a0e4891ec63c65233287484ff693504024f624660b1cc3675288dbc267dde"
+  ]
 }

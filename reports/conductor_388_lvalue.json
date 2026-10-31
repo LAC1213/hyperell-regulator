@@ -1,0 +1,31 @@
+{
+  "curve": "388.a.776.1",
+  "f": "-x^4 + 2*x^2 + x",
+  "h": "x^3 + x + 1",
+  "toric_factor_at_2": "T^2 + T + 1",
+  "wedge_square_factor_at_2": "8*T^4 - 8*T^3 - T + 1",
+  "standard_factor_at_2": "-4*T^3 + 2*T^2 + T + 1",
+  "standard_conductor": 37636,
+  "good_factor_backend": "PARI lfungenus2/lfuneuler; standard factors, coefficients, values and FE checks use the package",
+  "checks": [
+    {
+      "digits": 8,
+      "coefficients": 4928,
+      "value": "2.6170256284",
+      "feq": "2.6469779602e-23"
+    },
+    {
+      "digits": 15,
+      "coefficients": 4928,
+      "value": "2.61702562836175902",
+      "feq": "6.61744490042422140e-24"
+    }
+  ],
+  "source_sha256": {
+    "hyperell_regulator/lfunction.py": "89f3bc63a2713497dae9bd50bbe050c3eca7499e106b4482f377b453dfb58059",
+    "hyperell_regulator/reduction.py": "011c1758697e23435e6187be31aeecfe2a4caf9beeb095e3e775f838ddd322aa"
+  },
+  "date": "2026-10-29",
+  "component_condition_at_2": "undecided; the Euler-factor calculation does not settle cycle integrality",
+  "precision_note": "The 8- and 15-digit calls use the same coefficient count. PARI warns that its additional guard precision would require more coefficients; the recorded functional-equation errors are below both requested decimal targets."
+}

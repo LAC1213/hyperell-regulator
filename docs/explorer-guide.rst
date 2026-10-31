@@ -87,13 +87,18 @@ regulator column is
 
 .. math::
 
-   \frac{2R_{ab}(\varphi_T)+\log|c|P_{ab}}{N}.
+   \frac{w_{ab}}{N}\left(2R_{ab}(\varphi_T)+\log|c|P_{ab}\right),
+   \qquad (w_{11},w_{12},w_{22})=(1,2,1).
 
 The catalog determinant uses the columns for :math:`P`, :math:`R`, and
-the ordinary periods, in that order. It is checked against the stored
-reference determinant. The catalog's exact comparison factor is
-:math:`q=2\pi c^+c^-L''(\mathrm{std},1)/\det`.
-L-values are not recomputed by the viewer or exporter.
+the periods multiplied by the same row weights, in that order. Thus the
+determinant :math:`D` uses :math:`(1,2\operatorname{Re}(z),|z|^2)`. It is
+checked against the rescaled stored reference determinant. The catalog uses
+full cycle periods and :math:`q=\pi c^+c^-L''(\mathrm{std},1)/D`.
+All sixteen quotients have numerical comparisons. The dagger for
+``388.a.776.1`` marks its still-undecided component condition at 2; its
+L-value now uses the supported split nodal-model Euler factor. L-values
+are retained as reference data by the viewer and exporter.
 
 Recompute the complete catalog
 ------------------------------
@@ -123,8 +128,10 @@ The exporter constructs the exact functions by Riemann--Roch and integrates
 each cover once, retaining both ordinary and logarithmic edge integrals.
 It checks sheet closure, edge traces, agreement of the periods from the two
 covers, display continuation residuals and the reference determinants.
-Completed curve/function exports are reused when resuming with identical
-inputs, precision and algorithm source hashes.
+Raw curve/function integrals are reused when the geometric inputs, precision
+and integration source hashes match. Determinant columns are normalized
+separately; their source hashes preserve the distinction from the original
+edge computations.
 
 The JSON files and the plotting library are served from
 ``docs/_extra/explorer``. Sphinx copies them to ``explorer/`` in its HTML

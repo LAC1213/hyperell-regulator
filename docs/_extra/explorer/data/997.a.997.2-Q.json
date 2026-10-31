@@ -27,7 +27,8 @@
       "period": "4.0825601544661",
       "regulator": "-3.9767481898159",
       "pairing": "5.0633530547276",
-      "normalized_regulator": "-1.7016408125876130073762458322"
+      "normalized_regulator": "-1.7016408125876130073762458322",
+      "determinant_period": "4.0825601544661000000000000000"
     },
     {
       "forms": [
@@ -37,7 +38,8 @@
       "period": "-1.4595473104434",
       "regulator": "0.16666378740649",
       "pairing": "-0.21220292480128",
-      "normalized_regulator": "0.29458622263354598249182964018"
+      "normalized_regulator": "0.58917244526709196498365928036",
+      "determinant_period": "-2.9190946208868000000000000000"
     },
     {
       "forms": [
@@ -47,7 +49,8 @@
       "period": "3.2799192497240",
       "regulator": "6.8993086255384",
       "pairing": "-8.7844725733679",
-      "normalized_regulator": "1.1564604612819795556324397471"
+      "normalized_regulator": "1.1564604612819795556324397471",
+      "determinant_period": "3.2799192497240000000000000000"
     }
   ],
   "edges": [
@@ -9625,13 +9628,15 @@
         2,
         8
       ],
-      "q": "-16",
+      "q": "32",
       "numerical": {
-        "det": "15.83789147",
-        "c_plus": "-1.349351316",
-        "c_minus": "2.086222682",
+        "det": "31.67578293",
+        "c_plus": "5.397405264",
+        "c_minus": "4.172445365",
         "L_second_derivative": "14.32688507"
-      }
+      },
+      "comparison_verified": true,
+      "integrality_verified": true
     },
     "function": "R",
     "point": [
@@ -9641,7 +9646,16 @@
     "order": 8,
     "pole": "Q",
     "norm_c": "1/4",
-    "normalization": "normalized_regulator = (2*regulator + log|c|*period)/N; (x-x(P))^N = c*Norm(phi)"
+    "weights": [
+      1,
+      2,
+      1
+    ],
+    "normalization": "normalized_regulator = w*(2*regulator + log|c|*period)/N; determinant_period = w*period; (x-x(P))^N = c*Norm(phi)"
   },
-  "exporter_source_sha256": "d50a0e4891ec63c65233287484ff693504024f624660b1cc3675288dbc267dde"
+  "exporter_source_sha256": "d50a0e4891ec63c65233287484ff693504024f624660b1cc3675288dbc267dde",
+  "normalization_source_sha256": {
+    "hyperell_regulator/experiments/small_conductor_explorer.py": "7b333b73eed46dad90aae03c7f29ef87b8049e08911d3ae2c906fd5823eb12b5",
+    "hyperell_regulator/experiments/beilinson.py": "f7b58e33e3a68ef0bbeded6dcdb1bb3ddf661b2e15ffff8f96666d974d0be9f3"
+  }
 }

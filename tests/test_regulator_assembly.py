@@ -55,7 +55,7 @@ def test_beilinson_determinant_integrates_two_covers():
     from hyperell_regulator.experiments.beilinson import beilinson_determinant_stokes
 
     # Both points are Weierstrass, with phi=x and x-1 of order two.  Their
-    # norms are squares, so the normalized columns equal the raw regulators.
+    # norms are squares. Only the mixed row gains a factor of two.
     f = x * (x - 1) * (x**3 + x + 1)
     p_per = np.array([2., -1., 3.])
     q_per = np.array([2. + 1e-12, -1., 3.])
@@ -68,7 +68,7 @@ def test_beilinson_determinant_integrates_two_covers():
         det, matrix, error = beilinson_determinant_stokes(
             f, (0, 0), 2, (1, 0), 2)
     assert integrate.call_count == 2
-    expected = np.column_stack([p_reg, q_reg, p_per])
+    expected = np.array([1., 2., 1.])[:, None] * np.column_stack([p_reg, q_reg, p_per])
     np.testing.assert_allclose(np.asarray(matrix, float), expected, rtol=0, atol=0)
     assert abs(float(det) - np.linalg.det(expected)) < 1e-12
     assert error is None

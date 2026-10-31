@@ -2,6 +2,7 @@
 
 import json
 import hashlib
+from fractions import Fraction
 from pathlib import Path
 
 import numpy as np
@@ -87,17 +88,31 @@ def test_complete_small_conductor_catalog_reassembles_all_pairings():
     assert [c['label'] for c in catalog['curves']] == [c['label'] for c in inputs['curves']]
     assert len(catalog['curves']) == 16 and catalog['display_digits'] == 10
     assert catalog['source_sha256']
+    assert catalog['conventions']['determinant_weights'] == [1, 2, 1]
     assert all(len(checksum) == 64 for checksum in catalog['source_sha256'].values())
     for curve in catalog['curves']:
         assert curve['validation']['determinant_rounds_as_printed']
         assert len(curve['functions']) == 2
         assert [f['name'] for f in curve['functions']] == ['P', 'R']
+        assert Fraction(curve['q']).denominator == 1
+        assert curve['comparison_verified']
+        assert curve['integrality_verified'] == (curve['label'] != '388.a.776.1')
+        matrix = np.array(curve['normalized_matrix'], float)
+        assert abs(np.linalg.det(matrix)/float(curve['determinant'])-1) < 1e-10
         for f in curve['functions']:
             data = json.loads((site/f['file']).read_text())
             assert data['degree'] == f['order']
             assert data['collection']['pole'] == 'Q'
             assert data['collection']['function'] == f['name']
-            assert data['source_sha256'] == catalog['source_sha256']
+            assert data['normalization_source_sha256'] == catalog['normalization_source_sha256']
+            for module, checksum in data['source_sha256'].items():
+                if module.startswith('hyperell_regulator/regulator/') and not module.endswith(('/api.py', '/plane.py', '/surfaces.py')):
+                    assert checksum == catalog['source_sha256'][module]
+            for w, pair in zip((1, 2, 1), data['pairings']):
+                assert abs(float(pair['determinant_period'])-w*float(pair['period'])) < 1e-12
+            column = curve['functions'].index(f)
+            np.testing.assert_allclose(matrix[:, column], [float(p['normalized_regulator']) for p in data['pairings']], rtol=1e-12)
+            np.testing.assert_allclose(matrix[:, 2], [float(p['determinant_period']) for p in data['pairings']], rtol=1e-10)
             assert not data['warnings'], (curve['label'], f['name'], data['warnings'])
             for edge in data['edges']:
                 assert all(lift['xyz'] and None not in lift['xyz'] for lift in edge['lifts'])

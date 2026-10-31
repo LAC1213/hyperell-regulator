@@ -63,11 +63,8 @@ when comparing saved reports or other normalizations.
 ## Beilinson experiments
 
 ```sh
-# Fetch curve data and test conductors below 1000; float64 by default.
-sage -python -m hyperell_regulator.experiments.beilinson 1000 --fetch
-
-# Reuse cached data and request 30-digit regulators and L-values.
-sage -python -m hyperell_regulator.experiments.beilinson 250 --prec 30 --digits 30 --edge-seconds 120
+# Reuse cached data and request 100-digit regulators and L-values.
+sage -python -m hyperell_regulator.experiments.beilinson 1300 --edge-seconds 600 --digits 100 --reg-digits 100
 
 # Test the parameter n=2 in the one-parameter family, without an L-value.
 sage -python -m hyperell_regulator.experiments.family_n 2 --no-lvalue
@@ -77,8 +74,8 @@ Both commands use float64 regulators and a 15-second edge limit by default.
 Use `--help` or the [experiment guide](docs/experiments.rst) for precision,
 budget, conductor, and cache options.
 
-Reports compare `q = det / (2*pi*c_plus*c_minus*L''(std,1))` with a rational
-guess. Data and results are cached under
+Reports use determinant weights `(1, 2 Re(z), |z|^2)` and compare
+`q = pi*c_plus*c_minus*L''(std,1)/D` with a rational guess. Data and results are cached under
 `lmfdb_cache/` and `results/` in the working directory; set
 `HYPERELL_REGULATOR_DATA` to choose another location.
 

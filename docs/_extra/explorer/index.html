@@ -67,7 +67,7 @@
         <section class="panel pairing-panel">
           <div class="section-label"><h2>Regulator pairings</h2><span>ωₐ = xᵃ⁻¹ dx/y</span></div>
           <div class="table-scroll"><table><thead><tr><th>(a, b)</th><th>Pairing −4Rₐᵦ/π</th><th>Package Rₐᵦ</th><th>Period Pₐᵦ</th></tr></thead><tbody id="pairings"></tbody></table></div>
-          <p class="caption">Rₐᵦ = −¼ Im ∫<sub>C</sub> log|φ| ωₐ ∧ ω̄ᵦ, after symmetrization. The period column uses weight 1. These pairings use the exact function shown above; the determinant uses the normalized columns described in the guide.</p>
+          <p class="caption">Rₐᵦ = −¼ Im ∫<sub>C</sub> log|φ| ωₐ ∧ ω̄ᵦ, after symmetrization. The period column is unweighted by log|φ|. These pairings use the exact function shown above; the determinant uses normalized columns with d₁₁ = 1, d₁₂ = 2 Re(z), d₂₂ = |z|².</p>
         </section>
       </div>
       <details class="notes"><summary>Numerical conventions &amp; display limits</summary><p id="geometry"></p><p>Values retain the decimal strings exported by SageMath. The digit target is checked by the integrator; it is not a certified error bound. Cut topology and display continuation use float64.</p><p>Both banks use the selected geometric orientation. To traverse a sheet boundary, use the positive bank toward ∞ and the negative bank toward 0.</p><p id="divisor"></p><p id="warnings"></p></details>
@@ -75,7 +75,7 @@
     <section class="panel curve-table">
       <div class="section-label"><h2>Genus 2 curves of small conductor</h2><span>select a row to explore</span></div>
       <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>R</th><th>n<sub>P</sub></th><th>n<sub>R</sub></th><th>Computed determinant</th><th>q</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
-      <p class="caption">Points use the models y² = F(x). The orders of P and R are relative to the common pole Q at infinity.</p>
+      <p class="caption">Points use the models y² = F(x). The orders of P and R are relative to the common pole Q at infinity. Here q = π c⁺c⁻L″(std,1)/D, using full cycle periods. All displayed q values have numerical comparisons. † marks the undecided component condition at 2; cycle integrality remains a manuscript claim.</p>
     </section>
   </main>
   <footer><span>hyperell-regulator</span><span>Exact inputs. Numerical integrals. Visible paths.</span></footer>

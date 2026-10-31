@@ -25,37 +25,39 @@ notation here these points are called `P`, `R`, and `Q`, respectively.
 The construction (infinity normalization)
 ============================================================
 
-With the common pole `Q` at infinity, a torsion point `P \in C(\QQ)` of order
-`n` gives `n P - n Q = \div(f^+)`; applying the hyperelliptic involution
-`F` gives `f^- := f^+ \circ F` with `\div(f^-) = n F(P) - n F(Q)`. Setting
-`\varphi := f^+ f^-`, so that
-`\div(\varphi) = n(P + F(P) - Q - F(Q))`, the cycle
+With the common pole `Q` at infinity, a torsion point `P \in C(\QQ)` of
+order `n` gives a function `\varphi` with `(\varphi)=n(P-Q)`. Write `\iota`
+for the hyperelliptic involution and
+`\operatorname{N}(\varphi)=\varphi(\varphi\circ\iota)`. Then
+`(\varphi\circ\iota)=n(\iota(P)-\iota(Q))`, and the cycle
 
 .. MATH::
 
-    \alpha_P = (\Delta C, \varphi \circ \pi_1) - (\Gamma_F, \varphi \circ \pi_1)
-      - (\{P\} \times C, \psi \circ \pi_2) + (\{F(P)\} \times C, \psi \circ \pi_2)
-      - (C \times \{Q\}, \psi \circ \pi_1) + (C \times \{F(Q)\}, \psi \circ \pi_1)
+    \alpha_P = (\Delta C, \operatorname{N}(\varphi) \circ \pi_1)
+      - (\Gamma_\iota, \operatorname{N}(\varphi) \circ \pi_1)
+      - (\{P\} \times C, \psi \circ \pi_2)
+      + (\{\iota(P)\} \times C, \psi \circ \pi_2)
+      - (C \times \{Q\}, \psi \circ \pi_1)
+      + (C \times \{\iota(Q)\}, \psi \circ \pi_1)
 
-with `\psi := f^+/f^-` defines a class in `\CH^2(C \times C, 1)`.  Since
-`\div(x - x(P)) = P + F(P) - Q - F(Q)`, one has
-`(x - x(P))^n = c\,\varphi` for some `c \in \QQ^\times`, whence the regulator
+with `\psi=\varphi/(\varphi\circ\iota)` defines a class in
+`\CH^2(C\times C,1)`. Since
+`(x-x(P))=P+\iota(P)-Q-\iota(Q)`, one has
+`(x-x(P))^n=c\operatorname{N}(\varphi)` for some `c\in\QQ^\times`, whence
 
 .. MATH::
 
     \langle \reg(\alpha_P), \delta_{ij} \rangle
       = \frac{1}{2\pi i} \int_{\CC} \frac{\log|m_P(z)|}{|f(z)|} d_{ij}(z)\,
-        dz\, d\overline z + \log|c|\, a_{ij},
+        dz\,d\overline z + \log|c|\,a_{ij}.
 
-`m_P` being the minimal polynomial of `x(P)` over `\QQ` -- here `x - x(P)`,
-since `P` is rational.  The `\log|c| a_{ij}` terms are killed by row
-operations against the third column, which is why the matrix below has the
-`1/|f|` integrals as its last column and needs no knowledge of `c`.
+Here `m_P=x-x(P)` since `P` is rational. The `\log|c|a_{ij}` terms are
+removed by column operations against the unweighted period column.
 
 What is computed
 ================
 
-For `d_{11} = 1`, `d_{12} = \Re(z)`, `d_{22} = |z|^2`, the matrix
+For `d_{11} = 1`, `d_{12} = 2\Re(z)`, `d_{22} = |z|^2`, the matrix
 
 .. MATH::
 
@@ -65,26 +67,30 @@ For `d_{11} = 1`, `d_{12} = \Re(z)`, `d_{22} = |z|^2`, the matrix
       \int \frac{\log|m_P|}{|f|} d_{22} & \int \frac{\log|m_R|}{|f|} d_{22} & \int \frac{d_{22}}{|f|}
     \end{pmatrix}
 
-and its determinant, by the Stokes regulator
+and its determinant `D`, by the Stokes regulator
 (:func:`hyperell_regulator.regulator.regulator_stokes`): the columns at `P`
 and `R` come from functions with divisors `n(P-Q)` and `m(R-Q)`; the third is the period
 vector.  A curve whose cut system the Stokes method cannot build is reported
 and skipped -- nothing here integrates over `\CC`.
-If the determinant is non-zero, Beilinson's conjecture predicts it is a
-rational multiple of `(2\pi i) c^+(C) c^-(C) L'''(\wedge^2 C, 1)`; the periods
-`c^\pm` are reported alongside, the cached standard `L`-value is computed when needed for the comparison.
+For non-zero `D`, the reported rational quotient is
+
+.. math:: q=\frac{\pi c^+(C)c^-(C)L''(\mathrm{std},1)}{D}.
+
+The signed minors `c^\pm` use full cycle periods. Integer rational guesses
+are identified in the result; numerical agreement is not an integrality proof.
 
 Caveats
 =======
 
 * Condition 2 is decided by :mod:`hyperell_regulator.reduction`, which
   cannot answer at `p = 2`.
-  A triple whose pairs are *undecided* at 2 is reported as such and skipped by
-  default; pass ``allow_undecided=True`` to use it anyway.
+  Triples whose component verdicts are *undecided* are included by default,
+  with those verdicts retained in the report. Pass ``allow_undecided=False``
+  or ``--exclude-undecided`` to require affirmative component verdicts.
 * Triples are pairwise non-conjugate: conjugate `P,R` give equal weights,
   while a point conjugate to the pole `Q` gives the constant weight 1.
-* Integrality of `\alpha_P` -- the existence of a suitable `c` -- is exactly
-  what condition 2 is a proxy for.  It is not verified independently here.
+* Condition 2 is the package's test for integrality of `\alpha_P`;
+  integrality is not certified independently here.
 
 Run with::
 
@@ -122,7 +128,8 @@ from hyperell_regulator.paths import data_path, ensure_parent
 from hyperell_regulator.regulator import c_invariants
 
 DEFAULT_CONDUCTOR_BOUND = 1000
-REPORT_VERSION = 8  # full semilunar periods; pivot ties at quadrature accuracy
+REPORT_VERSION = 9  # weights (1, 2 Re(z), |z|^2); q = pi c+ c- L'' / D
+DETERMINANT_WEIGHTS = (1, 2, 1)
 
 LVALUES = data_path("results", "lvalue_cache.json")
 RESULTS_OUT = data_path("results", "beilinson_results.json")
@@ -206,13 +213,14 @@ def lmfdb_rank(row):
 # searching for a usable triple
 # ---------------------------------------------------------------------------
 
-def find_triples(record, C, row=None, allow_undecided=False):
+def find_triples(record, C, row=None, allow_undecided=True):
     r"""
     All triples of distinct points meeting the three conditions, as
     dictionaries. The legacy key ``R`` stores the common pole `Q`.
 
-    A pair counts if its verdict is ``True`` (or ``None`` when
-    ``allow_undecided``) and the order of the difference is finite.
+    A pair counts if its verdict is ``True`` or, by default, ``None``, and
+    the order of the difference is finite. ``allow_undecided=False`` excludes
+    undecided pairs; a ``False`` verdict always excludes a pair.
     """
     # How is torsion certified?  With a rational Weierstrass point the order of
     # each difference was computed in J(QQ) and must be finite.  Without one
@@ -387,7 +395,7 @@ def _resolve_triple_orders(G, images, pole, t):
 def cut_conditioning(G, point, n, pole="infinity"):
     r"""
     ``(N, nodes, span, gap, detour)`` for the cut system of the `\varphi` with
-    `\operatorname{div}(\varphi) = nP - nQ` on `v^2 = G(u)`, with pole `Q`.
+    `(\varphi) = nP - nQ` on `v^2 = G(u)`, with pole `Q`.
 
     Everything the Stokes legs do is measured in ``span`` and ``gap`` --- the
     largest and smallest distance between two nodes --- so their ratio is what
@@ -476,17 +484,17 @@ def regulator_column_stokes(f, point, order, digits=None, pole="infinity"):
 
     The Stokes method needs a function whose divisor is `N A - N B`, and
     `x - x(P)` instead has divisor `P + \iota(P) - Q - \iota(Q)`.
-    We use `f^+` with `\div(f^+) = nP - nQ`, the function defining
-    the cycle `\alpha_P`, and `f^- = f^+ \circ \iota`.  Pointwise,
+    We use `\varphi` with `(\varphi) = nP - nQ`, the function defining
+    the cycle `\alpha_P`. Pointwise,
 
-    .. math:: \log|f^+| + \log|f^-|
-              = \log|\operatorname{N}(f^+)|
+    .. math:: \log|\varphi| + \log|\varphi\circ\iota|
+              = \log|\operatorname{N}(\varphi)|
               = n\log|x - x(P)| - \log|c| ,
 
-    where `(x - x(P))^n = c\,f^+f^-`.  The differential weights are
+    where `(x - x(P))^n = c\operatorname{N}(\varphi)`.  The differential weights are
     invariant under the hyperelliptic involution `\iota`, so the integrals
-    weighted by `\log|f^+|` and `\log|f^-|` agree.  Consequently the column
-    is `\frac{2}{n}` times the `\log|f^+|` regulator plus
+    weighted by `\log|\varphi|` and `\log|\varphi\circ\iota|` agree.  Consequently the column
+    is `\frac{2}{n}` times the `\log|\varphi|` regulator plus
     `\frac{\log|c|}{n}` times the periods.  The `\log|c|` term is the same
     one the third column removes by row operations, but it costs nothing to
     put it in and makes this column equal the plane integrator's outright.
@@ -502,7 +510,7 @@ def regulator_column_stokes(f, point, order, digits=None, pole="infinity"):
 
 def _regulator_column_and_periods(f, point, order, digits=None, pole="infinity"):
     """The normalized logarithmic column and its already-computed periods."""
-    from sage.all import QQ, log
+    from sage.all import QQ
 
     from hyperell_regulator.regulator import (
         function_with_divisor, periods_and_regulator_stokes)
@@ -524,13 +532,14 @@ def _regulator_column_and_periods(f, point, order, digits=None, pole="infinity")
         raise ArithmeticError("the requested normalized weight does not match N(phi)")
     field = RR if digits is None else per[0].parent()
     logc = field(abs(QQ(c))).log()
-    column = [field(2) / n * reg[i] + logc / n * per[i] for i in range(3)]
-    return column, per
+    column = [w * (field(2) / n * r + logc / n * p)
+              for w, r, p in zip(DETERMINANT_WEIGHTS, reg, per)]
+    return column, [w * p for w, p in zip(DETERMINANT_WEIGHTS, per)]
 
 
 def phi_string(f, point, n, width=200, pole="infinity"):
     r"""
-    `\varphi = A(u) + B(u)v` with `\operatorname{div}(\varphi) = nP - nR`,
+    `\varphi = A(u) + B(u)v` with `(\varphi) = n(P-Q)`,
     as a string over a common denominator, or the reason there is none.
 
     Long ones are cut off at ``width``: the function for a point of order 14
@@ -573,7 +582,7 @@ def _sage_real(v, digits):
 
 def beilinson_determinant_stokes(G, imP, nP, imQ, nQ, digits=None, pole="infinity"):
     r"""
-    The `3\times 3` determinant by the Stokes regulator.
+    The `3\times 3` determinant for weights `(1,2\Re(z),|z|^2)` by Stokes.
 
     Columns one and two are :func:`regulator_column_stokes` at the marked
     points `P` and `R`; the legacy argument names are ``imP`` and ``imQ``.
@@ -700,18 +709,12 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
 # ---------------------------------------------------------------------------
 
 def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
-    r"""
-    Compare the regulator determinant with `2\pi\, c^+(C)\, c^-(C)\, L''`.
+    r"""Guess the rational quotient `q=\pi c^+c^-L''(\mathrm{std},1)/D`.
 
-    Corollary "3x3 matrix" predicts a non-zero determinant is a *rational*
-    multiple of `(2\pi i)\, c^+(C)\, c^-(C)` times the leading `L`-derivative;
-    with `c^-` returned as the determinant of the imaginary part of the period
-    matrix, the normalisation that the data actually picks out is
-    `2\pi c^+ c^- L''(\mathrm{std}, 1)`.
-
-    Returns ``{}`` if any ingredient is missing, else a dictionary with the
-    ratio, the integer relation ``[m, n]`` from ``gp.lindep`` with
-    ``m*det + n*norm = 0``, the implied rational ``-n/m`` and the residual.
+    Returns ``{}`` for missing ingredients or a zero determinant. Otherwise
+    ``ratio`` is the numerical quotient, and ``relation=[m,n]`` means
+    ``m*norm+n*det=0``, with ``norm=pi*c_plus*c_minus*lval``. The rational
+    guess is ``-n/m``; ``rational_is_integer`` tests its denominator only.
     """
     if lval is None or c_plus is None or c_minus is None:
         return {}
@@ -720,17 +723,20 @@ def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
     F = RR if digits is None else RealField(int(3.33 * int(digits)) + 24)
     cv = (lambda v: RR(v)) if digits is None else (lambda v: _sage_real(v, digits))
     det, c_plus, c_minus, lval = (cv(det), cv(c_plus), cv(c_minus), cv(lval))
-    norm = 2 * F(pi) * c_plus * c_minus * lval
-    if norm == 0:
+    norm = F(pi) * c_plus * c_minus * lval
+    if det == 0 or norm == 0:
         return {}
-    out = {"normalisation": "2pi c+ c- L''(std,1)",
-           "norm_value": norm, "ratio": det / norm}
+    out = {"normalisation": "pi c+ c- L''(std,1) / D",
+           "norm_value": norm, "ratio": norm / det}
     try:
-        rel = [Integer(t) for t in gp.lindep([det, norm], bound)]
+        # Work with the quotient so tiny coordinate-scaled determinants are
+        # not mistaken for zero by the integer-relation search.
+        rel = [Integer(t) for t in gp.lindep([out["ratio"], F(1)], bound)]
         out["relation"] = rel
         if rel and rel[0] != 0:
             out["rational"] = -QQ(rel[1]) / QQ(rel[0])
-            out["residual"] = abs(rel[0] * det + rel[1] * norm)
+            out["rational_is_integer"] = out["rational"].denominator() == 1
+            out["residual"] = abs(rel[0] * norm + rel[1] * det)
             if out["rational"]:
                 out["relative_agreement"] = abs(out["ratio"] / out["rational"] - 1)
     except Exception as exc:
@@ -869,17 +875,17 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
             print("  WARNING: %s" % res["L_precision_warning"])
         e = res.get("comparison") or {}
         if "rational" in e:
-            print("  => det = (%s) * 2pi c+ c- L''(std,1)    residual %.2e"
+            print("  => pi c+ c- L''(std,1) = (%s) * D    residual %.2e"
                   "    [ratio % .14e]"
                   % (e["rational"], float(e["residual"]), float(e["ratio"])))
         elif "ratio" in e:
-            print("  => det / (2pi c+ c- L) = % .12e   (no relation found)"
+            print("  => pi c+ c- L / D = % .12e   (no relation found)"
                   % float(e["ratio"]))
         print("")
     return res
 
 
-def analyse(record, cache=CACHE, allow_undecided=False, verbose=True,
+def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
             with_periods=True, with_lvalue=True, digits=15,
             lindep_bound=8, geom_simple=True, reg_digits=None, tries=1):
     r"""
@@ -893,6 +899,9 @@ def analyse(record, cache=CACHE, allow_undecided=False, verbose=True,
 
     ``geom_simple`` restricts to curves whose Jacobian is geometrically
     simple, which is LMFDB's ``is_simple_geom``.
+
+    Undecided component verdicts are accepted by default and remain recorded
+    in the selected triple. Set ``allow_undecided=False`` to exclude them.
 
     ``digits`` is the `L`-value's precision and ``reg_digits`` the
     regulator's. The default regulator uses float64 (``reg_digits=None``);
@@ -1059,7 +1068,7 @@ def _monitored_result(result, verbose, max_edge_seconds, max_edge_steps):
 
 def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         out=RESULTS_OUT, force=False, digits=15, reg_digits=None,
-        allow_undecided=False, geom_simple=True, fetch=False,
+        allow_undecided=True, geom_simple=True, fetch=False,
         with_lvalue=True, tries=1, verbose=False, max_edge_seconds=15,
         max_edge_steps=100000):
     """Report cached curves with conductor < max_cond (default 1000).
@@ -1114,8 +1123,8 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         _report_row(res)
     counts = Counter(r["status"] for r in results)
     print("\n" + "; ".join("%s: %d" % item for item in sorted(counts.items())))
-    print("q = det / (2*pi*c+*c-*L''(std,1)); rel. error = abs(q/rational - 1).")
-    print("no_admissible_triple: no pairwise non-conjugate torsion triple passes the component test.")
+    print("q = pi*c+*c-*L''(std,1) / D; rel. error = abs(q/rational - 1).")
+    print("no_admissible_triple: no pairwise non-conjugate torsion triple satisfies the component policy.")
     print("no_usable_cover: triples exist, but their models or covering functions could not be constructed.")
     print("numerical_failure: a selected cover failed continuation, quadrature, or an integration limit.")
     if out is not None:
@@ -1145,7 +1154,11 @@ def main(argv=None):
                         help="exclusive conductor bound (default: 1000)")
     _add_report_arguments(parser, RESULTS_OUT)
     parser.add_argument("--fetch", action="store_true", help="extend the curve cache from LMFDB")
-    parser.add_argument("--allow-undecided", action="store_true")
+    component_policy = parser.add_mutually_exclusive_group()
+    component_policy.add_argument("--allow-undecided", action="store_true", default=True,
+                                  help="include undecided component verdicts (default)")
+    component_policy.add_argument("--exclude-undecided", dest="allow_undecided", action="store_false",
+                                  help="require affirmative component verdicts")
     parser.add_argument("--tries", type=int, default=1, help="number of ranked triples to try per curve")
     args = parser.parse_args(argv)
     if args.N < 1 or args.digits < 1 or args.tries < 1 or (args.reg_digits is not None and args.reg_digits < 5):

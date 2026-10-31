@@ -1,0 +1,724 @@
+{
+  "date": "2026-10-29",
+  "report_version": 9,
+  "conventions": {
+    "weights": [
+      1,
+      2,
+      1
+    ],
+    "quotient": "q = pi*c_plus*c_minus*L_second_derivative/D",
+    "periods": "full semilunar cycle periods"
+  },
+  "scope": "Cached geometrically simple curves of conductor < 2000; 15-digit regulators with 45-second edge limits, existing compatible L-value caches, and fresh L-values for both conductor-603 curves after generalizing toric Frobenius. Component-undecided triples are excluded.",
+  "status_counts": {
+    "ok": 20,
+    "no_admissible_triple": 273,
+    "numerical_failure": 1
+  },
+  "compared_curves": 20,
+  "all_computed_curve_factors_are_integers": true,
+  "curve_results": [
+    {
+      "label": "249.a.249.1",
+      "cond": 249,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "33.487731512664502865892",
+      "c_plus": "6.4459258435624562366684",
+      "c_minus": "9.1370065862429186154259",
+      "L_second_derivative": "5.06762704034705871364207594097049216336594195849737784294811770002876721938488077496057805002146863473935",
+      "L_digits": 100,
+      "feq_check": 1.663265562503184e-111,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "937.656482354607616153",
+        "ratio": "28.0000000000000458648",
+        "relation": [
+          "1",
+          "-28"
+        ],
+        "rational": "28",
+        "rational_is_integer": true,
+        "residual": "1.53590844469836396158e-12",
+        "relative_agreement": "1.63802894757533474418e-15"
+      }
+    },
+    {
+      "label": "277.a.277.1",
+      "cond": 277,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "35.861634681834503802754",
+      "c_plus": "-8.0514371559943924694380",
+      "c_minus": "3.2481533721903552702770",
+      "L_second_derivative": 6.547289332454138,
+      "L_digits": 15,
+      "feq_check": 6.617444900424222e-24,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-537.924520227518563194",
+        "ratio": "-15.0000000000000280565",
+        "relation": [
+          "1",
+          "15"
+        ],
+        "rational": "-15",
+        "rational_is_integer": true,
+        "residual": "1.00615284333305243791e-12",
+        "relative_agreement": "1.87043488302765428116e-15"
+      }
+    },
+    {
+      "label": "295.a.295.1",
+      "cond": 295,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "36.146388431545526053453",
+      "c_plus": "7.3141500752776948957035",
+      "c_minus": "-7.4521702237848543859400",
+      "L_second_derivative": "5.91053013805730563916299237996863580664930868241757712778463057345867868007048107544989513189385516807217",
+      "L_digits": 100,
+      "feq_check": 1.3306124500025471e-110,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-1012.09887608327450623",
+        "ratio": "-27.9999999999999938232",
+        "relation": [
+          "1",
+          "28"
+        ],
+        "rational": "-28",
+        "rational_is_integer": true,
+        "residual": "2.23269536539505430994e-13",
+        "relative_agreement": "2.20600519629081132794e-16"
+      }
+    },
+    {
+      "label": "349.a.349.1",
+      "cond": 349,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "34.336883832328426849381",
+      "c_plus": "6.9971210311577323182064",
+      "c_minus": "7.9192134024869744735042",
+      "L_second_derivative": "5.12841217003379587289942801928720352503633279953021058838959906061240397144054809800964105609346539201015",
+      "L_digits": 100,
+      "feq_check": 1.3306124500025471e-110,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "892.758979640539777915",
+        "ratio": "26.0000000000000197988",
+        "relation": [
+          "1",
+          "-26"
+        ],
+        "rational": "26",
+        "rational_is_integer": true,
+        "residual": "6.79830866080755047420e-13",
+        "relative_agreement": "7.61494266284640751452e-16"
+      }
+    },
+    {
+      "label": "389.a.389.1",
+      "cond": 389,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "3.9155119405551965533484",
+      "c_plus": "4.9496550325218322541332",
+      "c_minus": "-2.6979531657150914725207",
+      "L_second_derivative": "7.4665388451406660760025856237796801",
+      "L_digits": 30,
+      "feq_check": 7.174648137343064e-43,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-313.240955244420055951",
+        "ratio": "-80.0000000000011062878",
+        "relation": [
+          "1",
+          "80"
+        ],
+        "rational": "-80",
+        "rational_is_integer": true,
+        "residual": "4.33168323259180976237e-12",
+        "relative_agreement": "1.38285980634685577717e-14"
+      }
+    },
+    {
+      "label": "389.a.389.2",
+      "cond": 389,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "-31.324095524442056653033",
+      "c_plus": "4.9496550325218322541332",
+      "c_minus": "-5.3959063314301829450415",
+      "L_second_derivative": "7.46653884514066607600258562377968135226414695230975425020060127850803050214059540474206558921630526453772",
+      "L_digits": 100,
+      "feq_check": 3.326531125006368e-111,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-626.481910488840111902",
+        "ratio": "19.9999999999999674002",
+        "relation": [
+          "1",
+          "-20"
+        ],
+        "rational": "20",
+        "rational_is_integer": true,
+        "residual": "1.02115841824068631638e-12",
+        "relative_agreement": "1.62998869908176011179e-15"
+      }
+    },
+    {
+      "label": "523.a.523.1",
+      "cond": 523,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "36.745633283959888074000",
+      "c_plus": "6.2049760316939313042894",
+      "c_minus": "3.4137589002007260319260",
+      "L_second_derivative": "11.0436569031179508177682973923522506551618222604905236816091852013959799878430734361039716921533769646554",
+      "L_digits": 100,
+      "feq_check": 3.326531125006368e-111,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "734.912665679199341712",
+        "ratio": "20.0000000000000430046",
+        "relation": [
+          "1",
+          "-20"
+        ],
+        "rational": "20",
+        "rational_is_integer": true,
+        "residual": "1.58023203897239561400e-12",
+        "relative_agreement": "2.15023104132943104067e-15"
+      }
+    },
+    {
+      "label": "603.a.603.1",
+      "cond": 603,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "-6.8556315813750361886533e-11",
+      "c_plus": "-0.0016424570046161979935961",
+      "c_minus": "0.00020387908825445747069971",
+      "L_second_derivative": "2.6692598475444251974",
+      "L_digits": 15,
+      "feq_check": 6.617444900424222e-24,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-2.80806669573121549655e-6",
+        "ratio": "40960.0000000000098266",
+        "relation": [
+          "1",
+          "-40960"
+        ],
+        "rational": "40960",
+        "rational_is_integer": true,
+        "residual": "6.73676408819786174844e-22",
+        "relative_agreement": "2.39907470991440434360e-16"
+      }
+    },
+    {
+      "label": "603.a.603.2",
+      "cond": 603,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "37.689233197351018685955",
+      "c_plus": "6.7275038909079469817698",
+      "c_minus": "3.3403549819610311999440",
+      "L_second_derivative": "2.6692598475444251974",
+      "L_digits": 15,
+      "feq_check": 6.617444900424222e-24,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "188.446165986755521313",
+        "ratio": "5.00000000000001135292",
+        "relation": [
+          "1",
+          "-5"
+        ],
+        "rational": "5",
+        "rational_is_integer": true,
+        "residual": "4.27882826826292417266e-13",
+        "relative_agreement": "2.27058383522242644009e-15"
+      }
+    },
+    {
+      "label": "691.a.691.1",
+      "cond": 691,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "35.305626272648609666122",
+      "c_plus": "-4.7031422281571053645166",
+      "c_minus": "-4.2577919736017548757445",
+      "L_second_derivative": 8.979279253213255,
+      "L_digits": 15,
+      "feq_check": 6.617444900424222e-24,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "564.890020362376187559",
+        "ratio": "15.9999999999999556133",
+        "relation": [
+          "1",
+          "-16"
+        ],
+        "rational": "16",
+        "rational_is_integer": true,
+        "residual": "1.56709920647729594734e-12",
+        "relative_agreement": "2.77416694522173660348e-15"
+      }
+    },
+    {
+      "label": "709.a.709.1",
+      "cond": 709,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "-31.470354660212799846366",
+      "c_plus": "-4.5902904081140363246050",
+      "c_minus": "-1.8848394486573809558649",
+      "L_second_derivative": "9.26247878935721513032298306910953620903815564119739667271208149164287660316819633297052655771668560641010",
+      "L_digits": 100,
+      "feq_check": 8.31632781251592e-112,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "251.762837281702122478",
+        "ratio": "-7.99999999999999122052",
+        "relation": [
+          "1",
+          "8"
+        ],
+        "rational": "-8",
+        "rational_is_integer": true,
+        "residual": "2.76293284041592701605e-13",
+        "relative_agreement": "1.09743473294574792748e-15"
+      }
+    },
+    {
+      "label": "763.a.763.1",
+      "cond": 763,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "-34.859529663143103301242",
+      "c_plus": "7.6214375113063397293445",
+      "c_minus": "5.0505621720678064434651",
+      "L_second_derivative": "11.5306828480650435105721686101671063027770502557734703092071478000224609248346709201891885777762794160496",
+      "L_digits": 100,
+      "feq_check": 2.6612249000050942e-110,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "1394.38118652572413273",
+        "ratio": "-40.0000000000000000195",
+        "relation": [
+          "1",
+          "40"
+        ],
+        "rational": "-40",
+        "rational_is_integer": true,
+        "residual": "6.79577921713914179236e-16",
+        "relative_agreement": "4.87467461144849845134e-19"
+      }
+    },
+    {
+      "label": "909.a.909.1",
+      "cond": 909,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "32.342556155550945521743",
+      "c_plus": "-5.4513871081710760790884",
+      "c_minus": "-4.0516691899616787964078",
+      "L_second_derivative": 3.7288374649636933,
+      "L_digits": 15,
+      "feq_check": 5.820766091346741e-11,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "258.740449244407984679",
+        "ratio": "8.00000000000001300161",
+        "relation": [
+          "1",
+          "-8"
+        ],
+        "rational": "8",
+        "rational_is_integer": true,
+        "residual": "4.20505210513288929519e-13",
+        "relative_agreement": "1.62520084534740517912e-15"
+      }
+    },
+    {
+      "label": "925.a.925.1",
+      "cond": 925,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "31.624872015054230167826",
+      "c_plus": "5.2197334991443611329487",
+      "c_minus": "-3.7711075693754736448682",
+      "L_second_derivative": "2.04560437815951103997024852815309109529115912882767080291475888040455132415269095066652044075884613032740",
+      "L_digits": 100,
+      "feq_check": 3.326531125006368e-111,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-126.499488060217039774",
+        "ratio": "-4.00000000000000376612",
+        "relation": [
+          "1",
+          "4"
+        ],
+        "rational": "-4",
+        "rational_is_integer": true,
+        "residual": "1.19103064541957459621e-13",
+        "relative_agreement": "9.41530060432358220646e-16"
+      }
+    },
+    {
+      "label": "997.a.997.2",
+      "cond": 997,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "31.675782931952274212704",
+      "c_plus": "5.3974052638941358850388",
+      "c_minus": "4.1724453646984045462887",
+      "L_second_derivative": "14.3268850674319755633383170923525025689897074990059429146703353672494883239784009225897266996948907971603",
+      "L_digits": 100,
+      "feq_check": 3.326531125006368e-111,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "1013.62505382247113833",
+        "ratio": "31.9999999999999483368",
+        "relation": [
+          "1",
+          "-32"
+        ],
+        "rational": "32",
+        "rational_is_integer": true,
+        "residual": "1.63647274984551893695e-12",
+        "relative_agreement": "1.61447539653191600786e-15"
+      }
+    },
+    {
+      "label": "1051.b.1051.1",
+      "cond": 1051,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "31.296842060497516509466",
+      "c_plus": "5.8329298764547203859365",
+      "c_minus": "3.7867370221105360883485",
+      "L_second_derivative": "7.21636891575606779050049186264349470537987335565110442276317225169321206749287278921218776481760093302695",
+      "L_digits": 100,
+      "feq_check": 8.515919680016301e-109,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "500.749472967960334067",
+        "ratio": "16.0000000000000022340",
+        "relation": [
+          "1",
+          "-16"
+        ],
+        "rational": "16",
+        "rational_is_integer": true,
+        "residual": "6.99158612949002389314e-14",
+        "relative_agreement": "1.39622369926557104991e-16"
+      }
+    },
+    {
+      "label": "1051.b.1051.2",
+      "cond": 1051,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "7.8242105151243650345569",
+      "c_plus": "1.4582324691136800964841",
+      "c_minus": "3.7867370221105360883485",
+      "L_second_derivative": "7.21636891575606779050049186264349470537987335565110442276317225169321206749287278921218776481760093302695",
+      "L_digits": 100,
+      "feq_check": 8.515919680016301e-109,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "125.187368241990083517",
+        "ratio": "16.0000000000000310528",
+        "relation": [
+          "1",
+          "-16"
+        ],
+        "rational": "16",
+        "rational_is_integer": true,
+        "residual": "2.42963919924905902281e-13",
+        "relative_agreement": "1.94080214512080528183e-15"
+      }
+    },
+    {
+      "label": "1123.a.1123.1",
+      "cond": 1123,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "31.230944257917859923818",
+      "c_plus": "5.3729611254352747096164",
+      "c_minus": "3.7768309410720597441014",
+      "L_second_derivative": "23.5144722571731947517484379960407862617153026108935153383263744375245471924545140558700767213152195661625",
+      "L_digits": 100,
+      "feq_check": 3.326531125006368e-111,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "1499.08532438005713157",
+        "ratio": "47.9999999999999953643",
+        "relation": [
+          "1",
+          "-48"
+        ],
+        "rational": "48",
+        "rational_is_integer": true,
+        "residual": "1.44776551858072366485e-13",
+        "relative_agreement": "9.65765790635671889097e-17"
+      }
+    },
+    {
+      "label": "1147.a.35557.2",
+      "cond": 1147,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "2.7515781818694002154865",
+      "c_plus": "-0.71616052748036640451801",
+      "c_minus": "4.4513101401409613799842",
+      "L_second_derivative": "17.5838400150293913187377393495430000472543808010676696573595189897152473450730574687314725656547228993692",
+      "L_digits": 100,
+      "feq_check": 1.663265562503184e-111,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-176.101003639641843122",
+        "ratio": "-64.0000000000000833451",
+        "relation": [
+          "1",
+          "64"
+        ],
+        "rational": "-64",
+        "rational_is_integer": true,
+        "residual": "2.29330606154459770707e-13",
+        "relative_agreement": "1.30226741662433503910e-15"
+      }
+    },
+    {
+      "label": "1717.a.1717.2",
+      "cond": 1717,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "5.0710077595697881580574",
+      "c_plus": "-2.5530849168629785594931",
+      "c_minus": "3.7330607702158502547718",
+      "L_second_derivative": "43.356483221718231630",
+      "L_digits": 15,
+      "feq_check": 4.1359030627651384e-25,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-1298.17798644986618112",
+        "ratio": "-256.000000000000081375",
+        "relation": [
+          "1",
+          "256"
+        ],
+        "rational": "-256",
+        "rational_is_integer": true,
+        "residual": "4.12655803624928374518e-13",
+        "relative_agreement": "3.17873042137936136220e-16"
+      }
+    }
+  ],
+  "unresolved": [
+    {
+      "label": "997.a.997.1",
+      "status": "numerical_failure",
+      "error": "IntegrationLimitError: edge 57 (degree 2) exceeded its time budget of 45 seconds in quadrature_level; state={'precision': 15, 'fraction': '0.00048249901081985711403413223245355302392607761', 'level': 13, 't': 0.0994370091659506, 'h': 4.195329636144529e-05}",
+      "retry_15_digits_120_seconds": "IntegrationLimitError: edge 57 (degree 2) exceeded its time budget of 120 seconds in quadrature_level; state={'precision': 15, 'fraction': '0.00048249901081985711403413223245355302392607761', 'level': 14, 't': 0.9267876760210173, 'h': 1.6725243752656084e-05}",
+      "retry_float64_30_seconds": "RuntimeError: the sheet boundaries do not close: 2.36e-01"
+    }
+  ],
+  "family_scope": "n=-4 through 2, 15-digit regulator and L-value targets",
+  "all_computed_family_factors_are_integers": true,
+  "family_results": [
+    {
+      "label": "family_n(-4)",
+      "n": -4,
+      "cond": 5497,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "26.779797341376605915042",
+      "c_plus": "4.1076476864818829426440",
+      "c_minus": "-6.3233539727656733475669",
+      "L_second_derivative": "84.014974132562883782749092521929328",
+      "L_digits": 30,
+      "feq_check": 1.1210387714598537e-44,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-6855.62811939241143821",
+        "ratio": "-256.000000000000012097",
+        "relation": [
+          "1",
+          "256"
+        ],
+        "rational": "-256",
+        "rational_is_integer": true,
+        "residual": "3.23955272329978782864e-13",
+        "relative_agreement": "4.72538505449492801658e-17"
+      }
+    },
+    {
+      "label": "family_n(-3)",
+      "n": -3,
+      "cond": 7351,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "25.353173386866005759873",
+      "c_plus": "3.9314473807200052135613",
+      "c_minus": "-3.4645950908160401127134",
+      "L_second_derivative": "37.919052315014299574947073088964515",
+      "L_digits": 30,
+      "feq_check": 8.96831017167883e-44,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-1622.60309675942480134",
+        "ratio": "-64.0000000000000170674",
+        "relation": [
+          "1",
+          "64"
+        ],
+        "rational": "-64",
+        "rational_is_integer": true,
+        "residual": "4.32713110135041212345e-13",
+        "relative_agreement": "2.66678370805886223727e-16"
+      }
+    },
+    {
+      "label": "family_n(-2)",
+      "n": -2,
+      "cond": 7463,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "24.936558755630560983133",
+      "c_plus": "3.8044581798867156408051",
+      "c_minus": "3.7925993939912068242393",
+      "L_second_derivative": "70.415267224560447556422444073174637",
+      "L_digits": 30,
+      "feq_check": 2.2958874039497803e-41,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "3191.87952072070845678",
+        "ratio": "127.999999999999865697",
+        "relation": [
+          "1",
+          "-128"
+        ],
+        "rational": "128",
+        "rational_is_integer": true,
+        "residual": "3.34906581633820366051e-12",
+        "relative_agreement": "1.04924565214791149295e-15"
+      }
+    },
+    {
+      "label": "family_n(-1)",
+      "n": -1,
+      "cond": 5591,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "25.987130729754473520316",
+      "c_plus": "-3.9684658451481276131290",
+      "c_minus": "3.9931688049189624223345",
+      "L_second_derivative": "66.815636747682314994758028056296118",
+      "L_digits": 30,
+      "feq_check": 1.793662034335766e-43,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-3326.35273340857459694",
+        "ratio": "-128.000000000000076436",
+        "relation": [
+          "1",
+          "128"
+        ],
+        "rational": "-128",
+        "rational_is_integer": true,
+        "residual": "1.98634121303942201564e-12",
+        "relative_agreement": "5.97152933858361399666e-16"
+      }
+    },
+    {
+      "label": "family_n(0)",
+      "n": 0,
+      "cond": 6343,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "25.520933790366966381397",
+      "c_plus": "3.9265102099390247758492",
+      "c_minus": "3.8832333315588485334047",
+      "L_second_derivative": "68.195613379550856518562946023223910",
+      "L_digits": 30,
+      "feq_check": 3.587324068671532e-43,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "3266.67952516696764016",
+        "ratio": "127.999999999999841046",
+        "relation": [
+          "1",
+          "-128"
+        ],
+        "rational": "128",
+        "rational_is_integer": true,
+        "residual": "4.05665822114653629171e-12",
+        "relative_agreement": "1.24182928649713576058e-15"
+      }
+    },
+    {
+      "label": "family_n(1)",
+      "n": 1,
+      "cond": 8183,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "24.681729324889203976224",
+      "c_plus": "-3.6302367233454226891354",
+      "c_minus": "3.7943857625727552829176",
+      "L_second_derivative": "146.01223543645192609608540839435552",
+      "L_digits": 30,
+      "feq_check": 2.2420775429197073e-44,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-6318.52270717163249836",
+        "ratio": "-255.999999999999849299",
+        "relation": [
+          "1",
+          "256"
+        ],
+        "rational": "-256",
+        "rational_is_integer": true,
+        "residual": "3.71955417854952230527e-12",
+        "relative_agreement": "5.88674663451937887210e-16"
+      }
+    },
+    {
+      "label": "family_n(2)",
+      "n": 2,
+      "cond": 3431,
+      "status": "ok",
+      "regulator_digits": 15,
+      "det": "29.199019596201398237828",
+      "c_plus": "-3.3070983965406455240554",
+      "c_minus": "4.5421087186844459893109",
+      "L_second_derivative": "39.599867150650786063996004572489331",
+      "L_digits": 30,
+      "feq_check": 7.174648137343064e-43,
+      "comparison": {
+        "normalisation": "pi c+ c- L''(std,1) / D",
+        "norm_value": "-1868.73725415689032189",
+        "ratio": "-64.0000000000000285855",
+        "relation": [
+          "1",
+          "64"
+        ],
+        "rational": "-64",
+        "rational_is_integer": true,
+        "residual": "8.34669356200579137806e-13",
+        "relative_agreement": "4.46648943416665111794e-16"
+      }
+    }
+  ],
+  "conductor_388": "Excluded by the default component policy; its independent L-value check and manuscript-model quotient are retained separately.",
+  "source_sha256": {
+    "hyperell_regulator/experiments/beilinson.py": "f7b58e33e3a68ef0bbeded6dcdb1bb3ddf661b2e15ffff8f96666d974d0be9f3",
+    "hyperell_regulator/experiments/family_n.py": "0d1d508ac2475f9684ec8e17f6e66bf565f41897126c4e7bcf30462c17fd94bb",
+    "hyperell_regulator/lfunction.py": "89f3bc63a2713497dae9bd50bbe050c3eca7499e106b4482f377b453dfb58059"
+  }
+}

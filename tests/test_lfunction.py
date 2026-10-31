@@ -248,6 +248,55 @@ def test_pari_precision_restored_after_nested_failure():
     assert pari.get_real_precision() == previous
 
 
+@pytest.mark.parametrize('shift', [0, 1])
+def test_conductor_388_factor_at_two_is_detected_from_reduction(shift):
+    x = PolynomialRing(QQ, 'x').gen()
+    f, h = x+2*x**2-x**4, x**3+x+1
+    L = StandardLFunction(HyperellipticCurveWithReduction(f(x+shift), h(x+shift)))
+    T = L._RT.gen()
+    assert L.h1_euler_factor(2) == 1+T+T**2
+    assert L.wedge2_euler_factor(2) == (1-T)*(1-8*T**3)
+    assert L.euler_factor(2) == (1-T)*(1+2*T+4*T**2)
+    assert L.conductor() == 4*97**2
+    # An explicit wedge-square override still takes precedence.
+    L.bad_factors[2] = (1-2*T)*(1+T)
+    assert L.wedge2_euler_factor(2) == (1-2*T)*(1+T)
+
+
+def test_unsupported_reduction_at_two_still_requires_override():
+    L = StandardLFunction(HyperellipticCurveWithReduction(F))
+    with pytest.raises(NotImplementedError, match='at 2 only'):
+        L.wedge2_euler_factor(2)
+
+
+@pytest.mark.parametrize('entries', [
+    [1, 0, 0, 1], [-1, 0, 0, -1], [1, 0, 0, -1],
+    [0, -1, 1, -1], [0, -1, 1, 0], [0, -1, 1, 1],
+])
+def test_toric_factor_matches_exterior_square_monodromy_kernel(entries):
+    """Compute the invariant subspace directly, including order 3, 4 and 6."""
+    from itertools import combinations
+    from sage.all import Matrix, block_diagonal_matrix, block_matrix, identity_matrix, zero_matrix
+
+    M = Matrix(QQ, 2, 2, entries)
+    p = 7
+    frobenius = block_diagonal_matrix(M, p*M)
+    N = block_matrix([[zero_matrix(QQ, 2), identity_matrix(QQ, 2)],
+                      [zero_matrix(QQ, 2), zero_matrix(QQ, 2)]])
+    pairs = list(combinations(range(4), 2))
+    Fw = Matrix(QQ, [[frobenius[a, i]*frobenius[b, j]-frobenius[b, i]*frobenius[a, j]
+                     for i, j in pairs] for a, b in pairs])
+    Nw = Matrix(QQ, [[N[a, i]*(b == j)-N[b, i]*(a == j)
+                     +(a == i)*N[b, j]-(b == i)*N[a, j]
+                     for i, j in pairs] for a, b in pairs])
+    invariant = Nw.right_kernel()
+    restricted = Matrix(QQ, [invariant.coordinate_vector(Fw*v) for v in invariant.basis()])
+    L = StandardLFunction(HyperellipticCurveWithReduction(F))
+    U = L._RT(M.charpoly().reverse())
+    expected = L._RT(restricted.charpoly().reverse())
+    assert L._wedge2_totally_toric(p, U) == expected
+
+
 @pytest.mark.parametrize("workers", [2, 4, 8, None])
 @pytest.mark.parametrize("f", [F, 4 * (X**5 - X + 1) + (X**3 + X + 1)**2])
 def test_native_parallel_matrices_match_serial_and_sage(workers, f):

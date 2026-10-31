@@ -104,7 +104,7 @@ def test_family_lvalue_comparison_uses_regulator_precision():
     assert result['status'] == 'ok'
     assert periods.call_args.kwargs['prec'] == 35
     assert lvalue.call_args.kwargs['digits'] == 40
-    expected = det/(2*R.pi()*2*3*R('0.01'))
+    expected = R.pi()*2*3*R('0.01')/det
     assert abs(R(result['comparison']['ratio'])-expected) < R('1e-33')
     saved = json.loads(json.dumps(result, default=str))
     assert abs(R(saved['det'])-det) < R('1e-33')

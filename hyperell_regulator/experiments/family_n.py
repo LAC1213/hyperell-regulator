@@ -8,6 +8,8 @@ The same-component condition holds throughout this family; the optional
 Like ``beilinson``, the runner uses float64 by default, shares ordinary and
 logarithmic edge integrals, supports ``--prec`` for arbitrary precision, and
 saves precision-preserving JSON with per-edge limits and retryable failures.
+The determinant uses weights `(1,2\Re(z),|z|^2)` and reports
+`q=\pi c^+c^-L''(\mathrm{std},1)/D`, as in ``beilinson``.
 The standard conductor can be large: ``--no-lvalue`` skips L-values, and
 ``--max-conductor`` caps their cost. Run ``--help`` for parameter selection.
 """
@@ -277,7 +279,7 @@ def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
         results.append(result)
         b._report_row(result, stored=cached)
     print("; ".join('%s: %d' % item for item in sorted(Counter(r['status'] for r in results).items())))
-    print("q = det / (2*pi*c+*c-*L''(std,1)); rel. error = abs(q/rational - 1).")
+    print("q = pi*c+*c-*L''(std,1) / D; rel. error = abs(q/rational - 1).")
     if out is not None:
         print('Results: %s' % out)
     return results

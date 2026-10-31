@@ -3,7 +3,9 @@
     sage -python -m reports.remake_paper_tables
 
 Only periods are freshly integrated. The portable input snapshot records the
-saved determinants, L-values, original models and their precision/provenance.
+saved determinants for weights (1, Re(z), |z|^2), L-values, original models
+and their precision/provenance. The middle row is doubled for the current
+weights (1, 2 Re(z), |z|^2), and q = pi*c_plus*c_minus*L''/D.
 The only output is one LaTeX file containing the three replacement tables.
 """
 
@@ -87,21 +89,25 @@ def compute(source, precision, check_precision):
         ratio_digits = min(precision, original['old_period_digits'])
         if ratio_error > real(10)**(-ratio_digits + 5):
             raise ArithmeticError('period product multiplier did not converge: ' + label)
-        q = QQ(original['old_paper_q']) * multiplier
-        determinant = original['determinant']
-        if not rounded_match(determinant, original['original_display']['det']):
+        # Old q used 2*pi and an undoubled middle determinant row.
+        q = QQ(original['old_paper_q']) * multiplier / 4
+        if not rounded_match(original['determinant'], original['original_display']['det']):
             raise ArithmeticError('saved determinant disagrees with manuscript: ' + label)
+        with localcontext() as context:
+            context.prec = max(180, len(original['determinant']) + 5)
+            determinant = str(2 * Decimal(original['determinant']))
         lvalue = original['L_second_derivative']
         error = None
         if lvalue is not None:
             if not rounded_match(lvalue, original['original_display']['L_second_derivative']):
                 raise ArithmeticError('saved L-value disagrees with manuscript: ' + label)
-            numeric_q = 2*real.pi()*real(cp)*real(cm)*real(lvalue)/real(determinant)
+            numeric_q = real.pi()*real(cp)*real(cm)*real(lvalue)/real(determinant)
             error = abs(numeric_q/real(q)-1)
             verified_digits = min(precision, original['determinant_digits'], original['lvalue_digits'])
             if error > real(10)**(-verified_digits + 3):
                 raise ArithmeticError('rescaled identity exceeds input accuracy: ' + label)
-        row = dict(original, c_plus=cp.str(truncate=False), c_minus=cm.str(truncate=False),
+        row = dict(original, determinant=determinant,
+                   c_plus=cp.str(truncate=False), c_minus=cm.str(truncate=False),
                    new_paper_q=str(q),
                    relative_error=None if error is None else error.str(truncate=False))
         rows.append(row)
@@ -124,12 +130,14 @@ def render(rows, output, digits):
     for row in rows:
         label = curve_link(row['label'])
         pending = row['relative_error'] is None
-        marker = r'^{\dagger}' if pending else ''
+        integrality_pending = any(p['same_component_everywhere'] is not True
+                                  for p in row['integrality_component_verdicts'])
+        marker = r'^{\dagger}' if integrality_pending else ''
         points = r'\begin{gathered}' + r'\\'.join(
             '(' + ','.join(tex_rational(a) for a in point) + ')' for point in row['points']) + r'\end{gathered}'
         orders = r'\begin{gathered}' + r'\\'.join(map(str, row['orders'])) + r'\end{gathered}'
         integral = r'\begin{gathered}\mathrm{Yes}\\\mathrm{Yes}\end{gathered}'
-        if pending:
+        if integrality_pending:
             integral += marker
         torsion.append(label + ' & $' + points + '$ & $' + orders + '$ & $' + integral +
                        '$ & $' + tex_rational(row['new_paper_q']) + marker + '$ & $' + error_tex(row) + r'$ \\')
@@ -137,17 +145,16 @@ def render(rows, output, digits):
         models.append(label + dagger + ' & $' + row['polynomial_latex'] + r'$ \\')
         lvalue = row['L_second_derivative'] or row['original_display']['L_second_derivative']
         values = [tex_number(row[k], digits) for k in ('determinant', 'c_plus', 'c_minus')]
-        values += [tex_number(lvalue, digits) + marker, error_tex(row)]
+        values += [tex_number(lvalue, digits) + (r'^{\dagger}' if pending else ''), error_tex(row)]
         numerical.append(label + ' & ' + ' & '.join('$' + v + '$' for v in values) + r' \\')
     scope = (r'Errors use full saved values and freshly computed periods. Thirteen rows use '
              r'100-digit determinant and $L$-value inputs; \texttt{277.a.277.1} uses '
              r'15-digit determinant and 30-digit $L$-value inputs; \texttt{389.a.389.1} uses '
-             r'30-digit inputs. For $\dagger$ (\texttt{388.a.776.1}), $q$ is transported '
-             r'from the manuscript claim; the displayed $L$-value is copied from the manuscript '
-             r'and the relative error is unavailable.')
+             r'30-digit inputs. \texttt{388.a.776.1} uses a 15-digit determinant and a '
+             r'fresh 15-digit $L$-value, whose functional-equation error is below $10^{-23}$.')
     torsion += [r'\bottomrule\end{tabular}',
                 r'\caption{Torsion point classes with the full cycle period convention, '
-                r'$2\pi c^+c^-L^{\prime\prime}=qD$. Orders are relative to $\mathcal O^+$ '
+                r'$\pi c^+c^-L^{\prime\prime}=qD$. Orders are relative to $\mathcal O^+$ '
                 r'on the displayed model (the unique infinity for a quintic, or '
                 r'$y/x^3\to+1$ for a sextic). The fourth column records integrality. '
                 r'For $\dagger$, integrality retains the manuscript claim; the package '
@@ -161,11 +168,12 @@ def render(rows, output, digits):
                r'\label{tab:curve-models}', r'\end{table}']
     numerical += [r'\bottomrule\end{tabular}',
                   r'\caption{Numerical data with full cycle periods. $D$ is the determinant '
-                  r'of the real plane-integral matrix in the manuscript. The period columns '
+                  r'of the real plane-integral matrix with weights '
+                  r'$(d_{11},d_{12},d_{22})=(1,2\operatorname{Re}(z),|z|^2)$. The period columns '
                   r'are signed minors of the real and imaginary parts of the full cycle '
                   r'period matrix. Displayed numbers have ' + str(digits) +
                   r' significant digits; the error is '
-                  r'$|2\pi c^+c^-L^{\prime\prime}/(qD)-1|$. ' + scope + '}',
+                  r'$|\pi c^+c^-L^{\prime\prime}/(qD)-1|$. ' + scope + '}',
                   r'\label{tab:data}', r'\end{table}']
     fragments = dict(torsion=torsion, models=models, numerical=numerical)
     note = '% Generated by reports.remake_paper_tables; requires amsmath, booktabs, hyperref.\n'

@@ -33,6 +33,15 @@ def algorithm_sources():
             for path in paths}
 
 
+def normalization_sources():
+    """Record the code applying the determinant basis to saved raw integrals."""
+    from . import beilinson
+
+    package = Path(__file__).resolve().parents[2]
+    return {str(path.relative_to(package)): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in (Path(__file__).resolve(), Path(beilinson.__file__).resolve())}
+
+
 def function_at_marked_point(F, point, order):
     """Construct phi with divisor N(P-Q), choosing Q by y/x^3 -> 1 in degree six."""
     from sage.all import QQ
@@ -59,6 +68,7 @@ def compute_curve(entry, out, prec, edge_seconds):
     from hyperell_regulator.regulator.cover import Cover
     from hyperell_regulator.regulator.diagnostics import IntegrationMonitor
     from hyperell_regulator.regulator.explorer import cut_system_data, parse_expression
+    from .beilinson import DETERMINANT_WEIGHTS
 
     S = PolynomialRing(QQ, "x")
     F = S(parse_expression(entry["F"], S.fraction_field()))
@@ -69,37 +79,53 @@ def compute_curve(entry, out, prec, edge_seconds):
     for name, point, n in zip(("P", "R"), entry["points"], entry["orders"]):
         filename = "%s-%s.json" % (label, name)
         path = out / "data" / filename
+        # Older catalogs used Q for the second zero; reuse their raw integrals.
+        legacy = out / "data" / (label + "-Q.json")
+        if name == "R" and not path.exists() and legacy.exists():
+            path, filename = legacy, legacy.name
+        phi = function_at_marked_point(F, point, n)
         if path.is_file():
             data = json.loads(path.read_text())
-            if (data["precision"] != prec or data.get("collection", {}).get("entry") != entry
-                    or data.get("source_sha256") != source_hashes):
+            previous = data.get("collection", {}).get("entry", {})
+            if (data["precision"] != prec
+                    or any(previous.get(k) != entry[k] for k in ("label", "F", "points", "orders"))
+                    or any(data.get("source_sha256", {}).get(k) != v for k, v in source_hashes.items()
+                           if k.startswith("hyperell_regulator/regulator/")
+                           # Plane wrappers and mesh generation do not enter
+                           # the saved Stokes edge integrations.
+                           and not k.endswith(("/api.py", "/plane.py", "/surfaces.py")))):
                 raise ValueError("Cached inputs, precision or source changed; choose a new output directory")
         else:
             print("%s phi_%s: N=%d, target=%d" % (label, name, n, prec), flush=True)
-            phi = function_at_marked_point(F, point, n)
             with IntegrationMonitor(max_edge_seconds=edge_seconds, max_edge_steps=1000000):
                 data = cut_system_data(F, phi, prec)
-            cov = Cover(F, *phi)
-            num, den = cov.norm_exact()
-            c = (S.gen() - QQ(point[0]))**n * den/num
-            if c.numerator().degree() > 0 or c.denominator().degree() > 0:
-                raise ArithmeticError("Norm normalization is not constant")
-            logc = R(abs(QQ(c))).log()
-            for pair in data["pairings"]:
-                pair["normalized_regulator"] = str((2*R(pair["regulator"]) + logc*R(pair["period"]))/n)
-            data["collection"] = dict(entry=entry, function=name, point=point, order=n,
-                                 pole="Q", norm_c=str(c),
-                                 normalization="normalized_regulator = (2*regulator + log|c|*period)/N; (x-x(P))^N = c*Norm(phi)")
             data["source_sha256"] = source_hashes
-            save(path, data)
+        # Normalize afresh even when the expensive raw edge integrals are cached.
+        cov = Cover(F, *phi)
+        num, den = cov.norm_exact()
+        c = (S.gen() - QQ(point[0]))**n * den/num
+        if c.numerator().degree() > 0 or c.denominator().degree() > 0:
+            raise ArithmeticError("Norm normalization is not constant")
+        logc = R(abs(QQ(c))).log()
+        for w, pair in zip(DETERMINANT_WEIGHTS, data["pairings"]):
+            pair["normalized_regulator"] = str(w*(2*R(pair["regulator"]) + logc*R(pair["period"]))/n)
+            pair["determinant_period"] = str(w*R(pair["period"]))
+        data["collection"] = dict(entry=entry, function=name, point=point, order=n,
+                                  pole="Q", norm_c=str(c), weights=list(DETERMINANT_WEIGHTS),
+                                  normalization="normalized_regulator = w*(2*regulator + log|c|*period)/N; determinant_period = w*period; (x-x(P))^N = c*Norm(phi)")
+        data["normalization_source_sha256"] = normalization_sources()
+        save(path, data)
         functions.append(dict(name=name, order=n, point=point, file="data/"+filename,
                               warnings=data["warnings"], data=data))
+        mesh = out / "meshes" / filename
+        if mesh.is_file() and json.loads(mesh.read_text()).get("integral_data_sha256") == hashlib.sha256(path.read_bytes()).hexdigest():
+            functions[-1]["mesh"] = "meshes/"+filename
     p, q = [f.pop("data") for f in functions]
     agreement = max(abs(R(a["period"])-R(b["period"])) for a, b in zip(p["pairings"], q["pairings"]))
     scale = max(R(1), *(abs(R(a["period"])) for a in p["pairings"]))
     if agreement/scale > R("1e-10"):
         raise ArithmeticError("Ordinary periods from the two covers disagree")
-    rows = [[R(a["normalized_regulator"]), R(b["normalized_regulator"]), R(a["period"])]
+    rows = [[R(a["normalized_regulator"]), R(b["normalized_regulator"]), R(a["determinant_period"])]
             for a, b in zip(p["pairings"], q["pairings"])]
     determinant = matrix(R, rows).determinant()
     from decimal import Decimal, localcontext
@@ -109,9 +135,17 @@ def compute_curve(entry, out, prec, edge_seconds):
         printed_match = abs(Decimal(str(determinant)) - printed) <= Decimal(5).scaleb(printed.as_tuple().exponent-1)
     if not printed_match:
         raise ArithmeticError("Fresh determinant %s disagrees with reference %s" % (determinant, printed))
+    quotient_error = None
+    if entry["comparison_verified"]:
+        values = entry["numerical"]
+        quotient = R.pi()*R(values["c_plus"])*R(values["c_minus"])*R(values["L_second_derivative"])/determinant
+        quotient_error = abs(quotient/R(QQ(entry["q"]))-1)
+        if quotient_error > R("1e-8"):
+            raise ArithmeticError("Fresh quotient disagrees with reference: " + label)
     return dict(**entry, functions=functions, determinant=str(determinant),
                 normalized_matrix=[[str(v) for v in row] for row in rows],
-                validation=dict(period_agreement=str(agreement), determinant_rounds_as_printed=printed_match))
+                validation=dict(period_agreement=str(agreement), determinant_rounds_as_printed=printed_match,
+                                quotient_relative_error=None if quotient_error is None else str(quotient_error)))
 
 
 def main(argv=None):
@@ -165,6 +199,10 @@ def main(argv=None):
     manifest = dict(schema_version=1, display_digits=10, computation_digits=args.prec,
                     source=source["source"], input_sha256=hashlib.sha256(args.inputs.read_bytes()).hexdigest(),
                     source_sha256=algorithm_sources(),
+                    normalization_source_sha256=normalization_sources(),
+                    conventions=dict(determinant_weights=[1, 2, 1],
+                                     quotient="q = pi*c_plus*c_minus*L_second_derivative/D",
+                                     periods="full cycle periods"),
                     curves=[completed[e["label"]] for e in source["curves"]])
     save(args.out / "catalog.json", manifest)
     print("Saved catalog: %d curves, %d functions" % (len(completed), 2*len(completed)), flush=True)

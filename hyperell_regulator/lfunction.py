@@ -59,7 +59,6 @@ from sage.all import (
     SageObject,
     ZZ,
     gp,
-    identity_matrix,
     pari,
 )
 
@@ -267,8 +266,12 @@ class StandardLFunction(SageObject):
 
       .. MATH::
 
-          P_p^{\wedge^2}(T) = (1 - u_2 T)(1 - pT)^2(1 - u_2 p T),
-          \qquad u_2 = \det(\mathrm{Frob} \mid U) = \pm 1.
+          P_p^{\wedge^2}(T) = (1-dT)S(pT),\qquad
+          S(X)=1-(s^2-d)X+d(s^2-d)X^2-d^3X^3,
+
+      where `s` and `d` are the trace and determinant of Frobenius on `U`.
+      Here `S` is the Euler polynomial of `\operatorname{Sym}^2 U`.
+      This includes order-three Frobenius, as occurs at 2 for 388.a.776.1.
 
     The toric factor is read off the Frobenius action on
     `H_1` of the dual graph, via ``Cluster.homology_of_special_fibre``; the
@@ -325,13 +328,14 @@ class StandardLFunction(SageObject):
     Assumptions, all checked at runtime
     ===================================
 
-    * `p` odd, and `C` either semistable at `p` or tame with potentially good
-      reduction -- otherwise the prime must be supplied in ``bad_factors``.  In
-      particular `p = 2` always needs an override, cluster pictures needing odd
-      residue characteristic.
-    * Frobenius acts on `H_1` of the dual graph with `M^2 = 1`, so that its
-      eigenvalues are `\pm 1`.  This is what makes the `t = 2` bookkeeping above
-      valid; a higher-order graph automorphism raises.
+    * At odd primes, `C` is semistable or tame with potentially good reduction.
+      At 2, the implemented case is a model reducing to two rational
+      components meeting transversely at three points: modulo 2,
+      `f=A(A+h)`, with `\deg A\leq3` and squarefree cubic `h`. Its dual graph
+      has two fixed vertices and three edges permuted as the roots of `h`.
+      This gives a semistable toric factor without a cluster picture, and
+      covers 388.a.776.1, where `A=x` and `h=x^3+x+1` modulo 2.
+      Other bad factors at 2 still require ``bad_factors`` overrides.
     * `(1 - pT)` divides `P_p^{\wedge^2}` exactly.
 
     The real check on all of this is the functional equation: see
@@ -448,12 +452,41 @@ class StandardLFunction(SageObject):
                          if hasattr(image, "coefficient") else QQ(0)
                          for c in basis])
         Mfrob = Matrix(QQ, t, t, rows)
-        if Mfrob ** 2 != identity_matrix(QQ, t):
-            raise NotImplementedError(
-                "Frobenius acts on H_1 of the dual graph at %s with a matrix "
-                "of order > 2 (%s); the wedge^2 bookkeeping implemented here "
-                "assumes eigenvalues +-1" % (p, Mfrob.list()))
         return self._RT(Mfrob.charpoly().reverse())
+
+    def _wedge2_totally_toric(self, p, U):
+        """Exterior-square inertia invariants: wedge^2 U plus Sym^2 U(-1)."""
+        if U.degree() != 2 or U[0] != 1 or U[2] not in (-1, 1):
+            raise ArithmeticError("invalid rank-two toric Euler factor at %s: %s" % (p, U))
+        T = self._RT.gen()
+        trace, det = -U[1], U[2]
+        X = p*T
+        symmetric = 1-(trace**2-det)*X+det*(trace**2-det)*X**2-det**3*X**3
+        return (1-det*T)*symmetric
+
+    def _toric_factor_at_two(self):
+        """Detect two rational components joined at three ordinary nodes.
+
+        A squarefree cubic h and f=A(A+h) modulo 2 give the two components
+        y=A and y=A+h. Their intersections are exactly the roots of h;
+        h' nonzero there makes them nodes, and infinity is smooth. On graph
+        homology, Frobenius is the node permutation modulo its constant line.
+        """
+        S = PolynomialRing(GF(2), 'x')
+        try:
+            f, h = S(self.C.f), S(self.C.h)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return None
+        if h.degree() != 3 or not h.is_squarefree():
+            return None
+        if not any(A*(A+h) == f for A in
+                   (S([(bits >> i) & 1 for i in range(4)]) for bits in range(16))):
+            return None
+        T = self._RT.gen()
+        nodes = self._RT(1)
+        for factor, _ in h.factor():
+            nodes *= 1-T**factor.degree()
+        return nodes // (1-T)
 
     def wedge2_euler_factor(self, p):
         r"""
@@ -468,9 +501,15 @@ class StandardLFunction(SageObject):
             return wedge2_euler_factor(P)
 
         if p == 2:
+            U = self._toric_factor_at_two()
+            if U is not None:
+                if U != P:
+                    raise ArithmeticError("the nodal model's toric factor at 2 disagrees with h^1")
+                return self._wedge2_totally_toric(p, U)
             raise NotImplementedError(
-                "p = 2 is a bad prime and cluster pictures need odd residue "
-                "characteristic; supply the wedge^2 factor in bad_factors")
+                "at 2 only split nodal models with squarefree cubic h "
+                "are implemented; supply the wedge^2 "
+                "factor in bad_factors")
         if self.C.is_semistable_at(p) is not True:
             return self._wedge2_potentially_good(p, P)
 
@@ -488,8 +527,7 @@ class StandardLFunction(SageObject):
             b2 = A[2]
             W = A(gamma * T) * (1 - b2 * T) * (1 - gamma ** 2 * p * T)
         elif t == 2:
-            u2 = U[2]                           # det(Frob | U) = +-1
-            W = (1 - u2 * T) * (1 - p * T) ** 2 * (1 - u2 * p * T)
+            W = self._wedge2_totally_toric(p, U)
         else:
             raise NotImplementedError("toric rank %s at %s" % (t, p))
         return W

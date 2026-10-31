@@ -1,7 +1,7 @@
 /* Static viewer: computations and full precision stay in the exported JSON. */
 "use strict";
 const DIGITS = 10;
-const DATA_VERSION = "labels-1";
+const DATA_VERSION = "symmetric-basis-1";
 const COLORS = ["#bd5034", "#267f91", "#9267af", "#45956b", "#c28b24", "#3865a4", "#b65787"];
 const $ = (id) => document.getElementById(id);
 let catalog = null, current = null, selectedCurve = null, loadVersion = 0;
@@ -115,7 +115,7 @@ function renderCatalog() {
     cell(row, curve.orders[0]);
     cell(row, curve.orders[1]);
     cell(row, decimal(curve.determinant));
-    cell(row, curve.q); // Exact rational torsion/comparison data is never rounded.
+    cell(row, curve.q + (curve.integrality_verified ? "" : " †")); // Exact rational torsion/comparison data is never rounded.
     $("catalog-rows").append(row);
   });
   $("curve-select").disabled = false;
@@ -177,7 +177,7 @@ async function show(data, curve = null, f = null, mesh = null) {
   $("result-model").textContent = `y² = ${data.input.F}`;
   $("metadata").textContent = `genus ${data.genus} · ${data.degree} sheets · ${data.edges.length} edges · 10 digits shown`;
   $("exact-inputs").textContent = `F(x) = ${data.input.F}\nA(x) = ${data.input.A}\nB(x) = ${data.input.B}\nφ = A(x) + B(x)y`;
-  $("point-info").textContent = curve ? `div(φ_${f.name}) = ${f.order} (${f.name} − Q), with ${f.name} = (${f.point.join(", ")}) and Q the common pole at infinity. Normalized determinant: ${decimal(curve.determinant)}.` : "An imported result computed locally with hyperell-regulator.";
+  $("point-info").textContent = curve ? `(φ_${f.name}) = ${f.order} (${f.name} − Q), with ${f.name} = (${f.point.join(", ")}) and Q the common pole at infinity. Normalized determinant: ${decimal(curve.determinant)}.` : "An imported result computed locally with hyperell-regulator.";
   $("edge").replaceChildren();
   data.edges.forEach((e, i) => option($("edge"), i, `σ_${e.index}${e.infinite ? " → ∞" : ""}`));
   $("sheet").replaceChildren();
