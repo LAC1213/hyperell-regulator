@@ -68,20 +68,23 @@ class Integrator:
         if toward is not None and toward[1]>1:
             z,e=toward
             ratio=(b-z)/(a-z)
-            if abs(ratio.imag()) <= self.R('1e-9')*abs(ratio) and ratio.real()>0:
-                ratio=ratio.real()
+            ratio_abs=abs(ratio)
+            if abs(ratio.imag()) <= self.R('1e-9')*ratio_abs and ratio.real()>0:
+                # Near-collinearity selects the substitution; it must not
+                # move b. Float64 detour corners can lie slightly off the
+                # ray, and projecting the ratio leaves a gap to the next leg.
                 sa=(a-z)**(self.R(1)/e)
                 sb=sa*ratio**(self.R(1)/e)
                 parameter=lambda t:(1-t)*sa+t*sb
                 coord=lambda t:z+parameter(t)**e
                 rate=lambda t:e*parameter(t)**(e-1)*(sb-sa)
-                if ratio<self.R('1e-6'):
+                if ratio_abs<self.R('1e-6'):
                     lr=ratio.log()
                     radial=lambda t:(a-z)*(lr*t).exp()
                     coord=lambda t:z+radial(t)
                     rate=lambda t:lr*radial(t)
                     projected=[((v-z)/(a-z)).real() for v in self.critical_values+[self.zero]]
-                    cuts=sorted(set([self.R(0),self.R(1)]+[r.log()/lr for r in projected if ratio<r<1]))
+                    cuts=sorted(set([self.R(0),self.R(1)]+[r.log()/lr.real() for r in projected if ratio_abs<r<1]))
         # The x coordinate is singular at a finite-value point at infinity.
         # Reuse the float64 preflight's chart choices, then integrate each
         # chart group entirely at the requested precision.

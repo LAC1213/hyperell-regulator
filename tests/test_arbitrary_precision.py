@@ -1,5 +1,6 @@
 """Precision growth, exact coefficients, and full-precision report regressions."""
 import json
+import pytest
 from unittest.mock import patch
 from sage.all import QQ, RealField
 from hyperell_regulator.regulator import periods_and_regulator_stokes, c_invariants, IntegrationMonitor
@@ -17,6 +18,33 @@ def test_exact_chart_center_does_not_round_through_float64():
     inverse=Chart(Cover(F,x-q+1,1),ar,kind='inv',center=q)
     assert inverse.F[0]==0 and inverse.F[1]==1
     assert inverse.F[4]==1 and inverse.F[5]==2 and inverse.F[6]==1
+
+
+@pytest.mark.parametrize('ratio', [('0.25', '1e-17'), ('1e-8', '1e-25')])
+def test_nearly_radial_mp_path_preserves_endpoint_and_integrals(ratio):
+    from hyperell_regulator.regulator.cover import Cover
+    from hyperell_regulator.regulator._mp_continuation import Arithmetic
+    from hyperell_regulator.regulator._mp_stokes import Integrator
+
+    x=ring().gen();ar=Arithmetic(30)
+    engine=Integrator(Cover(x**5+x+1,x,0),ar)
+    a,z=ar.C(2,3),ar.C('-.5','.25')
+    b=z+(a-z)*ar.C(*ratio)
+    points=engine.fibre(a);lam=a.log()
+    # Exercise both finite-path substitutions near a ramified endpoint.
+    # Even an almost radial path must reach b without projecting it onto
+    # the ray through a: a following segment starts at the original b.
+    ends,ll,I,L=engine.finite(a,b,points,lam,toward=(z,2))
+    for xx,yy in ends:
+        assert abs(xx-b)<ar.R('1e-40')
+        assert abs(yy**2-engine.global_chart.F(xx))<ar.R('1e-40')
+    back,lb,Ib,Lb=engine.finite(b,a,ends,ll)
+    for p,q in zip(points,back):
+        for v,w in zip(p,q):assert abs(v-w)<ar.R('1e-40')
+    assert abs(lb-lam)<ar.R('1e-33')
+    for forward,reverse in ((I,Ib),(L,Lb)):
+        for row,rev in zip(forward,reverse):
+            for v,w in zip(row,rev):assert abs(v+w)<ar.R('1e-33')
 
 
 def test_report_preserves_decimal_digits_and_cli_precision():
