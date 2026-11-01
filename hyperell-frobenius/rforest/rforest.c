@@ -13,6 +13,12 @@
 // available for arithmetic and performance comparisons.
 _Thread_local int rforest_forward_differences = 1;
 
+void rforest_configure(int disable_fft, int forward_differences)
+{
+    hw_disable_fft = disable_fft;
+    rforest_forward_differences = forward_differences;
+}
+
 static mpz_t *transition_differences(mpz_t *M, int deg, int dim,
                                     long kbase, mpz_t *w)
 {

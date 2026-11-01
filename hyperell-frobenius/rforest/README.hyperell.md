@@ -27,6 +27,8 @@ Local changes:
 - `rforest.c`: evaluate consecutive polynomial matrices using exact forward
   differences. `HYPELLFROB_RFOREST_EVAL=powers` selects the original evaluator
   for independent comparisons; both paths use the same forest arithmetic.
+- `rforest.c` and `rforest.h`: configure worker-local controls through a C
+  function, avoiding incompatible C/C++ thread-local wrapper symbols on macOS.
 
 The FFT routines, crossover tables, and forest algorithm are upstream code.
 The parent Makefile builds the C sources with `-O3`, C11, and GMP, without

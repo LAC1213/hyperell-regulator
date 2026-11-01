@@ -5,6 +5,9 @@
 extern "C" {
 #endif
 
+// Local extension: configure this worker's FFT and polynomial evaluator.
+// Keep C thread-local access behind a C function for portable C++ linkage.
+void rforest_configure(int disable_fft, int forward_differences);
 
 /*
     Given a transiion matrix over Z[x]^(dim x dim) with entries

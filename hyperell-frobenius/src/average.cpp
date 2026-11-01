@@ -28,8 +28,6 @@
 extern "C" {
 void hw_mpz_setup(void);
 void hw_mpz_clear(void);
-extern thread_local int hw_disable_fft;
-extern thread_local int rforest_forward_differences;
 }
 
 NTL_CLIENT
@@ -305,9 +303,9 @@ struct RforestContext {
     explicit RforestContext(bool enabled) : active(enabled) {
         if (active) {
             const char* fft = std::getenv("HYPELLFROB_RFOREST_FFT");
-            hw_disable_fft = fft && std::strcmp(fft, "0") == 0;
             const char* evaluator = std::getenv("HYPELLFROB_RFOREST_EVAL");
-            rforest_forward_differences = !(evaluator && std::strcmp(evaluator, "powers") == 0);
+            rforest_configure(fft && std::strcmp(fft, "0") == 0,
+                              !(evaluator && std::strcmp(evaluator, "powers") == 0));
             hw_mpz_setup();
         }
     }
