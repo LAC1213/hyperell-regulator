@@ -1,5 +1,5 @@
 r"""
-Build the bundled ``hypellfrob`` driver as part of installing the package.
+Build the bundled ``rforest Frobenius`` driver as part of installing the package.
 
 ``sage -pip install git+<url>`` should leave nothing to do by hand, so the
 C++ in ``hyperell-frobenius`` is compiled here and the resulting ``euler``
@@ -83,7 +83,7 @@ class build_with_euler(build_py):
         except Exception as exc:                       # noqa: BLE001
             if os.environ.get("HYPERELL_REGULATOR_REQUIRE_EULER") == "1":
                 raise
-            print("hyperell-regulator: could not build the hypellfrob driver "
+            print("hyperell-regulator: could not build the rforest Frobenius driver "
                   "(%s); falling back to Sage's Frobenius matrices" % exc)
             return
         target.parent.mkdir(parents=True, exist_ok=True)

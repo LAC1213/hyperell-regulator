@@ -4,10 +4,13 @@ import os
 import runpy
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from setuptools import Distribution
+
+from hyperell_regulator import frobenius
 
 
 def build_module():
@@ -24,9 +27,9 @@ def test_sage_macos_venv_prefix():
         assert '/opt/homebrew' in module['_prefixes']()
 
 
-def smoke_output():
-    return "".join("%d 1 4 %s\n" % (p, " ".join(["0"] * 16))
-                   for p in (101, 103, 107, 109))
+def smoke_output(batch=None):
+    return next(expected for data, expected in frobenius._CHECK_CASES
+                if batch is None or data == batch)
 
 
 def test_make_paths_and_smoke_test():
@@ -66,34 +69,40 @@ def test_ntl_download_rejects_bad_checksum():
 
 
 def test_accelerator_check_rejects_parallel_corruption():
-    from types import SimpleNamespace
-    from hyperell_regulator import frobenius
     with patch.object(frobenius.subprocess, 'run') as run:
         run.side_effect = [SimpleNamespace(stdout=smoke_output()),
                            SimpleNamespace(stdout=smoke_output().replace(' 0', ' 2'))]
-        with pytest.raises(RuntimeError, match='parallel matrices differ'):
+        with pytest.raises(RuntimeError, match='matrices differ from verified reference'):
             frobenius._check_binary('/euler')
 
 
 def test_accelerator_check_includes_cpu_count():
-    from hyperell_regulator import frobenius
     with patch.object(frobenius.os, 'cpu_count', return_value=16), \
             patch.object(frobenius.subprocess, 'run') as run:
-        run.return_value.stdout = smoke_output()
+        run.side_effect = lambda *args, **kwargs: SimpleNamespace(
+            stdout=smoke_output(kwargs['input']))
         assert frobenius._check_binary('/euler') == (1, 4, 16)
         assert [call.args[0] for call in run.call_args_list] == [
-            ['/euler', '1', 'legacy'], ['/euler', '4', 'legacy'], ['/euler', '16', 'legacy']]
+            ['/euler', str(n), 'rforest'] for _ in range(2) for n in (1, 4, 16)]
 
 
 def test_rforest_check_rejects_declined_matrices():
-    from types import SimpleNamespace
-    from hyperell_regulator import frobenius
     with patch.object(frobenius.subprocess, 'run') as run:
-        run.side_effect = [SimpleNamespace(stdout=smoke_output()),
-                           SimpleNamespace(stdout='101 0\n103 0\n107 0\n109 0\n')]
-        with pytest.raises(RuntimeError, match='rforest matrices differ'):
-            frobenius._check_rforest_binary('/euler', (1,))
-    assert run.call_args.args[0] == ['/euler', '1', 'rforest-only']
+        run.return_value = SimpleNamespace(stdout='101 0\n103 0\n107 0\n109 0\n')
+        with pytest.raises(RuntimeError, match='matrices differ from verified reference'):
+            frobenius._check_binary('/euler')
+    assert run.call_args.args[0] == ['/euler', '1', 'rforest']
+
+
+def test_rforest_check_rejects_even_degree_corruption():
+    def output(*args, **kwargs):
+        expected = smoke_output(kwargs['input'])
+        if kwargs['input'].startswith('1 6 9'):
+            expected = expected.replace(' 205', ' 206')
+        return SimpleNamespace(stdout=expected)
+    with patch.object(frobenius.subprocess, 'run', side_effect=output):
+        with pytest.raises(RuntimeError, match='matrices differ from verified reference'):
+            frobenius._check_binary('/euler')
 
 
 @pytest.mark.parametrize('cpus, override, expected', [
@@ -111,7 +120,6 @@ def test_build_jobs(cpus, override, expected):
     (16, None, 16), (None, None, 1), (16, 3, 3), (16, 0, 1),
 ])
 def test_frobenius_worker_count(cpus, nthreads, expected, monkeypatch):
-    from hyperell_regulator import frobenius
     monkeypatch.delenv('HYPELLFROB_BACKEND', raising=False)
     monkeypatch.delenv('HYPELLFROB_THREADS', raising=False)
     with patch.object(frobenius, 'euler_binary', return_value='/euler'), \

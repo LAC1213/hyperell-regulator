@@ -422,7 +422,7 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
     for (auto& pair : pairs)
         pair.polynomial = std::make_shared<Pair::PolynomialBlock>(red, pair.a, pair.b);
     // The bounded prefix is exact over Q. Its denominator must be a
-    // p-adic unit; exceptional small primes retain native/Sage fallback.
+    // p-adic unit; exceptional small primes are left to the Sage caller.
     eligible.erase(std::remove_if(eligible.begin(), eligible.end(), [&](size_t idx) {
         for (const auto& pair : pairs)
             if (pair.polynomial->initial.d % jobs[idx].p == 0 ||

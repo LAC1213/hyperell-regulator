@@ -3,10 +3,9 @@ Frobenius polynomials at good primes, in bulk.
 
 An `L`-function needs the Euler factor at every good prime below a bound,
 and for a genus 2 curve that is thousands of `p`-adic Frobenius
-computations.  Sage will do them one at a time through its own
-``hypellfrob``; this module hands the whole list to David Harvey's
-``hypellfrob`` as a single batched, threaded job, so the per-call overhead
-is paid once and the primes run concurrently.
+computations. This module hands the whole list to a simultaneous,
+threaded implementation of Harvey's average polynomial time algorithm,
+sharing reduction products across primes through the rforest C library.
 
 The mathematics is unchanged.  The external program returns the matrix of
 Frobenius on `H^1_{\mathrm{dR}}` modulo `p^N`, and the characteristic
@@ -16,12 +15,9 @@ does: reduce `a_g, \dots, a_0` into the symmetric range mod `p^N`, with `N`
 Kedlaya's bound, and recover `a_{2g},\dots,a_{g+1}` from the functional
 equation `a_{2g-i} = a_i q^{g-i}`.
 
-The default ``rforest`` backend implements Harvey's simultaneous
-algorithm (arXiv:1210.8239) in C++, using the rforest C library to share
-reduction products across primes. Select it with the ``backend`` keyword
-or ``HYPELLFROB_BACKEND`` for L-function computations. Select ``legacy``
-to use the per-prime algorithm explicitly, for example for isolated large
-primes. Unsupported jobs retain native and Sage fallback.
+The native implementation uses Harvey's simultaneous algorithm
+(arXiv:1210.8239) for both odd and even degree models. Unsupported jobs
+fall back to Sage; there is no native per-prime backend.
 
 The program is built from ``hyperell-frobenius`` and ships with this
 package: ``sage -pip install`` compiles it and puts it in
@@ -67,11 +63,9 @@ def odd_model(f):
     r"""
     A monic, integral, **odd** degree model of `y^2 = f(x)`, or ``None``.
 
-    The fast path needs `Q` monic of odd degree `2g+1`; `4f + h^2` has even
-    degree whenever `h` has degree `g+1`. The legacy even degree routine is
-    linear in `p`, while rforest handles either parity directly. An odd
-    degree model exists exactly when the
-    curve has a rational Weierstrass point, and then
+    Rforest handles either parity directly, but a rational Weierstrass
+    point permits a smaller odd degree model. An odd degree model exists
+    exactly when the curve has a rational Weierstrass point, and then
 
     .. math:: u \mapsto u^{\deg f}\,f(r + 1/u)
 
@@ -148,8 +142,8 @@ def _lift(M, p, g, N):
 def _run(fcoeffs, jobs, nthreads, backend=None):
     """One call to the program: (ascending Q, [(p, N)]) -> {p: matrix}."""
     backend = backend or os.environ.get("HYPELLFROB_BACKEND", "rforest")
-    if backend not in ("legacy", "rforest"):
-        raise ValueError("backend must be 'rforest' or 'legacy'")
+    if backend != "rforest":
+        raise ValueError("backend must be 'rforest'; the per-prime backends have been removed")
     binary = euler_binary()
     if binary is None or not jobs:
         return {}
@@ -192,14 +186,12 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     restricting affine Frobenius to the kernel of the residue at infinity.
     Nonmonic even models use a common monic quadratic twist over the
     rationals; its local character is removed from the returned polynomial.
-    ``backend='legacy'`` selects the per-prime algorithm. The default is
-    ``$HYPELLFROB_BACKEND`` or ``'rforest'``. Both L-function classes honour
-    this environment variable.
+    Rforest is the only native backend. The optional ``backend`` keyword
+    and ``HYPELLFROB_BACKEND`` environment variable accept only ``'rforest'``.
 
     An even degree ``f`` is replaced by :func:`odd_model` where one exists.
-    Otherwise ``rforest`` uses simultaneous even degree reductions;
-    ``legacy`` uses the even degree reference routine,
-    which is linear in `p`. Unsupported jobs retain Sage fallback.
+    Otherwise rforest uses simultaneous even degree reductions.
+    Unsupported jobs retain Sage fallback.
 
     The default uses ``HYPELLFROB_THREADS`` if set, otherwise one worker per
     logical CPU (``os.cpu_count()``), or one if the CPU count is unavailable.
@@ -225,14 +217,12 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     g = (fz.degree() - 1) // 2
     primes = [int(p) for p in primes]
     jobs = [(p, _bound(p, g)) for p in primes]
-    # the fast path wants a monic odd degree model; when the curve has a
-    # rational Weierstrass point there is one, isomorphic over QQ, and it is
-    # what gets sent. Without one, rforest handles the even degree model
-    # directly; the other backends use the even degree reference routine.
+    # A rational Weierstrass point gives a smaller odd degree model,
+    # isomorphic over QQ. Otherwise use simultaneous even degree reductions.
     selected_backend = backend or os.environ.get("HYPELLFROB_BACKEND", "rforest")
     model = odd_model(fz)
     twist = ZZ(1)
-    if selected_backend == "rforest" and model is None and not fz.is_monic():
+    if model is None and not fz.is_monic():
         # c^(d-1)*f(X/c) is monic and integral. In even degree it is
         # isomorphic over Q to the c-twist of the input curve. The common
         # rational transformation preserves sharing between primes; undo
@@ -269,59 +259,54 @@ def frobenius_polynomial(f, p, *, backend=None):
     return frobenius_polynomials(f, [p], backend=backend)[int(p)]
 
 
+# Fixed full-matrix references for odd and even degree, verified against
+# the former independent implementations and Sage characteristic polynomials.
+# Kept here so build isolation can check arithmetic without importing Sage.
+_CHECK_CASES = (
+    (
+        (
+            '1 0 0 1 0 1\n'
+            '101 3\n'
+            '103 3\n'
+            '107 3\n'
+            '109 3\n'
+            '31 3\n'
+        ),
+        (
+            '101 1 4 1011616 996870 945785 288208 460661 90799 98296 265518 397738 476518 632995 265953 658419 476922 143336 325199\n'
+            '103 1 4 689070 435175 295697 185257 399846 888272 442156 365773 1000336 732536 812626 320027 407777 109592 101499 888207\n'
+            '107 1 4 1037579 558968 609797 378854 503863 1165979 895436 1133730 193028 141775 1186127 1210054 474010 451540 119495 285437\n'
+            '109 1 4 1170878 640702 152452 271988 507286 748612 1080818 597880 992663 888786 543370 1020913 877559 412129 531249 127182\n'
+            '31 0\n'
+        ),
+    ),
+    (
+        (
+            '1 6 9 2 -2 0 1\n'
+            '41 2\n'
+            '43 2\n'
+            '31 2\n'
+        ),
+        (
+            '41 1 4 205 205 725 396 164 328 1490 402 779 861 5 40 1025 82 1659 1144\n'
+            '43 1 4 645 1763 1235 43 1247 129 1247 565 1075 0 1204 1806 0 1548 645 1720\n'
+            '31 0\n'
+        ),
+    ),
+)
+
+
 def _check_binary(binary):
-    """Compare serial, four-worker, and CPU-count runs without Sage fallback."""
-    primes = (101, 103, 107, 109)
-    batch = "1 0 0 1 0 1\n" + "".join("%d 3\n" % p for p in primes)
-    serial = None
+    """Check odd/even arithmetic and worker counts, without any fallback."""
     workers = tuple(dict.fromkeys((1, 4, os.cpu_count() or 1)))
-    for count in workers:
-        result = subprocess.run([binary, str(count), "legacy"], input=batch, text=True,
-                                capture_output=True, check=True, timeout=30)
-        rows = [line.split() for line in result.stdout.splitlines()]
-        if len(rows) != len(primes) or any(
-                row[:3] != [str(p), "1", "4"] or len(row) != 19
-                for p, row in zip(primes, rows)):
-            raise RuntimeError("unexpected driver output: " + result.stdout)
-        if serial is not None and rows != serial:
-            raise RuntimeError("parallel matrices differ from serial")
-        serial = rows
+    for batch, expected in _CHECK_CASES:
+        for count in workers:
+            result = subprocess.run([binary, str(count), "rforest"], input=batch, text=True,
+                                    capture_output=True, check=True, timeout=30)
+            if result.stdout != expected:
+                raise RuntimeError("Frobenius matrices differ from verified reference: " +
+                                   result.stdout)
     return workers
-
-
-def _check_rforest_binary(binary, workers):
-    """Compare the new backend's full matrices; fallback is prohibited."""
-    batch = "1 0 0 1 0 1\n101 3\n103 3\n107 3\n109 3\n"
-    reference = subprocess.run([binary, "1", "legacy"], input=batch,
-                               text=True, capture_output=True, check=True,
-                               timeout=30).stdout
-    for count in workers:
-        # 31 satisfies the old algorithm's p>25 precondition at N=3,
-        # but fails the new path's p-admissibility test. This also detects
-        # stale binaries which silently ignore the backend argument.
-        result = subprocess.run([binary, str(count), "rforest-only"],
-                                input=batch + "31 3\n", text=True, capture_output=True,
-                                check=True, timeout=30)
-        if result.stdout != reference + "31 0\n":
-            raise RuntimeError("rforest matrices differ from legacy")
-
-
-def _check_rforest_even_binary(binary, workers):
-    """Require genuine even-degree rforest support, in the reference basis."""
-    batch = "1 6 9 2 -2 0 1\n41 2\n43 2\n"
-    reference = subprocess.run([binary, "1", "legacy"], input=batch,
-                               text=True, capture_output=True, check=True,
-                               timeout=30).stdout
-    rows = [line.split() for line in reference.splitlines()]
-    if len(rows) != 2 or any(row[:3] != [str(p), "1", "4"] or len(row) != 19
-                             for p, row in zip((41, 43), rows)):
-        raise RuntimeError("even-degree legacy reference did not supply matrices")
-    for count in workers:
-        result = subprocess.run([binary, str(count), "rforest-only"],
-                                input=batch+"31 2\n", text=True,
-                                capture_output=True, check=True, timeout=30)
-        if result.stdout != reference+"31 0\n":
-            raise RuntimeError("even-degree rforest matrices differ from legacy")
 
 
 if __name__ == "__main__":
@@ -335,10 +320,8 @@ if __name__ == "__main__":
         parser.exit(1, "Frobenius accelerator not found; computations use Sage.\n")
     try:
         workers = _check_binary(binary)
-        _check_rforest_binary(binary, workers)
-        _check_rforest_even_binary(binary, workers)
     except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
         parser.exit(1, "Accelerator failed: %s\n%s\n" %
                     (exc, getattr(exc, "stderr", "")))
-    print("All Frobenius backends agree with worker counts %s: %s" %
+    print("Rforest Frobenius checks passed with worker counts %s: %s" %
           (", ".join(map(str, workers)), binary))

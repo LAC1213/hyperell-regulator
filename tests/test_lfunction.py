@@ -1,16 +1,8 @@
 r"""Tests for the batched Frobenius path and the two `L`-functions.
 
-The Euler factors at good primes now come from David Harvey's
-``hypellfrob``, handed the whole list of primes as one threaded job rather
-than one prime at a time.  The mathematics must be unchanged, so the first
-thing checked is that the batched factors are *identical* to Sage's, prime
-by prime; and that removing the program falls back to Sage rather than
-failing.
-
-An even degree model -- which is what `4f + h^2` gives when `h` has degree
-`g+1` -- is replaced by its odd model when the curve has a rational
-Weierstrass point to move to infinity, and otherwise goes through a routine
-linear in `p`: correct, but not the same speed.
+The good-prime Euler factors come from the simultaneous rforest algorithm,
+for either model parity. They must agree with Sage prime by prime, including
+when the native program declines a job or is unavailable.
 
 Then the two `L`-functions.  `L(C,s)` is checked against PARI's own
 ``lfungenus2`` -- coefficients and value both -- since that is an
@@ -119,11 +111,10 @@ def test_even_degree_with_a_weierstrass_point_takes_the_fast_path():
         assert got[p] == _sage_frobenius(f, p), p
 
 
-def test_even_degree_without_one_is_correct_if_slow():
+def test_even_degree_without_a_weierstrass_point():
     r"""
-    `4f + h^2` here has no rational Weierstrass point, so it goes through the
-    even degree routine: linear in `p`, and not able to reach the same speed,
-    but it must still be right.
+    The simultaneous even-degree algorithm handles models with no rational
+    Weierstrass point and must return the same Euler factors as Sage.
     """
     f = 4 * (X ** 5 - X + 1) + (X ** 3 + X + 1) ** 2
     assert odd_model(f) is None
@@ -316,7 +307,7 @@ def test_native_parallel_matrices_match_serial_and_sage(workers, f):
     if binary is None:
         pytest.skip("Frobenius accelerator not built")
     from hyperell_regulator.frobenius import _lift
-    ps = [int(p) for p in prime_range(31, 50) if f.discriminant() % p]
+    ps = [int(p) for p in prime_range(41, 60) if f.discriminant() % p]
     batch = " ".join(map(str, f.list())) + "\n"
     batch += "".join("%d 2\n" % p for p in ps)
     def run(n):

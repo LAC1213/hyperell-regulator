@@ -1,14 +1,15 @@
-"""Harvey 2013 against full 2007 matrices and independent Sage Euler factors.
+"""Simultaneous Frobenius against independent Sage matrices and Euler factors.
 
-The strict native mode is essential: fallback must not hide an arithmetic bug
-or an implementation that simply declines all the new backend's work.
+Native calls never use fallback. Tests require matrices for supported jobs,
+including even degree, and exercise the Sage fallback for unsupported jobs.
 """
 import random
 import os
 import subprocess
 
 import pytest
-from sage.all import GF, HyperellipticCurve, PolynomialRing, ZZ, prime_range
+from sage.all import GF, HyperellipticCurve, PolynomialRing, ZZ, matrix, prime_range
+from sage.schemes.hyperelliptic_curves.hypellfrob import hypellfrob
 
 from hyperell_regulator.frobenius import (
     _bound, _lift, euler_binary, frobenius_polynomials, odd_model,
@@ -38,20 +39,50 @@ def native(binary, q, jobs, backend="rforest-only", workers=1):
     return rows
 
 
-def test_native_default_uses_rforest_and_retains_fallback(binary):
+def sage_matrices(q, jobs):
+    """Independent full matrices for odd degree, in the same de Rham basis."""
+    rows = []
+    for p, n in jobs:
+        m = matrix(ZZ, hypellfrob(p, n, q))
+        rows.append([p, 1, m.nrows()] + [int(v) % p**n for v in m.list()])
+    return rows
+
+
+def check_characteristic_polynomials(q, jobs, rows):
+    """Compare every coefficient modulo p^N, without imposing reciprocity."""
+    genus = (q.degree()-1)//2
+    for (p, n), row in zip(jobs, rows):
+        assert row[:3] == [p, 1, 2*genus]
+        m = matrix(ZZ, 2*genus, 2*genus, row[3:])
+        expected = HyperellipticCurve(q.change_ring(GF(p))).frobenius_polynomial()
+        assert all((a-b) % p**n == 0 for a, b in zip(m.charpoly(), expected))
+
+
+def sage_polynomials(q, primes):
+    return {p: R(HyperellipticCurve(q.change_ring(GF(p))).frobenius_polynomial())
+            for p in primes}
+
+
+def test_native_default_uses_rforest_and_declines_unsupported_jobs(binary):
     batch = "1 6 9 2 -2 0 1\n41 2\n43 2\n31 2\n"
     env = dict(os.environ, HYPELLFROB_PROFILE="1")
     default = subprocess.run([binary, "4"], input=batch, text=True,
                              capture_output=True, check=True, timeout=30, env=env)
-    legacy = subprocess.run([binary, "4", "legacy"], input=batch, text=True,
-                            capture_output=True, check=True, timeout=30, env=env)
+    explicit = subprocess.run([binary, "4", "rforest-only"], input=batch, text=True,
+                              capture_output=True, check=True, timeout=30, env=env)
     assert "rforest a=" in default.stderr
-    assert "rforest a=" not in legacy.stderr
-    assert default.stdout == legacy.stdout
-    assert all(line.split()[1] == "1" for line in default.stdout.splitlines())
+    assert default.stdout == explicit.stdout
+    assert [line.split()[1] for line in default.stdout.splitlines()] == ["1", "1", "0"]
 
 
-def test_python_default_and_legacy_overrides(binary, monkeypatch):
+def test_native_rejects_removed_backend(binary):
+    result = subprocess.run([binary, "4", "legacy"], input="1 0 0 1 0 1\n101 2\n",
+                            text=True, capture_output=True)
+    assert result.returncode == 2
+    assert "backend must be rforest" in result.stderr
+
+
+def test_python_default_monicizes_even_models(binary, monkeypatch):
     from hyperell_regulator import frobenius
     monkeypatch.setenv("HYPELLFROB_EULER", binary)
     monkeypatch.delenv("HYPELLFROB_BACKEND", raising=False)
@@ -66,17 +97,22 @@ def test_python_default_and_legacy_overrides(binary, monkeypatch):
     monkeypatch.setattr(frobenius.subprocess, "run", capture)
     q = 2*(x**6-2*x**4+2*x**3+9*x**2+6*x+1)
     ps = [41, 43]
-    actual = frobenius_polynomials(q, ps, nthreads=4)
-    assert calls[-1][0] == [binary, "4", "rforest"]
-    assert calls[-1][1].split()[-1] == "1"  # default monicizes even input
-    expected = frobenius_polynomials(q, ps, nthreads=4, backend="legacy")
-    assert calls[-1][0] == [binary, "4", "legacy"]
-    assert actual == expected
-    monkeypatch.setenv("HYPELLFROB_BACKEND", "legacy")
+    expected = sage_polynomials(q, ps)
     assert frobenius_polynomials(q, ps, nthreads=4) == expected
-    assert calls[-1][0] == [binary, "4", "legacy"]
-    assert frobenius_polynomials(q, ps, nthreads=4, backend="rforest") == expected
     assert calls[-1][0] == [binary, "4", "rforest"]
+    assert calls[-1][1].split()[-1] == "1"
+    monkeypatch.setenv("HYPELLFROB_BACKEND", "rforest")
+    assert frobenius_polynomials(q, ps, nthreads=4) == expected
+
+
+@pytest.mark.parametrize("backend", ["legacy", "unknown"])
+def test_python_rejects_removed_or_unknown_backend(monkeypatch, backend):
+    monkeypatch.setenv("HYPELLFROB_EULER", "/nonexistent/euler")
+    with pytest.raises(ValueError, match="backend"):
+        frobenius_polynomials(x**5+x+1, [101], backend=backend)
+    monkeypatch.setenv("HYPELLFROB_BACKEND", backend)
+    with pytest.raises(ValueError, match="backend"):
+        frobenius_polynomials(x**5+x+1, [101])
 
 
 @pytest.mark.parametrize("q", [
@@ -91,7 +127,7 @@ def test_python_default_and_legacy_overrides(binary, monkeypatch):
 def test_full_matrices(binary, q, precision, backend):
     jobs = [(int(p), precision) for p in prime_range(151, 200)
             if q.discriminant() % p]
-    expected = native(binary, q, jobs, "legacy")
+    expected = sage_matrices(q, jobs)
     actual = native(binary, q, jobs, backend)
     assert all(row[1] == 1 for row in actual), actual
     assert actual == expected
@@ -101,7 +137,7 @@ def test_full_matrices(binary, q, precision, backend):
 def test_unsorted_duplicate_jobs_mixed_precision_and_threads(binary, backend):
     q = x**5 + x**3 + 1
     jobs = [(211, 2), (101, 3), (211, 2), (151, 1), (211, 3), (103, 3)]
-    expected = native(binary, q, jobs, "legacy")
+    expected = sage_matrices(q, jobs)
     for workers in (1, 4, 16):
         assert native(binary, q, jobs, backend, workers=workers) == expected
 
@@ -119,7 +155,7 @@ def test_dense_batch_and_deterministic_random_curves(binary, backend):
                     if q.discriminant() % p]
             actual = native(binary, q, jobs, backend)
             assert all(row[1] == 1 for row in actual)
-            assert actual == native(binary, q, jobs, "legacy")
+            assert actual == sage_matrices(q, jobs)
 
 
 @pytest.mark.parametrize("q,jobs", [
@@ -130,12 +166,12 @@ def test_dense_batch_and_deterministic_random_curves(binary, backend):
     ((x+1)**2*(x**3+2), [(101, 2)]),
 ])
 @pytest.mark.parametrize("backend", ["rforest-only"])
-def test_declines_and_native_fallback(binary, q, jobs, backend):
+def test_declines_without_native_fallback(binary, q, jobs, backend):
     strict = native(binary, q, jobs, backend)
     # Each case deliberately includes at least one unsupported job.
     assert any(row[1] == 0 for row in strict)
     if q.is_monic() and q.is_squarefree():
-        assert native(binary, q, jobs, backend.removesuffix("-only")) == native(binary, q, jobs, "legacy")
+        assert native(binary, q, jobs, "rforest") == strict
 
 
 @pytest.mark.parametrize("backend", ["rforest-only"])
@@ -167,7 +203,7 @@ def test_python_api_models_and_environment(binary, monkeypatch, backend):
     for q in (x**5+x**3+1, (x-1)*(x**5+x+3), x**6+x+1):
         good = [p for p in ps if q.discriminant() % p and
                 (odd_model(q) is None or odd_model(q).discriminant() % p)]
-        expected = frobenius_polynomials(q, good, backend="legacy")
+        expected = sage_polynomials(q, good)
         assert frobenius_polynomials(q, good, backend=backend) == expected
         monkeypatch.setenv("HYPELLFROB_BACKEND", backend)
         assert frobenius_polynomials(q, good) == expected
@@ -184,8 +220,9 @@ def test_lfunction_coefficients_use_new_backend(binary, monkeypatch, backend):
     # no automatic bad factor at 2 for the other test curve.
     q = (x**3+1)**2 + 4*(x**2+x)
     for cls in (CurveLFunction, StandardLFunction):
-        monkeypatch.setenv("HYPELLFROB_BACKEND", "legacy")
+        monkeypatch.setenv("HYPELLFROB_EULER", "/nonexistent/euler")
         expected = cls(HyperellipticCurveWithReduction(q)).dirichlet_coefficients(250)
+        monkeypatch.setenv("HYPELLFROB_EULER", binary)
         monkeypatch.setenv("HYPELLFROB_BACKEND", backend)
         actual = cls(HyperellipticCurveWithReduction(q)).dirichlet_coefficients(250)
         assert actual == expected
@@ -207,7 +244,7 @@ def test_conductor_388_uses_even_degree_forest(binary, monkeypatch):
     assert all(row[:3] == [p, 1, 4] for (p, _), row in zip(jobs, strict))
     actual = native(binary, q, jobs, "rforest", workers=4)
     assert actual == strict
-    assert actual == native(binary, q, jobs, "legacy", workers=4)
+    check_characteristic_polynomials(q, jobs, actual)
     reference = pari.lfungenus2([pari(str(f)), pari(str(h))])
     for (p, n), row in zip(jobs, actual):
         assert row[:3] == [p, 1, 4]
@@ -217,8 +254,9 @@ def test_conductor_388_uses_even_degree_forest(binary, monkeypatch):
 
     monkeypatch.setenv("HYPELLFROB_EULER", binary)
     for cls in (CurveLFunction, StandardLFunction):
-        monkeypatch.setenv("HYPELLFROB_BACKEND", "legacy")
+        monkeypatch.setenv("HYPELLFROB_EULER", "/nonexistent/euler")
         expected = cls(HyperellipticCurveWithReduction(f, h)).dirichlet_coefficients(128)
+        monkeypatch.setenv("HYPELLFROB_EULER", binary)
         monkeypatch.setenv("HYPELLFROB_BACKEND", "rforest")
         actual = cls(HyperellipticCurveWithReduction(f, h)).dirichlet_coefficients(128)
         assert actual == expected
@@ -233,15 +271,15 @@ def test_conductor_388_uses_even_degree_forest(binary, monkeypatch):
     x**8-x+1,
 ])
 @pytest.mark.parametrize("precision", [1, 2, 3, 4])
-def test_even_degree_full_matrices(binary, q, precision):
-    # One good prime beyond the common p-admissibility bound. Full entries,
-    # including higher p-adic digits, agree in the reference's residue basis.
+def test_even_degree_characteristic_polynomials_at_full_precision(binary, q, precision):
+    # One good prime beyond the common p-admissibility bound. Compare all
+    # characteristic coefficients, including higher p-adic digits.
     bound = q.degree()*(4*precision-1)
     p = next(p for p in prime_range(bound+1, bound+100) if q.discriminant()%p)
     jobs = [(int(p), precision)]
     actual = native(binary, q, jobs, "rforest-only", workers=4)
     assert actual[0][:3] == [p, 1, q.degree()-2]
-    assert actual == native(binary, q, jobs, "legacy", workers=4)
+    check_characteristic_polynomials(q, jobs, actual)
 
 
 @pytest.mark.parametrize("q", [x**4-x+1, x**6+x+1, x**6+x**2+x, x**8-x+1])
@@ -260,7 +298,8 @@ def test_even_degree_dense_euler_factors(binary, q):
 def test_even_degree_mixed_jobs_and_threads(binary):
     q = x**6-2*x**4+2*x**3+9*x**2+6*x+1
     jobs = [(101, 2), (83, 3), (101, 2), (71, 1), (101, 3), (89, 3)]
-    expected = native(binary, q, jobs, "legacy", workers=4)
+    expected = native(binary, q, jobs, workers=1)
+    check_characteristic_polynomials(q, jobs, expected)
     assert all(row[1] for row in expected)
     for workers in (1, 4, 16):
         assert native(binary, q, jobs, "rforest-only", workers=workers) == expected
@@ -306,7 +345,7 @@ def test_rforest_subtree_boundaries(binary, kappa):
     jobs = [(int(p), 2) for p in prime_range(37, 230) if q.discriminant() % p]
     jobs += [(101, 2), (211, 2)]
     random.Random(10).shuffle(jobs)
-    expected = native(binary, q, jobs, "legacy", workers=4)
+    expected = sage_matrices(q, jobs)
     batch = " ".join(map(str, q.list())) + "\n" + "".join("%d %d\n" % job for job in jobs)
     result = subprocess.run([binary, "4", "rforest-only", str(kappa)], input=batch,
                             capture_output=True, text=True, check=True, timeout=90)
@@ -321,7 +360,7 @@ def test_rforest_evaluators_and_fft_controls(binary, monkeypatch, evaluator, fft
     monkeypatch.setenv("HYPELLFROB_RFOREST_FFT", fft)
     q = x**5+x**3+1
     jobs = [(37, 2), (101, 2), (101, 2), (163, 3), (211, 2)]
-    expected = native(binary, q, jobs, "legacy", workers=4)
+    expected = sage_matrices(q, jobs)
     batch = " ".join(map(str, q.list())) + "\n" + "".join("%d %d\n" % job for job in jobs)
     result = subprocess.run([binary, "4", "rforest-only", str(kappa)], input=batch,
                             capture_output=True, text=True, check=True, timeout=90)

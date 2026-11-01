@@ -1,10 +1,8 @@
-"""Time native rforest/legacy runs and compare matrices or Euler factors.
+"""Time native rforest runs against independent Sage or saved references.
 
 Run with sage -python. Uses wait4 for per-process CPU time and peak RSS;
-wall time is measured with perf_counter. The strict rforest mode cannot
-silently pass a comparison by falling back to the old implementation.
-Use --hybrid to include native fallback in performance comparisons, or
---euler-reference for an independent smalljac lpdata coefficient file.
+wall time is measured with perf_counter. Unsupported jobs are declined.
+Reference generation is excluded from native timings.
 """
 import argparse
 import hashlib
@@ -19,7 +17,7 @@ import sys
 import tempfile
 import time
 
-from sage.all import PolynomialRing, ZZ, prime_range
+from sage.all import GF, HyperellipticCurve, PolynomialRing, ZZ, prime_range
 from sage.all import matrix as sage_matrix
 def precision(p, genus):
     # Exact integer form of the package's Kedlaya reconstruction bound.
@@ -45,9 +43,7 @@ def parse_rows(text, jobs, genus):
 
 
 def run(binary, workers, backend, kappa, batch, timeout, memory_mib, environment):
-    command = [binary, str(workers), backend]
-    if backend.startswith("rforest"):
-        command.append(str(kappa))
+    command = [binary, str(workers), backend, str(kappa)]
 
     def memory_limit():
         if memory_mib:
@@ -102,18 +98,18 @@ def main():
     parser.add_argument("--kappas", nargs="+", type=int, default=[-1])
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--coefficients", nargs="+", type=int, default=[1, 0, 0, 1, 0, 1])
-    parser.add_argument("--reference", help="saved legacy output; omit legacy timing")
-    parser.add_argument("--euler-reference", help="smalljac lpdata CSV (p,a1,...,ag); compare Euler factors and omit legacy timing")
+    references = parser.add_mutually_exclusive_group(required=True)
+    references.add_argument("--reference", help="saved native matrix output")
+    references.add_argument("--euler-reference", help="smalljac lpdata CSV (p,a1,...,ag)")
+    references.add_argument("--sage-reference", action="store_true",
+                            help="compute independent Sage Euler factors before timing")
     parser.add_argument("--reference-report", help="report recording the reference's input hash")
     parser.add_argument("--evaluator", choices=["differences", "powers"], default="differences")
     parser.add_argument("--no-fft", action="store_true")
-    parser.add_argument("--hybrid", action="store_true", help="include native fallback in rforest timings and comparisons")
     parser.add_argument("--timeout", type=float, default=7200)
     parser.add_argument("--memory-mib", type=int, default=8192)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
-    if args.reference and args.euler_reference:
-        parser.error("choose a matrix reference or an Euler-factor reference")
     if args.reference_report and not args.reference:
         parser.error("--reference-report requires --reference")
     if args.repeats < 1 or args.bound < 3 or any(w < 1 for w in args.workers) or \
@@ -143,16 +139,17 @@ def main():
               "platform": platform.platform(), "cpu_count": os.cpu_count(),
               "evaluator": args.evaluator, "fft": not args.no_fft, "repeats": args.repeats,
               "memory_limit_mib": args.memory_mib, "runs": [], "summaries": [], "status": "running"}
-    forest_backend = "rforest" if args.hybrid else "rforest-only"
-    report["strict_rforest"] = not args.hybrid
+    forest_backend = "rforest"
+    report["strict_rforest"] = True
     expected = None
     euler_expected = None
+    if args.euler_reference or args.sage_reference:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from hyperell_regulator.frobenius import _lift
     if args.euler_reference:
         # smalljac writes the independent L-polynomial coefficients
         # 1+a1*T+...+ag*T^g+...+p^g*T^(2g). Complete the functional
         # equation and compare to the lifted native characteristic polynomial.
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-        from hyperell_regulator.frobenius import _lift
         reference_text = Path(args.euler_reference).read_text()
         euler_expected = {}
         for line in reference_text.splitlines():
@@ -171,6 +168,13 @@ def main():
         report["reference"] = str(Path(args.euler_reference).resolve())
         report["reference_sha256"] = hashlib.sha256(reference_text.encode()).hexdigest()
         report["reference_header"] = reference_text.splitlines()[0]
+    if args.sage_reference:
+        euler_expected = {}
+        print(json.dumps({"event": "sage_reference", "jobs": len(jobs)}), flush=True)
+        for p, _ in jobs:
+            h = HyperellipticCurve(q.change_ring(GF(p)))
+            euler_expected[p] = [int(c) for c in h.frobenius_polynomial()]
+        report["reference"] = "Sage Frobenius polynomials"
     report["comparison"] = "euler_factors" if euler_expected is not None else "full_matrices"
     report["full_characteristic_moduli_checked"] = euler_expected is not None
     if args.reference:
@@ -195,8 +199,7 @@ def main():
     save()
     for workers in args.workers:
         for repeat in range(args.repeats):
-            variants = ([] if args.reference or args.euler_reference else [("legacy", -1)])
-            variants += [(forest_backend, k) for k in args.kappas]
+            variants = [(forest_backend, k) for k in args.kappas]
             if repeat%2:
                 variants.reverse()
             for backend, kappa in variants:
@@ -206,15 +209,11 @@ def main():
                 output, metrics = run(binary, workers, backend, kappa, batch, args.timeout,
                                       args.memory_mib, environment)
                 rows = parse_rows(output, jobs, genus)
-                if backend == "legacy" and expected is None:
-                    expected = rows
                 if expected is None and euler_expected is None:
                     raise RuntimeError("no reference matrices available")
                 compared = 0
                 for i, ((p, n), row) in enumerate(zip(jobs, rows)):
-                    if backend == "rforest" and expected is not None and row != expected[i]:
-                        raise AssertionError("hybrid matrix mismatch at p=%d" % p)
-                    if backend == "legacy" or row[1]:
+                    if row[1]:
                         if euler_expected is not None:
                             dim = 2*genus
                             matrix = [row[3+j*dim:3+(j+1)*dim] for j in range(dim)]
@@ -228,10 +227,10 @@ def main():
                         compared += int(row[1] == 1)
                     elif p > q.degree()*(4*n-1) and q[0]%p:
                         raise AssertionError("rforest unexpectedly declined p=%d" % p)
-                if backend != "legacy" and not compared:
+                if not compared:
                     raise AssertionError("rforest supplied no matrices")
                 record = {"backend": backend, "workers": workers, "kappa": kappa,
-                          "repeat": repeat,
+                          "repeat": repeat, "declined_jobs": len(jobs)-compared,
                           "matrices_compared": compared if euler_expected is None else 0,
                           "euler_factors_compared": compared if euler_expected is not None else 0,
                           "all_matrices_equal": True if euler_expected is None else None,
@@ -241,8 +240,7 @@ def main():
                 report["runs"].append(record)
                 print(json.dumps({"event": "completed", **record}), flush=True)
                 save()
-        for backend, kappa in (([("legacy", -1)] if not (args.reference or args.euler_reference) else [])+
-                               [(forest_backend, k) for k in args.kappas]):
+        for backend, kappa in [(forest_backend, k) for k in args.kappas]:
             selected = [r for r in report["runs"] if r["workers"] == workers and
                         r["backend"] == backend and r["kappa"] == kappa]
             report["summaries"].append({"backend": backend, "workers": workers,

@@ -34,10 +34,9 @@ Perl, and Make; if unavailable, computations fall back to Sage.
 See the [installation guide](docs/installation.rst) for build settings and
 [manual native build instructions](hyperell-frobenius/README.md).
 
-The native accelerator uses rforest by default for simultaneous Frobenius
-computations, including even degree models such as conductor 388. No backend
-environment setting is needed. Select `backend="legacy"` or set
-`HYPELLFROB_BACKEND=legacy` to use the per-prime implementation explicitly.
+The native accelerator uses rforest for simultaneous Frobenius computations,
+including even degree models such as conductor 388. It is the only native
+backend; unsupported primes fall back to Sage. No backend setting is needed.
 `HYPELLFROB_THREADS` controls workers for L-function computations; see the
 [backend guide](hyperell-frobenius/README.md#rforest-backend) for tuning and
 comparison commands. The bundled C library is in `hyperell-frobenius/rforest`.

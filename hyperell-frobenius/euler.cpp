@@ -1,8 +1,8 @@
 // Frobenius matrices for one curve at many primes, in parallel.
 //
-// Usage: euler [nthreads] [rforest|rforest-only|legacy] [kappa]
+// Usage: euler [nthreads] [rforest|rforest-only] [kappa]
 // rforest (default): simultaneous algorithm using the vendored C library.
-// rforest-only: prohibit legacy fallback when checking the new implementation.
+// rforest-only is an alias: unsupported jobs are always declined.
 //
 // Reads a job from stdin:
 //   line 1:  the coefficients of Q, ascending, whitespace separated
@@ -11,20 +11,9 @@
 //
 // Writes one line per job, in the input order:
 //   "<p> 1 <dim> <entries...>"   row-major, the 2g x 2g matrix mod p^N
-//   "<p> 0"                      matrix() declined: bad reduction, or a
+//   "<p> 0"                      declined: bad reduction, or a
 //                                precondition of the fast path failed
 //
-// In legacy mode odd degree goes through matrix(), which is O(sqrt p); even
-// degree through matrix_reference(), which is correct for either parity but
-// linear in p, so very much slower. The caller only sends an even degree
-// model when the curve has no rational Weierstrass point -- with one, it
-// moves that point to infinity first and sends the odd model instead.
-//
-// The point of the batching is that the caller pays NTL's setup and this
-// process's startup once for a whole L-function's worth of primes, and the
-// primes run concurrently.
-#include "hypellfrob.h"
-#include "even_degree.h"
 #include "average.h"
 #include <NTL/ZZX.h>
 #include <NTL/mat_ZZ.h>
@@ -33,7 +22,6 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include <atomic>
 #include <cstdlib>
 
 NTL_CLIENT
@@ -50,17 +38,15 @@ int main(int argc, char** argv) {
     int nthreads = argc > 1 ? atoi(argv[1]) : (int)std::thread::hardware_concurrency();
     if (nthreads < 1) nthreads = 1;
     std::string backend = argc > 2 ? argv[2] : "rforest";
-    const bool use_forest = backend == "rforest" || backend == "rforest-only";
-    const bool strict = backend == "rforest-only";
-    if (backend != "legacy" && !use_forest) {
-        std::cerr << "euler: backend must be rforest, rforest-only, or legacy\n";
+    if (backend != "rforest" && backend != "rforest-only") {
+        std::cerr << "euler: backend must be rforest or rforest-only\n";
         return 2;
     }
     int kappa = -1;
     if (argc > 3) {
         char* end;
         long value = std::strtol(argv[3], &end, 10);
-        if (!use_forest || end == argv[3] || *end || value < -1 || value > 30) {
+        if (end == argv[3] || *end || value < -1 || value > 30) {
             std::cerr << "euler: rforest kappa must be -1..30\n";
             return 2;
         }
@@ -98,39 +84,16 @@ int main(int argc, char** argv) {
         jobs.push_back(j);
     }
 
-    if (backend != "legacy") {
-        std::vector<AverageJob> average;
-        for (const auto& j : jobs) average.push_back({j.p, j.N});
-        try {
-            matrices_rforest(average, Q, nthreads, kappa);
-        } catch (const std::exception& e) {
-            std::cerr << "euler: rforest failed: " << e.what() << '\n';
-            return 1;
-        }
-        for (size_t k = 0; k < jobs.size(); ++k)
-            if (average[k].ok) { jobs[k].ok = 1; jobs[k].M = std::move(average[k].matrix); }
+    std::vector<AverageJob> average;
+    for (const auto& j : jobs) average.push_back({j.p, j.N});
+    try {
+        matrices_rforest(average, Q, nthreads, kappa);
+    } catch (const std::exception& e) {
+        std::cerr << "euler: rforest failed: " << e.what() << '\n';
+        return 1;
     }
-
-    std::atomic<size_t> next_index(0);
-    auto worker = [&]() {
-        for (;;) {
-            size_t k = next_index.fetch_add(1);
-            if (k >= jobs.size()) break;
-            Job& j = jobs[k];
-            if (j.ok || strict) continue;
-            ZZ pz = to_ZZ(j.p);
-            try {
-                j.ok = (deg % 2 == 1) ? matrix(j.M, pz, j.N, Q)
-                                      : matrix_reference(j.M, pz, j.N, Q);
-            } catch (...) {
-                j.ok = 0;
-            }
-        }
-    };
-
-    std::vector<std::thread> pool;
-    for (int t = 0; t < nthreads; t++) pool.emplace_back(worker);
-    for (auto& t : pool) t.join();
+    for (size_t k = 0; k < jobs.size(); ++k)
+        if (average[k].ok) { jobs[k].ok = 1; jobs[k].M = std::move(average[k].matrix); }
 
     for (const Job& j : jobs) {
         std::cout << j.p << ' ' << j.ok;

@@ -12,6 +12,7 @@
 BUILD    ?= build
 CXX      ?= g++
 CC       ?= cc
+PYTHON   ?= python3
 CXXFLAGS ?= -O2 -std=c++17
 RFOREST_CFLAGS ?= -O3 -std=gnu11 -fomit-frame-pointer -funroll-loops
 NTL_INC  ?= /usr/local/include
@@ -25,7 +26,7 @@ CONFIG_MK ?= config.mk
 
 -include $(CONFIG_MK)
 
-OBJS := $(BUILD)/hypellfrob.o $(BUILD)/recurrences_ntl.o $(BUILD)/even_degree.o $(BUILD)/average.o
+OBJS := $(BUILD)/even_degree.o $(BUILD)/average.o
 RFOREST_SRC := $(filter-out rforest/test_rforest.c,$(wildcard rforest/*.c rforest/fft62/*.c))
 RFOREST_OBJS := $(patsubst rforest/%.c,$(BUILD)/rforest/%.o,$(RFOREST_SRC))
 RFOREST_HEADERS := $(wildcard rforest/*.h rforest/fft62/*.h)
@@ -50,16 +51,9 @@ $(BUILD)/euler: euler.cpp $(OBJS) $(RFOREST_OBJS) src/average.h | $(BUILD)
 	    $(LDFLAGS) -L"$(NTL_LIB)" -L"$(GMP_LIB)" \
 	    $(NTL_RPATH) -Wl,-rpath,"$(GMP_LIB)" $(NTL_LINK) -lgmpxx -lgmp -lm -lpthread -o $@
 
-# A smoke test only: it shows the driver runs and produces matrices. What
-# actually checks the arithmetic is tests/test_lfunction.py, which compares
-# every Euler factor against Sage's own, prime by prime.
-#
-# The primes here clear the fast path's precondition p >= (2N-1)*deg; below
-# it matrix() declines, which is not an error -- the caller falls back.
+# Check full odd/even matrices and worker counts without importing Sage.
 check: $(BUILD)/euler
-	@printf '1 0 0 1 0 1\n101 3\n103 3\n1009 3\n' | $(BUILD)/euler 1 | \
-	  awk '{ n++; if ($$2 != 1) { print "FAILED: declined at p=" $$1; bad=1 } } \
-	       END { if (bad || n != 3) exit 1; print "ok: " n " matrices" }'
+	$(PYTHON) ../hyperell_regulator/frobenius.py --check --binary $(BUILD)/euler
 
 clean:
 	rm -rf $(BUILD)

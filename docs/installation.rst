@@ -51,19 +51,18 @@ for more detail.
 
 Euler-factor computation also defaults to one worker per logical CPU. Use
 ``frobenius_polynomials(f, primes, nthreads=4)`` to choose a worker count.
-The native build checks serial, four-worker and CPU-count results against
-each other before installing the binary.
+The native build checks odd- and even-degree matrices against fixed verified
+references with serial, four-worker and CPU-count runs before installation.
 
-The native accelerator uses the bundled rforest C library by default for
-the Python API, both L-function classes and the native driver. No separate
-rforest installation or backend setting is needed. Select
-``HYPELLFROB_BACKEND=legacy`` or ``backend="legacy"`` to use the per-prime
-implementation explicitly. Sources live in ``hyperell-frobenius`` with
+The native accelerator uses the bundled rforest C library for the Python
+API, both L-function classes and the native driver. Rforest is the only native
+backend; no separate rforest installation or backend setting is needed.
+Sources live in ``hyperell-frobenius`` with
 the bundled library under ``hyperell-frobenius/rforest``. The simultaneous algorithm benefits dense batches of
 primes, including even degree models without a rational branch point.
 Python monicizes nonmonic even input using a common quadratic twist and
 removes its local character from the returned characteristic polynomial.
 Set ``HYPELLFROB_THREADS`` to choose workers for L-function computations;
 an explicit ``nthreads`` argument takes precedence. Unsupported jobs retain
-native and Sage fallback. The vendored
+Sage fallback. The vendored
 FFT arithmetic requires a 64-bit platform with 64-bit GMP limbs.

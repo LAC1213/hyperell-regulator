@@ -1,4 +1,4 @@
-# The bundled hypellfrob sources are GPL v2-or-later and must travel with any
+# The bundled native Frobenius sources are GPL v2-or-later and must travel with any
 # distribution of this package. The native C/C++ code is built by its own
 # Makefile, so they are not a Python package; `packages.find` in
 # pyproject.toml already excludes them from the wheel.
