@@ -19,5 +19,9 @@ struct AverageJob {
 // Threads distribute independent (a,b) reduction trees, not individual primes.
 void matrices_average(std::vector<AverageJob>& jobs, const NTL::ZZX& Q,
                       int nthreads = 1);
+// Same arithmetic, with the upstream rforest C library and bounded forests.
+// kappa=-1 selects the automatic forest size; nonnegative values override it.
+void matrices_rforest(std::vector<AverageJob>& jobs, const NTL::ZZX& Q,
+                      int nthreads = 1, int kappa = -1);
 }
 #endif

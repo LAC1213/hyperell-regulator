@@ -45,24 +45,27 @@ def native(binary, q, jobs, backend="remainder-only", workers=1):
     x**7 - x + 1,
 ])
 @pytest.mark.parametrize("precision", [1, 2, 3, 4])
-def test_full_matrices(binary, q, precision):
+@pytest.mark.parametrize("backend", ["remainder-only", "rforest-only"])
+def test_full_matrices(binary, q, precision, backend):
     jobs = [(int(p), precision) for p in prime_range(151, 200)
             if q.discriminant() % p]
     expected = native(binary, q, jobs, "legacy")
-    actual = native(binary, q, jobs)
+    actual = native(binary, q, jobs, backend)
     assert all(row[1] == 1 for row in actual), actual
     assert actual == expected
 
 
-def test_unsorted_duplicate_jobs_mixed_precision_and_threads(binary):
+@pytest.mark.parametrize("backend", ["remainder-only", "rforest-only"])
+def test_unsorted_duplicate_jobs_mixed_precision_and_threads(binary, backend):
     q = x**5 + x**3 + 1
     jobs = [(211, 2), (101, 3), (211, 2), (151, 1), (211, 3), (103, 3)]
     expected = native(binary, q, jobs, "legacy")
     for workers in (1, 4, 16):
-        assert native(binary, q, jobs, workers=workers) == expected
+        assert native(binary, q, jobs, backend, workers=workers) == expected
 
 
-def test_dense_batch_and_deterministic_random_curves(binary):
+@pytest.mark.parametrize("backend", ["remainder-only", "rforest-only"])
+def test_dense_batch_and_deterministic_random_curves(binary, backend):
     rng = random.Random(12108239)
     for genus in (1, 2, 3):
         for _ in range(2):
@@ -72,7 +75,7 @@ def test_dense_batch_and_deterministic_random_curves(binary):
                 continue
             jobs = [(int(p), 2) for p in prime_range(101, 500)
                     if q.discriminant() % p]
-            actual = native(binary, q, jobs)
+            actual = native(binary, q, jobs, backend)
             assert all(row[1] == 1 for row in actual)
             assert actual == native(binary, q, jobs, "legacy")
 
@@ -84,27 +87,30 @@ def test_dense_batch_and_deterministic_random_curves(binary):
     (2*x**5 + x + 1, [(101, 2)]),
     ((x+1)**2*(x**3+2), [(101, 2)]),
 ])
-def test_declines_and_native_fallback(binary, q, jobs):
-    strict = native(binary, q, jobs)
+@pytest.mark.parametrize("backend", ["remainder-only", "rforest-only"])
+def test_declines_and_native_fallback(binary, q, jobs, backend):
+    strict = native(binary, q, jobs, backend)
     # Each case deliberately includes at least one unsupported job.
     assert any(row[1] == 0 for row in strict)
     if q.is_monic() and q.is_squarefree():
-        assert native(binary, q, jobs, "remainder") == native(binary, q, jobs, "legacy")
+        assert native(binary, q, jobs, backend.removesuffix("-only")) == native(binary, q, jobs, "legacy")
 
 
-def test_strict_input_validation(binary):
+@pytest.mark.parametrize("backend", ["remainder-only", "rforest-only"])
+def test_strict_input_validation(binary, backend):
     q = x**5 + x**3 + 1
     jobs = [(101, 0), (101, -1), (1, 2), (2, 2), (121, 2)]
-    assert all(row[1] == 0 for row in native(binary, q, jobs))
-    assert native(binary, q, []) == []
+    assert all(row[1] == 0 for row in native(binary, q, jobs, backend))
+    assert native(binary, q, [], backend) == []
 
 
 @pytest.mark.parametrize("q", [x**3-x+1, x**5+x**3+1, x**7-x+1])
-def test_euler_factors_against_sage(binary, q):
+@pytest.mark.parametrize("backend", ["remainder-only", "rforest-only"])
+def test_euler_factors_against_sage(binary, q, backend):
     genus = (q.degree()-1)//2
     ps = [int(p) for p in prime_range(151, 230) if q.discriminant() % p]
     jobs = [(p, _bound(p, genus)) for p in ps]
-    for (p, n), row in zip(jobs, native(binary, q, jobs)):
+    for (p, n), row in zip(jobs, native(binary, q, jobs, backend)):
         assert row[:3] == [p, 1, 2*genus]
         dim = row[2]
         matrix = [row[3+i*dim:3+(i+1)*dim] for i in range(dim)]
@@ -112,21 +118,23 @@ def test_euler_factors_against_sage(binary, q):
         assert _lift(matrix, p, genus, n) == expected
 
 
-def test_python_api_models_and_environment(binary, monkeypatch):
+@pytest.mark.parametrize("backend", ["remainder", "rforest"])
+def test_python_api_models_and_environment(binary, monkeypatch, backend):
     monkeypatch.setenv("HYPELLFROB_EULER", binary)
     ps = [101, 103, 107, 109]
     for q in (x**5+x**3+1, (x-1)*(x**5+x+3), x**6+x+1):
         good = [p for p in ps if q.discriminant() % p and
                 (odd_model(q) is None or odd_model(q).discriminant() % p)]
         expected = frobenius_polynomials(q, good, backend="legacy")
-        assert frobenius_polynomials(q, good, backend="remainder") == expected
-        monkeypatch.setenv("HYPELLFROB_BACKEND", "remainder")
+        assert frobenius_polynomials(q, good, backend=backend) == expected
+        monkeypatch.setenv("HYPELLFROB_BACKEND", backend)
         assert frobenius_polynomials(q, good) == expected
     with pytest.raises(ValueError, match="backend"):
         frobenius_polynomials(x**5+x+1, ps, backend="unknown")
 
 
-def test_lfunction_coefficients_use_new_backend(binary, monkeypatch):
+@pytest.mark.parametrize("backend", ["remainder", "rforest"])
+def test_lfunction_coefficients_use_new_backend(binary, monkeypatch, backend):
     from hyperell_regulator import HyperellipticCurveWithReduction
     from hyperell_regulator.lfunction import CurveLFunction, StandardLFunction
     monkeypatch.setenv("HYPELLFROB_EULER", binary)
@@ -136,6 +144,34 @@ def test_lfunction_coefficients_use_new_backend(binary, monkeypatch):
     for cls in (CurveLFunction, StandardLFunction):
         monkeypatch.setenv("HYPELLFROB_BACKEND", "legacy")
         expected = cls(HyperellipticCurveWithReduction(q)).dirichlet_coefficients(250)
-        monkeypatch.setenv("HYPELLFROB_BACKEND", "remainder")
+        monkeypatch.setenv("HYPELLFROB_BACKEND", backend)
         actual = cls(HyperellipticCurveWithReduction(q)).dirichlet_coefficients(250)
         assert actual == expected
+
+
+@pytest.mark.parametrize("kappa", [0, 1, 3, 20])
+def test_rforest_subtree_boundaries(binary, kappa):
+    q = x**5+x**3+1
+    jobs = [(int(p), 2) for p in prime_range(37, 230) if q.discriminant() % p]
+    jobs += [(101, 2), (211, 2)]
+    random.Random(10).shuffle(jobs)
+    expected = native(binary, q, jobs, "legacy", workers=4)
+    batch = " ".join(map(str, q.list())) + "\n" + "".join("%d %d\n" % job for job in jobs)
+    result = subprocess.run([binary, "4", "rforest-only", str(kappa)], input=batch,
+                            capture_output=True, text=True, check=True, timeout=90)
+    assert [list(map(int, line.split())) for line in result.stdout.splitlines()] == expected
+
+
+@pytest.mark.parametrize("evaluator", ["differences", "powers"])
+@pytest.mark.parametrize("fft", ["0", "1"])
+@pytest.mark.parametrize("kappa", [1, 20])
+def test_rforest_evaluators_and_fft_controls(binary, monkeypatch, evaluator, fft, kappa):
+    monkeypatch.setenv("HYPELLFROB_RFOREST_EVAL", evaluator)
+    monkeypatch.setenv("HYPELLFROB_RFOREST_FFT", fft)
+    q = x**5+x**3+1
+    jobs = [(37, 2), (101, 2), (101, 2), (163, 3), (211, 2)]
+    expected = native(binary, q, jobs, "legacy", workers=4)
+    batch = " ".join(map(str, q.list())) + "\n" + "".join("%d %d\n" % job for job in jobs)
+    result = subprocess.run([binary, "4", "rforest-only", str(kappa)], input=batch,
+                            capture_output=True, text=True, check=True, timeout=90)
+    assert [list(map(int, line.split())) for line in result.stdout.splitlines()] == expected

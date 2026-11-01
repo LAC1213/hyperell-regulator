@@ -1,8 +1,10 @@
 // Frobenius matrices for one curve at many primes, in parallel.
 //
-// Usage: euler [nthreads] [legacy|remainder|remainder-only]
+// Usage: euler [nthreads] [legacy|remainder|remainder-only|rforest|rforest-only] [kappa]
 // remainder: Harvey 2013 simultaneous algorithm, with legacy fallback.
 // remainder-only: decline unsupported jobs, useful for arithmetic comparisons.
+// rforest: the simultaneous algorithm using the vendored rforest C library.
+// rforest-only: prohibit legacy fallback when checking the new implementation.
 //
 // Reads a job from stdin:
 //   line 1:  the coefficients of Q, ascending, whitespace separated
@@ -34,6 +36,7 @@
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <cstdlib>
 
 NTL_CLIENT
 using namespace hypellfrob;
@@ -49,9 +52,21 @@ int main(int argc, char** argv) {
     int nthreads = argc > 1 ? atoi(argv[1]) : (int)std::thread::hardware_concurrency();
     if (nthreads < 1) nthreads = 1;
     std::string backend = argc > 2 ? argv[2] : "legacy";
-    if (backend != "legacy" && backend != "remainder" && backend != "remainder-only") {
-        std::cerr << "euler: backend must be legacy, remainder, or remainder-only\n";
+    const bool use_forest = backend == "rforest" || backend == "rforest-only";
+    const bool strict = backend == "remainder-only" || backend == "rforest-only";
+    if (backend != "legacy" && backend != "remainder" && backend != "remainder-only" && !use_forest) {
+        std::cerr << "euler: backend must be legacy, remainder, remainder-only, rforest, or rforest-only\n";
         return 2;
+    }
+    int kappa = -1;
+    if (argc > 3) {
+        char* end;
+        long value = std::strtol(argv[3], &end, 10);
+        if (!use_forest || end == argv[3] || *end || value < -1 || value > 30) {
+            std::cerr << "euler: rforest kappa must be -1..30\n";
+            return 2;
+        }
+        kappa = value;
     }
 
     std::string line;
@@ -89,7 +104,8 @@ int main(int argc, char** argv) {
         std::vector<AverageJob> average;
         for (const auto& j : jobs) average.push_back({j.p, j.N});
         try {
-            matrices_average(average, Q, nthreads);
+            if (use_forest) matrices_rforest(average, Q, nthreads, kappa);
+            else matrices_average(average, Q, nthreads);
         } catch (const std::exception& e) {
             std::cerr << "euler: remainder tree failed: " << e.what() << '\n';
             return 1;
@@ -104,7 +120,7 @@ int main(int argc, char** argv) {
             size_t k = next_index.fetch_add(1);
             if (k >= jobs.size()) break;
             Job& j = jobs[k];
-            if (j.ok || backend == "remainder-only") continue;
+            if (j.ok || strict) continue;
             ZZ pz = to_ZZ(j.p);
             try {
                 j.ok = (deg % 2 == 1) ? matrix(j.M, pz, j.N, Q)

@@ -1,5 +1,8 @@
 # Saved Beilinson survey
 
+The experimental [rforest Frobenius comparison](frobenius_rforest_20261101.md)
+records repeated timings, tuning, and the million-bound full-matrix check.
+
 `beilinson_100_digits.tex` contains all 16 entries marked `ok` in the saved
 100-digit survey. The numerical table and the accompanying algebraic table
 are linked by curve label. Decimal values are abbreviated for readability;

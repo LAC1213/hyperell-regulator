@@ -16,12 +16,13 @@ does: reduce `a_g, \dots, a_0` into the symmetric range mod `p^N`, with `N`
 Kedlaya's bound, and recover `a_{2g},\dots,a_{g+1}` from the functional
 equation `a_{2g-i} = a_i q^{g-i}`.
 
-The optional ``remainder`` backend implements Harvey's simultaneous
-algorithm (arXiv:1210.8239) in C++, sharing reduction products across
-primes with an accumulating remainder tree. Select it with the ``backend``
-keyword or ``HYPELLFROB_BACKEND=remainder`` for L-function computations.
-The existing per-prime backend remains the default pending a demonstrated
-performance advantage on the package's workloads.
+The optional ``rforest`` backend implements Harvey's simultaneous
+algorithm (arXiv:1210.8239) in C++, using the rforest C library to share
+reduction products across primes. Select it with the ``backend`` keyword
+or ``HYPELLFROB_BACKEND=rforest`` for L-function computations. The original
+C++ accumulating tree is also available as ``remainder``. The existing
+per-prime ``legacy`` backend remains the default; the simultaneous paths
+benefit dense batches of primes rather than isolated large primes.
 
 The program is built from ``hypellfrob-threaded`` and ships with this
 package: ``sage -pip install`` compiles it and puts it in
@@ -147,8 +148,8 @@ def _lift(M, p, g, N):
 def _run(fcoeffs, jobs, nthreads, backend=None):
     """One call to the program: (ascending Q, [(p, N)]) -> {p: matrix}."""
     backend = backend or os.environ.get("HYPELLFROB_BACKEND", "legacy")
-    if backend not in ("legacy", "remainder"):
-        raise ValueError("backend must be 'legacy' or 'remainder'")
+    if backend not in ("legacy", "remainder", "rforest"):
+        raise ValueError("backend must be 'legacy', 'remainder', or 'rforest'")
     binary = euler_binary()
     if binary is None or not jobs:
         return {}
@@ -182,7 +183,9 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     are the primes to do, which must be of good reduction.  Any prime the
     batched program declines falls back to Sage.
 
-    ``backend='remainder'`` selects Harvey's simultaneous accumulating
+    ``backend='rforest'`` selects the vendored upstream C remainder-forest
+    library, with polynomial factor cancellation and bounded forest storage.
+    ``backend='remainder'`` selects the earlier C++ accumulating
     remainder tree algorithm (arXiv:1210.8239). It applies to monic odd
     degree models; unsupported primes use the existing native backend.
     ``backend='legacy'`` selects the per-prime algorithm. The default is
@@ -273,7 +276,7 @@ def _check_binary(binary):
     return workers
 
 
-def _check_remainder_binary(binary, workers):
+def _check_remainder_binary(binary, workers, backend="remainder-only"):
     """Compare the new backend's full matrices; fallback is prohibited."""
     batch = "1 0 0 1 0 1\n101 3\n103 3\n107 3\n109 3\n"
     reference = subprocess.run([binary, "1", "legacy"], input=batch,
@@ -283,7 +286,7 @@ def _check_remainder_binary(binary, workers):
         # 31 satisfies the old algorithm's p>25 precondition at N=3,
         # but fails the new path's p-admissibility test. This also detects
         # stale binaries which silently ignore the backend argument.
-        result = subprocess.run([binary, str(count), "remainder-only"],
+        result = subprocess.run([binary, str(count), backend],
                                 input=batch + "31 3\n", text=True, capture_output=True,
                                 check=True, timeout=30)
         if result.stdout != reference + "31 0\n":
@@ -302,8 +305,9 @@ if __name__ == "__main__":
     try:
         workers = _check_binary(binary)
         _check_remainder_binary(binary, workers)
+        _check_remainder_binary(binary, workers, "rforest-only")
     except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
         parser.exit(1, "Accelerator failed: %s\n%s\n" %
                     (exc, getattr(exc, "stderr", "")))
-    print("Both Frobenius backends agree with worker counts %s: %s" %
+    print("All Frobenius backends agree with worker counts %s: %s" %
           (", ".join(map(str, workers)), binary))

@@ -11,7 +11,9 @@
 
 BUILD    ?= build
 CXX      ?= g++
+CC       ?= cc
 CXXFLAGS ?= -O2 -std=c++17
+RFOREST_CFLAGS ?= -O3 -std=gnu11 -fomit-frame-pointer -funroll-loops
 NTL_INC  ?= /usr/local/include
 NTL_LIB  ?= /usr/local/lib
 NTL_LINK ?= -lntl
@@ -24,6 +26,9 @@ CONFIG_MK ?= config.mk
 -include $(CONFIG_MK)
 
 OBJS := $(BUILD)/hypellfrob.o $(BUILD)/recurrences_ntl.o $(BUILD)/even_degree.o $(BUILD)/average.o
+RFOREST_SRC := $(filter-out vendor/rforest/test_rforest.c,$(wildcard vendor/rforest/*.c vendor/rforest/fft62/*.c))
+RFOREST_OBJS := $(patsubst vendor/rforest/%.c,$(BUILD)/rforest/%.o,$(RFOREST_SRC))
+RFOREST_HEADERS := $(wildcard vendor/rforest/*.h vendor/rforest/fft62/*.h)
 
 all: $(BUILD)/euler
 
@@ -33,12 +38,16 @@ $(BUILD):
 $(BUILD)/%.o: src/%.cpp | $(BUILD)
 	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread -c $< -o $@
 
-$(BUILD)/average.o: src/average.h
+$(BUILD)/average.o: src/average.h vendor/rforest/rforest.h
 
-$(BUILD)/euler: euler.cpp $(OBJS) src/average.h | $(BUILD)
-	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread euler.cpp $(OBJS) \
+$(BUILD)/rforest/%.o: vendor/rforest/%.c $(RFOREST_HEADERS)
+	@mkdir -p "$(@D)"
+	$(CC) -I"$(GMP_INC)" -Ivendor/rforest $(CPPFLAGS) $(RFOREST_CFLAGS) -c $< -o $@
+
+$(BUILD)/euler: euler.cpp $(OBJS) $(RFOREST_OBJS) src/average.h | $(BUILD)
+	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread euler.cpp $(OBJS) $(RFOREST_OBJS) \
 	    $(LDFLAGS) -L"$(NTL_LIB)" -L"$(GMP_LIB)" \
-	    $(NTL_RPATH) -Wl,-rpath,"$(GMP_LIB)" $(NTL_LINK) -lgmpxx -lgmp -lpthread -o $@
+	    $(NTL_RPATH) -Wl,-rpath,"$(GMP_LIB)" $(NTL_LINK) -lgmpxx -lgmp -lm -lpthread -o $@
 
 # A smoke test only: it shows the driver runs and produces matrices. What
 # actually checks the arithmetic is tests/test_lfunction.py, which compares

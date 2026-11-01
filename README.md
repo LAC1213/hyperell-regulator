@@ -29,10 +29,16 @@ From a checkout, use `sage -pip install .`, or
 The patched `sage_cluster_pictures` dependency is installed automatically.
 
 Installation builds an optional Frobenius accelerator using a private,
-checksum-verified NTL 11.6.0. It needs network access, a C++17 compiler, Perl,
-and Make; if unavailable, computations fall back to Sage.
+checksum-verified NTL 11.6.0. It needs network access, C11 and C++17 compilers,
+Perl, and Make; if unavailable, computations fall back to Sage.
 See the [installation guide](docs/installation.rst) for build settings and
 [manual native build instructions](hypellfrob-threaded/README.md).
+
+The `experimental/rforest` branch includes an optional rforest C backend
+for simultaneous Frobenius computations. Select it with
+`HYPELLFROB_BACKEND=rforest`, or `backend="rforest"` in
+`frobenius_polynomials`. See the [backend guide](hypellfrob-threaded/README.md#rforest-backend)
+for its build, tuning, and comparison commands.
 
 ## Python API
 

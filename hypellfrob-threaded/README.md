@@ -53,7 +53,7 @@ builds it with `NTL_THREADS=on` and `NTL_THREAD_BOOST=on`, and statically links
 it into `hyperell_regulator/bin/euler`. It discovers Sage's GMP prefix
 (including `SAGE_LOCAL`); `GMP_INC`/`GMP_LIB` override those paths.
 `HYPERELL_REGULATOR_BUILD_JOBS` sets build parallelism (default: logical CPU count).
-Installation needs network access, Perl, Make, and a C++17 compiler.
+Installation needs network access, Perl, Make, a C11 compiler, and a C++17 compiler.
 Sage's NTL is never changed. Package builds ignore local `config.mk` and
 `NTL_INC`/`NTL_LIB`/`NTL_LINK`; these remain available for manual builds.
 The build compares serial, four-worker, and CPU-count results before installing.
@@ -69,7 +69,7 @@ own, prime by prime.
 ## Using it
 
 ```
-build/euler [nthreads]
+build/euler [nthreads] [legacy|rforest|rforest-only|remainder|remainder-only] [kappa]
 ```
 
 reads from stdin
@@ -92,7 +92,62 @@ Odd degree goes through `hypellfrob::matrix()`, which is `O(sqrt p)` and
 needs `Q` monic with `p > (2g+1)(2N-1)`; even degree through
 `matrix_reference()`, which is correct but linear in `p`.
 
-## Simultaneous remainder-tree backend
+## rforest backend
+
+This experimental branch adds `rforest`, using the actual
+[rforest C library](https://math.mit.edu/~drew/rforest.html) for the
+accumulating products in Harvey's 2012 algorithm. It computes full
+Frobenius matrices modulo `p^N`, including the extra precision needed for
+denominator cancellation. It is not restricted to Hasse--Witt matrices
+modulo `p`.
+
+```python
+frobenius_polynomials(f, primes, nthreads=4, backend="rforest")
+```
+
+Set `HYPELLFROB_BACKEND=rforest` to use it in both L-function classes.
+`legacy` remains the default. At the native interface, `build/euler 4 rforest`
+uses legacy fallback for unsupported jobs; `rforest-only` declines those
+jobs so arithmetic comparisons cannot pass through fallback.
+The [measured comparison](../reports/frobenius_rforest_20261101.md) records
+the repeated 100,000-bound speedup and the full million-bound correctness
+check, including memory use and timing scope.
+
+The pinned C sources and their licenses are vendored under
+[`vendor/rforest`](vendor/rforest/README.hyperell.md). They build with the
+driver, without a separate rforest installation. FFT state is local to
+each worker and reused across reduction pairs. Exact polynomial factor
+cancellation reduces both matrix degree and required precision; forward
+differences replace repeated polynomial multiplications during evaluation.
+The largest transition degree on `y^2 = x^5 + x^3 + 1` at precision two
+drops from 18 to 6. Larger pairs run first to balance the workers.
+
+The forest splits its work into subtrees to bound temporary storage.
+The optional native `kappa` argument controls this split; `-1` chooses
+automatically, and larger values generally use less tree memory but more
+prefix updates. The automatic setting grows with `log(log(bound))`,
+preserving the average polynomial time bound. A thread-safe NTL build
+with matching headers is required, as for the other native backends.
+Rforest's FFT implementation requires 64-bit limbs and a 64-bit platform.
+
+Reproduce timings and full-matrix comparisons with:
+
+```sh
+sage -python hypellfrob-threaded/benchmark_rforest.py \
+    --binary hypellfrob-threaded/build/euler --bound 100000 \
+    --workers 4 --repeats 3 --output /tmp/rforest-benchmark.json
+```
+
+Use `--bound 1000000` for the million-bound experiment. The script
+alternates run order, measures wall time, CPU time and peak RSS, and
+compares every supplied matrix entry in strict mode. Timings cover the
+native Frobenius computation; they exclude Sage characteristic-polynomial
+lifting and L-function evaluation. `--reference` and `--reference-report`
+allow comparison against a previously saved legacy run, without claiming
+a fresh legacy timing. `--evaluator powers` and `--no-fft` expose the
+evaluation and FFT controls used in performance tuning.
+
+## Original simultaneous remainder-tree backend
 
 `src/average.cpp` implements David Harvey's
 [*Counting points on hyperelliptic curves in average polynomial time*](https://arxiv.org/pdf/1210.8239),
@@ -149,8 +204,8 @@ primes are better served by `legacy`. A thread-safe NTL library **and
 matching headers** are required for parallel runs; the installer's private
 NTL build supplies both.
 
-`sage -python -m hyperell_regulator.frobenius --check` now compares full
-matrices across both backends with one, four, and CPU-count workers and
+`sage -python -m hyperell_regulator.frobenius --check` compares full
+matrices across all three backends with one, four, and CPU-count workers and
 checks a strict-mode decline to detect stale executables. The arithmetic
 tests in `tests/test_average_frobenius.py` compare genera 1--3 at precisions
 1--4, independent Sage Euler factors, and both L-function coefficient
