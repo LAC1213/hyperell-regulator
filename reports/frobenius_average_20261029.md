@@ -16,10 +16,9 @@ mean these timings cannot establish the practical crossover of Harvey's
 algorithm. The corrected large-bound experiment is recorded in the
 [1,000,000-bound report](frobenius_average_1000000_20261029.md).
 
-The implementation is in [average.cpp](../hypellfrob-threaded/src/average.cpp),
-with [arithmetic and integration tests](../tests/test_average_frobenius.py),
-a [reproducible benchmark](../hypellfrob-threaded/benchmark.py), and
-[raw timings](frobenius_average_20261029.json).
+The implementation, arithmetic/integration tests, and `benchmark.py` are
+archived on `experimental/harvey-remainder-tree`. The historical
+[raw timings](frobenius_average_20261029.json) are retained here.
 
 The test suite covers genus 1, 2, and 3; p-adic precisions 1, 2, 3, and 4;
 negative coefficients; zero constant terms; randomized integral curves;

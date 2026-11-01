@@ -5,13 +5,12 @@
 include README.md
 recursive-include tests *.py
 recursive-include reports *.tex *.json *.md
-recursive-include hypellfrob-threaded *.cpp *.h *.md *.example
-recursive-include hypellfrob-threaded/vendor *.c LICENSE COPYING
-include hypellfrob-threaded/Makefile
-include hypellfrob-threaded/benchmark.py
-include hypellfrob-threaded/benchmark_rforest.py
-include hypellfrob-threaded/COPYING
-prune hypellfrob-threaded/build
+recursive-include hyperell-frobenius *.cpp *.h *.md *.example
+recursive-include hyperell-frobenius/rforest *.c LICENSE COPYING
+include hyperell-frobenius/Makefile
+include hyperell-frobenius/benchmark_rforest.py
+include hyperell-frobenius/COPYING
+prune hyperell-frobenius/build
 global-exclude *.pyc __pycache__
 
 include hyperell_regulator/NTL-COPYING.txt

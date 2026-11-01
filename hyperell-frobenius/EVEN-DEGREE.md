@@ -3,8 +3,9 @@
 The `rforest` backend computes full p-adic Frobenius matrices for monic
 squarefree `Q` of degree `d = 2g+2`, using the same integer reduction
 identities as the odd-degree implementation. No branch point or field
-extension is required. The `remainder` backend retains its original
-odd-degree restriction; `legacy` retains the direct even-degree reference.
+extension is required. Rforest is the default; `legacy` retains the direct
+even-degree reference. The earlier custom tree is archived on its
+experimental branches.
 
 ## Paths avoiding the horizontal singularity
 

@@ -46,7 +46,7 @@ accelerator and check the installed binary:
    sage -python -m hyperell_regulator.frobenius --check
 
 See the `native build instructions
-<https://github.com/LAC1213/hyperell-regulator/tree/main/hypellfrob-threaded>`_
+<https://github.com/LAC1213/hyperell-regulator/tree/main/hyperell-frobenius>`_
 for more detail.
 
 Euler-factor computation also defaults to one worker per logical CPU. Use
@@ -54,11 +54,12 @@ Euler-factor computation also defaults to one worker per logical CPU. Use
 The native build checks serial, four-worker and CPU-count results against
 each other before installing the binary.
 
-The experimental rforest branch also compiles the vendored rforest C
-library into this binary. No separate rforest installation is needed.
-Select it with ``HYPELLFROB_BACKEND=rforest`` for L-function computations,
-or ``frobenius_polynomials(f, primes, backend="rforest")``. The default
-remains ``legacy``. The simultaneous algorithm benefits dense batches of
+The native accelerator uses the bundled rforest C library by default for
+the Python API, both L-function classes and the native driver. No separate
+rforest installation or backend setting is needed. Select
+``HYPELLFROB_BACKEND=legacy`` or ``backend="legacy"`` to use the per-prime
+implementation explicitly. Sources live in ``hyperell-frobenius`` with
+the bundled library under ``hyperell-frobenius/rforest``. The simultaneous algorithm benefits dense batches of
 primes, including even degree models without a rational branch point.
 Python monicizes nonmonic even input using a common quadratic twist and
 removes its local character from the returned characteristic polynomial.

@@ -1,9 +1,7 @@
 // Frobenius matrices for one curve at many primes, in parallel.
 //
-// Usage: euler [nthreads] [legacy|remainder|remainder-only|rforest|rforest-only] [kappa]
-// remainder: Harvey 2013 simultaneous algorithm, with legacy fallback.
-// remainder-only: decline unsupported jobs, useful for arithmetic comparisons.
-// rforest: the simultaneous algorithm using the vendored rforest C library.
+// Usage: euler [nthreads] [rforest|rforest-only|legacy] [kappa]
+// rforest (default): simultaneous algorithm using the vendored C library.
 // rforest-only: prohibit legacy fallback when checking the new implementation.
 //
 // Reads a job from stdin:
@@ -16,7 +14,7 @@
 //   "<p> 0"                      matrix() declined: bad reduction, or a
 //                                precondition of the fast path failed
 //
-// Odd degree goes through hypellfrob::matrix(), which is O(sqrt p); even
+// In legacy mode odd degree goes through matrix(), which is O(sqrt p); even
 // degree through matrix_reference(), which is correct for either parity but
 // linear in p, so very much slower. The caller only sends an even degree
 // model when the curve has no rational Weierstrass point -- with one, it
@@ -51,11 +49,11 @@ struct Job {
 int main(int argc, char** argv) {
     int nthreads = argc > 1 ? atoi(argv[1]) : (int)std::thread::hardware_concurrency();
     if (nthreads < 1) nthreads = 1;
-    std::string backend = argc > 2 ? argv[2] : "legacy";
+    std::string backend = argc > 2 ? argv[2] : "rforest";
     const bool use_forest = backend == "rforest" || backend == "rforest-only";
-    const bool strict = backend == "remainder-only" || backend == "rforest-only";
-    if (backend != "legacy" && backend != "remainder" && backend != "remainder-only" && !use_forest) {
-        std::cerr << "euler: backend must be legacy, remainder, remainder-only, rforest, or rforest-only\n";
+    const bool strict = backend == "rforest-only";
+    if (backend != "legacy" && !use_forest) {
+        std::cerr << "euler: backend must be rforest, rforest-only, or legacy\n";
         return 2;
     }
     int kappa = -1;
@@ -104,10 +102,9 @@ int main(int argc, char** argv) {
         std::vector<AverageJob> average;
         for (const auto& j : jobs) average.push_back({j.p, j.N});
         try {
-            if (use_forest) matrices_rforest(average, Q, nthreads, kappa);
-            else matrices_average(average, Q, nthreads);
+            matrices_rforest(average, Q, nthreads, kappa);
         } catch (const std::exception& e) {
-            std::cerr << "euler: remainder tree failed: " << e.what() << '\n';
+            std::cerr << "euler: rforest failed: " << e.what() << '\n';
             return 1;
         }
         for (size_t k = 0; k < jobs.size(); ++k)

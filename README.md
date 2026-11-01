@@ -32,15 +32,15 @@ Installation builds an optional Frobenius accelerator using a private,
 checksum-verified NTL 11.6.0. It needs network access, C11 and C++17 compilers,
 Perl, and Make; if unavailable, computations fall back to Sage.
 See the [installation guide](docs/installation.rst) for build settings and
-[manual native build instructions](hypellfrob-threaded/README.md).
+[manual native build instructions](hyperell-frobenius/README.md).
 
-The `experimental/rforest` branch includes an optional rforest C backend
-for simultaneous Frobenius computations. Select it with
-`HYPELLFROB_BACKEND=rforest`, or `backend="rforest"` in
-`frobenius_polynomials`. See the [backend guide](hypellfrob-threaded/README.md#rforest-backend)
-for its build, tuning, and comparison commands.
-It supports even degree models directly, including conductor 388, and
-`HYPELLFROB_THREADS` controls the worker count for L-function computations.
+The native accelerator uses rforest by default for simultaneous Frobenius
+computations, including even degree models such as conductor 388. No backend
+environment setting is needed. Select `backend="legacy"` or set
+`HYPELLFROB_BACKEND=legacy` to use the per-prime implementation explicitly.
+`HYPELLFROB_THREADS` controls workers for L-function computations; see the
+[backend guide](hyperell-frobenius/README.md#rforest-backend) for tuning and
+comparison commands. The bundled C library is in `hyperell-frobenius/rforest`.
 
 ## Python API
 

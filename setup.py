@@ -2,7 +2,7 @@ r"""
 Build the bundled ``hypellfrob`` driver as part of installing the package.
 
 ``sage -pip install git+<url>`` should leave nothing to do by hand, so the
-C++ in ``hypellfrob-threaded`` is compiled here and the resulting ``euler``
+C++ in ``hyperell-frobenius`` is compiled here and the resulting ``euler``
 binary is put inside the package, where
 :func:`hyperell_regulator.frobenius.euler_binary` looks for it first.
 
@@ -30,7 +30,7 @@ from setuptools import Distribution, setup
 from setuptools.command.build_py import build_py
 
 ROOT = Path(__file__).resolve().parent
-SRC = ROOT / "hypellfrob-threaded"
+SRC = ROOT / "hyperell-frobenius"
 NTL_VERSION = "11.6.0"
 NTL_SHA256 = "30e29eb21c5da6db031fc7dc5b1a6c728f226c7128e922421247157bc89ecd86"
 CHECK = ROOT / "hyperell_regulator" / "frobenius.py"

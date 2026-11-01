@@ -1,5 +1,9 @@
 # rforest test on conductor 388, 1 November 2026
 
+This report records validation before promotion to main. Rforest is now the
+default, and the native directory is `hyperell-frobenius`; historical
+measurements and JSON paths are preserved.
+
 This is the historical check of commit `434e654`, before even-degree
 support was added. The [even-degree extension and new results](frobenius_rforest_even_20261101.md)
 supersede its backend limitation; the measurements below are preserved.
@@ -78,7 +82,7 @@ P_97(T) = 1 - 83*T - 1261*T^2 - 9409*T^3
 From the `experimental/rforest` worktree, with the native driver built:
 
 ```sh
-HYPELLFROB_EULER=$PWD/hypellfrob-threaded/build/euler \
+HYPELLFROB_EULER=$PWD/hyperell-frobenius/build/euler \
   sage -python -m pytest tests/test_average_frobenius.py \
     tests/test_lfunction.py -k conductor_388 -q
 ```

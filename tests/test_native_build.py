@@ -82,18 +82,18 @@ def test_accelerator_check_includes_cpu_count():
         run.return_value.stdout = smoke_output()
         assert frobenius._check_binary('/euler') == (1, 4, 16)
         assert [call.args[0] for call in run.call_args_list] == [
-            ['/euler', '1'], ['/euler', '4'], ['/euler', '16']]
+            ['/euler', '1', 'legacy'], ['/euler', '4', 'legacy'], ['/euler', '16', 'legacy']]
 
 
-def test_remainder_check_rejects_declined_matrices():
+def test_rforest_check_rejects_declined_matrices():
     from types import SimpleNamespace
     from hyperell_regulator import frobenius
     with patch.object(frobenius.subprocess, 'run') as run:
         run.side_effect = [SimpleNamespace(stdout=smoke_output()),
                            SimpleNamespace(stdout='101 0\n103 0\n107 0\n109 0\n')]
-        with pytest.raises(RuntimeError, match='remainder-tree matrices differ'):
-            frobenius._check_remainder_binary('/euler', (1,))
-    assert run.call_args.args[0] == ['/euler', '1', 'remainder-only']
+        with pytest.raises(RuntimeError, match='rforest matrices differ'):
+            frobenius._check_rforest_binary('/euler', (1,))
+    assert run.call_args.args[0] == ['/euler', '1', 'rforest-only']
 
 
 @pytest.mark.parametrize('cpus, override, expected', [
@@ -110,12 +110,14 @@ def test_build_jobs(cpus, override, expected):
 @pytest.mark.parametrize('cpus, nthreads, expected', [
     (16, None, 16), (None, None, 1), (16, 3, 3), (16, 0, 1),
 ])
-def test_frobenius_worker_count(cpus, nthreads, expected):
+def test_frobenius_worker_count(cpus, nthreads, expected, monkeypatch):
     from hyperell_regulator import frobenius
+    monkeypatch.delenv('HYPELLFROB_BACKEND', raising=False)
+    monkeypatch.delenv('HYPELLFROB_THREADS', raising=False)
     with patch.object(frobenius, 'euler_binary', return_value='/euler'), \
             patch.object(frobenius.os, 'cpu_count', return_value=cpus), \
             patch.object(frobenius.subprocess, 'run') as run:
         run.return_value.stdout = '101 1 1 7\n'
         result = frobenius._run([1, 0, 0, 1, 0, 1], [(101, 1)], nthreads)
-    assert run.call_args.args[0] == ['/euler', str(expected)]
+    assert run.call_args.args[0] == ['/euler', str(expected), 'rforest']
     assert result == {101: [[7]]}

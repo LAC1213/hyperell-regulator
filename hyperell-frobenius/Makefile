@@ -26,9 +26,9 @@ CONFIG_MK ?= config.mk
 -include $(CONFIG_MK)
 
 OBJS := $(BUILD)/hypellfrob.o $(BUILD)/recurrences_ntl.o $(BUILD)/even_degree.o $(BUILD)/average.o
-RFOREST_SRC := $(filter-out vendor/rforest/test_rforest.c,$(wildcard vendor/rforest/*.c vendor/rforest/fft62/*.c))
-RFOREST_OBJS := $(patsubst vendor/rforest/%.c,$(BUILD)/rforest/%.o,$(RFOREST_SRC))
-RFOREST_HEADERS := $(wildcard vendor/rforest/*.h vendor/rforest/fft62/*.h)
+RFOREST_SRC := $(filter-out rforest/test_rforest.c,$(wildcard rforest/*.c rforest/fft62/*.c))
+RFOREST_OBJS := $(patsubst rforest/%.c,$(BUILD)/rforest/%.o,$(RFOREST_SRC))
+RFOREST_HEADERS := $(wildcard rforest/*.h rforest/fft62/*.h)
 
 all: $(BUILD)/euler
 
@@ -38,12 +38,12 @@ $(BUILD):
 $(BUILD)/%.o: src/%.cpp | $(BUILD)
 	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread -c $< -o $@
 
-$(BUILD)/average.o: src/average.h src/even_degree.h vendor/rforest/rforest.h
+$(BUILD)/average.o: src/average.h src/even_degree.h rforest/rforest.h
 $(BUILD)/even_degree.o: src/even_degree.h
 
-$(BUILD)/rforest/%.o: vendor/rforest/%.c $(RFOREST_HEADERS)
+$(BUILD)/rforest/%.o: rforest/%.c $(RFOREST_HEADERS)
 	@mkdir -p "$(@D)"
-	$(CC) -I"$(GMP_INC)" -Ivendor/rforest $(CPPFLAGS) $(RFOREST_CFLAGS) -c $< -o $@
+	$(CC) -I"$(GMP_INC)" -Irforest $(CPPFLAGS) $(RFOREST_CFLAGS) -c $< -o $@
 
 $(BUILD)/euler: euler.cpp $(OBJS) $(RFOREST_OBJS) src/average.h | $(BUILD)
 	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread euler.cpp $(OBJS) $(RFOREST_OBJS) \

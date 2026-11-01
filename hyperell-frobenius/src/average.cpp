@@ -10,7 +10,7 @@
 #include "average.h"
 #include "even_degree.h"
 #include <gmp.h>
-#include "../vendor/rforest/rforest.h"
+#include "../rforest/rforest.h"
 #include <NTL/mat_ZZ.h>
 #include <algorithm>
 #include <atomic>
@@ -35,23 +35,6 @@ extern thread_local int rforest_forward_differences;
 NTL_CLIENT
 namespace hypellfrob {
 namespace {
-
-void reduce_mod(mat_ZZ& a, const ZZ& m) {
-    for (long i = 0; i < a.NumRows(); ++i)
-        for (long j = 0; j < a.NumCols(); ++j) a[i][j] %= m;
-}
-
-void reduce_centered(mat_ZZ& a, const ZZ& m, const ZZ& half) {
-    for (long i = 0; i < a.NumRows(); ++i)
-        for (long j = 0; j < a.NumCols(); ++j) {
-            ZZ& x = a[i][j];
-            // Turning a small negative integer into m-1 at every product
-            // node would destroy the size bounds of Proposition 4.
-            if (abs(x) <= half) continue;
-            x %= m;
-            if (x > half) x -= m;
-        }
-}
 
 struct Fraction {
     mat_ZZ m;
@@ -146,148 +129,6 @@ struct Reductions {
         return f;
     }
 
-    Fraction block(long a, long b, long r, bool normalize = true) const {
-        if (!r) return initial_block(a, b);
-        Fraction f;
-        ident(f.m, d);
-        long s = a*(2*r+1)-1, t = (b*(2*r+1)-1)/2;
-        auto apply = [&](char kind) {
-            Fraction z = step(s, t, kind);
-            f.m = z.m*f.m; f.d *= z.d;
-            if (kind != 'V') --s;
-            if (kind != 'H') --t;
-        };
-        for (long j = 0; j < std::min(2*a, b); ++j) apply('D');
-        for (long j = b; j < 2*a; ++j) apply('H');
-        for (long j = 2*a; j < b; ++j) apply('V');
-        if (normalize) cancel(f);
-        return f;
-    }
-};
-
-// Proposition 8 makes every entry a polynomial in r of degree at most
-// max(2a,b). Forward differences evaluate these polynomials using additions,
-// avoiding O(N) repetitions of all the small reduction-matrix products.
-class BlockSequence {
-    std::vector<Fraction> differences;
-public:
-    BlockSequence(const Reductions& red, long a, long b) {
-        long degree = std::max(2*a, b);
-        std::vector<Fraction> values;
-        for (long r = 1; r <= degree+1; ++r)
-            values.push_back(red.block(a, b, r, false));
-        for (long order = 0; order <= degree; ++order) {
-            differences.push_back(values[0]);
-            for (long i = 0; i < degree-order; ++i) {
-                values[i].m = values[i+1].m-values[i].m;
-                values[i].d = values[i+1].d-values[i].d;
-            }
-        }
-    }
-    Fraction next() {
-        Fraction f = differences[0];
-        for (size_t i = 0; i+1 < differences.size(); ++i) {
-            differences[i].m += differences[i+1].m;
-            differences[i].d += differences[i+1].d;
-        }
-        cancel(f);
-        return f;
-    }
-};
-
-struct Target {
-    size_t job;
-    long k;
-    ZZ modulus;
-};
-
-// Section 3. Leaves represent indices k and return the prefix THROUGH M_k.
-// Store products M_{k+1}, so the right child's prefix includes its left sibling.
-// Matrices need not be reduced modulo the product of *unrelated* primes.
-// Capping every product at the root modulus bounds coefficient growth without
-// changing a residue at any requested leaf.
-class RemainderTree {
-    const Reductions& red;
-    long a, b, base;
-    std::vector<Fraction> products;
-    std::vector<ZZ> moduli;
-
-    void descend(long node, const Fraction& prefix,
-                 const std::vector<Target>& targets,
-                 std::vector<Fraction>& answers) const {
-        if (moduli[node] == 1) return;
-        if (node >= base) {
-            long k = node-base;
-            auto it = std::lower_bound(targets.begin(), targets.end(), k,
-                [](const Target& t, long v) { return t.k < v; });
-            for (; it != targets.end() && it->k == k; ++it) {
-                Fraction f = prefix;
-                reduce_mod(f.m, it->modulus); f.d %= it->modulus;
-                answers[it->job] = std::move(f);
-            }
-            return;
-        }
-        for (long side = 0; side < 2; ++side) {
-            long child = 2*node+side;
-            if (moduli[child] == 1) continue;
-            Fraction f = prefix;
-            if (side) {
-                f.m *= products[2*node].m;
-                f.d *= products[2*node].d;
-            }
-            reduce_mod(f.m, moduli[child]); f.d %= moduli[child];
-            descend(child, f, targets, answers);
-        }
-    }
-
-public:
-    RemainderTree(const Reductions& red_, long a_, long b_)
-        : red(red_), a(a_), b(b_), base(1) {}
-
-    void run(const std::vector<Target>& targets, std::vector<Fraction>& answers) {
-        long last = targets.back().k;
-        while (base <= last) base *= 2;
-        products.resize(2*base); moduli.assign(2*base, ZZ(1));
-        // Duplicate jobs at the same p need only the largest requested power.
-        for (const auto& t : targets)
-            if (t.modulus > moduli[base+t.k]) moduli[base+t.k] = t.modulus;
-        for (long i = base-1; i > 0; --i) moduli[i] = moduli[2*i]*moduli[2*i+1];
-        // This threshold has O(N) bits. Compute it once: computing m/2
-        // at every one of the O(N) product nodes adds quadratic bit-work.
-        const ZZ half_modulus = moduli[1]/2;
-        BlockSequence sequence(red, a, b);
-        for (long k = 0; k < base; ++k) {
-            if (k < last) products[base+k] = sequence.next();
-            else ident(products[base+k].m, red.d);
-        }
-        for (long i = base-1; i > 0; --i) {
-            // No prefix ever uses products beyond the last target.
-            if (i == 1) continue;
-            products[i].m = products[2*i].m*products[2*i+1].m;
-            products[i].d = products[2*i].d*products[2*i+1].d;
-            reduce_centered(products[i].m, moduli[1], half_modulus);
-            products[i].d %= moduli[1];
-            // Descent uses only left-sibling products. The right child's
-            // product has had its last use now; its own left descendants
-            // are kept for descent inside that subtree.
-            products[2*i+1].m.kill();
-            clear(products[2*i+1].d);
-        }
-        // The root product is never formed, so its right child has no use.
-        if (base > 1) {
-            products[3].m.kill();
-            clear(products[3].d);
-        }
-        Fraction initial = red.block(a, b, 0);
-        // The first coordinate in W_{-1,0} is identically zero. Only its
-        // remaining d-1 rows are needed in all accumulating prefixes.
-        mat_ZZ rows;
-        rows.SetDims(red.d-1, red.d);
-        for (long i = 1; i < red.d; ++i) rows[i-1] = initial.m[i];
-        initial.m = std::move(rows);
-        reduce_mod(initial.m, moduli[1]); initial.d %= moduli[1];
-        descend(1, initial, targets, answers);
-    }
 };
 
 struct Pair {
@@ -533,28 +374,9 @@ struct ForestOutput {
     }
 };
 
-long denominator_valuation(long d, long a, long b, long p) {
-    // Sharpen Proposition 10's rho: each horizontal linear factor has a
-    // single root mod p, but only roots in [1,(p-1)/2] occur in the product.
-    // p-admissibility bounds every factor strictly below p^2 and makes the
-    // final reduction's denominator a unit. Cancelled contents can only
-    // decrease this valuation, so it remains a rigorous upper bound.
-    long v = (b-1)/2;
-    if (b <= 2*a) {
-        ZZ pz = to_ZZ(p);
-        ZZ inverse = InvMod((2*(to_ZZ(d)*b-2*a))%pz, pz);
-        for (long j = 0; j < 2*a-b; ++j) {
-            ZZ constant = to_ZZ(d)*(b+2)+2*(a-b-1-j);
-            ZZ root = (constant*inverse)%pz;
-            if (root >= 1 && root <= (p-1)/2) ++v;
-        }
-    }
-    return v;
-}
-
 void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& indices,
                    const Reductions& red, int mu, int nthreads,
-                   bool use_forest = false, int kappa = -1) {
+                   int kappa) {
     long dim = red.d-1;
     // Proposition 2. alpha_j = sum_{k=j}^{mu-1} (-1)^j binom(2k,k)/4^k binom(k,j).
     // Use a common denominator 4^(mu-1), a unit at every odd prime.
@@ -597,53 +419,35 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
     std::sort(eligible.begin(), eligible.end(), [&](size_t i, size_t j) {
         return jobs[i].p < jobs[j].p;
     });
-    if (use_forest) {
-        for (auto& pair : pairs)
-            pair.polynomial = std::make_shared<Pair::PolynomialBlock>(red, pair.a, pair.b);
-        // The bounded prefix is exact over Q. Its denominator must be a
-        // p-adic unit; exceptional small primes retain native/Sage fallback.
-        eligible.erase(std::remove_if(eligible.begin(), eligible.end(), [&](size_t idx) {
-            for (const auto& pair : pairs)
-                if (pair.polynomial->initial.d % jobs[idx].p == 0 ||
-                    (jobs[idx].p-1)/2 < pair.polynomial->start) return true;
-            return false;
-        }), eligible.end());
-        if (eligible.empty()) return;
-        // Start the expensive trees first; bounded forests make this possible
-        // without the old full-tree implementation's large memory spike.
-        std::stable_sort(pairs.begin(), pairs.end(), [](const Pair& x, const Pair& y) {
-            return x.polynomial->degree*64+x.polynomial->height_bits >
-                   y.polynomial->degree*64+y.polynomial->height_bits;
-        });
-    }
+    for (auto& pair : pairs)
+        pair.polynomial = std::make_shared<Pair::PolynomialBlock>(red, pair.a, pair.b);
+    // The bounded prefix is exact over Q. Its denominator must be a
+    // p-adic unit; exceptional small primes retain native/Sage fallback.
+    eligible.erase(std::remove_if(eligible.begin(), eligible.end(), [&](size_t idx) {
+        for (const auto& pair : pairs)
+            if (pair.polynomial->initial.d % jobs[idx].p == 0 ||
+                (jobs[idx].p-1)/2 < pair.polynomial->start) return true;
+        return false;
+    }), eligible.end());
+    if (eligible.empty()) return;
+    // Start the expensive trees first; bounded forests make this possible
+    // without the old full-tree implementation's large memory spike.
+    std::stable_sort(pairs.begin(), pairs.end(), [](const Pair& x, const Pair& y) {
+        return x.polynomial->degree*64+x.polynomial->height_bits >
+               y.polynomial->degree*64+y.polynomial->height_bits;
+    });
     std::atomic<size_t> next(0);
     std::mutex output_mutex, error_mutex;
     std::exception_ptr error;
     auto worker = [&]() {
         try {
-            RforestContext context(use_forest);
+            RforestContext context(true);
             for (;;) {
                 size_t pi = next.fetch_add(1);
                 if (pi >= pairs.size()) break;
                 const Pair& pair = pairs[pi];
                 const auto pair_start = std::chrono::steady_clock::now();
-                std::vector<Fraction> answers;
-                std::unique_ptr<ForestOutput> forest;
-                if (use_forest) {
-                    forest = std::make_unique<ForestOutput>(*pair.polynomial, jobs, eligible, mu, kappa);
-                } else {
-                    std::vector<Target> targets;
-                    for (size_t idx : eligible) {
-                    // Need p*U mod p^mu. The denominator needs mu+rho
-                    // digits even though the numerator has an extra p:
-                    // p*U can be a unit after cancellation of p^rho.
-                    long rho = denominator_valuation(red.d, pair.a, pair.b, jobs[idx].p);
-                    targets.push_back({idx, (jobs[idx].p-1)/2,
-                        power(to_ZZ(jobs[idx].p), mu+rho)});
-                    }
-                    answers.resize(jobs.size());
-                    RemainderTree(red, pair.a, pair.b).run(targets, answers);
-                }
+                ForestOutput forest(*pair.polynomial, jobs, eligible, mu, kappa);
                 GmpConversion conversion;
                 Fraction value;
                 std::vector<ZZ> column(dim);
@@ -651,10 +455,8 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
                 for (size_t ei = 0; ei < eligible.size(); ++ei) {
                     size_t idx = eligible[ei];
                     long p = jobs[idx].p;
-                    long rho = use_forest ? forest->losses[ei] :
-                        denominator_valuation(red.d, pair.a, pair.b, p);
-                    if (use_forest) forest->column(ei, conversion, value);
-                    else value = std::move(answers[idx]);
+                    long rho = forest.losses[ei];
+                    forest.column(ei, conversion, value);
                     ZZ modulus = power(to_ZZ(p), mu), den = value.d;
                     ZZ pvaluation(1);
                     long v = 0;
@@ -675,7 +477,7 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
                                 jobs[idx].matrix[row][col] = (jobs[idx].matrix[row][col] +
                                     column[row]*pair.weights[col])%modulus;
                 }
-                if (use_forest && std::getenv("HYPELLFROB_PROFILE")) {
+                if (std::getenv("HYPELLFROB_PROFILE")) {
                     double fs = std::chrono::duration<double>(forest_done-pair_start).count();
                     double assembly = std::chrono::duration<double>(
                         std::chrono::steady_clock::now()-forest_done).count();
@@ -684,7 +486,7 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
                               << " degree=" << pair.polynomial->degree
                               << " denominator_degree=" << deg(pair.polynomial->denominator)
                               << " start=" << pair.polynomial->start
-                              << " kappa=" << forest->kappa_used
+                              << " kappa=" << forest.kappa_used
                               << " forest_seconds=" << fs << " assembly_seconds=" << assembly << '\n';
                 }
             }
@@ -699,7 +501,7 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
     for (auto& thread : pool) thread.join();
     if (error) std::rethrow_exception(error);
     for (size_t idx : eligible) {
-        if (use_forest && red.d%2 == 0) {
+        if (red.d%2 == 0) {
             mat_ZZ projective;
             restrict_even_frobenius(projective, jobs[idx].matrix,
                                    to_ZZ(jobs[idx].p), mu, red.q);
@@ -709,26 +511,6 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
     }
 }
 } // namespace
-
-void matrices_average(std::vector<AverageJob>& jobs, const ZZX& Q, int nthreads) {
-    for (auto& job : jobs) { job.ok = false; job.matrix.kill(); }
-    if (deg(Q) < 3 || deg(Q)%2 == 0 || LeadCoeff(Q) != 1) return;
-    // Group by requested precision, never impose a small prime's precision on
-    // every larger prime. Each group remains a simultaneous many-prime job.
-    std::map<int, std::vector<size_t>> groups;
-    for (size_t i = 0; i < jobs.size(); ++i)
-        if (jobs[i].precision > 0 && jobs[i].p >= 3 && ProbPrime(jobs[i].p))
-            groups[jobs[i].precision].push_back(i);
-    if (groups.empty()) return;
-    try {
-        Reductions red(Q);
-        for (const auto& group : groups)
-            compute_group(jobs, group.second, red, group.first, nthreads);
-    } catch (const std::invalid_argument&) {
-        // Singular over Q: there are no good primes.
-        return;
-    }
-}
 
 void matrices_rforest(std::vector<AverageJob>& jobs, const ZZX& Q, int nthreads, int kappa) {
     for (auto& job : jobs) { job.ok = false; job.matrix.kill(); }
@@ -742,7 +524,7 @@ void matrices_rforest(std::vector<AverageJob>& jobs, const ZZX& Q, int nthreads,
     try {
         Reductions red(Q);
         for (const auto& group : groups)
-            compute_group(jobs, group.second, red, group.first, nthreads, true, kappa);
+            compute_group(jobs, group.second, red, group.first, nthreads, kappa);
     } catch (const std::invalid_argument&) {
         return;
     }

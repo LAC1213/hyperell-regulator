@@ -21,7 +21,14 @@ import time
 
 from sage.all import PolynomialRing, ZZ, prime_range
 from sage.all import matrix as sage_matrix
-from benchmark import precision
+def precision(p, genus):
+    # Exact integer form of the package's Kedlaya reconstruction bound.
+    import math
+    rhs = 4 * math.comb(2*genus, genus)**2 * p**genus
+    n = 1
+    while p**(2*n) < rhs:
+        n += 1
+    return n
 
 
 def parse_rows(text, jobs, genus):

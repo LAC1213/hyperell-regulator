@@ -1,5 +1,9 @@
 # Even-degree rforest support, 1 November 2026
 
+This report records validation before promotion to main. Rforest is now the
+default, and the native directory is `hyperell-frobenius`; historical
+measurements and JSON paths are preserved.
+
 The `experimental/rforest` branch now accelerates even-degree models,
 including **388.a.776.1**, using the actual rforest C library. For conductor
 388, a fresh 15-digit standard L-value calculation with 20,000 coefficients
@@ -33,7 +37,7 @@ method is not universally available: this sextic is irreducible modulo 11,
 so it has no root in the unramified quadratic extension at that prime.
 The direct method also retains one integer polynomial across all primes,
 which is what allows the remainder forest to share products. The
-[algorithm notes](../hypellfrob-threaded/EVEN-DEGREE.md) give the path
+[algorithm notes](../hyperell-frobenius/EVEN-DEGREE.md) give the path
 inequalities, prefix construction, precision conditions and residue formula.
 
 The Python caller additionally handles nonmonic integral even models by
@@ -181,8 +185,8 @@ million-bound comparison can be reproduced with:
 
 ```sh
 lpdata /tmp/conductor388 'x^6-2*x^4+2*x^3+9*x^2+6*x+1' 1000000 1
-sage -python hypellfrob-threaded/benchmark_rforest.py \
-    --binary hypellfrob-threaded/build/euler --bound 1000000 \
+sage -python hyperell-frobenius/benchmark_rforest.py \
+    --binary hyperell-frobenius/build/euler --bound 1000000 \
     --workers 8 --coefficients 1 6 9 2 -2 0 1 \
     --euler-reference /tmp/conductor388_lpdata.txt \
     --output /tmp/conductor388-million.json
@@ -191,8 +195,8 @@ sage -python hypellfrob-threaded/benchmark_rforest.py \
 For a fresh small-bound comparison including all native fallback jobs:
 
 ```sh
-sage -python hypellfrob-threaded/benchmark_rforest.py \
-    --binary hypellfrob-threaded/build/euler --bound 200 \
+sage -python hyperell-frobenius/benchmark_rforest.py \
+    --binary hyperell-frobenius/build/euler --bound 200 \
     --workers 8 --repeats 3 --hybrid --coefficients 1 6 9 2 -2 0 1 \
     --output /tmp/conductor388-paired.json
 ```

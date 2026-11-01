@@ -1,5 +1,9 @@
 # rforest Frobenius backend, 1 November 2026
 
+This report records validation before promotion to main. Rforest is now the
+default, and the native directory is `hyperell-frobenius`; historical
+measurements and JSON paths are preserved.
+
 The `experimental/rforest` branch uses the actual upstream rforest C
 library for Harvey's simultaneous Frobenius algorithm. On
 `Q = x^5 + x^3 + 1`, fresh paired measurements at bound 100,000 show a
@@ -114,21 +118,21 @@ cases (including genus three, zero constant term, and 16 workers), comparing
 sage -python -m pytest tests/test_average_frobenius.py \
     tests/test_lfunction.py tests/test_native_build.py -q
 sage -python -m hyperell_regulator.frobenius --check \
-    --binary hypellfrob-threaded/build/euler
+    --binary hyperell-frobenius/build/euler
 
 # Fresh paired native runs, including matrix comparison.
-sage -python hypellfrob-threaded/benchmark_rforest.py \
-    --binary hypellfrob-threaded/build/euler --bound 100000 \
+sage -python hyperell-frobenius/benchmark_rforest.py \
+    --binary hyperell-frobenius/build/euler --bound 100000 \
     --workers 16 --repeats 3 --output /tmp/rforest-paired.json
 
 # Fresh million-bound legacy/rforest comparison; takes longer.
-sage -python hypellfrob-threaded/benchmark_rforest.py \
-    --binary hypellfrob-threaded/build/euler --bound 1000000 \
+sage -python hyperell-frobenius/benchmark_rforest.py \
+    --binary hyperell-frobenius/build/euler --bound 1000000 \
     --workers 16 --output /tmp/rforest-million.json
 ```
 
 The last command computes a new oracle rather than requiring local saved
 output. `--reference` together with `--reference-report` instead uses a
 saved legacy output and verifies its original input hash, as in the
-million-bound result above. See the [native guide](../hypellfrob-threaded/README.md#rforest-backend)
+million-bound result above. See the [native guide](../hyperell-frobenius/README.md#rforest-backend)
 for build instructions, strict/hybrid modes and tuning controls.

@@ -16,15 +16,14 @@ does: reduce `a_g, \dots, a_0` into the symmetric range mod `p^N`, with `N`
 Kedlaya's bound, and recover `a_{2g},\dots,a_{g+1}` from the functional
 equation `a_{2g-i} = a_i q^{g-i}`.
 
-The optional ``rforest`` backend implements Harvey's simultaneous
+The default ``rforest`` backend implements Harvey's simultaneous
 algorithm (arXiv:1210.8239) in C++, using the rforest C library to share
 reduction products across primes. Select it with the ``backend`` keyword
-or ``HYPELLFROB_BACKEND=rforest`` for L-function computations. The original
-C++ accumulating tree is also available as ``remainder``. The existing
-per-prime ``legacy`` backend remains the default; the simultaneous paths
-benefit dense batches of primes rather than isolated large primes.
+or ``HYPELLFROB_BACKEND`` for L-function computations. Select ``legacy``
+to use the per-prime algorithm explicitly, for example for isolated large
+primes. Unsupported jobs retain native and Sage fallback.
 
-The program is built from ``hypellfrob-threaded`` and ships with this
+The program is built from ``hyperell-frobenius`` and ships with this
 package: ``sage -pip install`` compiles it and puts it in
 ``hyperell_regulator/bin/euler``, and in a checkout ``make`` in that
 directory does the same job.  It is looked for at ``$HYPELLFROB_EULER``
@@ -55,9 +54,9 @@ def euler_binary():
         return env if os.path.isfile(env) and os.access(env, os.X_OK) else None
     here = os.path.dirname(os.path.abspath(__file__))
     # installed inside the package by setup.py; then the source tree, so a
-    # checkout that has run ``make`` in hypellfrob-threaded works uninstalled
+    # checkout that has run ``make`` in hyperell-frobenius works uninstalled
     for rel in (("bin", "euler"),
-                ("..", "hypellfrob-threaded", "build", "euler")):
+                ("..", "hyperell-frobenius", "build", "euler")):
         guess = os.path.normpath(os.path.join(here, *rel))
         if os.path.isfile(guess) and os.access(guess, os.X_OK):
             return guess
@@ -148,9 +147,9 @@ def _lift(M, p, g, N):
 
 def _run(fcoeffs, jobs, nthreads, backend=None):
     """One call to the program: (ascending Q, [(p, N)]) -> {p: matrix}."""
-    backend = backend or os.environ.get("HYPELLFROB_BACKEND", "legacy")
-    if backend not in ("legacy", "remainder", "rforest"):
-        raise ValueError("backend must be 'legacy', 'remainder', or 'rforest'")
+    backend = backend or os.environ.get("HYPELLFROB_BACKEND", "rforest")
+    if backend not in ("legacy", "rforest"):
+        raise ValueError("backend must be 'rforest' or 'legacy'")
     binary = euler_binary()
     if binary is None or not jobs:
         return {}
@@ -161,9 +160,7 @@ def _run(fcoeffs, jobs, nthreads, backend=None):
         workers = max(1, int(configured)) if configured else (os.cpu_count() or 1)
     else:
         workers = max(1, int(nthreads))
-    args = [binary, str(workers)]
-    if backend != "legacy":
-        args.append(backend)
+    args = [binary, str(workers), backend]
     try:
         out = subprocess.run(args, input=inp, capture_output=True, text=True,
                              check=True).stdout
@@ -195,18 +192,13 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     restricting affine Frobenius to the kernel of the residue at infinity.
     Nonmonic even models use a common monic quadratic twist over the
     rationals; its local character is removed from the returned polynomial.
-    ``backend='remainder'`` selects the earlier C++ accumulating
-    remainder tree algorithm (arXiv:1210.8239). It applies to monic odd
-    degree models; unsupported primes use the existing native backend.
     ``backend='legacy'`` selects the per-prime algorithm. The default is
-    ``$HYPELLFROB_BACKEND`` or ``'legacy'``. The remainder implementation
-    is experimental: its asymptotic bound does not guarantee a speedup at
-    the bounds used by this package. Both L-function classes honour this
-    environment variable.
+    ``$HYPELLFROB_BACKEND`` or ``'rforest'``. Both L-function classes honour
+    this environment variable.
 
     An even degree ``f`` is replaced by :func:`odd_model` where one exists.
     Otherwise ``rforest`` uses simultaneous even degree reductions;
-    ``legacy`` and ``remainder`` use the even degree reference routine,
+    ``legacy`` uses the even degree reference routine,
     which is linear in `p`. Unsupported jobs retain Sage fallback.
 
     The default uses ``HYPELLFROB_THREADS`` if set, otherwise one worker per
@@ -237,7 +229,7 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     # rational Weierstrass point there is one, isomorphic over QQ, and it is
     # what gets sent. Without one, rforest handles the even degree model
     # directly; the other backends use the even degree reference routine.
-    selected_backend = backend or os.environ.get("HYPELLFROB_BACKEND", "legacy")
+    selected_backend = backend or os.environ.get("HYPELLFROB_BACKEND", "rforest")
     model = odd_model(fz)
     twist = ZZ(1)
     if selected_backend == "rforest" and model is None and not fz.is_monic():
@@ -284,7 +276,7 @@ def _check_binary(binary):
     serial = None
     workers = tuple(dict.fromkeys((1, 4, os.cpu_count() or 1)))
     for count in workers:
-        result = subprocess.run([binary, str(count)], input=batch, text=True,
+        result = subprocess.run([binary, str(count), "legacy"], input=batch, text=True,
                                 capture_output=True, check=True, timeout=30)
         rows = [line.split() for line in result.stdout.splitlines()]
         if len(rows) != len(primes) or any(
@@ -297,7 +289,7 @@ def _check_binary(binary):
     return workers
 
 
-def _check_remainder_binary(binary, workers, backend="remainder-only"):
+def _check_rforest_binary(binary, workers):
     """Compare the new backend's full matrices; fallback is prohibited."""
     batch = "1 0 0 1 0 1\n101 3\n103 3\n107 3\n109 3\n"
     reference = subprocess.run([binary, "1", "legacy"], input=batch,
@@ -307,11 +299,11 @@ def _check_remainder_binary(binary, workers, backend="remainder-only"):
         # 31 satisfies the old algorithm's p>25 precondition at N=3,
         # but fails the new path's p-admissibility test. This also detects
         # stale binaries which silently ignore the backend argument.
-        result = subprocess.run([binary, str(count), backend],
+        result = subprocess.run([binary, str(count), "rforest-only"],
                                 input=batch + "31 3\n", text=True, capture_output=True,
                                 check=True, timeout=30)
         if result.stdout != reference + "31 0\n":
-            raise RuntimeError("remainder-tree matrices differ from legacy")
+            raise RuntimeError("rforest matrices differ from legacy")
 
 
 def _check_rforest_even_binary(binary, workers):
@@ -343,8 +335,7 @@ if __name__ == "__main__":
         parser.exit(1, "Frobenius accelerator not found; computations use Sage.\n")
     try:
         workers = _check_binary(binary)
-        _check_remainder_binary(binary, workers)
-        _check_remainder_binary(binary, workers, "rforest-only")
+        _check_rforest_binary(binary, workers)
         _check_rforest_even_binary(binary, workers)
     except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
         parser.exit(1, "Accelerator failed: %s\n%s\n" %

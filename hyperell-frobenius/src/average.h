@@ -16,9 +16,7 @@ struct AverageJob {
 };
 
 // Unhandled jobs retain ok=false. No single-prime fallback is hidden here.
-// Threads distribute independent (a,b) reduction trees, not individual primes.
-void matrices_average(std::vector<AverageJob>& jobs, const NTL::ZZX& Q,
-                      int nthreads = 1);
+// Threads distribute independent (a,b) reduction forests, not individual primes.
 // Upstream rforest C library with bounded forests, for both parities.
 // Even models use paths avoiding the horizontal residue singularity and
 // return the same residue-free projective basis as matrix_reference().
