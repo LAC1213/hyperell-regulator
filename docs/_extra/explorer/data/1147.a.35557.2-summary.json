@@ -82,7 +82,8 @@
         "0"
       ],
       "file": "data/1147.a.35557.2-R.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/1147.a.35557.2-R.json"
     }
   ],
   "determinant": "2.7515781818694138308139300474",

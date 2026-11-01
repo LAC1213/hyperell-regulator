@@ -20,6 +20,7 @@ import re
 
 BOUND = 1300
 DIGITS = 100
+EXCLUDED_DISPLAY_CONDUCTORS = frozenset({1116})
 NORMALISATION = "pi c+ c- L''(std,1) / D"
 
 
@@ -135,12 +136,14 @@ def escape_tex(text):
 
 def render(rows, source_hash):
     """A standalone document; full decimals and unsuccessful rows stay in JSON."""
+    rows = [row for row in rows if int(row.get("cond", 0)) not in EXCLUDED_DISPLAY_CONDUCTORS]
     ok = [row for row in rows if row.get("status") == "ok"]
     lines = [r"\documentclass[10pt]{article}",
              r"\usepackage[a4paper,landscape,margin=12mm]{geometry}",
              r"\usepackage{amsmath,amssymb,booktabs,longtable}",
              r"\begin{document}",
              r"\noindent\textbf{Beilinson survey: conductor $<1300$, 100-digit targets.}",
+             r"Conductor $1116$ is retained in the JSON and omitted from these tables.",
              r"The determinant $D$ uses weights $(1,2\operatorname{Re}(z),|z|^2)$ and full cycle periods.",
              r"We compare $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$ with the rational guess $r$.",
              r"The error is $|q/r-1|$. Numerical targets are not certified error bounds.",
@@ -210,6 +213,8 @@ def export(source, output, cache):
     tex = render(rows, checksum)
     counts = Counter(row["status"] for row in rows)
     compared = sum(bool(row.get("comparison")) for row in rows)
+    displayed = sum(row.get("status") == "ok" and int(row["cond"]) not in EXCLUDED_DISPLAY_CONDUCTORS
+                    for row in rows)
     readme = f"""# Beilinson survey: conductor < 1300, 100 digits
 
 This directory contains only the current 100-digit Beilinson survey:
@@ -222,6 +227,9 @@ regulators and {compared} numerical comparisons. Unsuccessful attempts and their
 reasons are retained in the JSON; the tables list their status counts and any
 numerical failures. This is a survey of locally cached geometrically simple
 curves, without a claim of completeness over all curves.
+The conductor-1116 record is retained in the JSON, but omitted from the LaTeX
+tables and explorer. Table status counts use the same exclusion.
+The LaTeX tables and explorer include {displayed} successful regulators.
 
 Regulators and L-values target 100 decimal digits. The determinant uses weights
 `(1, 2 Re(z), |z|^2)`, full cycle periods, and
@@ -264,7 +272,7 @@ def explorer_inputs(report, output):
     curves = []
     x_expression = lambda value: re.sub(r"\bu\b", "x", value)
     for row in rows:
-        if row.get("status") != "ok":
+        if row.get("status") != "ok" or int(row["cond"]) in EXCLUDED_DISPLAY_CONDUCTORS:
             continue
         a, t = row["algebraic_data"], row["triple"]
         comparison = row.get("comparison", {})
@@ -290,7 +298,8 @@ def explorer_inputs(report, output):
                                 report_sha256=hashlib.sha256(raw).hexdigest(),
                                 marked_points=["P", "R"],
                                 pole_convention="Q is the report's common pole R; viewer zeros P,R are report zeros P,Q.",
-                                conductor_bound=BOUND, regulator_digits=DIGITS, lvalue_digits=DIGITS),
+                                conductor_bound=BOUND, regulator_digits=DIGITS, lvalue_digits=DIGITS,
+                                excluded_conductors=sorted(EXCLUDED_DISPLAY_CONDUCTORS)),
                     curves=curves)
     Path(output).write_text(json.dumps(snapshot, indent=2, allow_nan=False)+"\n")
     return snapshot

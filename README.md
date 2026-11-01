@@ -10,7 +10,7 @@ Regulators, periods and L-values support both float64 and arbitrary precision.
 [Documentation](https://lac1213.github.io/hyperell-regulator/)
 
 The [interactive cut-system explorer](https://lac1213.github.io/hyperell-regulator/explorer/)
-shows sixteen genus 2 curves of small conductor and thirty-two torsion functions, with
+shows the successful 100-digit survey curves and their torsion functions, with
 clickable lifted paths, ordinary/logarithmic integrals and regulator pairings
 displayed to ten significant digits. Its data is computed locally with Sage;
 the viewer runs entirely on GitHub Pages. See the
@@ -67,6 +67,22 @@ accuracy target and convergence failures raise exceptions.
 `c_invariants` uses signed minors of **full cycle periods** along validated
 semilunar paths. See the [period conventions](docs/quickstart.rst#period-conventions)
 when comparing saved reports or other normalizations.
+
+`divisor_class_order` computes exact orders on odd and even degree models,
+including curves without a rational Weierstrass point:
+
+```python
+from hyperell_regulator.components import HyperellipticCurveWithReduction, divisor_class_order
+
+C = HyperellipticCurveWithReduction(x + 2*x**2 - x**4, 1 + x + x**3)
+divisor_class_order(C, (0, 0), ("infinity", 0))   # 7
+divisor_class_order(C, (0, 0), ("infinity", -1))  # 21
+```
+
+Here infinity labels are the limits of `y/x**(g+1)` on the original
+`y**2 + h*y = f` model. The polynomial API `torsion_order(F, P, Q)` uses
+coordinates on `y**2 = F`; its optional `multiple=N` finds the exact order
+dividing `N` without the default 24-step search bound.
 
 ## Beilinson experiments
 

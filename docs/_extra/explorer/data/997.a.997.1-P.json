@@ -12218,7 +12218,7 @@
     "hyperell_regulator/regulator/cover.py": "20f5e4a9d6a2752fce84ab668b1ffcf896d943ac553ace8d230944c31f2685f7",
     "hyperell_regulator/regulator/diagnostics.py": "1066a9f5946353771aeb0f93641a78e7135075324c280c27fef4f5625118ab21",
     "hyperell_regulator/regulator/explorer.py": "bd37838feb88fc2f353b178772de2a1ff5eb17ccda7e4f330c569236a646690e",
-    "hyperell_regulator/regulator/functions.py": "7615069d15e6863f4036e11f244233bbcafd6e96c1c18e12479203a960ecbbc4",
+    "hyperell_regulator/regulator/functions.py": "2a29745a17630b9fa945e8e026563303e34cec96ba9895aed25a5a0b7fe406e8",
     "hyperell_regulator/regulator/plane.py": "4f0e77a2512ed2e47463b548a3bb47a38573e1114c39b1f3e2e154266fdc521f",
     "hyperell_regulator/regulator/plots.py": "bea1e4666a3b122f6a2314fade833dd8b059b46fb5215878ed720d470e9a3de5",
     "hyperell_regulator/regulator/polynomials.py": "4a55ee0afe66d13d501af62c7984a29887eca072f13e9261e4f60f4695c2b9a7",
@@ -12226,7 +12226,7 @@
     "hyperell_regulator/regulator/stokes.py": "81c930c40e4828bc120ffe777ce5e775dd97f03259a6a93ba0e688173a933e31",
     "hyperell_regulator/regulator/surfaces.py": "26ebf7077e0e371b5e7943ac3a51936e668ec2e15d8ea0d9ddb9310ba5844307",
     "hyperell_regulator/regulator/walks.py": "4fc176ca5ae1feec02200c0b056549b3b68e654f04d214ce58fa91653e8baf6a",
-    "hyperell_regulator/experiments/small_conductor_explorer.py": "04252c9930567a893326367638a849387e861242d6d31ec6da921ac994564ed1"
+    "hyperell_regulator/experiments/small_conductor_explorer.py": "f818455a2ae4f2f8f118243b267c46bbd522e06342e5aadf8cbb4a7231a60d97"
   },
   "collection": {
     "entry": {
@@ -12313,6 +12313,6 @@
   },
   "normalization_source_sha256": {
     "hyperell_regulator/experiments/small_conductor_explorer.py": "f818455a2ae4f2f8f118243b267c46bbd522e06342e5aadf8cbb4a7231a60d97",
-    "hyperell_regulator/experiments/beilinson.py": "0341523899238d9c1bbd8f7f3ee87cb7eb47bebc90cf916c114d6ab3397d5bd9"
+    "hyperell_regulator/experiments/beilinson.py": "4b6130d857934ac8fd70a04ac49ed4bff6beaadf1cb616d8154124b529e35a4d"
   }
 }

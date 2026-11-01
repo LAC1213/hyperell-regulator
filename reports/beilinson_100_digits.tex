@@ -3,6 +3,7 @@
 \usepackage{amsmath,amssymb,booktabs,longtable}
 \begin{document}
 \noindent\textbf{Beilinson survey: conductor $<1300$, 100-digit targets.}
+Conductor $1116$ is retained in the JSON and omitted from these tables.
 The determinant $D$ uses weights $(1,2\operatorname{Re}(z),|z|^2)$ and full cycle periods.
 We compare $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$ with the rational guess $r$.
 The error is $|q/r-1|$. Numerical targets are not certified error bounds.
@@ -32,7 +33,6 @@ Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(\mathrm{std},1)$ & $q$ & $r$ & R
 997.a.997.2 & $31.67578293$ & $5.397405264$ & $4.172445365$ & $14.32688507$ & $32.00000000$ & $32$ & $1.42\times 10^{-100}$ \\
 1051.b.1051.1 & $31.29684206$ & $5.832929876$ & $3.786737022$ & $7.216368916$ & $16.00000000$ & $16$ & $3.47\times 10^{-101}$ \\
 1051.b.1051.2 & $7.824210515$ & $1.458232469$ & $3.786737022$ & $7.216368916$ & $16.00000000$ & $16$ & $5.49\times 10^{-101}$ \\
-1116.a.214272.1$^{\dagger}$ & $5.308499956$ & $-4.246024754$ & $-1.712158426$ & $2.454293882$ & $10.55920177$ & $\frac{23811}{2255}$ & $5.74\times 10^{-10}$ \\
 1123.a.1123.1 & $31.23094426$ & $5.372961125$ & $3.776830941$ & $23.51447226$ & $48.00000000$ & $48$ & $3.32\times 10^{-101}$ \\
 1147.a.35557.2 & $2.751578182$ & $-0.7161605275$ & $4.451310140$ & $17.58384002$ & $-64.00000000$ & $-64$ & $6.12\times 10^{-101}$ \\
 \bottomrule\end{longtable}
@@ -140,11 +140,6 @@ Curve & $P$ & $Q$ & $R$ & $n_P$ & $n_Q$ \\
 \multicolumn{6}{p{0.95\linewidth}}{$\phi_P= u + 4 $} \\
 \multicolumn{6}{p{0.95\linewidth}}{$\phi_Q= u $} \\
 \addlinespace
-1116.a.214272.1 & $(-1,-1)$ & $(0,0)$ & $\infty_{-1}$ & 13 & 3 \\*
-\multicolumn{6}{l}{$G(u)= u^{6} + 4 u^{4} + 10 u^{3} + 4 u^{2} - 4 u + 1 ;\quad s= \text{--} ,\ d= 1 ,\quad \text{pole}= \infty $} \\*
-\multicolumn{6}{p{0.95\linewidth}}{$\phi_P= \frac{41875329343225}{373360370073984} u^{13} + \frac{41875329343225}{93340092518496} u^{12} + \frac{209376646716125}{124453456691328} u^{11} + \frac{2051891137818025}{373360370073984} u^{10} + \frac{5318166826589575}{373360370073984} u^{9} + \frac{3726904311547025}{124453456691328} u^{8} + \frac{6741928024259225}{124453456691328} u^{7} + \frac{10259455689090125}{124453456691328} u^{6} + \frac{12520723473624275}{124453456691328} u^{5} + \frac{34463396049474175}{373360370073984} u^{4} + \frac{21649545270447325}{373360370073984} u^{3} + \frac{2303143113877375}{124453456691328} u^{2} - \frac{209376646716125}{93340092518496} u - \frac{1298135209639975}{373360370073984} +\left( -\frac{41875329343225}{373360370073984} u^{10} - \frac{41875329343225}{93340092518496} u^{9} - \frac{544379281461925}{373360370073984} u^{8} - \frac{41875329343225}{10371121390944} u^{7} - \frac{41875329343225}{4609387284864} u^{6} - \frac{2973148383368975}{186680185036992} u^{5} - \frac{2805647065996075}{124453456691328} u^{4} - \frac{4731912215784425}{186680185036992} u^{3} - \frac{8081938563242425}{373360370073984} u^{2} - \frac{2303143113877375}{186680185036992} u - \frac{460628622775475}{124453456691328} \right)v $} \\
-\multicolumn{6}{p{0.95\linewidth}}{$\phi_Q= u^{3} + 2 u - 1 +\left( 1 \right)v $} \\
-\addlinespace
 1123.a.1123.1 & $(-1,1)$ & $\infty_{-1}$ & $(0,0)$ & 2 & 8 \\*
 \multicolumn{6}{l}{$G(u)= -4 u^{5} - 3 u^{4} - 2 u^{2} + 1 ;\quad s= 0 ,\ d= 1 ,\quad \text{pole}= \infty $} \\*
 \multicolumn{6}{p{0.95\linewidth}}{$\phi_P= u + 1 $} \\
@@ -163,8 +158,8 @@ Curve & $P$ & $Q$ & $R$ & $n_P$ & $n_Q$ \\
 Status & Curves \\
 \midrule
 no\_admissible\_triple & 132 \\
-ok & 22 \\
+ok & 21 \\
 \bottomrule\end{longtable}
 \noindent Source: \texttt{results/beilinson\_results.json}.
-\par\noindent\texttt{SHA-256: d6cc82098e80bc891e57ed43c658aa06a281da4b8d70bb1210e93088b667545e}
+\par\noindent\texttt{SHA-256: c04e1821eb7d9b279b7771e82fbf6f91d218efef47e479844fb250c918598d41}
 \end{document}

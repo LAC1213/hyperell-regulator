@@ -32,7 +32,8 @@ digits**. Exact polynomial coefficients, point coordinates and torsion orders
 remain exact. The catalog retains the full 100-digit survey reference values.
 Path integrals are independently exported at 15 digits and checked against
 the survey determinant; their JSON retains the integration precision.
-The saved conductor-1116 result appears in the table without a new path export.
+Conductor 1116 is retained in the report JSON and excluded from its LaTeX
+tables and this explorer.
 
 Sheets, banks and orientation
 -----------------------------
@@ -118,7 +119,7 @@ From the repository root, with the package installed in SageMath:
 .. code-block:: sh
 
    sage -python -m hyperell_regulator.experiments.beilinson_report --explorer-inputs docs/explorer_inputs.json
-   sage -python -m hyperell_regulator.experiments.small_conductor_explorer --jobs 4 --reference-only 1116.a.214272.1
+   sage -python -m hyperell_regulator.experiments.small_conductor_explorer --jobs 4
 
 Then generate the display meshes (this step does not reintegrate any edge):
 

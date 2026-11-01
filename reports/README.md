@@ -10,6 +10,9 @@ regulators and 22 numerical comparisons. Unsuccessful attempts and their
 reasons are retained in the JSON; the tables list their status counts and any
 numerical failures. This is a survey of locally cached geometrically simple
 curves, without a claim of completeness over all curves.
+The conductor-1116 record is retained in the JSON, but omitted from the LaTeX
+tables and explorer. Table status counts use the same exclusion.
+The LaTeX tables and explorer include 21 successful regulators.
 
 Regulators and L-values target 100 decimal digits. The determinant uses weights
 `(1, 2 Re(z), |z|^2)`, full cycle periods, and
@@ -32,4 +35,4 @@ The standalone LaTeX document uses `geometry`, `amsmath`, `amssymb`, `booktabs`
 and `longtable`. No PDF is generated.
 
 Source: `results/beilinson_results.json` (read without modification).
-Source SHA-256: `d6cc82098e80bc891e57ed43c658aa06a281da4b8d70bb1210e93088b667545e`.
+Source SHA-256: `c04e1821eb7d9b279b7771e82fbf6f91d218efef47e479844fb250c918598d41`.

@@ -116,7 +116,10 @@ def test_complete_small_conductor_catalog_reassembles_all_pairings():
     inputs = json.loads((root/'docs/explorer_inputs.json').read_text())
     assert [c['label'] for c in catalog['curves']] == [c['label'] for c in inputs['curves']]
     report = json.loads((root/'reports/beilinson_100_digits.json').read_text())
-    successful = {r['label']: r for r in report if r['status'] == 'ok'}
+    successful = {r['label']: r for r in report if r['status'] == 'ok' and int(r['cond']) != 1116}
+    assert any(int(r['cond']) == 1116 for r in report)
+    assert all(int(c['cond']) != 1116 for c in catalog['curves'])
+    assert inputs['source']['excluded_conductors'] == [1116]
     assert [c['label'] for c in catalog['curves']] == list(successful)
     assert catalog['display_digits'] == 10
     assert catalog['source']['report_sha256'] == hashlib.sha256((root/'reports/beilinson_100_digits.json').read_bytes()).hexdigest()

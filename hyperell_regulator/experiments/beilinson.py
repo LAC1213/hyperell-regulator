@@ -121,6 +121,7 @@ from hyperell_regulator.components import (
     RESULTS,
     _fmt,
     curve_from_row,
+    divisor_class_order,
     odd_degree_model,
 )
 from hyperell_regulator.lfunction import StandardLFunction
@@ -222,12 +223,9 @@ def find_triples(record, C, row=None, allow_undecided=True):
     the order of the difference is finite. ``allow_undecided=False`` excludes
     undecided pairs; a ``False`` verdict always excludes a pair.
     """
-    # How is torsion certified?  With a rational Weierstrass point the order of
-    # each difference was computed in J(QQ) and must be finite.  Without one
-    # there is no Mumford arithmetic and the stored order is None, so instead
-    # we accept LMFDB's Mordell-Weil rank being 0: then J(QQ) is all torsion
-    # and every difference is torsion automatically.  This fallback is used
-    # ONLY when there is no rational Weierstrass point.
+    # Exact orders are usable on either model. Recover missing even-model
+    # orders from older component caches by principality tests. Rank zero
+    # remains a fallback if the exact computation is unavailable.
     has_weierstrass = odd_degree_model(C) is not None
     rank = lmfdb_rank(row)
     rank_zero = (rank == 0)
@@ -235,23 +233,21 @@ def find_triples(record, C, row=None, allow_undecided=True):
     if isinstance(invariants, str):
         invariants = json.loads(invariants)
     exponent = int(lcm([ZZ(v) for v in invariants])) if rank_zero else None
-    via = "order in J(Q)" if has_weierstrass else (
-        "LMFDB rank 0" if rank_zero else None)
-
     ok = {}                      # R -> list of S with (S, R) usable
     for d in record["pairs"]:
         verdict = d["same_component_everywhere"]
         if verdict is not True and not (allow_undecided and verdict is None):
             continue
         order = d["order_of_P_minus_Q"]
-        if has_weierstrass:
-            if order is None or order == "Infinity":
-                continue         # not known to be torsion
-        else:
-            if not rank_zero:
-                continue         # cannot certify torsion at all
-            order = order if order not in (None, "Infinity") else "rank 0"
         P, Q = _parse_point(d["P"]), _parse_point(d["Q"])
+        if order is None and not has_weierstrass:
+            order = divisor_class_order(C, P, Q)
+        if str(order) in ("Infinity", "+Infinity"):
+            continue
+        if order is None:
+            if has_weierstrass or not rank_zero:
+                continue
+            order = "rank 0"
         ok.setdefault(P, []).append((Q, verdict, order))
         ok.setdefault(Q, []).append((P, verdict, order))
 
@@ -268,7 +264,8 @@ def find_triples(record, C, row=None, allow_undecided=True):
                             "order_P": nP, "order_Q": nQ,
                             "verdict_P": vP, "verdict_Q": vQ,
                             "pairwise_nonconjugate": True,
-                            "torsion_certified_by": via,
+                            "torsion_certified_by": "LMFDB rank 0" if "rank 0" in (nP, nQ)
+                                                    else "order in J(Q)",
                             "mw_rank": rank,
                             "torsion_exponent": exponent})
     return out
@@ -748,6 +745,23 @@ def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
 # driver
 # ---------------------------------------------------------------------------
 
+def _component_warning(triple):
+    """State missing component evidence separately from a known failure."""
+    pairs = [("P-R", triple.get("verdict_P")), ("Q-R", triple.get("verdict_Q"))]
+    failed = [name for name, verdict in pairs if verdict is False]
+    unknown = [name for name, verdict in pairs if verdict is not True and verdict is not False]
+    if not failed and not unknown:
+        return None
+    details = []
+    if failed:
+        details.append("failed for " + ", ".join(failed))
+    if unknown:
+        details.append("undecided for " + ", ".join(unknown))
+    message = ("triple fails the same-component criterion" if failed else
+               "triple is not known to satisfy the same-component criterion")
+    return message + " (" + "; ".join(details) + ")"
+
+
 def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
                     with_periods=True, with_lvalue=True, digits=15,
                     lindep_bound=8, reg_digits=None):
@@ -794,6 +808,11 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
         for who, im, n in (("P", imP, nP), ("Q", imQ, nQ)):
             if str(n).isdigit() or isinstance(n, (int, Integer)):
                 print("  phi_%s = %s" % (who, phi_string(G, im, int(n), pole=pole)))
+
+    notice = _component_warning(t)
+    if notice:
+        res["component_warning"] = notice
+        print("  %s WARNING: %s" % (record["label"], notice), flush=True)
 
     usable = all(isinstance(n, (int, Integer)) or
                  (isinstance(n, str) and n.isdigit()) for n in (nP, nQ))
@@ -1035,6 +1054,10 @@ def _report_row(result, stored=False):
     for key in ("error", "periods_error", "L_status", "L_precision_warning"):
         if result.get(key):
             print("  %s: %s" % (key, result[key]), flush=True)
+    if stored and result.get("triple"):
+        notice = _component_warning(result["triple"])
+        if notice:
+            print("  WARNING: %s" % notice, flush=True)
 
 
 @contextmanager

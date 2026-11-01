@@ -72,7 +72,8 @@
         "-1"
       ],
       "file": "data/388.a.776.1-P.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/388.a.776.1-P.json"
     },
     {
       "name": "R",
@@ -82,7 +83,8 @@
         "-1"
       ],
       "file": "data/388.a.776.1-R.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/388.a.776.1-R.json"
     }
   ],
   "determinant": "-26.392686309406791661854461548",

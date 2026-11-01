@@ -1,7 +1,7 @@
 /* Static viewer: computations and full precision stay in the exported JSON. */
 "use strict";
 const DIGITS = 10;
-const DATA_VERSION = "beilinson-100-1300-2";
+const DATA_VERSION = "beilinson-100-1300-3";
 const COLORS = ["#bd5034", "#267f91", "#9267af", "#45956b", "#c28b24", "#3865a4", "#b65787"];
 const $ = (id) => document.getElementById(id);
 let catalog = null, current = null, selectedCurve = null, loadVersion = 0;

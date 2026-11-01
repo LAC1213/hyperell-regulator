@@ -37,5 +37,5 @@ reference generated from the package's docstrings.
 * :ref:`modindex`
 * :ref:`search`
 
-`Open the interactive cut-system explorer <explorer/index.html>`_ for all
-sixteen genus 2 curves of small conductor and thirty-two torsion functions.
+`Open the interactive cut-system explorer <explorer/index.html>`_ for the
+successful 100-digit survey curves and their torsion functions.

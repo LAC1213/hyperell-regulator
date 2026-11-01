@@ -50,6 +50,14 @@ The saved triple retains those verdicts. Use ``--exclude-undecided`` (or
 ``allow_undecided=False`` in Python) to require affirmative verdicts; known
 negative verdicts are always excluded.
 
+Torsion orders are computed exactly on both odd and even degree models.
+Without a rational Weierstrass point, good reductions bound the possible
+order and Riemann--Roch tests principality. Old component records with missing
+orders are checked when selecting triples, so positive or unknown
+Mordell--Weil rank does not exclude a difference with a proven finite order.
+The LMFDB rank-zero fallback remains available when the exact computation
+cannot be completed.
+
 Saved results
 -------------
 

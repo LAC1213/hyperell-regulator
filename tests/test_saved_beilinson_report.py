@@ -52,6 +52,22 @@ def test_rejects_stale_conventions_and_insufficient_lvalue_precision():
         report.select_results([row])
 
 
+def test_1116_is_retained_in_json_but_excluded_from_tables_and_explorer(tmp_path):
+    included = saved_row()
+    excluded = saved_row("1116.a.214272.1", 1116)
+    selected = report.select_results([excluded, included])
+    assert [r['label'] for r in selected] == [included['label'], excluded['label']]
+    assert excluded['label'] not in report.render([excluded], 'snapshot')
+    failed = dict(excluded, status='numerical_failure', error='excluded numerical failure')
+    assert 'excluded numerical failure' not in report.render([failed], 'snapshot')
+    # Even an older report containing 1116 cannot reintroduce it to the viewer.
+    source = tmp_path/"legacy-report.json"
+    source.write_text(json.dumps([excluded]))
+    inputs = report.explorer_inputs(source, tmp_path/"inputs.json")
+    assert inputs["curves"] == []
+    assert inputs["source"]["excluded_conductors"] == [1116]
+
+
 def test_exports_exact_current_model_and_functions_without_integrating(tmp_path):
     row = saved_row()
     source = tmp_path/"results.json"

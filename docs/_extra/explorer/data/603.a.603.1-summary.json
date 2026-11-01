@@ -72,7 +72,8 @@
         "-4096"
       ],
       "file": "data/603.a.603.1-P.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/603.a.603.1-P.json"
     },
     {
       "name": "R",
@@ -82,7 +83,8 @@
         "0"
       ],
       "file": "data/603.a.603.1-R.json",
-      "warnings": []
+      "warnings": [],
+      "mesh": "meshes/603.a.603.1-R.json"
     }
   ],
   "determinant": "-6.8556315813751003176039782763e-11",
