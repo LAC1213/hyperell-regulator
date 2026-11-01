@@ -38,7 +38,8 @@ $(BUILD):
 $(BUILD)/%.o: src/%.cpp | $(BUILD)
 	$(CXX) -I"$(NTL_INC)" -I"$(GMP_INC)" -Isrc $(CPPFLAGS) $(CXXFLAGS) -pthread -c $< -o $@
 
-$(BUILD)/average.o: src/average.h vendor/rforest/rforest.h
+$(BUILD)/average.o: src/average.h src/even_degree.h vendor/rforest/rforest.h
+$(BUILD)/even_degree.o: src/even_degree.h
 
 $(BUILD)/rforest/%.o: vendor/rforest/%.c $(RFOREST_HEADERS)
 	@mkdir -p "$(@D)"

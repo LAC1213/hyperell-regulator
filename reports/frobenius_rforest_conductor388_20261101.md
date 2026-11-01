@@ -1,5 +1,9 @@
 # rforest test on conductor 388, 1 November 2026
 
+This is the historical check of commit `434e654`, before even-degree
+support was added. The [even-degree extension and new results](frobenius_rforest_even_20261101.md)
+supersede its backend limitation; the measurements below are preserved.
+
 The new backend does **not accelerate `388.a.776.1`**. It supports monic odd
 models, while this curve has no rational Weierstrass point. Its completed
 square model is

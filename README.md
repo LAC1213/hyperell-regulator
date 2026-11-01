@@ -39,6 +39,8 @@ for simultaneous Frobenius computations. Select it with
 `HYPELLFROB_BACKEND=rforest`, or `backend="rforest"` in
 `frobenius_polynomials`. See the [backend guide](hypellfrob-threaded/README.md#rforest-backend)
 for its build, tuning, and comparison commands.
+It supports even degree models directly, including conductor 388, and
+`HYPELLFROB_THREADS` controls the worker count for L-function computations.
 
 ## Python API
 

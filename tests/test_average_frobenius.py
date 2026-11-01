@@ -83,7 +83,7 @@ def test_dense_batch_and_deterministic_random_curves(binary, backend):
 @pytest.mark.parametrize("q,jobs", [
     (x**5 + x**3 + 1, [(3, 2), (31, 2), (53, 2), (61, 2), (101, 2)]),
     (x**5 + x + 101, [(101, 2), (103, 2)]),  # c0 divisible by a good prime
-    (x**6 + x + 1, [(101, 2)]),
+    (x**6 + x + 1, [(31, 2), (101, 2)]),
     (2*x**5 + x + 1, [(101, 2)]),
     ((x+1)**2*(x**3+2), [(101, 2)]),
 ])
@@ -149,8 +149,8 @@ def test_lfunction_coefficients_use_new_backend(binary, monkeypatch, backend):
         assert actual == expected
 
 
-def test_conductor_388_uses_even_degree_fallback(binary, monkeypatch):
-    """This sextic has no rational branch point, so rforest cannot run."""
+def test_conductor_388_uses_even_degree_forest(binary, monkeypatch):
+    """The even forest handles this curve without a rational branch point."""
     from sage.all import QQ, pari
     from hyperell_regulator import HyperellipticCurveWithReduction
     from hyperell_regulator.lfunction import CurveLFunction, StandardLFunction
@@ -159,10 +159,12 @@ def test_conductor_388_uses_even_degree_fallback(binary, monkeypatch):
     q = 4*f+h**2
     assert q.roots(QQ) == []
     assert odd_model(q) is None
-    jobs = [(p, 2) for p in (23, 31, 37, 41, 101)]
+    assert q.change_ring(GF(11)).is_irreducible()  # no root over F_(11^2)
+    jobs = [(p, 2) for p in (41, 43, 47, 71, 101)]
     strict = native(binary, q, jobs, "rforest-only", workers=4)
-    assert strict == [[p, 0] for p, _ in jobs]
+    assert all(row[:3] == [p, 1, 4] for (p, _), row in zip(jobs, strict))
     actual = native(binary, q, jobs, "rforest", workers=4)
+    assert actual == strict
     assert actual == native(binary, q, jobs, "legacy", workers=4)
     reference = pari.lfungenus2([pari(str(f)), pari(str(h))])
     for (p, n), row in zip(jobs, actual):
@@ -178,6 +180,82 @@ def test_conductor_388_uses_even_degree_fallback(binary, monkeypatch):
         monkeypatch.setenv("HYPELLFROB_BACKEND", "rforest")
         actual = cls(HyperellipticCurveWithReduction(f, h)).dirichlet_coefficients(128)
         assert actual == expected
+
+
+@pytest.mark.parametrize("q", [
+    x**4-x+1,
+    x**6-2*x**4+2*x**3+9*x**2+6*x+1,
+    x**6+x+1,
+    x**6+x**2+x,
+    x**6-3*x**5+2*x**4-5*x**2+7*x-2,
+    x**8-x+1,
+])
+@pytest.mark.parametrize("precision", [1, 2, 3, 4])
+def test_even_degree_full_matrices(binary, q, precision):
+    # One good prime beyond the common p-admissibility bound. Full entries,
+    # including higher p-adic digits, agree in the reference's residue basis.
+    bound = q.degree()*(4*precision-1)
+    p = next(p for p in prime_range(bound+1, bound+100) if q.discriminant()%p)
+    jobs = [(int(p), precision)]
+    actual = native(binary, q, jobs, "rforest-only", workers=4)
+    assert actual[0][:3] == [p, 1, q.degree()-2]
+    assert actual == native(binary, q, jobs, "legacy", workers=4)
+
+
+@pytest.mark.parametrize("q", [x**4-x+1, x**6+x+1, x**6+x**2+x, x**8-x+1])
+def test_even_degree_dense_euler_factors(binary, q):
+    genus = (q.degree()-2)//2
+    jobs = [(int(p), _bound(p, genus)) for p in prime_range(151, 210)
+            if q.discriminant()%p]
+    actual = native(binary, q, jobs, "rforest-only", workers=4)
+    for (p, n), row in zip(jobs, actual):
+        assert row[:3] == [p, 1, 2*genus]
+        matrix = [row[3+i*2*genus:3+(i+1)*2*genus] for i in range(2*genus)]
+        expected = HyperellipticCurve(q.change_ring(GF(p))).frobenius_polynomial()
+        assert _lift(matrix, p, genus, n) == expected
+
+
+def test_even_degree_mixed_jobs_and_threads(binary):
+    q = x**6-2*x**4+2*x**3+9*x**2+6*x+1
+    jobs = [(101, 2), (83, 3), (101, 2), (71, 1), (101, 3), (89, 3)]
+    expected = native(binary, q, jobs, "legacy", workers=4)
+    assert all(row[1] for row in expected)
+    for workers in (1, 4, 16):
+        assert native(binary, q, jobs, "rforest-only", workers=workers) == expected
+
+
+@pytest.mark.parametrize("q", [
+    2*(x**6+x+1),
+    4*(x**6+x+1),
+    -3*(x**6+x+1),
+    -2*x**6+x**3+x+1,
+    5*x**6+x**5+x+1,              # p=5 remains good after degree drops
+    3*x**4+x+1,
+])
+def test_even_degree_nonmonic_python_models(binary, monkeypatch, q):
+    monkeypatch.setenv("HYPELLFROB_EULER", binary)
+    ps = [p for p in (3, 5, 7, 43, 47, 59, 71, 83) if q.discriminant()%p]
+    actual = frobenius_polynomials(q, ps, nthreads=4, backend="rforest")
+    for p in ps:
+        expected = HyperellipticCurve(q.change_ring(GF(p))).frobenius_polynomial()
+        assert actual[p] == expected
+
+
+@pytest.mark.parametrize("kappa", [0, 2, 20])
+@pytest.mark.parametrize("evaluator", ["differences", "powers"])
+def test_even_degree_prefix_and_subtrees(binary, monkeypatch, kappa, evaluator):
+    q = x**6-2*x**4+2*x**3+9*x**2+6*x+1
+    jobs = [(int(p), 2) for p in prime_range(41, 170) if q.discriminant()%p]
+    jobs += [(101, 2), (163, 2)]
+    random.Random(388).shuffle(jobs)
+    expected = native(binary, q, jobs, "rforest-only", workers=4)
+    assert all(row[1] for row in expected)
+    monkeypatch.setenv("HYPELLFROB_RFOREST_EVAL", evaluator)
+    batch = " ".join(map(str, q.list()))+"\n"+"".join("%d %d\n"%job for job in jobs)
+    actual = subprocess.run([binary, "4", "rforest-only", str(kappa)],
+                            input=batch, text=True, capture_output=True,
+                            check=True, timeout=90)
+    assert [list(map(int, line.split())) for line in actual.stdout.splitlines()] == expected
 
 
 @pytest.mark.parametrize("kappa", [0, 1, 3, 20])

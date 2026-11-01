@@ -4,6 +4,8 @@ The experimental [rforest Frobenius comparison](frobenius_rforest_20261101.md)
 records repeated timings, tuning, and the million-bound full-matrix check.
 The [conductor-388 test](frobenius_rforest_conductor388_20261101.md) checks
 correctness and documents why that sextic uses fallback rather than rforest.
+That initial restriction is lifted by the [even-degree extension](frobenius_rforest_even_20261101.md),
+which includes independent million-bound Euler-factor verification.
 
 `beilinson_100_digits.tex` contains all 16 entries marked `ok` in the saved
 100-digit survey. The numerical table and the accompanying algebraic table

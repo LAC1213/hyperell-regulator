@@ -59,5 +59,10 @@ library into this binary. No separate rforest installation is needed.
 Select it with ``HYPELLFROB_BACKEND=rforest`` for L-function computations,
 or ``frobenius_polynomials(f, primes, backend="rforest")``. The default
 remains ``legacy``. The simultaneous algorithm benefits dense batches of
-primes; unsupported jobs retain native and Sage fallback. The vendored
+primes, including even degree models without a rational branch point.
+Python monicizes nonmonic even input using a common quadratic twist and
+removes its local character from the returned characteristic polynomial.
+Set ``HYPELLFROB_THREADS`` to choose workers for L-function computations;
+an explicit ``nthreads`` argument takes precedence. Unsupported jobs retain
+native and Sage fallback. The vendored
 FFT arithmetic requires a 64-bit platform with 64-bit GMP limbs.

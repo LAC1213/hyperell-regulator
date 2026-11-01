@@ -83,6 +83,12 @@ the monomial basis with the g-th dropped.
 int matrix_reference(NTL::mat_ZZ& output, const NTL::ZZ& p, int N,
                      const NTL::ZZX& Q, int extra_precision = 12);
 
+// Restrict a (2g+1)-dimensional even-degree affine matrix to ker(residue),
+// in the same basis as matrix_reference(). Verifies Frobenius-equivariance
+// of the residue covector before returning a projective 2g-by-2g matrix.
+void restrict_even_frobenius(NTL::mat_ZZ& output, const NTL::mat_ZZ& affine,
+                            const NTL::ZZ& p, int N, const NTL::ZZX& Q);
+
 } // namespace hypellfrob
 
 #endif

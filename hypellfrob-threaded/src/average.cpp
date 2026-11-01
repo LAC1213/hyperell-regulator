@@ -2,10 +2,13 @@
 // An implementation of David Harvey, "Counting points on hyperelliptic
 // curves in average polynomial time", arXiv:1210.8239v3, Sections 3--5.
 // Original implementation for hyperell-regulator, 2026.
+// Even-degree extension: shifted horizontal/diagonal paths avoid the
+// residue singularity; restrict the affine answer to the residue kernel.
 //
 // All matrices act on columns in the basis of W_{s,t}. In particular the
 // accumulating products are M_0 M_1 ... M_{(p-1)/2}, in that order.
 #include "average.h"
+#include "even_degree.h"
 #include <gmp.h>
 #include "../vendor/rforest/rforest.h"
 #include <NTL/mat_ZZ.h>
@@ -123,7 +126,10 @@ struct Reductions {
         return f;
     }
 
-    Fraction block(long a, long b, long r, bool normalize = true) const {
+    // Reduce a bounded starting block without horizontal steps at t>0.
+    // This remains valid for even degree: their horizontal maps can have
+    // a zero denominator on the residue line s=d(t-1/2).
+    Fraction initial_block(long a, long b, long r = 0) const {
         Fraction f;
         ident(f.m, d);
         long s = a*(2*r+1)-1, t = (b*(2*r+1)-1)/2;
@@ -133,15 +139,27 @@ struct Reductions {
             if (kind != 'V') --s;
             if (kind != 'H') --t;
         };
-        if (r) { // Proposition 8
-            for (long j = 0; j < std::min(2*a, b); ++j) apply('D');
-            for (long j = b; j < 2*a; ++j) apply('H');
-            for (long j = 2*a; j < b; ++j) apply('V');
-        } else { // Proposition 9: vertical steps must precede the final s=0 step
-            while (t > s+1) apply('V');
-            while (t > 0) apply('D');
-            while (s >= 0) apply('H');
-        }
+        while (t > s+1) apply('V');
+        while (t > 0) apply('D');
+        while (s >= 0) apply('H');
+        cancel(f);
+        return f;
+    }
+
+    Fraction block(long a, long b, long r, bool normalize = true) const {
+        if (!r) return initial_block(a, b);
+        Fraction f;
+        ident(f.m, d);
+        long s = a*(2*r+1)-1, t = (b*(2*r+1)-1)/2;
+        auto apply = [&](char kind) {
+            Fraction z = step(s, t, kind);
+            f.m = z.m*f.m; f.d *= z.d;
+            if (kind != 'V') --s;
+            if (kind != 'H') --t;
+        };
+        for (long j = 0; j < std::min(2*a, b); ++j) apply('D');
+        for (long j = b; j < 2*a; ++j) apply('H');
+        for (long j = 2*a; j < b; ++j) apply('V');
         if (normalize) cancel(f);
         return f;
     }
@@ -285,7 +303,7 @@ struct Pair {
 // passing it to rforest. This cancels whole affine factors, rather than only
 // cancelling their values after evaluating each block separately.
 struct Pair::PolynomialBlock {
-    long d, degree;
+    long d, degree, start = 0;
     std::vector<ZZX> entries;
     ZZX denominator;
     std::vector<ZZX> denominator_factors;
@@ -293,7 +311,15 @@ struct Pair::PolynomialBlock {
     long height_bits = 0;
 
     PolynomialBlock(const Reductions& red, long a, long b)
-        : d(red.d), entries(d*d), initial(red.block(a, b, 0)) {
+        : d(red.d), entries(d*d) {
+        // In even degree the horizontal denominator can vanish at an
+        // integer. Below the residue line, do H before D, so H moves away
+        // from that line. Above it, D before H is safe. A bounded prefix
+        // puts the low-slope path strictly below the line at its start.
+        const long gap = d*b-2*a;
+        const bool horizontal_first = d%2 == 0 && gap > 0 && 2*a > b;
+        if (horizontal_first) start = std::max(0L, (d-1-gap/2)/gap);
+        initial = red.initial_block(a, b, start);
         for (long i = 0; i < d; ++i) SetCoeff(entries[i*d+i], 0, 1);
         SetCoeff(denominator, 0, 1);
         std::vector<ZZX> factors;
@@ -322,12 +348,15 @@ struct Pair::PolynomialBlock {
             GCD(content, coeff(linear, 0), coeff(linear, 1));
             if (LeadCoeff(linear) < 0) content = -content;
             linear /= content;
-            factors.push_back(std::move(linear));
+            if (deg(linear) > 0) factors.push_back(std::move(linear));
             if (kind != 'V') --s;
             if (kind != 'H') --t;
         };
+        if (horizontal_first)
+            for (long j = b; j < 2*a; ++j) apply('H');
         for (long j = 0; j < std::min(2*a, b); ++j) apply('D');
-        for (long j = b; j < 2*a; ++j) apply('H');
+        if (!horizontal_first)
+            for (long j = b; j < 2*a; ++j) apply('H');
         for (long j = 2*a; j < b; ++j) apply('V');
         // All nonconstant denominator factors are already known affine
         // polynomials. Exact division by these primitive factors is much
@@ -381,7 +410,7 @@ struct Pair::PolynomialBlock {
         const ZZ pz = to_ZZ(p);
         for (const auto& factor : denominator_factors) {
             ZZ root = (-coeff(factor, 0)*InvMod(coeff(factor, 1)%pz, pz))%pz;
-            if (root >= 1 && root <= (p-1)/2) ++v;
+            if (root > start && root <= (p-1)/2) ++v;
         }
         return v;
     }
@@ -491,9 +520,9 @@ struct ForestOutput {
         }
         kappa_used = kappa;
         rforest(matrix.data(), initial.data(), rows, polynomial.data(), block.degree,
-                d, moduli.data(), 1, endpoints.data(), n, product[0], kappa);
+                d, moduli.data(), block.start+1, endpoints.data(), n, product[0], kappa);
         rforest(denominator.data(), scalar_initial.data(), 1, scalar_polynomial.data(),
-                scalar_degree, 1, moduli.data(), 1, endpoints.data(), n, product[1], kappa);
+                scalar_degree, 1, moduli.data(), block.start+1, endpoints.data(), n, product[1], kappa);
     }
 
     void column(long i, GmpConversion& conversion, Fraction& out) {
@@ -571,6 +600,15 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
     if (use_forest) {
         for (auto& pair : pairs)
             pair.polynomial = std::make_shared<Pair::PolynomialBlock>(red, pair.a, pair.b);
+        // The bounded prefix is exact over Q. Its denominator must be a
+        // p-adic unit; exceptional small primes retain native/Sage fallback.
+        eligible.erase(std::remove_if(eligible.begin(), eligible.end(), [&](size_t idx) {
+            for (const auto& pair : pairs)
+                if (pair.polynomial->initial.d % jobs[idx].p == 0 ||
+                    (jobs[idx].p-1)/2 < pair.polynomial->start) return true;
+            return false;
+        }), eligible.end());
+        if (eligible.empty()) return;
         // Start the expensive trees first; bounded forests make this possible
         // without the old full-tree implementation's large memory spike.
         std::stable_sort(pairs.begin(), pairs.end(), [](const Pair& x, const Pair& y) {
@@ -645,6 +683,7 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
                     std::cerr << "rforest a=" << pair.a << " b=" << pair.b
                               << " degree=" << pair.polynomial->degree
                               << " denominator_degree=" << deg(pair.polynomial->denominator)
+                              << " start=" << pair.polynomial->start
                               << " kappa=" << forest->kappa_used
                               << " forest_seconds=" << fs << " assembly_seconds=" << assembly << '\n';
                 }
@@ -659,7 +698,15 @@ void compute_group(std::vector<AverageJob>& jobs, const std::vector<size_t>& ind
     for (long i = 0; i < workers; ++i) pool.emplace_back(worker);
     for (auto& thread : pool) thread.join();
     if (error) std::rethrow_exception(error);
-    for (size_t idx : eligible) jobs[idx].ok = true;
+    for (size_t idx : eligible) {
+        if (use_forest && red.d%2 == 0) {
+            mat_ZZ projective;
+            restrict_even_frobenius(projective, jobs[idx].matrix,
+                                   to_ZZ(jobs[idx].p), mu, red.q);
+            jobs[idx].matrix = std::move(projective);
+        }
+        jobs[idx].ok = true;
+    }
 }
 } // namespace
 
@@ -685,7 +732,7 @@ void matrices_average(std::vector<AverageJob>& jobs, const ZZX& Q, int nthreads)
 
 void matrices_rforest(std::vector<AverageJob>& jobs, const ZZX& Q, int nthreads, int kappa) {
     for (auto& job : jobs) { job.ok = false; job.matrix.kill(); }
-    if (deg(Q) < 3 || deg(Q)%2 == 0 || LeadCoeff(Q) != 1) return;
+    if (deg(Q) < 3 || LeadCoeff(Q) != 1) return;
     if (kappa < -1 || kappa > 30) throw std::invalid_argument("rforest kappa must be -1..30");
     std::map<int, std::vector<size_t>> groups;
     for (size_t i = 0; i < jobs.size(); ++i)

@@ -69,8 +69,9 @@ def odd_model(f):
     A monic, integral, **odd** degree model of `y^2 = f(x)`, or ``None``.
 
     The fast path needs `Q` monic of odd degree `2g+1`; `4f + h^2` has even
-    degree whenever `h` has degree `g+1`, and the only even degree routine
-    available is linear in `p`.  An odd degree model exists exactly when the
+    degree whenever `h` has degree `g+1`. The legacy even degree routine is
+    linear in `p`, while rforest handles either parity directly. An odd
+    degree model exists exactly when the
     curve has a rational Weierstrass point, and then
 
     .. math:: u \mapsto u^{\deg f}\,f(r + 1/u)
@@ -155,7 +156,11 @@ def _run(fcoeffs, jobs, nthreads, backend=None):
         return {}
     inp = " ".join(str(int(c)) for c in fcoeffs) + "\n"
     inp += "".join("%d %d\n" % (p, N) for p, N in jobs)
-    workers = (os.cpu_count() or 1) if nthreads is None else max(1, int(nthreads))
+    if nthreads is None:
+        configured = os.environ.get("HYPELLFROB_THREADS")
+        workers = max(1, int(configured)) if configured else (os.cpu_count() or 1)
+    else:
+        workers = max(1, int(nthreads))
     args = [binary, str(workers)]
     if backend != "legacy":
         args.append(backend)
@@ -185,6 +190,11 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
 
     ``backend='rforest'`` selects the vendored upstream C remainder-forest
     library, with polynomial factor cancellation and bounded forest storage.
+    Monic even degree models are handled directly, without a branch point
+    or a field extension, by avoiding singular reduction paths and
+    restricting affine Frobenius to the kernel of the residue at infinity.
+    Nonmonic even models use a common monic quadratic twist over the
+    rationals; its local character is removed from the returned polynomial.
     ``backend='remainder'`` selects the earlier C++ accumulating
     remainder tree algorithm (arXiv:1210.8239). It applies to monic odd
     degree models; unsupported primes use the existing native backend.
@@ -194,14 +204,14 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     the bounds used by this package. Both L-function classes honour this
     environment variable.
 
-    An even degree ``f`` is replaced by :func:`odd_model` where one exists,
-    since only odd degree has the `O(\sqrt p)` path; without a rational
-    Weierstrass point it goes through the even degree routine, which is
-    correct but linear in `p`, so an even degree curve with no such point
-    cannot reach the same speed.
+    An even degree ``f`` is replaced by :func:`odd_model` where one exists.
+    Otherwise ``rforest`` uses simultaneous even degree reductions;
+    ``legacy`` and ``remainder`` use the even degree reference routine,
+    which is linear in `p`. Unsupported jobs retain Sage fallback.
 
-    The default uses one worker per logical CPU (``os.cpu_count()``), or one
-    if the CPU count is unavailable. Pass ``nthreads`` to override this.
+    The default uses ``HYPELLFROB_THREADS`` if set, otherwise one worker per
+    logical CPU (``os.cpu_count()``), or one if the CPU count is unavailable.
+    Pass ``nthreads`` to override this.
     The installed accelerator includes a private thread-safe NTL; custom
     binaries must also be linked to a thread-safe NTL.
 
@@ -225,15 +235,26 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     jobs = [(p, _bound(p, g)) for p in primes]
     # the fast path wants a monic odd degree model; when the curve has a
     # rational Weierstrass point there is one, isomorphic over QQ, and it is
-    # what gets sent. Without one the even degree model goes as it is, which
-    # is correct but linear in p.
+    # what gets sent. Without one, rforest handles the even degree model
+    # directly; the other backends use the even degree reference routine.
+    selected_backend = backend or os.environ.get("HYPELLFROB_BACKEND", "legacy")
     model = odd_model(fz)
-    got = _run((model if model is not None else fz).list(), jobs, nthreads, backend)
+    twist = ZZ(1)
+    if selected_backend == "rforest" and model is None and not fz.is_monic():
+        # c^(d-1)*f(X/c) is monic and integral. In even degree it is
+        # isomorphic over Q to the c-twist of the input curve. The common
+        # rational transformation preserves sharing between primes; undo
+        # the twist on characteristic polynomials via (c/p).
+        d = fz.degree()
+        twist = fz.leading_coefficient()
+        model = R([fz[i]*twist**(d-1-i) for i in range(d)]+[1])
+    got = _run((model if model is not None else fz).list(), jobs, nthreads, selected_backend)
 
     out = {}
     for p, N in jobs:
-        if p in got:
-            out[p] = _lift(got[p], p, g, N)
+        if p in got and twist%p:
+            cp = _lift(got[p], p, g, N)
+            out[p] = cp(-R.gen()) if twist != 1 and twist.kronecker(p) == -1 else cp
         else:
             H = HyperellipticCurve(PolynomialRing(GF(p), "x")(fz))
             out[p] = R(H.frobenius_polynomial())
@@ -293,6 +314,24 @@ def _check_remainder_binary(binary, workers, backend="remainder-only"):
             raise RuntimeError("remainder-tree matrices differ from legacy")
 
 
+def _check_rforest_even_binary(binary, workers):
+    """Require genuine even-degree rforest support, in the reference basis."""
+    batch = "1 6 9 2 -2 0 1\n41 2\n43 2\n"
+    reference = subprocess.run([binary, "1", "legacy"], input=batch,
+                               text=True, capture_output=True, check=True,
+                               timeout=30).stdout
+    rows = [line.split() for line in reference.splitlines()]
+    if len(rows) != 2 or any(row[:3] != [str(p), "1", "4"] or len(row) != 19
+                             for p, row in zip((41, 43), rows)):
+        raise RuntimeError("even-degree legacy reference did not supply matrices")
+    for count in workers:
+        result = subprocess.run([binary, str(count), "rforest-only"],
+                                input=batch+"31 2\n", text=True,
+                                capture_output=True, check=True, timeout=30)
+        if result.stdout != reference+"31 0\n":
+            raise RuntimeError("even-degree rforest matrices differ from legacy")
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Check the installed Frobenius accelerator.")
@@ -306,6 +345,7 @@ if __name__ == "__main__":
         workers = _check_binary(binary)
         _check_remainder_binary(binary, workers)
         _check_remainder_binary(binary, workers, "rforest-only")
+        _check_rforest_even_binary(binary, workers)
     except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
         parser.exit(1, "Accelerator failed: %s\n%s\n" %
                     (exc, getattr(exc, "stderr", "")))

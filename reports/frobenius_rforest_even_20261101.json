@@ -1,0 +1,1062 @@
+{
+  "date": "2026-11-01",
+  "branch": "experimental/rforest",
+  "base_commit": "259d1c8",
+  "main_unchanged": "30f22b4",
+  "curve": "388.a.776.1",
+  "f": "-x^4+2*x^2+x",
+  "h": "x^3+x+1",
+  "completed_square_coefficients": [
+    1,
+    6,
+    9,
+    2,
+    -2,
+    0,
+    1
+  ],
+  "method": "Direct even-degree integer reductions: horizontal/diagonal ordering avoids the residue singularity, a bounded initial prefix shifts the forest, and affine Frobenius is restricted to the residue kernel. Python nonmonic models use a common monic quadratic twist, corrected by its local character.",
+  "build": {
+    "cxx": "G++ 15.2.0",
+    "cc": "GCC 15.2.0",
+    "cxxflags": "-O2 -std=c++17 -pthread",
+    "rforest_cflags": "-O3 -std=gnu11 -fomit-frame-pointer -funroll-loops",
+    "ntl": "Private static 11.6.0, NTL_THREADS=on and NTL_THREAD_BOOST=on",
+    "gmp": "system libgmp.so.10",
+    "rforest_upstream_commit": "3103d396c67cb1685131b1f11e84975cca335bdf",
+    "cpu": "Intel Core Ultra 7 265H, 16 logical CPUs"
+  },
+  "source_sha256": {
+    "hypellfrob-threaded/src/average.cpp": "d552f24c54130f585e8f25d509850c5a0759723451e5991dabb80efecacf8eac",
+    "hypellfrob-threaded/src/average.h": "b62586a40cc5a709ac6b2111235b53fa7c5041ce8474bb34bad19b6bc874e3a2",
+    "hypellfrob-threaded/src/even_degree.cpp": "f63a9a1c3b1132a91c95fb5ee44c4026cbbc74187ab0f5f9e212f6c83f0775ca",
+    "hypellfrob-threaded/src/even_degree.h": "beaa972c7660773f4dd9ac0c27aab00372c23f044d5a00f784ce368176764e1b",
+    "hypellfrob-threaded/Makefile": "d7d8b2d9d3f6cccf736ca7cb00a5cbd94fa9de187003a2d51faf99d527e68b96",
+    "hypellfrob-threaded/benchmark_rforest.py": "cbbda856725f7bf0e01cb3df888e4c3c02169d8c02e25b4a25910b9826deb31c",
+    "hypellfrob-threaded/EVEN-DEGREE.md": "28c575d287a9aa8413a396b79bfe37a1a9ab9c3e975aeb0b31de61ccd8b2bf63",
+    "hyperell_regulator/frobenius.py": "72926943b67e9081a756288b8cca0779111d73447b7e39233b7d018248146585",
+    "tests/test_average_frobenius.py": "b0782b3827ead0edbf56409fc4af4f37f73666c6cceaafb29cbcb622dca428d2"
+  },
+  "oracle": {
+    "software": "smalljac 4.1.3 with ff_poly 1.2.7; used only for independent validation, not by the production backend",
+    "url": "https://math.mit.edu/~drew/smalljac.html",
+    "paper": "https://arxiv.org/abs/0801.2778",
+    "smalljac_archive_sha256": "5a145509e491bba19bf73d8104576083286bd35aea2a149c7c516e9ea5ca8ec7",
+    "ffpoly_archive_sha256": "ffbe5c7f7ce077f3fedb530656b0f7ae95268cf23a38c9adfc3f654a65973b13",
+    "command": "lpdata /tmp/conductor388 'x^6-2*x^4+2*x^3+9*x^2+6*x+1' 1000000 1",
+    "reported_wall_seconds": 20,
+    "workers": 16,
+    "good_prime_factors": 78496,
+    "output_sha256": "5ea2b80d06433b702b61b4bd509f69d3c8ccfe25c1c744842e4d2139bbb307f4",
+    "notes": "Oracle time is the program coarse wall report, not a paired measurement; smalljac supplies Euler factors and does not supply the full p-adic matrices."
+  },
+  "summary": {
+    "direct_euler_factors_below_million": 78485,
+    "small_fallback_euler_factors": 11,
+    "total_euler_factors_checked": 78496,
+    "mismatches": 0,
+    "million_wall_seconds": 187.15740334399743,
+    "million_peak_rss_kib": 3430984,
+    "paired_bound_200_wall_speedup": 35.86886149840499,
+    "fresh_4928_coefficient_15_digit_median_seconds": 0.9667798749869689,
+    "transition_degree_before_cancellation": 22,
+    "transition_degree_after_cancellation": 7,
+    "maximum_initial_prefix": 2
+  },
+  "million": {
+    "bound": 1000000,
+    "jobs": 78496,
+    "coefficients": [
+      1,
+      6,
+      9,
+      2,
+      -2,
+      0,
+      1
+    ],
+    "binary": "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+    "binary_sha256": "c2544ead6f508cb88d7f49582618e532163a599575dea664e1782475c2da4ec4",
+    "input_sha256": "5f419544c650cdba90daa1f3e9683c19ee039030799927efb64844cbf0e97b7a",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "cpu_count": 16,
+    "evaluator": "differences",
+    "fft": true,
+    "repeats": 1,
+    "memory_limit_mib": 8192,
+    "runs": [
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 0,
+        "matrices_compared": 0,
+        "euler_factors_compared": 78485,
+        "all_matrices_equal": null,
+        "all_euler_factors_equal": true,
+        "native_output_sha256": "26b5ca286fb8fa1b8f9edf96ade2a5a58b5a30e6ef49169172f5c7630088a9d3",
+        "elapsed_seconds": 187.15740334399743,
+        "user_seconds": 1364.34002,
+        "system_seconds": 24.428751,
+        "peak_rss_kib": 3430984,
+        "stderr": ""
+      }
+    ],
+    "summaries": [
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": -1,
+        "median_seconds": 187.15740334399743,
+        "median_cpu_seconds": 1388.768771,
+        "peak_rss_kib": 3430984
+      }
+    ],
+    "status": "complete",
+    "reference": "/tmp/hyperell-rforest-oracle/conductor388_lpdata.txt",
+    "reference_sha256": "5ea2b80d06433b702b61b4bd509f69d3c8ccfe25c1c744842e4d2139bbb307f4",
+    "reference_header": "[x^6-2*x^4+2*x^3+9*x^2+6*x+1] 1 1000000",
+    "comparison": "euler_factors"
+  },
+  "small_fallback": [
+    {
+      "p": 3,
+      "characteristic_polynomial": [
+        9,
+        6,
+        3,
+        2,
+        1
+      ]
+    },
+    {
+      "p": 5,
+      "characteristic_polynomial": [
+        25,
+        10,
+        4,
+        2,
+        1
+      ]
+    },
+    {
+      "p": 7,
+      "characteristic_polynomial": [
+        49,
+        -7,
+        0,
+        -1,
+        1
+      ]
+    },
+    {
+      "p": 11,
+      "characteristic_polynomial": [
+        121,
+        22,
+        1,
+        2,
+        1
+      ]
+    },
+    {
+      "p": 13,
+      "characteristic_polynomial": [
+        169,
+        -52,
+        12,
+        -4,
+        1
+      ]
+    },
+    {
+      "p": 17,
+      "characteristic_polynomial": [
+        289,
+        -51,
+        16,
+        -3,
+        1
+      ]
+    },
+    {
+      "p": 19,
+      "characteristic_polynomial": [
+        361,
+        76,
+        20,
+        4,
+        1
+      ]
+    },
+    {
+      "p": 23,
+      "characteristic_polynomial": [
+        529,
+        23,
+        -8,
+        1,
+        1
+      ]
+    },
+    {
+      "p": 29,
+      "characteristic_polynomial": [
+        841,
+        0,
+        40,
+        0,
+        1
+      ]
+    },
+    {
+      "p": 31,
+      "characteristic_polynomial": [
+        961,
+        31,
+        14,
+        1,
+        1
+      ]
+    },
+    {
+      "p": 37,
+      "characteristic_polynomial": [
+        1369,
+        0,
+        58,
+        0,
+        1
+      ]
+    }
+  ],
+  "paired_native_bound_200": {
+    "bound": 200,
+    "jobs": 44,
+    "coefficients": [
+      1,
+      6,
+      9,
+      2,
+      -2,
+      0,
+      1
+    ],
+    "binary": "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+    "binary_sha256": "c2544ead6f508cb88d7f49582618e532163a599575dea664e1782475c2da4ec4",
+    "input_sha256": "df2985972c23a905b33e682cf9795e24f9b92b70a75e134cdccf7da80f5db842",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "cpu_count": 16,
+    "evaluator": "differences",
+    "fft": true,
+    "repeats": 3,
+    "memory_limit_mib": 8192,
+    "runs": [
+      {
+        "backend": "legacy",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 0,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 10.539130359014962,
+        "user_seconds": 63.626125,
+        "system_seconds": 7.200335,
+        "peak_rss_kib": 125112,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 0,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 0.32181004201993346,
+        "user_seconds": 0.668909,
+        "system_seconds": 0.11822099999999999,
+        "peak_rss_kib": 138400,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 1,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 0.3211653290200047,
+        "user_seconds": 0.707214,
+        "system_seconds": 0.148112,
+        "peak_rss_kib": 139248,
+        "stderr": ""
+      },
+      {
+        "backend": "legacy",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 1,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 11.542959826008882,
+        "user_seconds": 68.594126,
+        "system_seconds": 9.418936,
+        "peak_rss_kib": 125232,
+        "stderr": ""
+      },
+      {
+        "backend": "legacy",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 2,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 15.754157748015132,
+        "user_seconds": 96.979296,
+        "system_seconds": 11.718223,
+        "peak_rss_kib": 125236,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 2,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 0.32416639698203653,
+        "user_seconds": 0.762262,
+        "system_seconds": 0.146173,
+        "peak_rss_kib": 140188,
+        "stderr": ""
+      }
+    ],
+    "summaries": [
+      {
+        "backend": "legacy",
+        "workers": 8,
+        "kappa": -1,
+        "median_seconds": 11.542959826008882,
+        "median_cpu_seconds": 78.013062,
+        "peak_rss_kib": 125236
+      },
+      {
+        "backend": "rforest",
+        "workers": 8,
+        "kappa": -1,
+        "median_seconds": 0.32181004201993346,
+        "median_cpu_seconds": 0.855326,
+        "peak_rss_kib": 140188
+      }
+    ],
+    "status": "complete",
+    "strict_rforest": false,
+    "comparison": "full_matrices"
+  },
+  "exploratory_strict_bound_200": {
+    "bound": 200,
+    "jobs": 44,
+    "coefficients": [
+      1,
+      6,
+      9,
+      2,
+      -2,
+      0,
+      1
+    ],
+    "binary": "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+    "binary_sha256": "c2544ead6f508cb88d7f49582618e532163a599575dea664e1782475c2da4ec4",
+    "input_sha256": "df2985972c23a905b33e682cf9795e24f9b92b70a75e134cdccf7da80f5db842",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "cpu_count": 16,
+    "evaluator": "differences",
+    "fft": true,
+    "repeats": 3,
+    "memory_limit_mib": 8192,
+    "runs": [
+      {
+        "backend": "legacy",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 0,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 9.032838067039847,
+        "user_seconds": 53.957583,
+        "system_seconds": 4.914324,
+        "peak_rss_kib": 125008,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 0,
+        "matrices_compared": 33,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "8f6ede419c625a786a7c9356cd69211037b24d689add1c4e6904bff80a677ba5",
+        "elapsed_seconds": 0.12464803602779284,
+        "user_seconds": 0.094494,
+        "system_seconds": 0.141255,
+        "peak_rss_kib": 127016,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 1,
+        "matrices_compared": 33,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "8f6ede419c625a786a7c9356cd69211037b24d689add1c4e6904bff80a677ba5",
+        "elapsed_seconds": 0.12415196403162554,
+        "user_seconds": 0.122538,
+        "system_seconds": 0.133961,
+        "peak_rss_kib": 137504,
+        "stderr": ""
+      },
+      {
+        "backend": "legacy",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 1,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 14.750779138004873,
+        "user_seconds": 83.402909,
+        "system_seconds": 11.354584,
+        "peak_rss_kib": 125128,
+        "stderr": ""
+      },
+      {
+        "backend": "legacy",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 2,
+        "matrices_compared": 38,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "712e6a3a95b3400cd8f2391f272f7bbcc1d80f00e939ed046a0f39ed86ee9694",
+        "elapsed_seconds": 17.254367555025965,
+        "user_seconds": 97.671776,
+        "system_seconds": 13.205347,
+        "peak_rss_kib": 125132,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 2,
+        "matrices_compared": 33,
+        "euler_factors_compared": 0,
+        "all_matrices_equal": true,
+        "all_euler_factors_equal": null,
+        "native_output_sha256": "8f6ede419c625a786a7c9356cd69211037b24d689add1c4e6904bff80a677ba5",
+        "elapsed_seconds": 0.12492257496342063,
+        "user_seconds": 0.108306,
+        "system_seconds": 0.108306,
+        "peak_rss_kib": 137852,
+        "stderr": ""
+      }
+    ],
+    "summaries": [
+      {
+        "backend": "legacy",
+        "workers": 8,
+        "kappa": -1,
+        "median_seconds": 14.750779138004873,
+        "median_cpu_seconds": 94.757493,
+        "peak_rss_kib": 125132
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": -1,
+        "median_seconds": 0.12464803602779284,
+        "median_cpu_seconds": 0.235749,
+        "peak_rss_kib": 137852
+      }
+    ],
+    "status": "complete",
+    "comparison": "full_matrices"
+  },
+  "tuning_bound_100000": {
+    "bound": 100000,
+    "jobs": 9590,
+    "coefficients": [
+      1,
+      6,
+      9,
+      2,
+      -2,
+      0,
+      1
+    ],
+    "binary": "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+    "binary_sha256": "c2544ead6f508cb88d7f49582618e532163a599575dea664e1782475c2da4ec4",
+    "input_sha256": "70d9b152192ed284b24eecbd00a4723322435f6150ed8f51c52c0913f8222c6b",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "cpu_count": 16,
+    "evaluator": "differences",
+    "fft": true,
+    "repeats": 1,
+    "memory_limit_mib": 8192,
+    "runs": [
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": 6,
+        "repeat": 0,
+        "matrices_compared": 0,
+        "euler_factors_compared": 9579,
+        "all_matrices_equal": null,
+        "all_euler_factors_equal": true,
+        "elapsed_seconds": 6.5342138829873875,
+        "user_seconds": 44.412808,
+        "system_seconds": 1.368055,
+        "peak_rss_kib": 466680,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": 7,
+        "repeat": 0,
+        "matrices_compared": 0,
+        "euler_factors_compared": 9579,
+        "all_matrices_equal": null,
+        "all_euler_factors_equal": true,
+        "elapsed_seconds": 8.635289899015334,
+        "user_seconds": 58.571316,
+        "system_seconds": 2.041289,
+        "peak_rss_kib": 420712,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 16,
+        "kappa": 6,
+        "repeat": 0,
+        "matrices_compared": 0,
+        "euler_factors_compared": 9579,
+        "all_matrices_equal": null,
+        "all_euler_factors_equal": true,
+        "elapsed_seconds": 9.154312853992451,
+        "user_seconds": 90.724049,
+        "system_seconds": 2.290547,
+        "peak_rss_kib": 773808,
+        "stderr": ""
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 16,
+        "kappa": 7,
+        "repeat": 0,
+        "matrices_compared": 0,
+        "euler_factors_compared": 9579,
+        "all_matrices_equal": null,
+        "all_euler_factors_equal": true,
+        "elapsed_seconds": 13.258202277997043,
+        "user_seconds": 117.987438,
+        "system_seconds": 3.558417,
+        "peak_rss_kib": 708084,
+        "stderr": ""
+      }
+    ],
+    "summaries": [
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": 6,
+        "median_seconds": 6.5342138829873875,
+        "median_cpu_seconds": 45.780863,
+        "peak_rss_kib": 466680
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": 7,
+        "median_seconds": 8.635289899015334,
+        "median_cpu_seconds": 60.612605,
+        "peak_rss_kib": 420712
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 16,
+        "kappa": 6,
+        "median_seconds": 9.154312853992451,
+        "median_cpu_seconds": 93.014596,
+        "peak_rss_kib": 773808
+      },
+      {
+        "backend": "rforest-only",
+        "workers": 16,
+        "kappa": 7,
+        "median_seconds": 13.258202277997043,
+        "median_cpu_seconds": 121.545855,
+        "peak_rss_kib": 708084
+      }
+    ],
+    "status": "complete",
+    "reference": "/tmp/hyperell-rforest-oracle/conductor388_lpdata.txt",
+    "reference_sha256": "5ea2b80d06433b702b61b4bd509f69d3c8ccfe25c1c744842e4d2139bbb307f4",
+    "comparison": "euler_factors"
+  },
+  "lfunction_checks": {
+    "workers": 8,
+    "backend": "rforest",
+    "binary_sha256": "c2544ead6f508cb88d7f49582618e532163a599575dea664e1782475c2da4ec4",
+    "cases": [
+      {
+        "coefficient_count": 4928,
+        "digits": 15,
+        "backend": "rforest",
+        "repeat": 0,
+        "value": "2.61702562836175902",
+        "feq": "6.61744490042422140e-24",
+        "setup_seconds": 0.013301250990480185,
+        "lfun_build_seconds": 0.9469258949975483,
+        "evaluation_seconds": 0.15420833101961762,
+        "elapsed_seconds": 1.1144354770076461,
+        "native_calls": [
+          {
+            "command": [
+              "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+              "8",
+              "rforest"
+            ],
+            "elapsed_seconds": 0.3600967620150186,
+            "jobs": 655,
+            "native_matrices_supplied": 649
+          }
+        ],
+        "good_h1_cache_entries": 655,
+        "coefficients_sha256": "26a82f38949286f1c9f9b149838aaefac831922aa04e8b3b196448551b979c5a"
+      },
+      {
+        "coefficient_count": 4928,
+        "digits": 15,
+        "backend": "rforest",
+        "repeat": 1,
+        "value": "2.61702562836175902",
+        "feq": "6.61744490042422140e-24",
+        "setup_seconds": 0.001535971008706838,
+        "lfun_build_seconds": 0.8104818669962697,
+        "evaluation_seconds": 0.15476203698199242,
+        "elapsed_seconds": 0.9667798749869689,
+        "native_calls": [
+          {
+            "command": [
+              "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+              "8",
+              "rforest"
+            ],
+            "elapsed_seconds": 0.3605454609496519,
+            "jobs": 655,
+            "native_matrices_supplied": 649
+          }
+        ],
+        "good_h1_cache_entries": 655,
+        "coefficients_sha256": "26a82f38949286f1c9f9b149838aaefac831922aa04e8b3b196448551b979c5a"
+      },
+      {
+        "coefficient_count": 4928,
+        "digits": 15,
+        "backend": "rforest",
+        "repeat": 2,
+        "value": "2.61702562836175902",
+        "feq": "6.61744490042422140e-24",
+        "setup_seconds": 0.0017763489740900695,
+        "lfun_build_seconds": 0.737770009029191,
+        "evaluation_seconds": 0.15023256599670276,
+        "elapsed_seconds": 0.8897789239999838,
+        "native_calls": [
+          {
+            "command": [
+              "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+              "8",
+              "rforest"
+            ],
+            "elapsed_seconds": 0.3542470220127143,
+            "jobs": 655,
+            "native_matrices_supplied": 649
+          }
+        ],
+        "good_h1_cache_entries": 655,
+        "coefficients_sha256": "26a82f38949286f1c9f9b149838aaefac831922aa04e8b3b196448551b979c5a"
+      },
+      {
+        "coefficient_count": 20000,
+        "digits": 15,
+        "backend": "rforest",
+        "repeat": 0,
+        "value": "2.61702562836175902",
+        "feq": "6.31088724176809444e-30",
+        "setup_seconds": 0.002146167040336877,
+        "lfun_build_seconds": 2.654964139976073,
+        "evaluation_seconds": 0.23548899602610618,
+        "elapsed_seconds": 2.892599303042516,
+        "native_calls": [
+          {
+            "command": [
+              "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+              "8",
+              "rforest"
+            ],
+            "elapsed_seconds": 1.3417590219760314,
+            "jobs": 2260,
+            "native_matrices_supplied": 2254
+          }
+        ],
+        "good_h1_cache_entries": 2260,
+        "coefficients_sha256": "e61d8138b211987f6917d677ee9c5a93f5bec7e16278920558d3bec3f64e31af"
+      },
+      {
+        "coefficient_count": 100000,
+        "digits": 30,
+        "backend": "rforest",
+        "repeat": 0,
+        "value": "2.61702562836175901615851458820520",
+        "feq": "6.84227765783602085411977335590779e-49",
+        "setup_seconds": 0.004239580011926591,
+        "lfun_build_seconds": 11.739740794990212,
+        "evaluation_seconds": 0.6520501080085523,
+        "elapsed_seconds": 12.39603048301069,
+        "native_calls": [
+          {
+            "command": [
+              "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+              "8",
+              "rforest"
+            ],
+            "elapsed_seconds": 7.627521005982999,
+            "jobs": 9590,
+            "native_matrices_supplied": 9584
+          }
+        ],
+        "good_h1_cache_entries": 9590,
+        "coefficients_sha256": "85bcd7a6a5f50badf85edd3c210a190df1f2cf7b39c5edd5586c12801dd58cdb"
+      },
+      {
+        "coefficient_count": 100000,
+        "digits": 30,
+        "backend": "smalljac_reference",
+        "repeat": 0,
+        "value": "2.61702562836175901615851458820520",
+        "feq": "6.84227765783602085411977335590779e-49",
+        "setup_seconds": 0.028327383974101394,
+        "lfun_build_seconds": 1.8797238279948942,
+        "evaluation_seconds": 1.3680967630352825,
+        "elapsed_seconds": 3.276147975004278,
+        "native_calls": [],
+        "good_h1_cache_entries": 9590,
+        "coefficients_sha256": "85bcd7a6a5f50badf85edd3c210a190df1f2cf7b39c5edd5586c12801dd58cdb"
+      }
+    ],
+    "status": "complete",
+    "all_100000_coefficients_equal": true
+  },
+  "block_degrees": [
+    {
+      "a": 11,
+      "b": 3,
+      "degree": 7,
+      "denominator_degree": 7,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 10,
+      "b": 3,
+      "degree": 5,
+      "denominator_degree": 5,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 5,
+      "b": 1,
+      "degree": 5,
+      "denominator_degree": 5,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 1,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 9,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 2,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 8,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 2,
+      "kappa": 0
+    },
+    {
+      "a": 7,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 3,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 4,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 5,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 6,
+      "b": 3,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 4,
+      "b": 1,
+      "degree": 3,
+      "denominator_degree": 3,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 1,
+      "b": 1,
+      "degree": 1,
+      "denominator_degree": 1,
+      "start": 0,
+      "kappa": 0
+    },
+    {
+      "a": 2,
+      "b": 1,
+      "degree": 1,
+      "denominator_degree": 1,
+      "start": 2,
+      "kappa": 0
+    },
+    {
+      "a": 3,
+      "b": 1,
+      "degree": 1,
+      "denominator_degree": 1,
+      "start": 0,
+      "kappa": 0
+    }
+  ],
+  "validation": {
+    "full_targeted_suite": "159 passed in 279.30s, including 35 new even-degree matrix/Euler/mixed-job/subtree cases",
+    "additional_nonmonic_cases": "6 passed in 1.09s",
+    "final_api_and_build_checks": "22 passed in 7.07s; includes the nonmonic cases and Python API checks after thread configuration was added",
+    "native_selfcheck": "All three backends agree at workers 1, 4, 16; requires even-degree rforest support",
+    "doctests": "19 passed in hyperell_regulator/frobenius.py",
+    "asan_cases": [
+      {
+        "coefficients": [
+          1,
+          6,
+          9,
+          2,
+          -2,
+          0,
+          1
+        ],
+        "jobs": 2248,
+        "workers": 8,
+        "matrices_equal": 2247,
+        "address_sanitizer": "passed",
+        "leak_sanitizer": "passed"
+      },
+      {
+        "coefficients": [
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1
+        ],
+        "jobs": 3,
+        "workers": 4,
+        "matrices_equal": 3,
+        "address_sanitizer": "passed",
+        "leak_sanitizer": "passed"
+      },
+      {
+        "coefficients": [
+          1,
+          -1,
+          0,
+          0,
+          1
+        ],
+        "jobs": 3,
+        "workers": 4,
+        "matrices_equal": 3,
+        "address_sanitizer": "passed",
+        "leak_sanitizer": "passed"
+      },
+      {
+        "coefficients": [
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "jobs": 3,
+        "workers": 16,
+        "matrices_equal": 3,
+        "address_sanitizer": "passed",
+        "leak_sanitizer": "passed"
+      }
+    ],
+    "asan_matrices_compared": 2256,
+    "sdist": "Even-degree sources/header, algorithm notes, benchmark and rforest license notices present; native build outputs excluded.",
+    "final_model_dispatch": "8 Python API/nonmonic cases passed after restricting even-model normalization to the rforest backend; legacy dispatch is preserved."
+  },
+  "timing_notes": [
+    "Native benchmark timings include startup/output; the hybrid paired run includes every native fallback job and requires identical full output for all jobs. Strict runs cannot conceal failure through fallback.",
+    "The million run compares all supplied characteristic polynomials with independent smalljac factors; it is not a million-bound matrix-entry comparison with the slow reference.",
+    "The 15-digit/4928-coefficient rows use fresh L-function/H1 objects but retain the historical PARI coefficient-count warnings. The 20000/15-digit and 100000/30-digit runs emit no coefficient-count warnings.",
+    "The cached smalljac-reference L-value timing excludes generation of the oracle factors and is used for correctness, not as an end-to-end timing comparison.",
+    "Shared machine: host load, thermal behaviour and scheduling vary. Three alternating native repetitions are available only at bound 200; larger-bound timings are single runs.",
+    "The independent Euler-factor oracle is faster at the million bound than the full-matrix rforest implementation. No claim of globally optimal Euler-only performance is made."
+  ],
+  "status": "complete",
+  "full_characteristic_moduli_bound_100000": {
+    "bound": 100000,
+    "jobs": 9590,
+    "coefficients": [
+      1,
+      6,
+      9,
+      2,
+      -2,
+      0,
+      1
+    ],
+    "binary": "/home/lambert/hyperell-regulator/build/rforest-worktree/hypellfrob-threaded/build/euler",
+    "binary_sha256": "c2544ead6f508cb88d7f49582618e532163a599575dea664e1782475c2da4ec4",
+    "input_sha256": "70d9b152192ed284b24eecbd00a4723322435f6150ed8f51c52c0913f8222c6b",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "cpu_count": 16,
+    "evaluator": "differences",
+    "fft": true,
+    "repeats": 1,
+    "memory_limit_mib": 8192,
+    "runs": [
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": -1,
+        "repeat": 0,
+        "matrices_compared": 0,
+        "euler_factors_compared": 9579,
+        "all_matrices_equal": null,
+        "all_euler_factors_equal": true,
+        "native_output_sha256": "6c9fb8733cd6a28b609f6ed5f6bf30ad8b3aca52f6716ad40029f0be1131d8ce",
+        "elapsed_seconds": 13.552741460967809,
+        "user_seconds": 78.72928,
+        "system_seconds": 1.9868299999999999,
+        "peak_rss_kib": 461656,
+        "stderr": ""
+      }
+    ],
+    "summaries": [
+      {
+        "backend": "rforest-only",
+        "workers": 8,
+        "kappa": -1,
+        "median_seconds": 13.552741460967809,
+        "median_cpu_seconds": 80.71611,
+        "peak_rss_kib": 461656
+      }
+    ],
+    "status": "complete",
+    "strict_rforest": true,
+    "reference": "/tmp/hyperell-rforest-oracle/conductor388_lpdata.txt",
+    "reference_sha256": "5ea2b80d06433b702b61b4bd509f69d3c8ccfe25c1c744842e4d2139bbb307f4",
+    "reference_header": "[x^6-2*x^4+2*x^3+9*x^2+6*x+1] 1 1000000",
+    "comparison": "euler_factors",
+    "full_characteristic_moduli_checked": true
+  }
+}

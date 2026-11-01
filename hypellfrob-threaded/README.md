@@ -88,7 +88,7 @@ and writes one line per job, in order:
                               of the fast path failed
 ```
 
-Odd degree goes through `hypellfrob::matrix()`, which is `O(sqrt p)` and
+In `legacy` mode, odd degree goes through `hypellfrob::matrix()`, which is `O(sqrt p)` and
 needs `Q` monic with `p > (2g+1)(2N-1)`; even degree through
 `matrix_reference()`, which is correct but linear in `p`.
 
@@ -112,9 +112,20 @@ jobs so arithmetic comparisons cannot pass through fallback.
 The [measured comparison](../reports/frobenius_rforest_20261101.md) records
 the repeated 100,000-bound speedup and the full million-bound correctness
 check, including memory use and timing scope.
-The conductor-388 example has no rational Weierstrass point, so its sextic
-cannot use this backend; selecting `rforest` uses the even-degree fallback.
-See the [conductor-388 check](../reports/frobenius_rforest_conductor388_20261101.md).
+Rforest now handles even degree models directly, including conductor 388,
+without a rational Weierstrass point. Shifted horizontal/diagonal paths
+avoid the even-degree singularity, and a residue check removes the extra
+affine class. The result is a full matrix in the same projective basis as
+the existing reference. See the [algorithm notes](EVEN-DEGREE.md) and
+[even-degree results](../reports/frobenius_rforest_even_20261101.md).
+Python also monicizes nonmonic even input using a common quadratic twist
+and removes its local character from the characteristic polynomial.
+
+`HYPELLFROB_THREADS` sets the worker count for Python and both L-function
+classes when no explicit `nthreads` is supplied. Eight workers with the
+automatic forest split was fastest in the conductor-388 100,000-bound
+sweep on the test machine. Choose workers for the available hardware;
+more simultaneous trees use more memory and can be slower.
 
 The pinned C sources and their licenses are vendored under
 [`vendor/rforest`](vendor/rforest/README.hyperell.md). They build with the
@@ -149,6 +160,13 @@ lifting and L-function evaluation. `--reference` and `--reference-report`
 allow comparison against a previously saved legacy run, without claiming
 a fresh legacy timing. `--evaluator powers` and `--no-fft` expose the
 evaluation and FFT controls used in performance tuning.
+`--euler-reference file` instead accepts a smalljac `lpdata` CSV and
+compares every supplied Euler factor independently. This works for even
+models too, and omits the legacy run; it does not claim full matrix-entry
+comparison against that oracle. No smalljac dependency is needed to build
+or use the backend.
+`--hybrid` includes the legacy fallback jobs when timing `rforest`; with a
+legacy matrix reference, it requires identical output for every job.
 
 ## Original simultaneous remainder-tree backend
 
@@ -234,8 +252,9 @@ The caller only sends an even degree model when it has to. `4f + h^2` has
 even degree whenever `h` has degree `g+1`, but if the curve has a rational
 Weierstrass point `r`, then `u^{\deg F} F(r + 1/u)` moves it to infinity and
 has odd degree -- an isomorphism over `Q`, so the Frobenius characteristic
-polynomial is unchanged -- and the fast path applies after monicising. Only
-a curve with no rational Weierstrass point at all takes the slow route.
+polynomial is unchanged -- and the fast path applies after monicising. A
+curve with no rational Weierstrass point uses the even-degree forest in
+`rforest` mode and the reference routine in the other modes.
 
 `hyperell_regulator.frobenius` drives this and lifts the matrices to
 characteristic polynomials; it looks for the binary at `$HYPELLFROB_EULER`,

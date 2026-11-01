@@ -364,6 +364,17 @@ int matrix_reference(mat_ZZ& output, const ZZ& p, int N,
 
     if (d % 2 != 0) { output = M; return 1; }      // odd: already H^1 of the curve
 
+    restrict_even_frobenius(output, M, p, N, Q);
+    return 1;
+}
+
+void restrict_even_frobenius(mat_ZZ& output, const mat_ZZ& M,
+                            const ZZ& p, int N, const ZZX& Q)
+{
+    const int d = deg(Q);
+    if (d%2 || d < 4 || M.NumRows() != d-1 || M.NumCols() != d-1)
+        throw std::invalid_argument("invalid even-degree affine Frobenius matrix");
+
     int g = (d - 2) / 2;
 
     ZZ_pContext caller;  caller.save();
@@ -376,6 +387,14 @@ int matrix_reference(mat_ZZ& output, const ZZ& p, int N,
     // its monomial coordinates with the g-th dropped.
     output.SetDims(2 * g, 2 * g);
     ZZ mod = power(p, N);
+    for (int j = 0; j <= 2*g; ++j) {
+        ZZ_p value;
+        for (int i = 0; i <= 2*g; ++i) value += rho[i]*to_ZZ_p(M[i][j]);
+        if (value != to_ZZ_p(p)*rho[j]) {
+            caller.restore();
+            throw std::runtime_error("even-degree Frobenius residue invariant failed");
+        }
+    }
     for (int jj = 0, jout = 0; jj <= 2 * g; jj++) {
         if (jj == g) continue;
         for (int ff = 0, fout = 0; ff <= 2 * g; ff++) {
@@ -388,7 +407,6 @@ int matrix_reference(mat_ZZ& output, const ZZ& p, int N,
     }
 
     caller.restore();
-    return 1;
 }
 
 } // namespace hypellfrob
