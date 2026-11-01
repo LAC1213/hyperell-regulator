@@ -247,8 +247,16 @@ def _cut_data(cov, z, d, **kwds):
             out.append([int(np.argmin(np.abs(ex - v) + np.abs(ey - u)))
                         for v, u in zip(rx, ry)])
             if sorted(out[-1]) != list(range(cov.N)):
-                raise RuntimeError(
-                    "sheet labels at sigma_%d are not a bijection" % (k + 1))
+                # An unramified point near infinity can move much farther
+                # than the other sheets across the racetrack offset. Match
+                # at the reference fibre itself rather than comparing
+                # coordinates at two different base points.
+                tx, ty = follow(cov, path[marks[(k, side)]], ref[k], rx, ry)
+                out[-1] = [int(np.argmin(np.abs(ex-v)+np.abs(ey-u)))
+                           for v, u in zip(tx, ty)]
+                if sorted(out[-1]) != list(range(cov.N)):
+                    raise RuntimeError(
+                        "sheet labels at sigma_%d are not a bijection" % (k + 1))
         a0 = np.angle(ref[k])
         n = {s: round((ang[(k, s)] - a0) / (2 * np.pi)) for s in (+1, -1)}
         lam.append(np.log(abs(ref[k])) + 1j * (a0 + 2 * np.pi * n[-1]))

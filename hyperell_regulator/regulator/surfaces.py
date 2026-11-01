@@ -12,10 +12,29 @@ import numpy as np
 
 from .cover import Cover
 from .explorer import parse_request
-from .stokes import cut_data, cut_scale, follow, racetrack
+from .stokes import cut_data, cut_scale, follow
 
 
 def _continue(cov, start, end, x, y):
+    if getattr(cov, "_surface_guarded", False):
+        current, target = complex(start), complex(end)
+        for _ in range(4000):
+            remaining = abs(target-current)
+            if not remaining:
+                return x, y
+            radius = .05 * float(np.min(abs(current-cov._surface_branch_values)))
+            following = target if remaining <= radius else current+(target-current)*(radius/remaining)
+            if following == current:
+                raise RuntimeError("Surface continuation cannot resolve the next step")
+            x, y = _follow_segment(cov, current, following, x, y)
+            if following == target:
+                return x, y
+            current = following
+        raise RuntimeError("Surface continuation exceeded its subdivision limit")
+    return _follow_segment(cov, start, end, x, y)
+
+
+def _follow_segment(cov, start, end, x, y):
     try:
         return follow(cov, start, end, x, y)
     except RuntimeError:
@@ -25,7 +44,42 @@ def _continue(cov, start, end, x, y):
         return xx, yy
 
 
-def surface_mesh(data, density=20):
+def _bank_radius(w, critical, cut, index):
+    """Stay on the chosen cut bank, including between nearby parallel slits."""
+    radius = min(abs(w-z) for z in critical)*1e-5
+    for other, (left, right) in enumerate(zip(cut[:-1], cut[1:])):
+        if other == index:
+            continue
+        fraction = np.clip(((w-left)/(right-left)).real, 0, 1)
+        separation = abs(w-(left+fraction*(right-left)))
+        radius = min(radius, separation*.1)
+    return radius
+
+
+def _ray_endpoint(start, direction, bounds):
+    """End the slit exactly on the window boundary, without a rounding gap."""
+    crossings = []
+    for axis, (value, component, low, high) in enumerate(
+            ((start.real, direction.real, bounds[0], bounds[1]),
+             (start.imag, direction.imag, bounds[2], bounds[3]))):
+        if abs(component) > 1e-12:
+            wall = high if component > 0 else low
+            reach = (wall-value)/component
+            if reach > 0:
+                crossings.append((reach, axis, wall))
+    reach, axis, wall = min(crossings)
+    end = start+reach*direction
+    return complex(wall, end.imag) if axis == 0 else complex(end.real, wall)
+
+
+def _label_seed(nodes):
+    """The integrator's first racetrack point, without constructing its path."""
+    _, gap = cut_scale(nodes)
+    tangent = (nodes[1]-nodes[0])/abs(nodes[1]-nodes[0])
+    return nodes[0]+.02j*gap*tangent
+
+
+def surface_mesh(data, density=20, *, _guarded=False):
     """Return one finite-window mesh per globally labelled sheet.
 
     Faces approach their vertices by a small relative inset, avoiding exact
@@ -45,20 +99,17 @@ def surface_mesh(data, density=20):
     direction = complex(0 if abs(direction.real) < 1e-12 else direction.real,
                         0 if abs(direction.imag) < 1e-12 else direction.imag)
     critical = nodes[np.array(kinds) != "none"]
+    cov._surface_guarded = _guarded
+    cov._surface_branch_values = critical
     base = np.array([complex(*p) for edge in data["edges"] for p in edge["base"]])
-    seed = racetrack(nodes, direction)[0][0]
+    seed = _label_seed(nodes)
     base = np.r_[base, seed]
     span = max(np.ptp(base.real), np.ptp(base.imag))
     pad = span*.13
     bounds = [base.real.min()-pad, base.real.max()+pad,
               base.imag.min()-pad, base.imag.max()+pad]
     center = complex((bounds[0]+bounds[1])/2, (bounds[2]+bounds[3])/2)
-    distances = []
-    for value, component, low, high in ((nodes[-1].real, direction.real, bounds[0], bounds[1]),
-                                       (nodes[-1].imag, direction.imag, bounds[2], bounds[3])):
-        if abs(component) > 1e-12:
-            distances.append(((high if component > 0 else low)-value)/component)
-    end = nodes[-1]+min(v for v in distances if v > 0)*direction
+    end = _ray_endpoint(nodes[-1], direction, bounds)
     cut = np.r_[nodes, end]
     gridx, gridy = np.meshgrid(np.linspace(bounds[0], bounds[1], density),
                               np.linspace(bounds[2], bounds[3], density))
@@ -123,6 +174,7 @@ def surface_mesh(data, density=20):
     queue = deque([first])
     cycle_error = 0.0
     cycle_count = 0
+    visited_edges = set()
     while queue:
         index = queue.popleft()
         x, y = labels[index]
@@ -131,8 +183,10 @@ def surface_mesh(data, density=20):
             if neighbor < 0:
                 continue
             edge = tuple(sorted(int(face[k]) for k in range(3) if k != opposite))
-            if edge in blocked or (neighbor in labels and cycle_count >= 80):
+            pair = tuple(sorted((index, int(neighbor))))
+            if edge in blocked or pair in visited_edges:
                 continue
+            visited_edges.add(pair)
             midpoint = (coordinates[edge[0]]+coordinates[edge[1]])/2
             xx, yy = _continue(cov, centers[index], midpoint, x, y)
             xx, yy = _continue(cov, midpoint, centers[neighbor], xx, yy)
@@ -141,10 +195,16 @@ def surface_mesh(data, density=20):
                 defect = np.max((abs(xx-ex)+abs(yy-ey))/(1+abs(ex)+abs(ey)))
                 cycle_error = max(cycle_error, float(defect))
                 cycle_count += 1
+                if defect > 1e-6:
+                    if not _guarded:
+                        return surface_mesh(data, density, _guarded=True)
+                    raise RuntimeError("Inconsistent sheet continuation over the slit mesh: %g" % defect)
             else:
                 labels[int(neighbor)] = (xx, yy)
                 queue.append(int(neighbor))
-    if len(labels) != len(faces) or cycle_error > 1e-6:
+    if len(labels) != len(faces):
+        raise RuntimeError("Cut mesh has disconnected regions at floating point precision")
+    if cycle_error > 1e-6:
         raise RuntimeError("Inconsistent sheet continuation over the slit mesh: %g" % cycle_error)
     boundary_error = 0.0
     for j, a in enumerate(nodes):
@@ -153,7 +213,7 @@ def surface_mesh(data, density=20):
         w = ((a+b)/2 if j+1 < len(nodes)
              else a+cut_scale(nodes)[0]*integration_direction)
         normal = 1j*(b-a)/abs(b-a)
-        radius = min(abs(w-z) for z in critical)*1e-5
+        radius = _bank_radius(w, critical, cut, j)
         x, y = cov.fibre(w)
         for sign, permutation in ((1, upper[j]), (-1, lower[j])):
             target = w+sign*radius*normal
@@ -167,6 +227,8 @@ def surface_mesh(data, density=20):
             defect = np.max((abs(mx-ex)+abs(my-ey))/(1+abs(ex)+abs(ey)))
             boundary_error = max(boundary_error, float(defect))
     if boundary_error > 1e-6:
+        if not _guarded:
+            return surface_mesh(data, density, _guarded=True)
         raise RuntimeError("Mesh sheets disagree with the cut's bank labels: %g" % boundary_error)
     vertices = [[] for _ in range(cov.N)]
     triangles = []

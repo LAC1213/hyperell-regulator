@@ -3,6 +3,7 @@
 # Makefile, so they are not a Python package; `packages.find` in
 # pyproject.toml already excludes them from the wheel.
 include README.md
+include docs/explorer_inputs.json
 recursive-include tests *.py
 recursive-include reports *.tex *.json *.md
 recursive-include hyperell-frobenius *.cpp *.h *.md *.example

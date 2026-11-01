@@ -1,75 +1,35 @@
-# Saved Beilinson survey
+# Beilinson survey: conductor < 1300, 100 digits
 
-Rforest is now the default on main. The [rforest comparison](frobenius_rforest_20261101.md)
-and [even-degree extension](frobenius_rforest_even_20261101.md) record the
-validation before promotion. The [initial conductor-388 test](frobenius_rforest_conductor388_20261101.md)
-records the limitation that the even-degree extension subsequently removed.
-Native sources are now in `hyperell-frobenius`, with the library in `rforest`.
-Historical JSON source paths, hashes and measurements are preserved as
-recorded. The older custom-tree code and benchmark driver remain on their
-experimental branches; archived commands require the corresponding commit.
+This directory contains only the current 100-digit Beilinson survey:
 
-`beilinson_100_digits.tex` contains all 16 entries marked `ok` in the saved
-100-digit survey. The numerical table and the accompanying algebraic table
-are linked by curve label. Decimal values are abbreviated for readability;
-`beilinson_100_digits.json` retains the full saved values and exact functions.
+- [Full saved data and exact functions](beilinson_100_digits.json).
+- [LaTeX numerical and algebraic tables](beilinson_100_digits.tex).
 
-The error column is the absolute difference `abs(q - rational)`, computed
-from the full decimal ratio. Three successful regulators have no L-value:
-the two conductor-603 curves have an unsupported Frobenius action, and
-1717.a.1717.2 exhausted the PARI stack. Their comparison cells are blank.
-The omitted rows were not marked `ok`.
+The snapshot has 154 curve records, 22 successful
+regulators and 22 numerical comparisons. Unsuccessful attempts and their
+reasons are retained in the JSON; the tables list their status counts and any
+numerical failures. This is a survey of locally cached geometrically simple
+curves, without a claim of completeness over all curves.
 
-Points use the original cached curve coordinates. Functions use the displayed
-integration model `v^2=G(u)`; the table gives its coordinate shift and scale.
-The scalar normalization of each exact function is the package's normalization.
-The normalized regulator includes the corresponding norm correction.
+Regulators and L-values target 100 decimal digits. The determinant uses weights
+`(1, 2 Re(z), |z|^2)`, full cycle periods, and
+`q = pi*c_plus*c_minus*L_second_derivative/D`. The comparison error is
+`abs(q/rational - 1)`. An undecided component verdict remains undecided and is
+marked by a dagger. Precision targets are not certified error bounds.
 
-The saved TeX and JSON are retained as an archived snapshot.
+The numerical table displays 10 significant digits. The JSON preserves the
+complete saved decimal strings, matrices, precision settings, component
+verdicts and exact functions. Points are in the original cached model;
+functions are on the displayed integration model, with its coordinate change.
 
-The TeX uses `amsmath`, `amssymb`, `booktabs`, `longtable`, and `geometry`.
-It is a standalone landscape document. Compile with `pdflatex` twice where
-those LaTeX packages are installed; this workspace lacks a LaTeX format.
-
-Source: `results/beilinson_results.json` (kept locally, excluded from Git).
-Source SHA-256: `9179b3d7e7155adf507acae7b58da77a8c932454c6ef72e9086437e07340db31`.
-The source was read without modification; numerical failures at 100 digits
-were not rerun or suppressed.
-
-## Integer quotient check
-
-With weights `(1, 2 Re(z), |z|^2)` and `q = pi*c_plus*c_minus*L''/D`,
-all 20 completed comparisons in the cached conductor-below-2000 survey and
-all 7 family comparisons for `n=-4,...,2` give integers. The numerical
-results and scope are saved in [beilinson_integer_factors.json](beilinson_integer_factors.json).
-That saved survey excluded undecided component verdicts; the runner now
-includes them by default.
-`997.a.997.1` remains unresolved after a time-limited 15-digit retry and a
-float64 sheet-closure failure; no quotient is claimed for that curve.
-
-## Manuscript tables with full cycle periods
-
-`paper_full_periods.tex` contains replacements for the manuscript's torsion,
-model and numerical tables using the current `c_invariants` convention.
-The script produces this single LaTeX file, with all three table environments.
-The determinant uses weights `(1, 2 Re(z), |z|^2)`. All sixteen transported
-paper factors `q = pi*c_plus*c_minus*L_second_derivative/D` are integers;
-all sixteen now have numerical comparisons. The component condition at 2
-for `388.a.776.1` remains undecided. Its freshly computed L-value and
-functional-equation checks are saved in [conductor_388_lvalue.json](conductor_388_lvalue.json).
-
-Regenerate from the repository root:
+After the calculation has finished, regenerate without repeating integrations:
 
 ```sh
-sage -python -m reports.remake_paper_tables
-# Choose another output file:
-sage -python -m reports.remake_paper_tables --out /tmp/paper_tables.tex
+sage -python -m hyperell_regulator.experiments.beilinson_report
 ```
 
-The script reads the portable `paper_full_periods_input.json`, so it does not
-need the attachment, LMFDB caches or local experiment results. It computes
-periods at 50 and 110 digits, doubles the saved determinants for the new
-middle-row weight, and reuses the saved L-values.
-The table captions identify the lower precision available for three rows and
-the remaining integrality claim for `388.a.776.1`. The archived survey
-above retains its historical normalization. The LaTeX uses `amsmath`, `booktabs` and `hyperref`.
+The standalone LaTeX document uses `geometry`, `amsmath`, `amssymb`, `booktabs`
+and `longtable`. No PDF is generated.
+
+Source: `results/beilinson_results.json` (read without modification).
+Source SHA-256: `d6cc82098e80bc891e57ed43c658aa06a281da4b8d70bb1210e93088b667545e`.

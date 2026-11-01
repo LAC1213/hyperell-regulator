@@ -7,7 +7,7 @@
   <title>Cut system explorer · hyperell-regulator</title>
   <link rel="stylesheet" href="explorer.css?v=labels-1">
   <script defer src="plotly.min.js"></script>
-  <script defer src="explorer.js?v=labels-1"></script>
+  <script defer src="explorer.js?v=beilinson-100-1300-2"></script>
 </head>
 <body>
   <header>
@@ -16,9 +16,9 @@
   </header>
   <main>
     <section class="intro">
-      <p class="eyebrow">GENUS 2 CURVES OF SMALL CONDUCTOR</p>
+      <p class="eyebrow">BEILINSON SURVEY · CONDUCTOR &lt; 1300 · 100-DIGIT TARGETS</p>
       <h1>Follow the cuts.</h1>
-      <p>Explore genus 2 curves of small conductor through the sheets of φ. Select a lifted path to inspect its ordinary and logarithmic integrals, displayed to 10 significant digits.</p>
+      <p>Explore the successful 100-digit Beilinson regulator computations for genus 2 curves of conductor below 1300. Select a lifted path to inspect its ordinary and logarithmic integrals, displayed to 10 significant digits.</p>
     </section>
     <section class="workspace" aria-label="Choose a curve and torsion function">
       <div class="section-label"><h2>Curve &amp; torsion function</h2><span>computed locally in SageMath</span></div>
@@ -74,8 +74,8 @@
     </section>
     <section class="panel curve-table">
       <div class="section-label"><h2>Genus 2 curves of small conductor</h2><span>select a row to explore</span></div>
-      <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>R</th><th>n<sub>P</sub></th><th>n<sub>R</sub></th><th>Computed determinant</th><th>q</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
-      <p class="caption">Points use the models y² = F(x). The orders of P and R are relative to the common pole Q at infinity. Here q = π c⁺c⁻L″(std,1)/D, using full cycle periods. All displayed q values have numerical comparisons. † marks the undecided component condition at 2; cycle integrality remains a manuscript claim.</p>
+      <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>R</th><th>n<sub>P</sub></th><th>n<sub>R</sub></th><th>Survey D</th><th>c⁺</th><th>c⁻</th><th>L″(std,1)</th><th>q</th><th>Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
+      <p class="caption">Models, points, exact functions, determinants and q come from the 100-digit survey. The viewer labels its two zeros P and R and its common pole Q; the report stores these as P, Q and R respectively. Here q = π c⁺c⁻L″(std,1)/D, using full cycle periods. Rational guesses are shown when agreement exceeds 95 digits; otherwise q is displayed as a decimal. Relative error refers to the saved rational guess. A dash denotes a missing comparison. † marks an undecided component verdict. Path integrals are independently exported at 15 digits and checked against the survey determinant; the catalog retains the full survey values. The saved 1116 result is included without a new path export.</p>
     </section>
   </main>
   <footer><span>hyperell-regulator</span><span>Exact inputs. Numerical integrals. Visible paths.</span></footer>

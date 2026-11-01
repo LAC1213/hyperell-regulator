@@ -11,6 +11,35 @@ from sage.all import PolynomialRing, QQ
 
 from hyperell_regulator.regulator._mp_continuation import Arithmetic, LogFunctionSamples, quadrature
 from hyperell_regulator.regulator.explorer import parse_request
+from hyperell_regulator.regulator.surfaces import _bank_radius, _label_seed, _ray_endpoint
+
+
+def test_bank_probe_stays_between_long_nearby_cut_segments():
+    # At the midpoint the other bank is only one unit away, although every
+    # branch value is roughly half a billion units away (the 603 geometry).
+    cut = np.array([0j, 1e9+0j, 2j, -1e9+2j])
+    midpoint = 5e8+0j
+    radius = _bank_radius(midpoint, cut[:-1], cut, 0)
+    assert 0 < radius < .5
+
+
+def test_diagonal_ray_is_attached_exactly_to_the_mesh_boundary():
+    start = np.complex128(-0.3631747176028129-0.5361912224070701j)
+    direction = complex(0.5850690806785093, -0.8109834590384712)
+    bounds = [-1.8954284433231354, 1.3755735373634823,
+              -2.7982054841030943, 0.9197943833330182]
+    end = _ray_endpoint(start, direction, bounds)
+    # A gap of even one ulp lets a mesh cycle go around all five branch
+    # values, reversing a hyperelliptic sheet (conductor 909).
+    assert end.imag == bounds[2]
+    assert bounds[0] <= end.real <= bounds[1]
+    assert abs(((end-start)/direction).imag) < 1e-14
+
+
+def test_mesh_seed_matches_the_integrators_racetrack():
+    from hyperell_regulator.regulator.stokes import racetrack
+    nodes = np.array([0j, 1+2j, -1+3j])
+    assert _label_seed(nodes) == racetrack(nodes, 1j)[0][0]
 
 
 def test_endpoint_logarithm_is_continued_across_principal_cut():
@@ -84,19 +113,35 @@ def test_complete_small_conductor_catalog_reassembles_all_pairings():
     root = Path(__file__).resolve().parents[1]
     site = root/'docs/_extra/explorer'
     catalog = json.loads((site/'catalog.json').read_text())
-    inputs = json.loads((root/'reports/small_conductor_explorer_inputs.json').read_text())
+    inputs = json.loads((root/'docs/explorer_inputs.json').read_text())
     assert [c['label'] for c in catalog['curves']] == [c['label'] for c in inputs['curves']]
-    assert len(catalog['curves']) == 16 and catalog['display_digits'] == 10
+    report = json.loads((root/'reports/beilinson_100_digits.json').read_text())
+    successful = {r['label']: r for r in report if r['status'] == 'ok'}
+    assert [c['label'] for c in catalog['curves']] == list(successful)
+    assert catalog['display_digits'] == 10
+    assert catalog['source']['report_sha256'] == hashlib.sha256((root/'reports/beilinson_100_digits.json').read_bytes()).hexdigest()
     assert catalog['source_sha256']
     assert catalog['conventions']['determinant_weights'] == [1, 2, 1]
     assert all(len(checksum) == 64 for checksum in catalog['source_sha256'].values())
     for curve in catalog['curves']:
-        assert curve['validation']['determinant_rounds_as_printed']
+        reference = successful[curve['label']]
+        assert curve['cond'] < 1300
+        assert curve['numerical']['det'] == reference['det']
+        assert curve['numerical']['L_second_derivative'] == reference.get('L_second_derivative')
+        assert curve['regulator_digits'] == 100
+        if curve.get('visualization_status') == 'not_exported':
+            assert curve['label'] in catalog['reference_only']
+            assert curve['functions'] == []
+            continue
+        assert float(curve['validation']['determinant_relative_error']) < 1e-10
         assert len(curve['functions']) == 2
         assert [f['name'] for f in curve['functions']] == ['P', 'R']
-        assert Fraction(curve['q']).denominator == 1
-        assert curve['comparison_verified']
-        assert curve['integrality_verified'] == (curve['label'] != '388.a.776.1')
+        if curve['comparison_verified']:
+            assert curve['q'] == reference['comparison']['rational']
+            if curve['integrality_verified']:
+                assert Fraction(curve['q']).denominator == 1
+        assert curve['integrality_verified'] == all(reference['triple'].get(k) is True
+                                                   for k in ('verdict_P', 'verdict_Q'))
         matrix = np.array(curve['normalized_matrix'], float)
         assert abs(np.linalg.det(matrix)/float(curve['determinant'])-1) < 1e-10
         for f in curve['functions']:
@@ -131,8 +176,14 @@ def test_complete_small_conductor_catalog_reassembles_all_pairings():
 def test_all_surface_meshes_match_the_unchanged_integral_data():
     site = Path(__file__).resolve().parents[1]/'docs/_extra/explorer'
     catalog = json.loads((site/'catalog.json').read_text())
+    missing = []
     for curve in catalog['curves']:
         for function in curve['functions']:
+            if 'mesh' not in function:
+                assert function.get('mesh_error')
+                missing.append((curve['label'], function['name']))
+                assert (site/function['file']).is_file()
+                continue
             integral_bytes = (site/function['file']).read_bytes()
             mesh = json.loads((site/function['mesh']).read_text())
             assert hashlib.sha256(integral_bytes).hexdigest() == mesh['integral_data_sha256']
@@ -152,3 +203,7 @@ def test_all_surface_meshes_match_the_unchanged_integral_data():
             for key in ('max_relative_sheet_cycle_defect', 'max_relative_sheet_boundary_defect',
                         'max_relative_curve_residual', 'max_relative_function_residual'):
                 assert checks[key] < 1e-6, (curve['label'], function['name'], key)
+    # These nearly coincident cuts remain usable through their exact
+    # functions, paths and integrals. At 997 the real-axis detour has only
+    # a roughly 1e-13 imaginary separation, disconnecting the float mesh.
+    assert set(missing) <= {('997.a.997.1', 'P'), ('1147.a.35557.2', 'P')}

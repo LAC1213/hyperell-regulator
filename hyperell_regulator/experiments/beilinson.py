@@ -671,6 +671,8 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
             return rec
     try:
         num_coeffs = LF._coeffs_needed(digits)
+        if progress:
+            print("  L-value: %s coefficients ..." % num_coeffs, flush=True)
         # warm the coefficient cache first, reporting progress: this is the
         # slow step and everything after it is instant
         LF.lfun(num_coeffs, digits, progress=progress)
@@ -729,8 +731,6 @@ def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
     out = {"normalisation": "pi c+ c- L''(std,1) / D",
            "norm_value": norm, "ratio": norm / det}
     try:
-        # Work with the quotient so tiny coordinate-scaled determinants are
-        # not mistaken for zero by the integer-relation search.
         rel = [Integer(t) for t in gp.lindep([out["ratio"], F(1)], bound)]
         out["relation"] = rel
         if rel and rel[0] != 0:
@@ -843,9 +843,6 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
     # --- the L-value: an invariant of the curve, not of the model, so it is
     # --- cached by label and reused rather than recomputed
     if with_lvalue:
-        if verbose:
-            print("  L-value: %s coefficients ..."
-                  % StandardLFunction(C)._coeffs_needed(digits), flush=True)
         clock = time.time()
         res.update(standard_lvalue_cached(record["label"], C, digits=digits,
                                            progress=verbose))
@@ -1112,7 +1109,7 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
                                allow_undecided=allow_undecided, verbose=verbose,
                                with_periods=with_lvalue, with_lvalue=with_lvalue,
                                digits=digits, geom_simple=geom_simple,
-                               reg_digits=reg_digits, tries=tries))
+                               reg_digits=reg_digits, tries=tries, lindep_bound=int(digits/2)))
         res["settings"] = settings
         results.append(res)
         have[label] = res

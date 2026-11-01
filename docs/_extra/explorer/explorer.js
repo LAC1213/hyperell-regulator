@@ -1,7 +1,7 @@
 /* Static viewer: computations and full precision stay in the exported JSON. */
 "use strict";
 const DIGITS = 10;
-const DATA_VERSION = "symmetric-basis-1";
+const DATA_VERSION = "beilinson-100-1300-2";
 const COLORS = ["#bd5034", "#267f91", "#9267af", "#45956b", "#c28b24", "#3865a4", "#b65787"];
 const $ = (id) => document.getElementById(id);
 let catalog = null, current = null, selectedCurve = null, loadVersion = 0;
@@ -98,6 +98,7 @@ async function fetchJSON(path) {
 }
 
 function renderCatalog() {
+  const referenceNumber = value => value == null ? "—" : decimal(value);
   $("curve-select").replaceChildren();
   $("catalog-rows").replaceChildren();
   catalog.curves.forEach(curve => {
@@ -114,8 +115,12 @@ function renderCatalog() {
     cell(row, `(${curve.points[1].join(", ")})`);
     cell(row, curve.orders[0]);
     cell(row, curve.orders[1]);
-    cell(row, decimal(curve.determinant));
-    cell(row, curve.q + (curve.integrality_verified ? "" : " †")); // Exact rational torsion/comparison data is never rounded.
+    cell(row, decimal(curve.numerical?.det ?? curve.determinant));
+    cell(row, referenceNumber(curve.numerical?.c_plus));
+    cell(row, referenceNumber(curve.numerical?.c_minus));
+    cell(row, referenceNumber(curve.numerical?.L_second_derivative));
+    cell(row, (curve.q ?? referenceNumber(curve.quotient)) + (curve.integrality_verified ? "" : " †"));
+    cell(row, referenceNumber(curve.relative_agreement));
     $("catalog-rows").append(row);
   });
   $("curve-select").disabled = false;
@@ -131,6 +136,18 @@ function chooseCurve(label, functionName = "P") {
   $("function-select").value = selectedCurve.functions.some(f => f.name === functionName) ? functionName : "P";
   $("function-select").disabled = false;
   for (const row of $("catalog-rows").children) row.classList.toggle("selected", row.dataset.label === label);
+  if (!selectedCurve.functions.length) {
+    ++loadVersion;
+    if (selectionFrame !== null) cancelAnimationFrame(selectionFrame);
+    selectionFrame = null;
+    current = null;
+    currentMesh = null;
+    $("function-select").disabled = true;
+    $("results").hidden = true;
+    $("export").disabled = true;
+    status("Saved numerical result shown in the table. Path data have not been exported.");
+    return;
+  }
   return loadFunction();
 }
 
@@ -142,7 +159,7 @@ async function loadFunction() {
   try {
     let data = cache.get(f.file);
     if (!data) { data = validate(await fetchJSON(`${f.file}?v=${DATA_VERSION}`)); cache.set(f.file, data); }
-    let mesh = null, meshError = null;
+    let mesh = null, meshError = f.mesh_error ? new Error(f.mesh_error) : null;
     if (f.mesh) {
       try {
         mesh = meshCache.get(f.mesh);
@@ -175,9 +192,10 @@ async function show(data, curve = null, f = null, mesh = null) {
   $("export").disabled = false;
   $("result-source").textContent = curve ? `${curve.label} / φ_${f.name}` : "IMPORTED LOCAL RESULT";
   $("result-model").textContent = `y² = ${data.input.F}`;
-  $("metadata").textContent = `genus ${data.genus} · ${data.degree} sheets · ${data.edges.length} edges · 10 digits shown`;
+  $("metadata").textContent = `genus ${data.genus} · ${data.degree} sheets · ${data.edges.length} edges · ${data.precision}-digit path integrals · 10 digits shown`;
   $("exact-inputs").textContent = `F(x) = ${data.input.F}\nA(x) = ${data.input.A}\nB(x) = ${data.input.B}\nφ = A(x) + B(x)y`;
-  $("point-info").textContent = curve ? `(φ_${f.name}) = ${f.order} (${f.name} − Q), with ${f.name} = (${f.point.join(", ")}) and Q the common pole at infinity. Normalized determinant: ${decimal(curve.determinant)}.` : "An imported result computed locally with hyperell-regulator.";
+  const pole = curve?.pole && curve.pole !== "infinity" ? `(${curve.pole.join(", ")})` : "at infinity";
+  $("point-info").textContent = curve ? `(φ_${f.name}) = ${f.order} (${f.name} − Q), with ${f.name} = (${f.point.join(", ")}) and common pole Q ${pole}. Survey determinant (${curve.regulator_digits ?? 100}-digit target): ${decimal(curve.numerical?.det ?? curve.determinant)}.` : "An imported result computed locally with hyperell-regulator.";
   $("edge").replaceChildren();
   data.edges.forEach((e, i) => option($("edge"), i, `σ_${e.index}${e.infinite ? " → ∞" : ""}`));
   $("sheet").replaceChildren();
@@ -425,8 +443,9 @@ async function initialize() {
     if (catalog.schema_version !== 1 || !Array.isArray(catalog.curves)) throw new Error("Unsupported curve catalog");
     renderCatalog();
     const hash = decodeURIComponent(location.hash.slice(1)).split("/");
-    const label = catalog.curves.some(c => c.label === hash[0]) ? hash[0] : "763.a.763.1";
-    await chooseCurve(label, hash[1] || "R");
+    if (!catalog.curves.length) throw new Error("No successful curves in this survey");
+    const label = catalog.curves.some(c => c.label === hash[0]) ? hash[0] : catalog.curves[0].label;
+    await chooseCurve(label, hash[1] || "P");
   } catch (error) { status(error.message + ". Serve this folder over HTTP when viewing locally.", true); }
 }
 initialize();

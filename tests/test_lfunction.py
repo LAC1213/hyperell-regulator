@@ -269,6 +269,17 @@ def test_unsupported_reduction_at_two_still_requires_override():
         L.wedge2_euler_factor(2)
 
 
+def test_1116_toric_homology_uses_submodule_coordinates():
+    C = HyperellipticCurveWithReduction(-X+X**2+2*X**3+X**4, 1+X**3)
+    L = StandardLFunction(C)
+    T = L._RT.gen()
+    # The totally toric h^1 factor is independently supplied by PARI.
+    assert L.toric_factor(3) == L.h1_euler_factor(3) == 1+T+T**2
+    assert L.wedge2_euler_factor(3) == (1-T)*(1-27*T**3)
+    assert L.euler_factor(3) == (1-T)*(1+3*T+9*T**2)
+    assert L.conductor() == 4*9*31**2
+
+
 @pytest.mark.parametrize('entries', [
     [1, 0, 0, 1], [-1, 0, 0, -1], [1, 0, 0, -1],
     [0, -1, 1, -1], [0, -1, 1, 0], [0, -1, 1, 1],

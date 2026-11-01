@@ -310,6 +310,16 @@ class Walker:
                             gap=min(radii) if radii else R(1)+abs(v)
                         if abs(v-u)>gap/4 or error>gap/100:
                             good=False;break
+                        if self.ch.pure:
+                            # Choosing the nearest square root only tracks y
+                            # when F cannot turn through pi on this step.
+                            # Otherwise coarse quadrature can cache a point
+                            # on the opposite sheet and poison all refinements.
+                            distances = [abs(r-u) for r in self.ch.roots]
+                            movement = abs(v-u)
+                            if distances and (movement >= min(distances) or
+                                    sum((movement/d).arcsin() for d in distances) >= R.pi()):
+                                good=False;break
                         if abs(f-e)>abs(f+e):
                             distances = [abs(r-u) for r in self.ch.roots]
                             movement = abs(v-u)

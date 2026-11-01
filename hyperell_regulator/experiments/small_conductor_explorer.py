@@ -1,4 +1,4 @@
-"""Precompute 16 genus 2 curves of small conductor and 32 torsion functions.
+"""Precompute the Beilinson survey's cut systems and marked torsion functions.
 
     sage -python -m hyperell_regulator.experiments.small_conductor_explorer --jobs 4
 
@@ -69,6 +69,7 @@ def compute_curve(entry, out, prec, edge_seconds):
     from hyperell_regulator.regulator.diagnostics import IntegrationMonitor
     from hyperell_regulator.regulator.explorer import cut_system_data, parse_expression
     from .beilinson import DETERMINANT_WEIGHTS
+    from hyperell_regulator.regulator import function_with_divisor
 
     S = PolynomialRing(QQ, "x")
     F = S(parse_expression(entry["F"], S.fraction_field()))
@@ -76,19 +77,32 @@ def compute_curve(entry, out, prec, edge_seconds):
     source_hashes = algorithm_sources()
     functions = []
     R = RealField(int(3.322*(prec+15)))
-    for name, point, n in zip(("P", "R"), entry["points"], entry["orders"]):
+    pole = entry.get("pole", "infinity")
+    if pole != "infinity":
+        pole = tuple(QQ(v) for v in pole)
+    for index, (name, point, n) in enumerate(zip(("P", "R"), entry["points"], entry["orders"])):
         filename = "%s-%s.json" % (label, name)
         path = out / "data" / filename
         # Older catalogs used Q for the second zero; reuse their raw integrals.
         legacy = out / "data" / (label + "-Q.json")
         if name == "R" and not path.exists() and legacy.exists():
             path, filename = legacy, legacy.name
-        phi = function_at_marked_point(F, point, n)
+        if "exact_functions" in entry:
+            phi = tuple(parse_expression(entry["exact_functions"][index][key], S.fraction_field())
+                        for key in ("A", "B"))
+            # Exact reconstruction checks the saved normalization, rather than
+            # guessing which infinity is the pole on an even-degree model.
+            expected = function_with_divisor(F, tuple(QQ(v) for v in point), pole, n)
+            if phi != expected:
+                raise ArithmeticError("Saved exact function differs from its divisor construction")
+        else:
+            phi = function_at_marked_point(F, point, n)
         if path.is_file():
             data = json.loads(path.read_text())
             previous = data.get("collection", {}).get("entry", {})
             if (data["precision"] != prec
-                    or any(previous.get(k) != entry[k] for k in ("label", "F", "points", "orders"))
+                    or any(previous.get(k) != entry.get(k) for k in
+                           ("label", "F", "points", "orders", "pole", "exact_functions"))
                     or any(data.get("source_sha256", {}).get(k) != v for k, v in source_hashes.items()
                            if k.startswith("hyperell_regulator/regulator/")
                            # Plane wrappers and mesh generation do not enter
@@ -103,7 +117,10 @@ def compute_curve(entry, out, prec, edge_seconds):
         # Normalize afresh even when the expensive raw edge integrals are cached.
         cov = Cover(F, *phi)
         num, den = cov.norm_exact()
-        c = (S.gen() - QQ(point[0]))**n * den/num
+        weight = S.fraction_field()(S.gen() - QQ(point[0]))
+        if pole != "infinity":
+            weight /= S.gen() - pole[0]
+        c = weight**n * den/num
         if c.numerator().degree() > 0 or c.denominator().degree() > 0:
             raise ArithmeticError("Norm normalization is not constant")
         logc = R(abs(QQ(c))).log()
@@ -111,8 +128,9 @@ def compute_curve(entry, out, prec, edge_seconds):
             pair["normalized_regulator"] = str(w*(2*R(pair["regulator"]) + logc*R(pair["period"]))/n)
             pair["determinant_period"] = str(w*R(pair["period"]))
         data["collection"] = dict(entry=entry, function=name, point=point, order=n,
-                                  pole="Q", norm_c=str(c), weights=list(DETERMINANT_WEIGHTS),
-                                  normalization="normalized_regulator = w*(2*regulator + log|c|*period)/N; determinant_period = w*period; (x-x(P))^N = c*Norm(phi)")
+                                  pole="Q", pole_coordinates=entry.get("pole", "infinity"),
+                                  norm_c=str(c), weights=list(DETERMINANT_WEIGHTS),
+                                  normalization="normalized_regulator = w*(2*regulator + log|c|*period)/N; determinant_period = w*period; weight^N = c*Norm(phi); weight=(x-x(P)) at infinity, (x-x(P))/(x-x(Q)) at a finite pole")
         data["normalization_source_sha256"] = normalization_sources()
         save(path, data)
         functions.append(dict(name=name, order=n, point=point, file="data/"+filename,
@@ -130,10 +148,15 @@ def compute_curve(entry, out, prec, edge_seconds):
     determinant = matrix(R, rows).determinant()
     from decimal import Decimal, localcontext
     with localcontext() as context:
-        context.prec = 80
+        context.prec = 180
         printed = Decimal(entry["numerical"]["det"])
-        printed_match = abs(Decimal(str(determinant)) - printed) <= Decimal(5).scaleb(printed.as_tuple().exponent-1)
-    if not printed_match:
+        difference = abs(Decimal(str(determinant)) - printed)
+        printed_match = difference <= Decimal(5).scaleb(printed.as_tuple().exponent-1)
+        reference_error = difference/max(abs(printed), Decimal("1e-100"))
+    # The display export can use fewer digits than the 100-digit reference.
+    # Test actual agreement at its precision instead of requiring all saved
+    # reference digits to round identically.
+    if reference_error > Decimal(10)**(-min(prec-4, 10)):
         raise ArithmeticError("Fresh determinant %s disagrees with reference %s" % (determinant, printed))
     quotient_error = None
     if entry["comparison_verified"]:
@@ -145,17 +168,20 @@ def compute_curve(entry, out, prec, edge_seconds):
     return dict(**entry, functions=functions, determinant=str(determinant),
                 normalized_matrix=[[str(v) for v in row] for row in rows],
                 validation=dict(period_agreement=str(agreement), determinant_rounds_as_printed=printed_match,
+                                determinant_relative_error=str(reference_error),
                                 quotient_relative_error=None if quotient_error is None else str(quotient_error)))
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--inputs", type=Path, default=Path("reports/small_conductor_explorer_inputs.json"))
+    parser.add_argument("--inputs", type=Path, default=Path("docs/explorer_inputs.json"))
     parser.add_argument("--out", type=Path, default=Path("docs/_extra/explorer"))
     parser.add_argument("--prec", type=int, default=15)
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--edge-seconds", type=float, default=120)
     parser.add_argument("--timeout", type=int, default=1200)
+    parser.add_argument("--reference-only", action="append", default=[], metavar="LABEL",
+                        help="include saved numerical results without computing path data")
     parser.add_argument("--worker", type=int, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     source = json.loads(args.inputs.read_text())
@@ -170,6 +196,8 @@ def main(argv=None):
     start = time.monotonic()
     def run(index):
         label = source["curves"][index]["label"]
+        if label in args.reference_only:
+            return dict(**source["curves"][index], functions=[], visualization_status="not_exported")
         log = args.out / "data" / (label + ".log")
         log.parent.mkdir(parents=True, exist_ok=True)
         command = [sys.executable, "-m", "hyperell_regulator.experiments.small_conductor_explorer",
@@ -200,12 +228,14 @@ def main(argv=None):
                     source=source["source"], input_sha256=hashlib.sha256(args.inputs.read_bytes()).hexdigest(),
                     source_sha256=algorithm_sources(),
                     normalization_source_sha256=normalization_sources(),
+                    reference_only=args.reference_only,
                     conventions=dict(determinant_weights=[1, 2, 1],
                                      quotient="q = pi*c_plus*c_minus*L_second_derivative/D",
                                      periods="full cycle periods"),
                     curves=[completed[e["label"]] for e in source["curves"]])
     save(args.out / "catalog.json", manifest)
-    print("Saved catalog: %d curves, %d functions" % (len(completed), 2*len(completed)), flush=True)
+    count = sum(len(curve["functions"]) for curve in completed.values())
+    print("Saved catalog: %d curves, %d functions" % (len(completed), count), flush=True)
 
 
 if __name__ == "__main__":

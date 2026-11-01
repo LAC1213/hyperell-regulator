@@ -111,15 +111,11 @@ the native driver. Select `backend="legacy"`, set
 per-prime algorithm explicitly. The default `build/euler 4` uses legacy
 fallback for unsupported jobs; `rforest-only` declines those
 jobs so arithmetic comparisons cannot pass through fallback.
-The [measured comparison](../reports/frobenius_rforest_20261101.md) records
-the repeated 100,000-bound speedup and the full million-bound correctness
-check, including memory use and timing scope.
 Rforest now handles even degree models directly, including conductor 388,
 without a rational Weierstrass point. Shifted horizontal/diagonal paths
 avoid the even-degree singularity, and a residue check removes the extra
 affine class. The result is a full matrix in the same projective basis as
-the existing reference. See the [algorithm notes](EVEN-DEGREE.md) and
-[even-degree results](../reports/frobenius_rforest_even_20261101.md).
+the existing reference.
 Python also monicizes nonmonic even input using a common quadratic twist
 and removes its local character from the characteristic polynomial.
 
@@ -180,8 +176,8 @@ odd and even degree. Arithmetic and L-function tests live in
 The earlier custom accumulating-tree backend and its benchmark driver
 remain on `experimental/harvey-remainder-tree` and `experimental/rforest`.
 They are not included in the main-branch implementation. Historical
-measurements are retained under `reports/`; reproduce them from their
-recorded commits. The current comparison utility is `benchmark_rforest.py`.
+measurements remain in Git history. The current comparison utility is
+`benchmark_rforest.py`.
 
 The caller only sends an even degree model when it has to. `4f + h^2` has
 even degree whenever `h` has degree `g+1`, but if the curve has a rational

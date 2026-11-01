@@ -19,6 +19,8 @@ def main(argv=None):
     parser.add_argument("--site", type=Path, default=Path("docs/_extra/explorer"))
     parser.add_argument("--density", type=int, default=20)
     parser.add_argument("--jobs", type=int, default=4)
+    parser.add_argument("--allow-missing", action="store_true",
+                        help="retain paths and record a reason when a surface cannot be validated")
     parser.add_argument("--worker", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     if args.worker:
@@ -61,15 +63,23 @@ def main(argv=None):
         return f
     errors = []
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
-        futures = [executor.submit(run, f) for f in functions]
+        futures = {executor.submit(run, f): f for f in functions}
         for future in as_completed(futures):
             try:
                 f = future.result()
                 f["mesh"] = "meshes/"+Path(f["file"]).name
+                f.pop("mesh_error", None)
             except Exception as exc:
                 errors.append(str(exc)); print(str(exc), file=sys.stderr, flush=True)
-    if errors:
+                if args.allow_missing:
+                    f = futures[future]
+                    f.pop("mesh", None)
+                    f["mesh_error"] = "Surface mesh could not be validated. Paths and integrals remain available."
+                    (args.site/"meshes"/Path(f["file"]).name).unlink(missing_ok=True)
+    if errors and not args.allow_missing:
         raise SystemExit("%d surface exports need attention" % len(errors))
+    catalog["surface_meshes"] = dict(available=sum("mesh" in f for f in functions),
+                                    unavailable=sum("mesh" not in f for f in functions))
     catalog_path.write_text(json.dumps(catalog, indent=2)+"\n")
 
 

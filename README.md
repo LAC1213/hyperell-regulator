@@ -87,7 +87,7 @@ Reports use determinant weights `(1, 2 Re(z), |z|^2)` and compare
 `lmfdb_cache/` and `results/` in the working directory; set
 `HYPERELL_REGULATOR_DATA` to choose another location.
 
-The [saved 100-digit survey](reports/README.md) includes LaTeX tables,
+The [saved 100-digit survey for conductor < 1300](reports/README.md) includes LaTeX tables,
 full-precision values, exact functions, and regeneration instructions.
 
 ## Tests

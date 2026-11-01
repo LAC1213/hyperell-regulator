@@ -288,7 +288,9 @@ class Integrator:
             kind,center='inv',0
         ch=Chart(cov,self.ar,kind,center,sigma=True,zr=z)
         sigma0=1/(span*d)
-        if not cov.even and len(cov.ad)==len(cov.bd)==1:
+        # The exterior-disk bound also applies to even-degree models.
+        # tau() uses 1/x there and 1/sqrt(x) at odd-degree infinity.
+        if len(cov.ad)==len(cov.bd)==1:
             radius,bound=_legs._odd_infinity_region(cov)
             factor=max(self.R(1),(2*self.R(bound)+2*abs(z)+span*abs(d))/(span*abs(d)))
             lr=factor.log()

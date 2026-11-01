@@ -126,6 +126,28 @@ def test_explicit_precision_failure_does_not_silently_fall_back():
     assert calc.call_count==1 and calc.call_args.kwargs['digits']==30
 
 
+def test_verbose_lvalue_failure_preserves_completed_regulator():
+    x = ring().gen()
+    G = x**5+x+1
+    triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5)
+    with patch.object(b, '_model_for_triple', return_value=(G, [(0, 1), (1, 1)], None, 'infinity')), \
+            patch.object(b, '_resolve_triple_orders'), \
+            patch.object(b, 'phi_string', return_value='test function'), \
+            patch.object(b, 'beilinson_determinant_stokes', return_value=(2.0, [[1.0]], None)), \
+            patch.object(b, 'load_lvalues', return_value={}), \
+            patch.object(b, 'save_lvalue') as save, \
+            patch.object(b, 'StandardLFunction') as lfunction, \
+            contextlib.redirect_stdout(io.StringIO()):
+        lfunction.return_value._coeffs_needed.side_effect = ArithmeticError('bad Euler factor')
+        result = b._analyse_triple(dict(label='test', cond=1), None, triple, 1,
+                                   verbose=True, with_periods=False)
+    assert result['status'] == 'ok' and result['det'] == 2.0
+    assert result['L_second_derivative'] is None
+    assert result['L_status'] == 'ArithmeticError: bad Euler factor'
+    assert result['comparison'] == {}
+    save.assert_called_once()
+
+
 def test_higher_precision_report_is_reused_without_rounding():
     record = dict(label='a', cond=249)
     def analyse(record, **kwargs):
