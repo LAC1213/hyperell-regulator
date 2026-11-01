@@ -91,6 +91,19 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
     assert r"q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D" in tex
     assert r"2\operatorname{Re}(z)" in tex
     assert hashlib.sha256(original).hexdigest() in tex
+    assert tex.count(r"\begin{table}") == tex.count(r"\end{table}") == 3
+    assert tex.count(r"\begin{tabular}") == tex.count(r"\end{tabular}") == 3
+    assert r"\begin{longtable}" not in tex
+    assert r"\begin{tabular}{@{}cccccc@{}}" in tex
+    assert r"\begin{tabular}{@{}ll@{}}" in tex
+    assert r"\begin{tabular}{@{}lrrrrr@{}}" in tex
+    assert r"https://www.lmfdb.org/Genus2Curve/Q/249/a/249/1" in tex
+    # Use the integration-model images, not the original LMFDB points.
+    assert r"\begin{gathered}(-1,0)\\(0,-1)\end{gathered}" in tex
+    assert r"\begin{gathered}7\\14\end{gathered}" in tex
+    assert r"\label{tab:torsion-integrality}" in tex
+    assert r"\label{tab:curve-models}" in tex
+    assert r"\label{tab:data}" in tex
     inputs = report.explorer_inputs(out/"beilinson_100_digits.json", tmp_path/"inputs.json")
     entry = inputs["curves"][0]
     assert entry["numerical"]["det"] == row["det"]
@@ -110,13 +123,26 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
 def test_tex_preserves_undecided_verdict_and_reports_failure():
     row = saved_row()
     row["triple"]["verdict_P"] = None
-    row["algebraic_data"] = dict(model_latex="u^5+1", shift=None, scale="1", pole="infinity",
+    row["algebraic_data"] = dict(model="u^5+1", model_latex="u^5+1", shift=None, scale="1", pole="infinity",
+                                 image_points=[["-1", "0"], ["0", "-1"], "infinity"],
                                  functions={k:dict(latex="u+v") for k in ("P", "Q")})
     failure = dict(label="997.a.997.1", status="numerical_failure", error="cut_system_failed & timeout")
     tex = report.render([row, failure], "abc123")
-    assert row["label"] + r"$^{\dagger}$" in tex
+    assert r"\begin{gathered}\text{Undecided}\\\text{Yes}\end{gathered}" in tex
     assert r"cut\_system\_failed \& timeout" in tex
     assert "997.a.997.1" in tex
+
+
+def test_model_table_labels_the_selected_infinity_and_coordinate_change():
+    row = saved_row("277.a.277.1", 277)
+    row["triple"]["R"] = ["infinity", "-1"]
+    row["algebraic_data"] = dict(model="u^6+1", original_h="x^3+1",
+                                 shift=None, scale="1", pole="infinity")
+    assert report.model_pole_tex(row) == r"\infty_{-1}"
+    row["triple"]["R"] = ["0", "-1"]
+    row["algebraic_data"].update(model="4*u^6+4", shift="0", scale="2")
+    assert report.model_pole_tex(row) == r"\infty_{-2}"
+    assert report.curve_link(row["label"], changed_model=True).endswith(r"$^{\dagger}$")
 
 
 def test_unshifted_model_keeps_its_original_variable_and_infinity_pole():

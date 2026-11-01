@@ -134,68 +134,151 @@ def escape_tex(text):
     return "".join(replacements.get(c, c) for c in str(text))
 
 
+def curve_link(label, changed_model=False):
+    """LMFDB link, with a dagger for a reciprocal coordinate change."""
+    url = "https://www.lmfdb.org/Genus2Curve/Q/" + "/".join(label.split("."))
+    link = r"\href{" + url + r"}{\texttt{" + escape_tex(label) + "}}"
+    return link + (r"$^{\dagger}$" if changed_model else "")
+
+
+def stacked(values):
+    return r"$\begin{gathered}" + r"\\".join(values) + r"\end{gathered}$"
+
+
+def integrality_tex(verdict):
+    return r"\text{" + ("Yes" if verdict is True else "No" if verdict is False else "Undecided") + "}"
+
+
+def model_pole_tex(row):
+    """Label the common pole on the integration model, rather than guessing a sign."""
+    from sage.all import PolynomialRing, QQ
+
+    data = row["algebraic_data"]
+    if data["pole"] != "infinity":
+        return point_tex(data["pole"])
+    ring = PolynomialRing(QQ, "x")
+    model = ring(re.sub(r"\bu\b", "x", data["model"]))
+    if model.degree() % 2:
+        return r"\infty"
+    h = ring(data["original_h"])
+    pole = row["triple"]["R"]
+    if pole[0] == "infinity":
+        eta = 2*QQ(pole[1]) + h[model.degree()//2]
+    else:
+        eta = QQ(data["scale"])*(2*QQ(pole[1]) + h(QQ(pole[0])))
+    return point_tex(("infinity", str(eta)))
+
+
 def render(rows, source_hash):
-    """A standalone document; full decimals and unsuccessful rows stay in JSON."""
+    """Three publication tables using the saved values and integration coordinates."""
     rows = [row for row in rows if int(row.get("cond", 0)) not in EXCLUDED_DISPLAY_CONDUCTORS]
     ok = [row for row in rows if row.get("status") == "ok"]
     lines = [r"\documentclass[10pt]{article}",
-             r"\usepackage[a4paper,landscape,margin=12mm]{geometry}",
-             r"\usepackage{amsmath,amssymb,booktabs,longtable}",
+             r"\usepackage[a4paper,margin=12mm]{geometry}",
+             r"\usepackage{amsmath,amssymb,booktabs,arydshln}",
+             r"\usepackage[hidelinks]{hyperref}",
              r"\begin{document}",
              r"\noindent\textbf{Beilinson survey: conductor $<1300$, 100-digit targets.}",
              r"Conductor $1116$ is retained in the JSON and omitted from these tables.",
-             r"The determinant $D$ uses weights $(1,2\operatorname{Re}(z),|z|^2)$ and full cycle periods.",
-             r"We compare $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$ with the rational guess $r$.",
-             r"The error is $|q/r-1|$. Numerical targets are not certified error bounds.",
-             r"Displayed decimals have 10 significant digits; the JSON retains all saved digits.",
-             r"A dagger marks an undecided component verdict; no integrality assertion is made for that row.",
-             r"\scriptsize", r"\begin{longtable}{lrrrrrrr}", r"\toprule",
-             r"Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(\mathrm{std},1)$ & $q$ & $r$ & Relative error \\",
-             r"\midrule\endhead"]
-    for row in ok:
+             r"We use $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$, full cycle periods,",
+             r"and determinant weights $(1,2\operatorname{Re}(z),|z|^2)$.",
+             r"Displayed decimals have 10 significant digits; errors use the full saved values.",
+             r"\begin{table}[htbp]",
+             r"\centering\small",
+             r"\renewcommand{\arraystretch}{1.5}",
+             r"\setlength{\tabcolsep}{6pt}",
+             r"\begin{tabular}{@{}cccccc@{}}",
+             r"\toprule",
+             r"Curve & Point $P$ & Order of $P$ & $\alpha_P$ integral? & Factor $q$ & Error \\",
+             r"\midrule"]
+    for index, row in enumerate(ok):
+        triple, data = row["triple"], row["algebraic_data"]
         comparison = row.get("comparison", {})
-        t = row["triple"]
-        dagger = r"$^{\dagger}$" if any(t.get(k) is not True for k in ("verdict_P", "verdict_Q")) else ""
-        values = [number_tex(row.get(k)) for k in ("det", "c_plus", "c_minus", "L_second_derivative")]
-        values += [number_tex(comparison.get("ratio")), rational_tex(comparison.get("rational")),
-                   number_tex(comparison.get("relative_agreement"), 3)]
-        lines.append(escape_tex(row["label"]) + dagger + " & " + " & ".join("$"+v+"$" for v in values) + r" \\")
-    lines += [r"\bottomrule\end{longtable}",
-              r"\noindent The following table uses original coordinates for $P,Q,R$.",
-              r"The saved keys $P,Q$ denote the two zeros and $R$ the common pole.",
-              r"On the integration model $v^2=G(u)$, $(\phi_P)=n_P(P-R)$ and $(\phi_Q)=n_Q(Q-R)$.",
-              r"For $s=\text{--}$, $(u,v)=(x,2y+h(x))$; otherwise $(u,v)=((x-s)^{-1},d(2y+h(x))/(x-s)^3)$.",
-              r"Exact functions use the package's scalar normalization; $D$ includes its norm correction.",
-              r"\begin{longtable}{llllrr}", r"\toprule",
-              r"Curve & $P$ & $Q$ & $R$ & $n_P$ & $n_Q$ \\", r"\midrule\endhead"]
+        cells = [
+            curve_link(row["label"]),
+            stacked([point_tex(point) for point in data["image_points"][:2]]),
+            stacked([rational_tex(triple[key]) for key in ("order_P", "order_Q")]),
+            stacked([integrality_tex(triple.get(key)) for key in ("verdict_P", "verdict_Q")]),
+            "$" + rational_tex(comparison.get("rational")) + "$",
+            "$" + number_tex(comparison.get("relative_agreement"), 2) + "$",
+        ]
+        lines.append(" & ".join(cells) + r" \\")
+        if index + 1 < len(ok):
+            lines.append(r"\hdashline")
+    lines += [
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\caption{Torsion point classes for " + str(len(ok)) +
+        r" genus 2 curves. Each stacked cell lists the two marked points in the order of the regulator columns,",
+        r"in the integration coordinates of Table~\ref{tab:curve-models}.",
+        r"The order of a displayed point is the order of $[P]-[R]$, with common pole $R$ given there.",
+        r"The integrality column records the component criterion: Yes, No, or Undecided;",
+        r"Undecided makes no integrality assertion.",
+        r"Factor $q$ is the saved rational guess. The error is",
+        r"$|\pi c^+c^-L^{\prime\prime}(M_{\mathrm{std}},1)/(qD)-1|$,",
+        r"computed from unrounded values. Numerical targets are not certified error bounds.}",
+        r"\label{tab:torsion-integrality}",
+        r"\end{table}",
+        r"\clearpage",
+        r"\begin{table}[htbp]\centering\small",
+        r"\renewcommand{\arraystretch}{1.35}",
+        r"\setlength{\tabcolsep}{6pt}",
+        r"\begin{tabular}{@{}ll@{}}",
+        r"\toprule",
+        r"Curve & $f(x)$ in $y^2=f(x)$; common pole $R$ \\",
+        r"\midrule"]
     for row in ok:
-        t, a = row["triple"], row["algebraic_data"]
-        lines.append(escape_tex(row["label"]) + " & " + " & ".join("$"+point_tex(t[k])+"$" for k in ("P", "Q", "R")) +
-                     " & " + str(t["order_P"]) + " & " + str(t["order_Q"]) + r" \\*")
-        shift = r"\text{--}" if a["shift"] is None else rational_tex(a["shift"])
-        lines.append(r"\multicolumn{6}{l}{$G(u)=" + a["model_latex"] + r";\quad s=" + shift +
-                     r",\ d=" + rational_tex(a["scale"]) + r",\quad \text{pole}=" + point_tex(a["pole"]) + r"$} \\*")
-        for key in ("P", "Q"):
-            lines.append(r"\multicolumn{6}{p{0.95\linewidth}}{$\phi_" + key + "=" + a["functions"][key]["latex"] + r"$} \\")
-        lines.append(r"\addlinespace")
-    lines += [r"\bottomrule\end{longtable}", r"\normalsize",
-              r"\noindent\textbf{Survey status.}", r"\begin{longtable}{lr}", r"\toprule",
-              r"Status & Curves \\", r"\midrule"]
-    for status, count in sorted(Counter(row["status"] for row in rows).items()):
-        lines.append(escape_tex(status) + " & " + str(count) + r" \\")
-    lines += [r"\bottomrule\end{longtable}"]
+        data = row["algebraic_data"]
+        model = re.sub(r"\bu\b", "x", data["model_latex"])
+        description = model + r";\quad R=" + model_pole_tex(row)
+        changed = data["shift"] is not None
+        if changed:
+            description += r";\quad(s,d)=(" + rational_tex(data["shift"]) + "," + rational_tex(data["scale"]) + ")"
+        lines.append(curve_link(row["label"], changed) + " & $" + description + r"$ \\")
+    lines += [
+        r"\bottomrule\end{tabular}",
+        r"\caption{Integration models for the " + str(len(ok)) +
+        r" displayed curves; points in Table~\ref{tab:torsion-integrality} use these coordinates.",
+        r"Write the LMFDB equation as $y_{\mathrm L}^2+h(x_{\mathrm L})y_{\mathrm L}=f_{\mathrm L}(x_{\mathrm L})$.",
+        r"For unmarked rows, $x=x_{\mathrm L}$ and $y=2y_{\mathrm L}+h(x_{\mathrm L})$.",
+        r"Rows marked $\dagger$ use $x=(x_{\mathrm L}-s)^{-1}$ and",
+        r"$y=d(2y_{\mathrm L}+h(x_{\mathrm L}))/(x_{\mathrm L}-s)^3$,",
+        r"with the displayed $(s,d)$. In odd degree the point at infinity is unique;",
+        r"in even degree $\infty_\eta$ denotes $y/x^3\to\eta$.}",
+        r"\label{tab:curve-models}",
+        r"\end{table}",
+        r"\clearpage",
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\scriptsize",
+        r"\setlength{\tabcolsep}{3pt}",
+        r"\renewcommand{\arraystretch}{1.3}",
+        r"\begin{tabular}{@{}lrrrrr@{}}",
+        r"\toprule",
+        r"Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & Relative error \\",
+        r"\midrule"]
+    for row in ok:
+        values = [number_tex(row.get(key)) for key in ("det", "c_plus", "c_minus", "L_second_derivative")]
+        values.append(number_tex(row.get("comparison", {}).get("relative_agreement"), 2))
+        lines.append(curve_link(row["label"]) + " & " +
+                     " & ".join("$" + value + "$" for value in values) + r" \\")
+    lines += [
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\caption{Numerical data for Table~\ref{tab:torsion-integrality}.",
+        r"Real values are rounded to 10 significant digits; relative errors are calculated from the unrounded data.",
+        r"The columns $c^+$ and $c^-$ use full cycle periods.}",
+        r"\label{tab:data}",
+        r"\end{table}"]
     issues = [row for row in rows if row.get("status") not in ("ok", "no_admissible_triple")
               or (row.get("status") == "ok" and not row.get("comparison"))]
     if issues:
-        lines += [r"\begin{longtable}{lp{0.7\linewidth}}", r"\toprule", r"Curve & Incomplete computation \\", r"\midrule"]
+        lines.append(r"\par\noindent\textbf{Incomplete computations (full records in JSON).}")
         for row in issues:
             reason = row.get("error") or row.get("L_error") or row.get("L_status") or row.get("periods_error") or row["status"]
-            # The JSON retains the complete integrator state, including long
-            # decimal coordinates; the table needs the failure reason.
             reason = str(reason).partition("; state=")[0]
-            lines.append(escape_tex(row["label"]) + " & " + escape_tex(reason) + r" \\")
-        lines += [r"\bottomrule\end{longtable}"]
-    lines += [r"\noindent Source: \texttt{results/beilinson\_results.json}.",
+            lines.append(r"\par\noindent\texttt{" + escape_tex(row["label"]) + "}: " + escape_tex(reason))
+    lines += [r"\par\noindent Source: \texttt{results/beilinson\_results.json}.",
               r"\par\noindent\texttt{SHA-256: " + source_hash + "}", r"\end{document}"]
     return "\n".join(lines) + "\n"
 
@@ -220,27 +303,30 @@ def export(source, output, cache):
 This directory contains only the current 100-digit Beilinson survey:
 
 - [Full saved data and exact functions](beilinson_100_digits.json).
-- [LaTeX numerical and algebraic tables](beilinson_100_digits.tex).
+- [Three LaTeX tables: torsion/integrality, models, and numerical data](beilinson_100_digits.tex).
 
 The snapshot has {len(rows)} curve records, {counts.get('ok', 0)} successful
 regulators and {compared} numerical comparisons. Unsuccessful attempts and their
-reasons are retained in the JSON; the tables list their status counts and any
-numerical failures. This is a survey of locally cached geometrically simple
+reasons are retained in the JSON. The three tables display completed
+comparisons. This is a survey of locally cached geometrically simple
 curves, without a claim of completeness over all curves.
 The conductor-1116 record is retained in the JSON, but omitted from the LaTeX
-tables and explorer. Table status counts use the same exclusion.
+tables and explorer.
 The LaTeX tables and explorer include {displayed} successful regulators.
 
 Regulators and L-values target 100 decimal digits. The determinant uses weights
 `(1, 2 Re(z), |z|^2)`, full cycle periods, and
 `q = pi*c_plus*c_minus*L_second_derivative/D`. The comparison error is
-`abs(q/rational - 1)`. An undecided component verdict remains undecided and is
-marked by a dagger. Precision targets are not certified error bounds.
+`abs(q/rational - 1)`. An undecided component verdict is displayed as
+`Undecided` in the integrality column. Precision targets are not certified
+error bounds.
 
 The numerical table displays 10 significant digits. The JSON preserves the
 complete saved decimal strings, matrices, precision settings, component
-verdicts and exact functions. Points are in the original cached model;
-functions are on the displayed integration model, with its coordinate change.
+verdicts and exact functions. Table points use the displayed integration
+models. Reciprocal coordinate changes are marked by a dagger in the model
+table, with their shift and scale given explicitly. The JSON retains both
+the original points and their integration-model images.
 
 After the calculation has finished, regenerate without repeating integrations:
 
@@ -248,8 +334,8 @@ After the calculation has finished, regenerate without repeating integrations:
 sage -python -m hyperell_regulator.experiments.beilinson_report
 ```
 
-The standalone LaTeX document uses `geometry`, `amsmath`, `amssymb`, `booktabs`
-and `longtable`. No PDF is generated.
+The standalone LaTeX document uses `geometry`, `amsmath`, `amssymb`, `booktabs`,
+`arydshln`, and `hyperref`. No PDF is generated.
 
 Source: `results/beilinson_results.json` (read without modification).
 Source SHA-256: `{checksum}`.
