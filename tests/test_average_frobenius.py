@@ -149,6 +149,37 @@ def test_lfunction_coefficients_use_new_backend(binary, monkeypatch, backend):
         assert actual == expected
 
 
+def test_conductor_388_uses_even_degree_fallback(binary, monkeypatch):
+    """This sextic has no rational branch point, so rforest cannot run."""
+    from sage.all import QQ, pari
+    from hyperell_regulator import HyperellipticCurveWithReduction
+    from hyperell_regulator.lfunction import CurveLFunction, StandardLFunction
+
+    f, h = -x**4+2*x**2+x, x**3+x+1
+    q = 4*f+h**2
+    assert q.roots(QQ) == []
+    assert odd_model(q) is None
+    jobs = [(p, 2) for p in (23, 31, 37, 41, 101)]
+    strict = native(binary, q, jobs, "rforest-only", workers=4)
+    assert strict == [[p, 0] for p, _ in jobs]
+    actual = native(binary, q, jobs, "rforest", workers=4)
+    assert actual == native(binary, q, jobs, "legacy", workers=4)
+    reference = pari.lfungenus2([pari(str(f)), pari(str(h))])
+    for (p, n), row in zip(jobs, actual):
+        assert row[:3] == [p, 1, 4]
+        matrix = [row[3+4*i:7+4*i] for i in range(4)]
+        factor = R(reference.lfuneuler(p).denominator())
+        assert _lift(matrix, p, 2, n) == factor.reverse()
+
+    monkeypatch.setenv("HYPELLFROB_EULER", binary)
+    for cls in (CurveLFunction, StandardLFunction):
+        monkeypatch.setenv("HYPELLFROB_BACKEND", "legacy")
+        expected = cls(HyperellipticCurveWithReduction(f, h)).dirichlet_coefficients(128)
+        monkeypatch.setenv("HYPELLFROB_BACKEND", "rforest")
+        actual = cls(HyperellipticCurveWithReduction(f, h)).dirichlet_coefficients(128)
+        assert actual == expected
+
+
 @pytest.mark.parametrize("kappa", [0, 1, 3, 20])
 def test_rforest_subtree_boundaries(binary, kappa):
     q = x**5+x**3+1

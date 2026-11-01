@@ -112,6 +112,9 @@ jobs so arithmetic comparisons cannot pass through fallback.
 The [measured comparison](../reports/frobenius_rforest_20261101.md) records
 the repeated 100,000-bound speedup and the full million-bound correctness
 check, including memory use and timing scope.
+The conductor-388 example has no rational Weierstrass point, so its sextic
+cannot use this backend; selecting `rforest` uses the even-degree fallback.
+See the [conductor-388 check](../reports/frobenius_rforest_conductor388_20261101.md).
 
 The pinned C sources and their licenses are vendored under
 [`vendor/rforest`](vendor/rforest/README.hyperell.md). They build with the

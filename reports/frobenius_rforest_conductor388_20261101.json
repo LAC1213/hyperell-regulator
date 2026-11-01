@@ -1,0 +1,386 @@
+{
+  "curve": "388.a.776.1",
+  "f": "-x^4 + 2*x^2 + x",
+  "h": "x^3 + x + 1",
+  "F": "x^6 - 2*x^4 + 2*x^3 + 9*x^2 + 6*x + 1",
+  "rational_roots": [],
+  "odd_model": null,
+  "tested_commit": "434e654",
+  "native_binary_sha256": "e319c90a3cff845ecf6326aa73a36fa8b0bd460f1dfa24fb152a90b167ca1c9d",
+  "strict_coverage": {
+    "bound": 1000000,
+    "odd_good_prime_jobs": 78496,
+    "matrices_supplied": 0,
+    "all_declined": true,
+    "elapsed_seconds": 0.2338259390089661,
+    "input_sha256": "5f419544c650cdba90daa1f3e9683c19ee039030799927efb64844cbf0e97b7a"
+  },
+  "standard_conductor": 37636,
+  "bad_factors": {
+    "2": "-4*T^3 + 2*T^2 + T + 1",
+    "97": "-9409*T^3 - 1261*T^2 - 83*T + 1"
+  },
+  "lvalue_backend": "Independent PARI lfungenus2 supplies good H1 factors; package supplies bad/standard factors, coefficients, value, and FE check. This is a reference computation, not rforest acceleration.",
+  "sample_native_and_pari": {
+    "F": "x^6 - 2*x^4 + 2*x^3 + 9*x^2 + 6*x + 1",
+    "odd_model": null,
+    "jobs": [
+      [
+        23,
+        2
+      ],
+      [
+        31,
+        2
+      ],
+      [
+        37,
+        2
+      ],
+      [
+        41,
+        2
+      ],
+      [
+        101,
+        2
+      ]
+    ],
+    "runs": [
+      {
+        "backend": "rforest-only",
+        "elapsed_seconds": 0.03167083399603143,
+        "rows": [
+          [
+            23,
+            0
+          ],
+          [
+            31,
+            0
+          ],
+          [
+            37,
+            0
+          ],
+          [
+            41,
+            0
+          ],
+          [
+            101,
+            0
+          ]
+        ],
+        "stderr": ""
+      },
+      {
+        "backend": "legacy",
+        "elapsed_seconds": 6.513214450969826,
+        "rows": [
+          [
+            23,
+            1,
+            4,
+            23,
+            138,
+            185,
+            344,
+            230,
+            161,
+            70,
+            336,
+            276,
+            23,
+            323,
+            526,
+            184,
+            483,
+            90,
+            21
+          ],
+          [
+            31,
+            1,
+            4,
+            744,
+            496,
+            726,
+            892,
+            248,
+            155,
+            875,
+            308,
+            279,
+            589,
+            230,
+            934,
+            868,
+            341,
+            478,
+            792
+          ],
+          [
+            37,
+            1,
+            4,
+            1110,
+            333,
+            1256,
+            532,
+            1332,
+            962,
+            773,
+            825,
+            962,
+            296,
+            752,
+            792,
+            592,
+            888,
+            1099,
+            1283
+          ],
+          [
+            41,
+            1,
+            4,
+            205,
+            205,
+            725,
+            396,
+            164,
+            328,
+            1490,
+            402,
+            779,
+            861,
+            5,
+            40,
+            1025,
+            82,
+            1659,
+            1144
+          ],
+          [
+            101,
+            1,
+            4,
+            606,
+            7777,
+            2881,
+            5397,
+            7777,
+            606,
+            9432,
+            240,
+            7373,
+            7979,
+            1053,
+            4480,
+            606,
+            8585,
+            7187,
+            7934
+          ]
+        ],
+        "stderr": ""
+      },
+      {
+        "backend": "rforest",
+        "elapsed_seconds": 9.32855734101031,
+        "rows": [
+          [
+            23,
+            1,
+            4,
+            23,
+            138,
+            185,
+            344,
+            230,
+            161,
+            70,
+            336,
+            276,
+            23,
+            323,
+            526,
+            184,
+            483,
+            90,
+            21
+          ],
+          [
+            31,
+            1,
+            4,
+            744,
+            496,
+            726,
+            892,
+            248,
+            155,
+            875,
+            308,
+            279,
+            589,
+            230,
+            934,
+            868,
+            341,
+            478,
+            792
+          ],
+          [
+            37,
+            1,
+            4,
+            1110,
+            333,
+            1256,
+            532,
+            1332,
+            962,
+            773,
+            825,
+            962,
+            296,
+            752,
+            792,
+            592,
+            888,
+            1099,
+            1283
+          ],
+          [
+            41,
+            1,
+            4,
+            205,
+            205,
+            725,
+            396,
+            164,
+            328,
+            1490,
+            402,
+            779,
+            861,
+            5,
+            40,
+            1025,
+            82,
+            1659,
+            1144
+          ],
+          [
+            101,
+            1,
+            4,
+            606,
+            7777,
+            2881,
+            5397,
+            7777,
+            606,
+            9432,
+            240,
+            7373,
+            7979,
+            1053,
+            4480,
+            606,
+            8585,
+            7187,
+            7934
+          ]
+        ],
+        "stderr": ""
+      }
+    ],
+    "pari_equal": true
+  },
+  "validation": {
+    "pytest_command": "sage -python -m pytest tests/test_average_frobenius.py tests/test_lfunction.py -k conductor_388 -q",
+    "pytest_result": "3 passed, 107 deselected in 56.28s",
+    "lfunction_coefficient_prefix": 128,
+    "lfunction_classes": [
+      "CurveLFunction",
+      "StandardLFunction"
+    ],
+    "coefficient_comparison": "legacy vs rforest, exactly equal; rforest uses native/Sage fallback on this model",
+    "independent_sample_primes": [
+      23,
+      31,
+      37,
+      41,
+      101
+    ],
+    "independent_sample_reference": "PARI lfungenus2/lfuneuler; five characteristic polynomials equal"
+  },
+  "failed_attempts": [
+    {
+      "backend": "legacy",
+      "workers": 16,
+      "jobs": [
+        [
+          17,
+          2
+        ],
+        [
+          31,
+          2
+        ],
+        [
+          101,
+          2
+        ],
+        [
+          211,
+          2
+        ],
+        [
+          503,
+          2
+        ],
+        [
+          1009,
+          2
+        ]
+      ],
+      "timeout_seconds": 120,
+      "outcome": "timed out; no completed native output; not used for timing comparisons"
+    }
+  ],
+  "notes": [
+    "No rforest arithmetic is exercised by this degree-six model. Strict-mode decline is expected; hybrid mode uses the existing even-degree implementation.",
+    "The native sample timings ran alongside other checks and are not controlled performance measurements.",
+    "No end-to-end million-bound fallback run was attempted; the coverage test only verifies all strict-mode declines.",
+    "The independent full L-value calculation uses PARI good factors and must not be described as rforest acceleration."
+  ],
+  "date": "2026-11-01",
+  "reference_lvalue_checks_status": "complete",
+  "reference_good_factors": 655,
+  "reference_factors_seconds": 507.4308123079827,
+  "reference_lvalue_checks": [
+    {
+      "digits": 8,
+      "coefficients": 4928,
+      "value": "2.6170256284",
+      "feq": "2.6469779602e-23",
+      "elapsed_seconds": 0.6996484700357541,
+      "matches_saved_value": true
+    },
+    {
+      "digits": 15,
+      "coefficients": 4928,
+      "value": "2.61702562836175902",
+      "feq": "6.61744490042422140e-24",
+      "elapsed_seconds": 0.6804158079903573,
+      "matches_saved_value": true
+    }
+  ],
+  "reference_report_sha256": "f9d7b394282cf1cad45dfe3fce16c97d8a0cbf4290804cc6b1e74fe5867813c7",
+  "precision_note": "4928 coefficients reproduce the saved values at 8 and 15 digits and small functional-equation errors. PARI warns that additional guard precision requires more coefficients (requests: 9764, 11204, 15781, 17998). This agreement is a numerical check, not a rigorous accuracy certificate."
+}
