@@ -72,3 +72,20 @@ def test_beilinson_determinant_integrates_two_covers():
     np.testing.assert_allclose(np.asarray(matrix, float), expected, rtol=0, atol=0)
     assert abs(float(det) - np.linalg.det(expected)) < 1e-12
     assert error is None
+
+
+def test_normalized_column_is_invariant_under_a_large_positive_scalar():
+    from sage.all import QQ, RealField
+    from hyperell_regulator import regulator
+    from hyperell_regulator.experiments.beilinson import _regulator_column_and_periods
+
+    R=RealField(300)
+    per=[R(2),R(-1),R(3)];reg=[R(1),R(4),R(-2)]
+    scale=QQ(2**400+13)/(3**80+1)
+    columns=[]
+    for scalar in (QQ(1),scale):
+        shifted=[v+R(scalar).log()*p for v,p in zip(reg,per)]
+        with patch.object(regulator,'function_with_divisor',return_value=(scalar*x,0)), \
+                patch.object(regulator,'periods_and_regulator_stokes',return_value=(per,shifted)):
+            columns.append(_regulator_column_and_periods(F,(0,0),2,digits=60)[0])
+    assert max(abs(a-b) for a,b in zip(*columns))<R('1e-80')

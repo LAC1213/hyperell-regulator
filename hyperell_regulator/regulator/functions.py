@@ -83,6 +83,22 @@ def _in_x(c):
     return K(R(c.numerator().list())) / K(R(c.denominator().list()))
 
 
+def _short_scalar(A, B):
+    """Remove a large arbitrary Riemann--Roch scalar when coefficients shrink."""
+    pivot = A if A else B
+    scale = abs(pivot.numerator().leading_coefficient()
+                / pivot.denominator().leading_coefficient())
+    if scale.numerator().nbits()+scale.denominator().nbits() <= 64:
+        return A, B
+
+    def height(pair):
+        return max(c.numerator().nbits()+c.denominator().nbits()
+                   for f in pair for q in (f.numerator(), f.denominator()) for c in q)
+
+    shortened = A/scale, B/scale
+    return shortened if height(shortened)+64 < height((A, B)) else (A, B)
+
+
 def function_with_divisor(F, P, Q, N):
     r"""
     `\varphi = (A, B)` with `\operatorname{div}(\varphi) = N P - N Q` on
@@ -92,6 +108,8 @@ def function_with_divisor(F, P, Q, N):
     ``("infinity", eta)`` with `eta = \lim y/x^{g+1}`, or bare ``"infinity"``
     to try every infinite place. Raises :exc:`ValueError` when `N(P-Q)` is not
     principal, which is the same as `L(NQ - NP)` being zero.
+    A large arbitrary positive scalar is removed when this shortens the
+    coefficients; the prescribed divisor is unchanged.
 
     EXAMPLES::
 
@@ -111,7 +129,7 @@ def function_with_divisor(F, P, Q, N):
             basis = D.basis_function_space()
             if len(basis) == 1:
                 A, B = basis[0].list()
-                return _in_x(A), _in_x(B)
+                return _short_scalar(_in_x(A), _in_x(B))
             last = len(basis)
     raise ValueError(
         "L(%d Q - %d P) has dimension %s, so %d(P-Q) is not principal"

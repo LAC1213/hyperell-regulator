@@ -182,6 +182,7 @@ class Cover:
         self.pure_x = bool(np.all(self.b == 0))
         self._factors = None
         self._factors_hp = {}
+        self._branch_polynomial_cache = None
         self._rs = {}
         self._dd = None
         self._degen = None
@@ -381,6 +382,30 @@ class Cover:
                 center, local = self._centered_fibre
                 x, y = local.fibre(w)
                 return x + center, y
+            # Near a ramified Weierstrass zero of B, expanded polynomials
+            # at x=x0 lose both the small root separation and B's vanishing.
+            # Read the same fibre in u=x-x0, keeping those factors exact.
+            if not hasattr(self, '_weier_fibres'):
+                from sage.all import QQ
+
+                F, a, ad, b, bd = self.exact
+                self._weier_fibres = [
+                    (r, complex(a(r)/ad(r)))
+                    for r in b.gcd(F).roots(QQ, multiplicities=False)
+                    if r and ad(r) and bd(r)] if b else []
+                self._weier_fibre_charts = {}
+            nearby = [(abs(complex(w)-value), r)
+                      for r, value in self._weier_fibres
+                      if abs(complex(w)-value) < 0.1*max(1., abs(value))]
+            if nearby:
+                _, center = min(nearby)
+                if center not in self._weier_fibre_charts:
+                    local = self.shifted(center)
+                    local._centered_fibre = None
+                    local._weier_fibres = []
+                    self._weier_fibre_charts[center] = local
+                x, y = self._weier_fibre_charts[center].fibre(w)
+                return x + complex(center), y
         if self.pure_x:
             num = np.polysub(w * self.ad, self.a)
             x = np.roots(num) if len(num) > 1 else np.zeros(0, complex)
@@ -814,6 +839,19 @@ class Cover:
         conv = lambda q: S(q.subs({R.gen(): xx}))
         return conv(p0) + conv(p1) * ww + conv(p2) * ww ** 2
 
+    def _resultant_data(self):
+        """Share the exact elimination between vertices and endpoint certificates."""
+        if not hasattr(self, '_fibre_resultant_data'):
+            from sage.all import QQ, PolynomialRing
+
+            P = self.exact_polynomial()
+            x, w = P.parent().gens()
+            T = PolynomialRing(QQ, "W")
+            res = T(P.resultant(P.derivative(x), x).polynomial(w))
+            lead = T(P.coefficient({x: P.degree(x)}).polynomial(w))
+            self._fibre_resultant_data = P, res, lead
+        return self._fibre_resultant_data
+
     def _branch_polynomial(self):
         r"""
         The squarefree part of `\operatorname{disc}_x\mathcal{P}`, whose
@@ -849,22 +887,21 @@ class Cover:
         zeros of `B`, where the fibre degenerates in `x` while `\varphi`
         stays unramified, and for the same reason.
         """
-        from sage.all import QQ, PolynomialRing
-
-        P = self.exact_polynomial()
-        x, w = P.parent().gens()
-        T = PolynomialRing(QQ, "W")
-        res = T(P.resultant(P.derivative(x), x).polynomial(w))
-        lead = T(P.coefficient({x: P.degree(x)}).polynomial(w))
+        if self._branch_polynomial_cache is not None:
+            return self._branch_polynomial_cache
+        P, res, lead = self._resultant_data()
+        T = res.parent()
         f, rem = res.quo_rem(lead)
         if rem != 0 or f.degree() < 1:        # not the expected identity
             f = res
         f = f // f.gcd(f.derivative())
         pinch, ramified = self._pinch_polynomials(P.parent(), T)
-        if pinch is None or pinch.degree() < 1:
-            return f
-        f = f // f.gcd(pinch)
-        return f if ramified is None else f * (ramified // f.gcd(ramified))
+        if pinch is not None and pinch.degree() >= 1:
+            f = f // f.gcd(pinch)
+            if ramified is not None:
+                f *= ramified // f.gcd(ramified)
+        self._branch_polynomial_cache = f
+        return f
 
     def _pinch_polynomials(self, S, T):
         r"""
@@ -872,17 +909,20 @@ class Cover:
         ramify})`, as polynomials in `w`, or ``(None, None)``.
 
         A zero `x_0` of `B` forces `\varphi(x_0, \pm y_0) = A(x_0)`, so
-        `\mathcal{P}(\cdot, A(x_0))` has a double root in `x` although
-        `\varphi` is unramified over it -- the two points are distinct.
+        `\mathcal{P}(\cdot, A(x_0))` has a double root in `x`. Away from
+        Weierstrass points, the two points are distinct and this alone does
+        not imply ramification of `\varphi`.
         `\operatorname{Res}_x(\mathcal{P},\mathcal{P}_x)` reports such a
         value all the same, and the cut system must not: a node there puts a
         chart leg where nothing comes together.  Those values are
         `\operatorname{Res}_x(B_{\mathrm{num}},\, w\,a_d - a)`.
 
-        A zero of `B` can be a ramification point as well: there
-        `d\varphi = (A' \pm B'y)\,dx` with `y^2 = F`, so it is one exactly
-        when `(A')^2 = (B')^2F`, and its value must be kept.  Both conditions
-        are polynomial identities over `\QQ`, so no tolerance decides this --
+        A zero of `B` can be a ramification point as well. Away from a
+        Weierstrass point, `d\varphi = (A' \pm B'y)\,dx`, so ramification
+        occurs exactly when `(A')^2 = (B')^2F`. At a Weierstrass point,
+        `x-x_0` has order two, and `B(x_0)=0` always forces ramification.
+        These conditions are polynomial identities over `\QQ`, so no
+        tolerance decides this --
         which matters, since a zero of `B` of multiplicity two still accounts
         for a single coincidence, and counting the fibre numerically cannot
         tell that from a coincidence with a branch point in it.
@@ -902,9 +942,50 @@ class Cover:
             r = T(into(q).resultant(w * into(ad) - into(a), x).polynomial(w))
             return r // r.gcd(r.derivative()) if r.degree() > 0 else r
 
-        g = gcd(b, ((a.derivative() * ad - a * ad.derivative()) ** 2 * bd ** 2
-                    - b.derivative() ** 2 * ad ** 4 * F))
+        # At a Weierstrass point x-x0 has order two. If B(x0)=0,
+        # dphi vanishes there even when A'(x0) is nonzero.
+        g = gcd(b, F * ((a.derivative() * ad - a * ad.derivative()) ** 2 * bd ** 2
+                        - b.derivative() ** 2 * ad ** 4 * F))
         return values(b), (values(g) if g.degree() >= 1 else None)
+
+    def rational_target(self, z):
+        """Identify an exact rational target without snapping a nearby fibre.
+
+        Approximate vertices must equal the float64 image of a known exact
+        branch value or leading-coefficient zero. Other inexact targets do
+        not justify an exact function-field place calculation.
+        """
+        from sage.all import QQ, ZZ, PolynomialRing
+
+        if isinstance(z, int) or getattr(z, 'parent', lambda: None)() in (QQ, ZZ):
+            return QQ(z)
+        value = complex(z)
+        if value == 0:
+            return QQ(0)
+        if value.imag or self.exact is None:
+            return None
+        if not hasattr(self, '_rational_targets'):
+            F, a, ad, _, _ = self.exact
+            if self.pure_x:
+                derivative = a.derivative()*ad-a*ad.derivative()
+                points = F.roots(QQ, multiplicities=False)
+                if derivative:
+                    points += derivative.roots(QQ, multiplicities=False)
+                targets = [a(p)/ad(p) for p in points if ad(p)]
+                if a.degree() <= ad.degree():
+                    targets.append(a.leading_coefficient()/ad.leading_coefficient()
+                                   if a.degree() == ad.degree() else QQ(0))
+            else:
+                targets = self._branch_polynomial().roots(QQ, multiplicities=False)
+                P = self.exact_polynomial()
+                x, w = P.parent().gens()
+                lead = PolynomialRing(QQ, 'W')(
+                    P.coefficient({x: P.degree(x)}).polynomial(w))
+                if lead:
+                    targets += lead.roots(QQ, multiplicities=False)
+            self._rational_targets = tuple(set(targets))
+        matches = [r for r in self._rational_targets if complex(r) == value]
+        return matches[0] if len(matches) == 1 else None
 
     def places_over(self, z, tol=1e-9):
         r"""
@@ -947,11 +1028,14 @@ class Cover:
         """
         if self.exact is None:
             return None
-        from sage.all import QQ
+        from sage.all import QQ, ZZ
 
         from .functions import _field
 
-        key = ("places", None if z is None else complex(z))
+        exact = z is not None and (isinstance(z, int)
+            or getattr(z, 'parent', lambda: None)() in (QQ, ZZ))
+        key = (("places_exact", QQ(z)) if exact else
+               ("places", None if z is None else complex(z)))
         if getattr(self, "_places", None) is None:
             self._places = {}
         if key in self._places:
@@ -965,7 +1049,8 @@ class Cover:
             if z is None:
                 div = phi.divisor_of_poles()
             else:
-                zz = QQ(complex(z).real) if abs(complex(z).imag) < tol else None
+                zz = (QQ(z) if exact else
+                      QQ(complex(z).real) if abs(complex(z).imag) < tol else None)
                 if zz is None:
                     return None
                 div = (phi - zz).divisor_of_zeros()
@@ -1019,18 +1104,15 @@ class Cover:
             # at each branch point of a smooth hyperelliptic curve.
             if max(len(self.a), len(self.ad)) == 2:
                 return 2
-            places = self.places_over(z) if value.imag == 0 else None
+            target = self.rational_target(z)
+            places = self.places_over(target) if target is not None else None
             if places and max(p["e"] for p in places) > 1:
                 return lcm(*(int(p["e"]) for p in places))
             raise NotImplementedError(
                 "ramification of this composite x-map needs exact places")
 
         if not hasattr(self, "_endpoint_discriminant"):
-            P = self.exact_polynomial()
-            x, w = P.parent().gens()
-            T = PolynomialRing(QQ, "W")
-            res = T(P.resultant(P.derivative(x), x).polynomial(w))
-            lead = T(P.coefficient({x: P.degree(x)}).polynomial(w))
+            _, res, lead = self._resultant_data()
             disc, remainder = res.quo_rem(lead)
             if remainder:
                 raise ArithmeticError("cover resultant is not divisible by its leading coefficient")
@@ -1044,13 +1126,18 @@ class Cover:
         disc = self._endpoint_discriminant
         if value.imag == 0 and disc(QQ(value.real)) == 0:
             # Equality is exact, with no snapping to a nearby rational.
-            places = self.places_over(z)
+            places = self.places_over(QQ(value.real))
             if places and max(p["e"] for p in places) > 1:
                 return lcm(*(int(p["e"]) for p in places))
         roots = self._simple_endpoint_values
         error = 64 * np.finfo(float).eps * max(1.0, abs(value))
         if len(roots) and np.min(abs(roots - value)) <= error:
             return 2
+        target = self.rational_target(z)
+        if target is not None:
+            places = self.places_over(target)
+            if places and max(p["e"] for p in places) > 1:
+                return lcm(*(int(p["e"]) for p in places))
         raise NotImplementedError(
             "endpoint %r has no verified simple ramification; "
             "an exact endpoint or its monodromy is required" % (z,))

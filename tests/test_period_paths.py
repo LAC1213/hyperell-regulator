@@ -58,6 +58,28 @@ def test_finite_path_validation_rejects_obstructions(nodes, crit):
         check_path_embedded(nodes, crit=crit, include_ray=False)
 
 
+def test_distant_critical_value_does_not_hide_a_backtracking_cut():
+    # The degree-28 cover for 249.a.6723.1 has this badly scaled geometry.
+    values = np.array([-3.5733102834628396, -1.523892144098351,
+                       0, 8387456858.080941], complex)
+    with pytest.raises(NotImplementedError, match="lies on the segment"):
+        check_path_embedded(values[[2, 3, 0, 1]], crit=values,
+                            include_ray=False)
+    # A nearby point beyond an endpoint is outside this segment, even when
+    # its projected parameter differs from zero by less than the tolerance.
+    check_path_embedded(values[[2, 3]], crit=values, include_ray=False)
+
+    nodes, labels, direction = _paths.semilunar_path(values, start=2)
+    assert sorted(label for label in labels if label is not None) == list(range(4))
+    assert None in labels
+    check_path_embedded(nodes, direction, values)
+    from hyperell_regulator.regulator.stokes import racetrack
+    path, marks, _ = racetrack(nodes, direction)
+    assert len(marks) == 2*len(nodes)
+    assert np.isfinite(path).all()
+    assert abs(path[0]-path[-1]) < 1e-12
+
+
 def test_real_branch_periods_match_independent_integrals_and_integral_basis():
     x = ring().gen()
     F = (x+2)*(x+1)*x*(x-1)*(x-3)

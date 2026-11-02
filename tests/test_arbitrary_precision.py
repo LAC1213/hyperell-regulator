@@ -20,6 +20,25 @@ def test_exact_chart_center_does_not_round_through_float64():
     assert inverse.F[4]==1 and inverse.F[5]==2 and inverse.F[6]==1
 
 
+def test_regular_zero_analytic_tail_matches_the_exponential_lift_sheet_by_sheet():
+    from hyperell_regulator.regulator.cover import Cover
+    from hyperell_regulator.regulator._mp_continuation import Arithmetic
+    from hyperell_regulator.regulator._mp_stokes import Integrator
+
+    x=ring().gen();ar=Arithmetic(20)
+    engine=Integrator(Cover(x**5+(x+1)**2,x+1,1),ar)
+    w=ar.C('0.001','0.0003');points=engine.fibre(w);lam=w.log()
+    fast=engine.regular_zero_tail(points,lam)
+    assert fast is not None
+    coord=lambda r:w*(-engine.n*r).exp()
+    rate=lambda r:-engine.n*coord(r)
+    _,_,I,L=engine.walk(engine.chart,coord,rate,points,lam,logarithmic=True)
+    for actual,expected in zip(fast,(I,L)):
+        for row,reference in zip(actual,expected):
+            for a,b in zip(row,reference):
+                assert abs(a-b)<ar.R('1e-20')
+
+
 @pytest.mark.parametrize('ratio', [('0.25', '1e-17'), ('1e-8', '1e-25')])
 def test_nearly_radial_mp_path_preserves_endpoint_and_integrals(ratio):
     from hyperell_regulator.regulator.cover import Cover

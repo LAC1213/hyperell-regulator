@@ -8,6 +8,27 @@ from hyperell_regulator.regulator.polynomials import ring
 from hyperell_regulator.regulator.walks import Chart, charts_over
 
 
+def test_249_degree_28_cover_keeps_its_weierstrass_branch_and_sheet_labels():
+    from hyperell_regulator.regulator.stokes import cut_data
+
+    x=ring().gen()
+    F=x**6-4*x**5+6*x**3+4*x**2+12*x+9
+    A,B=function_with_divisor(F,(0,3),'infinity',28)
+    # A scalar from the Riemann--Roch basis used to inflate these to
+    # almost 1000 bits, making repeated elimination prohibitively slow.
+    assert max(c.numerator().nbits()+c.denominator().nbits()
+               for f in (A,B) for q in (f.numerator(),f.denominator()) for c in q)<64
+    cov=Cover(F,A,B)
+    values=cov.critical_values()
+    assert len(values)==5 and B(-1)==0
+    assert min(abs(values-complex(A(-1))))<1e-12
+    nodes,kinds,direction=cov.cut_path()
+    upper,lower,_,jump=cut_data(cov,nodes,direction)
+    assert len(upper)==len(lower)==len(nodes)
+    assert all(sorted(row)==list(range(28)) for row in upper+lower)
+    assert abs(abs(jump)-2*np.pi)<1e-12
+
+
 def test_centered_high_order_zero_keeps_exact_factors():
     from sage.all import ComplexField
     x=ring().gen()

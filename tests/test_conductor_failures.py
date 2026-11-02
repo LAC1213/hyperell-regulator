@@ -66,7 +66,13 @@ def test_1116_reference_labels_continue_the_point_near_infinity():
 def test_1116_even_infinity_ray_matches_logarithmic_reference():
     x = PolynomialRing(QQ, 'x').gen()
     F = x**6+4*x**4+10*x**3+4*x*x-4*x+1
-    cov = Cover(F, *function_with_divisor(F, (-1, -2), 'infinity', 13))
+    A, B = function_with_divisor(F, (-1, -2), 'infinity', 13)
+    # The raw logarithmic integral and its float64 starting point depend on
+    # phi's scalar. Preserve the scalar of this independent reference even
+    # when the Riemann--Roch basis is subsequently normalized.
+    leading = A.numerator().leading_coefficient()/A.denominator().leading_coefficient()
+    scale = (QQ(41875329343225)/373360370073984)/leading
+    cov = Cover(F, scale*A, scale*B)
     ar = Arithmetic(25)
     engine = Integrator(cov, ar)
     nodes, _, direction = cov.cut_path()

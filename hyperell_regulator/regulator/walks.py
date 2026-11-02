@@ -393,7 +393,8 @@ def charts_over(cov, z, sigma=False, zr=0.0):
     out = [Chart(cov, "x", 0.0, sigma, zr),
            Chart(cov, "inv", 0.0, sigma, zr)]
     try:
-        pls = cov.places_over(z) or []
+        target = None if z is None else cov.rational_target(z)
+        pls = (cov.places_over(target) or []) if z is None or target is not None else []
     except Exception:                                          # noqa: BLE001
         return out
     if z is None and pls and all(q["infinite"] for q in pls):
@@ -665,7 +666,9 @@ def race(cov, coord, x0, y0, charts, budgets=(64, 256, 1024, 4096), big=1e8,
                 last = exc
                 remaining.append((ch, wk))
                 continue
-            except RuntimeError as exc:
+            except (RuntimeError, OverflowError) as exc:
+                # A Newton trial can leave a chart's representable range.
+                # Reject that chart and let the remaining coordinates race.
                 last = exc
                 continue
             x, y = wk.xy()

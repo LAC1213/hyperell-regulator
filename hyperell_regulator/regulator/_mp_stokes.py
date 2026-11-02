@@ -147,6 +147,11 @@ class Integrator:
             rate=lambda r:-self.n*coord(r)
             _,_,I,L=self.walk(self.chart,coord,rate,[point],lam,logarithmic=True)
             return [row[0] for row in I]+[row[0] for row in L]
+        return self._finite_endpoint(point,lam,xt,yt,chart)
+
+    def _finite_endpoint(self,point,lam,xt,yt,chart):
+        """Integrate a straight local x/y tail in its analytic endpoint disk."""
+        x0,y0=point
         M=self.global_chart
         S=M.F.parent();u=S.gen()
         # Preserve exact vanishing at rational endpoints before conversion
@@ -204,6 +209,45 @@ class Integrator:
                 values=[-(xt+v)**j*u0/y for j in range(self.g)]
                 return values,ll
         return quadrature(self.ar,LogFunctionSamples(self.ar,evaluate,lam),2*self.g)
+
+    def regular_zero_tail(self,points,lam):
+        """Finish a regular N-fold zero inside a branch-free x disk.
+
+        For polynomial phi with norm c*u^N, bound |phi| on |u|=radius
+        from below by |c|*radius^N/(|A|+|B|*sqrt(|F|)). Rouché's theorem
+        then puts every preimage of the smaller target disk inside this
+        source disk. Continue there in phi, then use straight analytic x
+        tails instead of tracking exponentially small phi values to zero.
+        """
+        ch=self.chart
+        if not (ch.F[0] and ch.ad.degree()==0 and ch.bd.degree()==0):
+            return None
+        zeros,poles=ch.norm_factors
+        if poles or len(zeros)!=1 or zeros[0][0]!=0 or zeros[0][1]!=self.n:
+            return None
+        radius=min([self.R(1)]+[abs(r) for r in ch.roots])/4
+        def bound(poly):
+            return sum(abs(c)*radius**k for k,c in enumerate(poly))
+        upper=bound(ch.a)/abs(ch.ad[0])+bound(ch.b)/abs(ch.bd[0])*bound(ch.F).sqrt()
+        lower=abs(ch.norm_lead)*radius**self.n/upper
+        u,e=ch.to_local(*points[0])
+        w0=ch.values(u,e)[0]
+        stop=max(self.R(0),(abs(w0/lower)*4).log()/self.n)
+        if stop:
+            coord=lambda t:w0*(-self.n*stop*t).exp()
+            rate=lambda t:-self.n*stop*coord(t)
+            points,lam,I,L=self.walk(ch,coord,rate,points,lam)
+        else:
+            I,L=self.zeros(),self.zeros()
+        if any(abs(ch.to_local(*point)[0])>=radius for point in points):
+            raise _legs.LegFailure('regular zero tail did not enter its analytic disk')
+        checkpoint('regular_zero_tails',radius=str(radius))
+        for j,point in enumerate(points):
+            tail=self._finite_endpoint(point,lam,self.C(self.center),None,'x')
+            for a in range(self.g):
+                I[a][j]+=tail[a]
+                L[a][j]+=tail[self.g+a]
+        return I,L
 
     def tau(self,point,lam):
         M=self.global_chart;x0,y0=point
@@ -267,9 +311,13 @@ class Integrator:
                                           at_infinity=j in gone,fib=fibre)
                 ends,ll,I,L=self.finite(m,w,points,lam,(z,e))
                 if kind=='P' and all(target[2]=='x' for target in targets):
-                    coord=lambda r:w*(-self.R(self.n)*r).exp()
-                    rate=lambda r:-self.n*coord(r)
-                    _,_,tailI,tailL=self.walk(self.chart,coord,rate,ends,ll,logarithmic=True)
+                    tail=self.regular_zero_tail(ends,ll)
+                    if tail is None:
+                        coord=lambda r:w*(-self.R(self.n)*r).exp()
+                        rate=lambda r:-self.n*coord(r)
+                        _,_,tailI,tailL=self.walk(self.chart,coord,rate,ends,ll,logarithmic=True)
+                    else:
+                        tailI,tailL=tail
                     return self.add(I,tailI),self.add(L,tailL)
                 for j,(point,target) in enumerate(zip(ends,targets)):
                     tail=self.endpoint(point,ll,*target,kind)

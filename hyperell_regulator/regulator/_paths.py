@@ -119,6 +119,14 @@ def check_path_embedded(e, ray=None, crit=None, tol=1e-9, include_ray=True):
     if crit is None:
         crit = e
     crit = np.asarray(crit, complex)
+    # A distant critical value must not make distinct nearby vertices count
+    # as the same endpoint. Keep the usual tolerance below their separation.
+    proximity = tol * scale
+    if len(crit) > 1:
+        gaps = np.abs(crit[:, None] - crit[None, :])
+        positive = gaps[gaps > 0]
+        if positive.size:
+            proximity = min(proximity, 0.01 * float(positive.min()))
     segs = list(zip(pts[:-1], pts[1:]))
 
     def side(a, b, c):
@@ -128,10 +136,11 @@ def check_path_embedded(e, ray=None, crit=None, tol=1e-9, include_ray=True):
         if a == b:
             raise NotImplementedError("the path has a zero-length segment")
         for c in crit:
-            if abs(c - a) < tol * scale or abs(c - b) < tol * scale:
+            if abs(c - a) < proximity or abs(c - b) < proximity:
                 continue
-            t = ((c - a).conjugate() * (b - a)).real / abs(b - a) ** 2
-            if -tol < t < 1 + tol and abs(a + t * (b - a) - c) < tol * scale:
+            t = np.clip(((c - a).conjugate() * (b - a)).real / abs(b - a) ** 2,
+                        0., 1.)
+            if abs(a + t * (b - a) - c) < proximity:
                 raise NotImplementedError(
                     "the critical value %r lies on the segment %r--%r" % (c, a, b))
         for c, d in segs[i + 2:]:

@@ -1,5 +1,8 @@
 """Regressions for endpoint charts and resumable continuation."""
 import numpy as np
+import pytest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from hyperell_regulator.regulator import function_with_divisor, IntegrationMonitor
 from hyperell_regulator.regulator.cover import Cover
@@ -53,10 +56,36 @@ def test_chart_race_resumes_the_same_walk():
     assert abs(direct.u-xe) < 1e-12
 
 
+def test_chart_overflow_does_not_abort_other_coordinate_trials():
+    bad, good = object(), object()
+
+    def make_walker(cov, coord, x0, y0, chart):
+        def to(*args):
+            if chart is bad:
+                raise OverflowError('complex exponentiation')
+        return SimpleNamespace(to=to, xy=lambda:(2, 3), u=2, steps=1)
+
+    with patch('hyperell_regulator.regulator.walks.walker', side_effect=make_walker):
+        assert race(None, None, 0, 1, [bad, good]) == (2, 3, 1, good)
+        # If every available chart fails, the numerical failure still propagates.
+        with pytest.raises(RuntimeError, match='complex exponentiation'):
+            race(None, None, 0, 1, [bad, bad])
+
+
 def test_infinity_pole_uses_endpoint_chart_only():
     cov = Cover(F249, *function_with_divisor(F249, (0, -1), "infinity", 14))
     charts = charts_over(cov, None, sigma=True)
     assert len(charts) == 1 and charts[0].kind == "inv"
+
+
+def test_approximate_irrational_vertex_does_not_request_a_rational_fibre():
+    cov = Cover(x**5-x+1, 0, 1)
+    value = next(z for z in cov.critical_values()
+                 if z.imag == 0 and z.real != 0 and cov.rational_target(z) is None)
+    with patch.object(cov, 'places_over', wraps=cov.places_over) as places:
+        charts = charts_over(cov, value)
+    places.assert_not_called()
+    assert {ch.kind for ch in charts} == {'x', 'inv'}
 
 
 def test_inverse_chart_can_change_center_when_path_crosses_its_pole():

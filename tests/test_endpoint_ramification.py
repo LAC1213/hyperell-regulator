@@ -1,8 +1,10 @@
 """Endpoint ramification and coordinate identities for float64 continuation."""
 
 from functools import lru_cache
+from unittest.mock import patch
 
 import numpy as np
+import pytest
 from sage.all import QQ, PolynomialRing
 
 from hyperell_regulator.regulator import function_with_divisor
@@ -16,6 +18,38 @@ F249 = x**6 + 4*x**5 + 4*x**4 + 2*x**3 + 1
 @lru_cache(maxsize=1)
 def _cover249():
     return Cover(F249, *function_with_divisor(F249, (0, -1), "infinity", 14))
+
+
+def test_float_and_high_precision_vertices_share_the_exact_branch_polynomial():
+    cov = Cover(x**5+x**2+2*x+1, x+1, 1)
+    with patch.object(cov, 'exact_polynomial', wraps=cov.exact_polynomial) as build:
+        low = cov.critical_values()
+        high = cov.critical_values_hp(160)
+        for value in low:
+            if abs(value)>1e-8:
+                assert cov.endpoint_ramification(value, 'simple') == 2
+        assert build.call_count == 1
+    assert len(low) == len(high)
+    for value in high:
+        assert min(abs(complex(value)-z) for z in low) < 1e-12
+
+
+def test_weierstrass_zero_of_B_remains_a_true_branch_value():
+    cov = Cover(x*(x**4+x+1), x+1, x)
+    assert cov._branch_polynomial()(1) == 0
+    assert 1 in cov.critical_values()
+    assert cov.endpoint_ramification(1) == 2
+
+
+def test_rational_endpoint_is_not_replaced_by_its_rounded_regular_fibre():
+    value = QQ(1)/3 + QQ(1)/10**30
+    cov = Cover(x*(x**4+x+1), x+value, x)
+    # These share a float64 representation but define different exact fibres.
+    assert max(p['e'] for p in cov.places_over(float(value))) == 1
+    assert max(p['e'] for p in cov.places_over(value)) == 2
+    assert cov.endpoint_ramification(complex(value)) == 2
+    with pytest.raises(NotImplementedError):
+        cov.endpoint_ramification(np.nextafter(float(value), np.inf))
 
 
 def test_approximate_real_critical_values_keep_ramification():
