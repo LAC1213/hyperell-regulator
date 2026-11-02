@@ -271,6 +271,31 @@ def test_1116_toric_homology_uses_submodule_coordinates():
     assert L.conductor() == 4*9*31**2
 
 
+@pytest.mark.parametrize('support_order', [(0, 1, 2), (2, 1, 0)])
+def test_toric_frobenius_uses_echelonized_cycle_basis(support_order):
+    """Changing the cycle basis must preserve order-three Frobenius."""
+    C = HyperellipticCurveWithReduction(-X+X**2+2*X**3+X**4, 1+X**3)
+    L = StandardLFunction(C)
+    R = C.cluster_picture(3)
+    H1, _, _ = R.homology_of_special_fibre()
+    ambient = H1.ambient()
+    edges = list(ambient.basis())
+    generators = [edges[1]-edges[0], edges[2]-edges[0]]
+    cycles = ambient.submodule(
+        generators, support_order=[edges[i].support()[0] for i in support_order])
+    # Reproduce the upstream map: its generator indices do not necessarily
+    # match the echelonized basis returned by Sage's submodule constructor.
+    def on_basis(i):
+        return ambient.sum_of_terms(
+            (s.frobenius(), n*s.epsilon(
+                lambda c: c.frobenius(), R.field_frobenius()))
+            for s, n in generators[i])
+    frob = cycles.module_morphism(on_basis=on_basis, codomain=cycles)
+    with patch.object(type(R), 'homology_of_special_fibre',
+                      return_value=(cycles, None, frob)):
+        assert L.toric_factor(3) == L.h1_euler_factor(3)
+
+
 @pytest.mark.parametrize('entries', [
     [1, 0, 0, 1], [-1, 0, 0, -1], [1, 0, 0, -1],
     [0, -1, 1, -1], [0, -1, 1, 0], [0, -1, 1, 1],

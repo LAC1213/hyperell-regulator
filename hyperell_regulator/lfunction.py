@@ -61,6 +61,7 @@ from sage.all import (
     gp,
     pari,
 )
+from sage.modules.with_basis.subquotient import SubmoduleWithBasis
 
 from hyperell_regulator.reduction import potential_toric_rank
 
@@ -446,19 +447,21 @@ class StandardLFunction(SageObject):
         if t == 0:
             return self._RT(1)
         rows = []
-        keys = {c.support()[0] for c in basis}
         for b in basis:
-            image = frob(b)
-            if not set(image.monomial_coefficients()).issubset(keys):
-                # Some cluster-picture homology maps return ambient edge
-                # coordinates inside an element of the homology submodule.
-                # Retract those coordinates before reading the matrix;
-                # otherwise every coefficient at an integer basis index
-                # is zero, incorrectly erasing the toric factor.
-                image = H1.retract(H1.ambient()._from_dict(image.monomial_coefficients()))
-            rows.append([QQ(image.coefficient(c.support()[0]))
-                         if hasattr(image, "coefficient") else QQ(0)
-                         for c in basis])
+            if isinstance(H1, SubmoduleWithBasis):
+                # The cluster package defines its map on the generators
+                # passed to submodule(), but Sage echelonizes that basis.
+                # Act on the actual lifted cycles, then retract to H1.
+                # Merely retracting frob(b) can give an invertible but
+                # incorrect matrix, depending on the cluster ordering.
+                image = H1.ambient().sum_of_terms(
+                    (s.frobenius(), n*s.epsilon(
+                        lambda c: c.frobenius(), R.field_frobenius()))
+                    for s, n in H1.lift(b))
+                image = H1.retract(image)
+            else:
+                image = frob(b)
+            rows.append([QQ(image.coefficient(c.support()[0])) for c in basis])
         Mfrob = Matrix(QQ, t, t, rows)
         if Mfrob.det() not in (-1, 1):
             raise ArithmeticError("Frobenius on graph homology is not invertible at %s" % p)
