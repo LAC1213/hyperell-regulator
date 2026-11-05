@@ -13,11 +13,12 @@ Using the viewer
 Choose a curve and either marked torsion function. Click an edge in the
 :math:`w=\varphi` plane, then a lift in the three-dimensional projection.
 The selectors provide the same choices without using the plot. Drag the
-lifted plot to rotate, and use its toolbar to zoom and reset the view.
+lifted plot to rotate, and use its toolbar to zoom or pan. Switching tools
+preserves the current view; only the **Home** button resets the camera.
 The **Display sheets** selector shows all sheets or isolates one surface
 with both banks of its boundary. The **Surface mesh** checkbox hides or
-shows the surface while retaining the lifted paths. Path selection preserves
-the camera and zoom.
+shows the surface while retaining the lifted paths. Path selection, sheet
+filters, and changes of curve or function preserve the camera and zoom.
 
 The path table shows, for every holomorphic form
 :math:`\omega_a=x^{a-1}dx/y`,

@@ -253,8 +253,38 @@ function pathVisible(lift) {
   return sheet === 0 || lift.sheet === sheet || lift.minus_sheet === sheet;
 }
 
+function saveLiftCamera() {
+  const plot = $("lift-plot"), scene = plot._fullLayout?.scene?._scene;
+  if (!scene) return {eye: {x: 1.5, y: -1.6, z: 1.2}};
+  // GL wheel/drag motion can finish after Plotly saves its layout. Capture
+  // the displayed camera before an update can restore that older snapshot.
+  scene.saveLayout(plot.layout);
+  return scene.getCamera();
+}
+
+let modeCamera = null;
+$("lift-plot").addEventListener("click", event => {
+  modeCamera = null;
+  const button = event.target.closest(".modebar-btn");
+  if (!button || button.getAttribute("data-attr") === "resetDefault") return;
+  const camera = saveLiftCamera();
+  if (button.getAttribute("data-attr") === "scene.dragmode") modeCamera = camera;
+}, true);
+$("lift-plot").addEventListener("click", () => {
+  if (!modeCamera) return;
+  // Switching to turntable also replaces the up vector. Keep the displayed
+  // orientation, including any roll from orbit mode, until the user moves it.
+  const plot = $("lift-plot"), scene = plot._fullLayout.scene._scene;
+  scene.setViewport({...plot._fullLayout.scene, camera: modeCamera});
+  scene.saveLayout(plot.layout);
+  scene.glplot.redraw();
+  modeCamera = null;
+});
+
 async function renderPlots() {
   const data = current;
+  const camera = saveLiftCamera();
+  const dragmode = $("lift-plot")._fullLayout?.scene?.dragmode || "turntable";
   const base = data.edges.map((edge, i) => ({
     x: edge.base.map(p => p[0]), y: edge.base.map(p => p[1]), type: "scatter", mode: "lines+markers",
     line: {color: i === edgeIndex ? "#bc542e" : "#44736a", width: i === edgeIndex ? 4 : 2}, marker: {size: 5},
@@ -284,7 +314,7 @@ async function renderPlots() {
   const shared = {paper_bgcolor: "#fffefa", plot_bgcolor: "#fffefa", font: {family: "sans-serif", color: "#183e3b", size: 11}, margin: {l: 50, r: 15, t: 15, b: 45}, showlegend: false, uirevision: `${data.input.F}/${data.input.A}/${data.input.B}`};
   await Promise.all([
     Plotly.react($("base-plot"), base, {...shared, xaxis: {...axes, title: "Re w"}, yaxis: {...axes, title: "Im w", scaleanchor: "x", scaleratio: 1}, hovermode: "closest"}, plotConfig),
-    Plotly.react($("lift-plot"), lifts, {...shared, margin: {l: 0, r: 0, t: 0, b: 0}, scene: {xaxis: {...axes, title: "Re w"}, yaxis: {...axes, title: "Im w"}, zaxis: {...axes, title: "height"}, aspectmode: "cube", camera: {eye: {x: 1.5, y: -1.6, z: 1.2}}}}, plotConfig)
+    Plotly.react($("lift-plot"), lifts, {...shared, margin: {l: 0, r: 0, t: 0, b: 0}, scene: {xaxis: {...axes, title: "Re w"}, yaxis: {...axes, title: "Im w"}, zaxis: {...axes, title: "height"}, aspectmode: "cube", camera, dragmode, uirevision: "keep-camera"}}, {...plotConfig, doubleClick: false, modeBarButtonsToRemove: [...plotConfig.modeBarButtonsToRemove, "resetCameraLastSave3d"]})
   ]);
   for (const id of ["base-plot", "lift-plot"]) $(id).removeAllListeners("plotly_click");
   $("base-plot").on("plotly_click", event => {
@@ -376,6 +406,7 @@ function selectPath(edge, sheet) {
       selectionFrame = null;
       Plotly.restyle($("base-plot"), {"line.width": current.edges.map((_, i) => i === edgeIndex ? 4 : 2), "line.color": current.edges.map((_, i) => i === edgeIndex ? "#bc542e" : "#44736a")}, current.edges.map((_, i) => i));
       const plot = $("lift-plot");
+      saveLiftCamera();
       const indices = [], widths = [], opacities = [];
       plot.data.forEach((trace, i) => {
         if (trace.meta?.kind !== "path") return;
@@ -394,7 +425,10 @@ function updateSheetView() {
   const visible = plot.data.map(trace => trace.meta.kind === "surface" ?
     $("show-mesh").checked && (!sheet || trace.meta.sheet === sheet) :
     !sheet || trace.meta.sheet === sheet || trace.meta.minus_sheet === sheet);
-  if (visible.some((value, i) => value !== (plot.data[i].visible !== false))) Plotly.restyle(plot, {visible});
+  if (visible.some((value, i) => value !== (plot.data[i].visible !== false))) {
+    saveLiftCamera();
+    Plotly.restyle(plot, {visible});
+  }
 }
 
 $("visible-sheet").addEventListener("change", () => {
