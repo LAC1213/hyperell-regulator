@@ -1,20 +1,15 @@
 # hyperell-regulator
 
-A SageMath package for numerical tests of Beilinson's conjecture for the
-standard motive of genus 2 curves over the rationals. This is the rank-5
+This repository contains a SageMath package for numerical tests of Beilinson's conjecture for the
+standard motive of genus-two curves over the rationals. This is the rank-5
 submotive of the wedge-square of h^1(C) given by the kernel of the cup
 product. The package computes regulator
-integrals, periods, standard L-values, and reduction/component data.
-Regulators, periods and L-values support both float64 and arbitrary precision.
-
-[Documentation](https://lac1213.github.io/hyperell-regulator/)
+integrals, periods, standard L-values, and reduction data for hyperelliptic curves.
+Regulators, periods and L-values can be computed to arbitrary precision.
+The complete documentation can be found [here](https://lac1213.github.io/hyperell-regulator/).
 
 The [interactive cut-system explorer](https://lac1213.github.io/hyperell-regulator/explorer/)
-shows the successful 100-digit survey curves and their torsion functions, with
-clickable lifted paths, ordinary/logarithmic integrals and regulator pairings
-displayed to ten significant digits. Its data is computed locally with Sage;
-the viewer runs entirely on GitHub Pages. See the
-[export and regeneration guide](docs/explorer-guide.rst).
+shows the paths of integration and functions used for some genus-two curves of small conductor.
 
 ## Installation
 
@@ -28,22 +23,13 @@ From a checkout, use `sage -pip install .`, or
 `sage -pip install -e '.[test]'` for development and tests.
 The patched `sage_cluster_pictures` dependency is installed automatically.
 
-Installation builds an optional Frobenius accelerator using a private,
-checksum-verified NTL 11.6.0. It needs network access, C11 and C++17 compilers,
-Perl, and Make; if unavailable, computations fall back to Sage.
-See the [installation guide](docs/installation.rst) for build settings and
-[manual native build instructions](hyperell-frobenius/README.md).
+Installation builds a C++ program for fast computation of
+Frobenius eigenvalues which uses [rforest](https://math.mit.edu/~drew/rforest.html) and implements the algorithm of David Harvey and Andrew V. Sutherland.
 
-The native accelerator uses rforest for simultaneous Frobenius computations,
-including even degree models such as conductor 388. It is the only native
-backend; unsupported primes fall back to Sage. No backend setting is needed.
-`HYPELLFROB_THREADS` controls workers for L-function computations; see the
-[backend guide](hyperell-frobenius/README.md#rforest-backend) for tuning and
-comparison commands. The bundled C library is in `hyperell-frobenius/rforest`.
+## Examples
 
-## Python API
-
-Run in Sage or with `sage -python`:
+Given a function `phi` with divisor of the form `N P - N Q` on a genus-two curve `C`, we consider the integrals of `log |phi| w`, where w is a (1,1)-form on `C`.
+For example you can run the following in Sage or with `sage -python`:
 
 ```python
 from sage.all import QQ, PolynomialRing
@@ -53,22 +39,15 @@ from hyperell_regulator.regulator import (
 
 x = PolynomialRing(QQ, "x").gen()
 F = x**5 + (x + 1)**2              # curve y^2 = F(x)
-phi = (x + 1, 1)                  # function (x + 1) + y
+phi = (x + 1, 1)                  # function (x + 1) + y with divisor 5 (0, -1) - 5 oo
 
-periods, regulator = periods_and_regulator_stokes(F, phi)  # float64
 periods, regulator = periods_and_regulator_stokes(F, phi, prec=30)
 c_plus, c_minus = c_invariants(F, prec=30)
 ```
 
-Use exact rational coefficients for arbitrary precision. `prec` is a decimal
-accuracy target and convergence failures raise exceptions.
+`prec` is the number of decimal digits to compute.
 
-`c_invariants` uses signed minors of **full cycle periods** along validated
-semilunar paths. See the [period conventions](docs/quickstart.rst#period-conventions)
-when comparing saved reports or other normalizations.
-
-`divisor_class_order` computes exact orders on odd and even degree models,
-including curves without a rational Weierstrass point:
+`divisor_class_order` computes exact orders of divisors of the form `P - Q`:
 
 ```python
 from hyperell_regulator.components import HyperellipticCurveWithReduction, divisor_class_order
@@ -78,10 +57,8 @@ divisor_class_order(C, (0, 0), ("infinity", 0))   # 7
 divisor_class_order(C, (0, 0), ("infinity", -1))  # 21
 ```
 
-Here infinity labels are the limits of `y/x**(g+1)` on the original
-`y**2 + h*y = f` model. The polynomial API `torsion_order(F, P, Q)` uses
-coordinates on `y**2 = F`; its optional `multiple=N` finds the exact order
-dividing `N` without the default 24-step search bound.
+Here infinity labels are the limits of `y/x**(g+1)` on the
+`y**2 + h*y = f` model.
 
 ## Beilinson experiments
 
@@ -89,16 +66,14 @@ dividing `N` without the default 24-step search bound.
 # Reuse cached data and request 100-digit regulators and L-values.
 sage -python -m hyperell_regulator.experiments.beilinson 1300 --edge-seconds 600 --digits 100 --reg-digits 100
 
-# Test the parameter n=2 in the one-parameter family, without an L-value.
-sage -python -m hyperell_regulator.experiments.family_n 2 --no-lvalue
+# Test the parameter n=2 in the one-parameter family.
+sage -python -m hyperell_regulator.experiments.family_n 2
 ```
 
 Both commands use float64 regulators and a 15-second edge limit by default.
-Use `--help` or the [experiment guide](docs/experiments.rst) for precision,
-budget, conductor, and cache options.
+Use `--help` or the [experiment guide](docs/experiments.rst) for precision, conductor, and cache options.
 
-Reports use determinant weights `(1, 2 Re(z), |z|^2)` and compare
-`q = pi*c_plus*c_minus*L''(std,1)/D` with a rational guess. Data and results are cached under
+Data and results are cached under
 `lmfdb_cache/` and `results/` in the working directory; set
 `HYPERELL_REGULATOR_DATA` to choose another location.
 

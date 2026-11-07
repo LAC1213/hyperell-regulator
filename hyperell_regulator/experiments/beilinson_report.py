@@ -300,7 +300,7 @@ def export(source, output, cache):
                     for row in rows)
     readme = f"""# Beilinson survey: conductor < 1300, 100 digits
 
-This directory contains only the current 100-digit Beilinson survey:
+This directory contains the current 100-digit Beilinson survey:
 
 - [Full saved data and exact functions](beilinson_100_digits.json).
 - [Three LaTeX tables: torsion/integrality, models, and numerical data](beilinson_100_digits.tex).
@@ -333,9 +333,6 @@ After the calculation has finished, regenerate without repeating integrations:
 ```sh
 sage -python -m hyperell_regulator.experiments.beilinson_report
 ```
-
-The standalone LaTeX document uses `geometry`, `amsmath`, `amssymb`, `booktabs`,
-`arydshln`, and `hyperref`. No PDF is generated.
 
 Source: `results/beilinson_results.json` (read without modification).
 Source SHA-256: `{checksum}`.

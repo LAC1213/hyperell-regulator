@@ -1,4 +1,4 @@
-# Vendored rforest
+# rforest
 
 Source: https://github.com/edgarcosta/rforest
 
