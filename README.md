@@ -60,6 +60,20 @@ divisor_class_order(C, (0, 0), ("infinity", -1))  # 21
 Here infinity labels are the limits of `y/x**(g+1)` on the
 `y**2 + h*y = f` model.
 
+For the curve `y^2 + (x^3 + 1)y = x^2 + x` (LMFDB 249.a.249.1),
+compute the standard L-function's second derivative `L''(std, 1)` to
+30 decimal digits:
+
+```python
+from sage.all import QQ, PolynomialRing
+from hyperell_regulator import HyperellipticCurveWithReduction, standard_lvalue
+
+x = PolynomialRing(QQ, "x").gen()
+C = HyperellipticCurveWithReduction(x**2 + x, x**3 + 1)
+result = standard_lvalue(C, digits=30, verbose=False)
+print(result["value"])
+```
+
 ## Beilinson experiments
 
 ```sh
