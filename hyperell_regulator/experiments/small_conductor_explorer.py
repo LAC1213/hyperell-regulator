@@ -231,7 +231,7 @@ def main(argv=None):
                     reference_only=args.reference_only,
                     conventions=dict(determinant_weights=[1, 2, 1],
                                      quotient="q = pi*c_plus*c_minus*L_second_derivative/D",
-                                     periods="full cycle periods"),
+                                     periods="periods"),
                     curves=[completed[e["label"]] for e in source["curves"]])
     save(args.out / "catalog.json", manifest)
     count = sum(len(curve["functions"]) for curve in completed.values())

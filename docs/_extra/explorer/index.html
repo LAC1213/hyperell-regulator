@@ -18,13 +18,13 @@
     <section class="intro">
       <p class="eyebrow">BEILINSON SURVEY · CONDUCTOR &lt; 1300 · 100-DIGIT TARGETS</p>
       <h1>Follow the cuts.</h1>
-      <p>Explore the successful 100-digit Beilinson regulator computations for genus 2 curves of conductor below 1300. Select a lifted path to inspect its ordinary and logarithmic integrals, displayed to 10 significant digits.</p>
+      <p>Explore the 100-digit Beilinson regulator computations for genus 2 curves of conductor below 1300. Select a lifted path to inspect its ordinary and logarithmic integrals, displayed to 10 significant digits.</p>
     </section>
-    <section class="workspace" aria-label="Choose a curve and torsion function">
-      <div class="section-label"><h2>Curve &amp; torsion function</h2><span>computed locally in SageMath</span></div>
+    <section class="workspace" aria-label="Choose a curve and a function">
+      <div class="section-label"><h2>Curve &amp; function</h2></div>
       <div class="catalog-controls">
         <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
-        <label>Torsion function<select id="function-select" disabled><option>Loading functions…</option></select></label>
+        <label>Function<select id="function-select" disabled><option>Loading functions…</option></select></label>
         <button type="button" class="secondary" id="export" disabled>↓ Export full data</button>
         <label class="file-button" for="import">Import local result<input type="file" id="import" accept="application/json,.json"></label>
       </div>
@@ -48,7 +48,7 @@
             <label class="check-control"><input id="show-mesh" type="checkbox" checked> Surface mesh</label>
           </div>
           <div id="lift-plot" class="plot" aria-label="Interactive three-dimensional projection of the lifted paths"></div>
-          <p class="caption" id="mesh-caption">Select a colored lift. A single-sheet view includes both banks of its boundary. This is a projection of the curve; projection crossings can occur.</p>
+          <p class="caption" id="mesh-caption">Select a colored lift. A single-sheet view includes both sides of its boundary. This is a projection of the curve; projection crossings can occur.</p>
         </section>
       </div>
       <div class="analysis">
@@ -56,8 +56,8 @@
           <div class="section-label"><h2>Path integrals</h2><span id="path-label"></span></div>
           <div class="selectors">
             <label>Cut edge<select id="edge"></select></label>
-            <label>Positive-bank sheet<select id="sheet"></select></label>
-            <label>Logarithm bank<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>
+            <label>Positive-side sheet<select id="sheet"></select></label>
+            <label>Logarithm side<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>
             <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Toward 0</option></select></label>
           </div>
           <p id="gluing" class="hint"></p>
@@ -70,7 +70,7 @@
           <p class="caption">Rₐᵦ = −¼ Im ∫<sub>C</sub> log|φ| ωₐ ∧ ω̄ᵦ, after symmetrization. The period column is unweighted by log|φ|. These pairings use the exact function shown above; the determinant uses normalized columns with d₁₁ = 1, d₁₂ = 2 Re(z), d₂₂ = |z|².</p>
         </section>
       </div>
-      <details class="notes"><summary>Numerical conventions &amp; display limits</summary><p id="geometry"></p><p>Values retain the decimal strings exported by SageMath. The digit target is checked by the integrator; it is not a certified error bound. Cut topology and display continuation use float64.</p><p>Both banks use the selected geometric orientation. To traverse a sheet boundary, use the positive bank toward ∞ and the negative bank toward 0.</p><p id="divisor"></p><p id="warnings"></p></details>
+      <details class="notes"><summary>Numerical conventions &amp; display limits</summary><p id="geometry"></p><p>Values retain the decimal strings exported by SageMath. Cut topology and display continuation use float64.</p><p>Both sides use the selected geometric orientation. To traverse a sheet boundary, use the positive side toward ∞ and the negative side toward 0.</p><p id="divisor"></p><p id="warnings"></p></details>
     </section>
     <section class="panel curve-table">
       <div class="section-label"><h2>Genus 2 curves of small conductor</h2><span>select a row to explore</span></div>

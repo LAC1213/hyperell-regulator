@@ -205,8 +205,8 @@ async function show(data, curve = null, f = null, mesh = null) {
   for (let s = 1; s <= data.degree; s++) option($("visible-sheet"), s, `Only S_${s}`);
   $("show-mesh").disabled = !mesh;
   $("mesh-caption").textContent = mesh ?
-    "Select a colored lift. A single-sheet view includes both banks of its boundary. Projection crossings can occur; surface triangles approach cut endpoints." :
-    "Select a colored lift. A single-sheet view includes both banks of its boundary. This result has no surface mesh.";
+    "Select a colored lift. A single-sheet view includes both sides of its boundary. Projection crossings can occur; surface triangles approach cut endpoints." :
+    "Select a colored lift. A single-sheet view includes both sides of its boundary. This result has no surface mesh.";
   $("pairings").replaceChildren();
   data.pairings.forEach(p => {
     const row = document.createElement("tr");
@@ -232,7 +232,7 @@ function renderIntegrals() {
   const edge = current.edges[edgeIndex], lift = edge.lifts[sheetIndex];
   const bank = $("bank").value, reverse = $("orientation").value === "reverse";
   $("path-label").textContent = `e${bank === "plus" ? "+" : "−"}_${bank === "plus" ? lift.sheet : lift.minus_sheet},${edge.index}`;
-  $("gluing").textContent = `The same geometric lift bounds S_${lift.sheet} on the positive bank and S_${lift.minus_sheet} on the negative bank. ${edge.infinite ? "This edge ends at infinity; all integral values include the entire tail." : ""}`;
+  $("gluing").textContent = `The same geometric lift bounds S_${lift.sheet} on the positive side and S_${lift.minus_sheet} on the negative side. ${edge.infinite ? "This edge ends at infinity; all integral values include the entire tail." : ""}`;
   $("integrals").replaceChildren();
   const logarithmic = bank === "plus" ? lift.log_plus : lift.log_minus;
   for (let a = 0; a < current.genus; a++) {

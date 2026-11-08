@@ -1,24 +1,22 @@
 Interactive cut-system explorer
 ===============================
 
-`Open the explorer <explorer/index.html>`_. It contains the successful 100-digit Beilinson regulator computations for
-genus 2 curves of conductor strictly below 1300, with their two marked torsion
-functions.
-Calculations run locally in SageMath before publication; the published
-GitHub Pages site serves only static files.
+`Open the explorer <explorer/index.html>`_. It contains the 100-digit Beilinson regulator computations for
+genus 2 curves of conductor strictly below 1300, which have two functions
+with divisors of the form :math:`N \cdot P - N \cdot Q`. Integrality of the
+corresponding motivic cohomology classes is checked using the component
+criterion; undecided verdicts are marked separately.
 
 Using the viewer
 ----------------
 
-Choose a curve and either marked torsion function. Click an edge in the
+Choose a curve and either marked function. Click an edge in the
 :math:`w=\varphi` plane, then a lift in the three-dimensional projection.
 The selectors provide the same choices without using the plot. Drag the
-lifted plot to rotate, and use its toolbar to zoom or pan. Switching tools
-preserves the current view; only the **Home** button resets the camera.
+lifted plot to rotate, and use its toolbar to zoom or pan.
 The **Display sheets** selector shows all sheets or isolates one surface
-with both banks of its boundary. The **Surface mesh** checkbox hides or
-shows the surface while retaining the lifted paths. Path selection, sheet
-filters, and changes of curve or function preserve the camera and zoom.
+with its boundary. The **Surface mesh** checkbox hides or
+shows the surface while retaining the lifted paths.
 
 The path table shows, for every holomorphic form
 :math:`\omega_a=x^{a-1}dx/y`,
@@ -30,27 +28,22 @@ The path table shows, for every holomorphic form
 
 All numerical values displayed by the viewer are rounded to **10 significant
 digits**. Exact polynomial coefficients, point coordinates and torsion orders
-remain exact. The catalog retains the full 100-digit survey reference values.
-Path integrals are independently exported at 15 digits and checked against
-the survey determinant; their JSON retains the integration precision.
-Conductor 1116 is retained in the report JSON and excluded from its LaTeX
-tables and this explorer.
+remain exact.
 
-Sheets, banks and orientation
------------------------------
+Sheets and orientation
+----------------------
 
-The path selector numbers lifts by their positive-bank sheet. A geometric
-edge bounds a positive-bank sheet :math:`S_i` and a negative-bank sheet
+The path selector numbers lifts by their positive-side sheet. A geometric
+edge bounds a positive-side sheet :math:`S_i` and a negative-side sheet
 :math:`S_j`; both are shown in the path panel. On the same oriented lift,
 
 .. math::
 
-   L_a^+=L_a^-+\Delta\log(\varphi)I_a,
-   \qquad \Delta\log(\varphi)=\pm2\pi i.
+   L_a^+=L_a^- \pm 2 \pi i I_a.
 
-The jump and both bank labels come from the integration program. Both banks
+The jump and both side labels come from the integration program. Both sides
 initially point toward infinity. For a sheet's oriented boundary, traverse
-the positive bank toward infinity and the negative bank toward zero. The
+the positive side toward infinity and the negative side toward zero. The
 orientation control negates both ordinary and logarithmic integrals.
 
 The base plot retains the actual polygonal detours of the cut system.
@@ -102,7 +95,7 @@ The catalog determinant uses the columns for :math:`P`, :math:`R`, and
 the periods multiplied by the same row weights, in that order. Thus the
 determinant :math:`D` uses :math:`(1,2\operatorname{Re}(z),|z|^2)`. It is
 checked against the current 100-digit survey determinant. The catalog uses
-full cycle periods and :math:`q=\pi c^+c^-L''(\mathrm{std},1)/D`.
+:math:`q=\pi c^+c^-L''(\mathrm{std},1)/D`.
 A missing numerical comparison is displayed as a dash. A dagger marks an
 undecided component verdict, without asserting integrality. L-values and
 relative comparison errors are retained from the report. The report stores

@@ -10,7 +10,7 @@ The experiment commands combine regulator determinants, periods and standard
 
 with a rational guess. The determinant :math:`D` uses weights
 :math:`d_{11}=1`, :math:`d_{12}=2\operatorname{Re}(z)`, and
-:math:`d_{22}=|z|^2`. The periods :math:`c^\pm` are full cycle minors;
+:math:`d_{22}=|z|^2`.
 ``comparison.rational_is_integer`` reports whether the guessed rational
 has denominator one.
 
@@ -49,14 +49,6 @@ default, so ``388.a.776.1`` is attempted despite the undecided condition at 2.
 The saved triple retains those verdicts. Use ``--exclude-undecided`` (or
 ``allow_undecided=False`` in Python) to require affirmative verdicts; known
 negative verdicts are always excluded.
-
-Torsion orders are computed exactly on both odd and even degree models.
-Without a rational Weierstrass point, good reductions bound the possible
-order and Riemann--Roch tests principality. Old component records with missing
-orders are checked when selecting triples, so positive or unknown
-Mordell--Weil rank does not exclude a difference with a proven finite order.
-The LMFDB rank-zero fallback remains available when the exact computation
-cannot be completed.
 
 Saved results
 -------------

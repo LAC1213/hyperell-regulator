@@ -6,8 +6,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 project = "hyperell-regulator"
-author = "Lambert A'Campo"
-copyright = "2026, Lambert A'Campo"
+author = "Lambert A'Campo, Hohto Bekki, Aleksander Horawa"
+copyright = "2026, Lambert A'Campo, Hohto Bekki, Aleksander Horawa"
 release = "0.1.0"
 
 extensions = [

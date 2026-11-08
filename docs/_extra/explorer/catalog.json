@@ -53,7 +53,7 @@
       1
     ],
     "quotient": "q = pi*c_plus*c_minus*L_second_derivative/D",
-    "periods": "full cycle periods"
+    "periods": "periods"
   },
   "curves": [
     {
