@@ -1,16 +1,27 @@
 Interactive curve explorer
 ===========================
 
-`Open the explorer <explorer/index.html>`_. Each curve has a two-dimensional spanning tree
-and a three-dimensional sheet view, shared by all its logarithmic weights. The catalog retains
+`Open the explorer <explorer/index.html>`_. For a genus-two hyperelliptic curve
+:math:`C` with marked points :math:`P,Q`, the explorer shows how Stokes' theorem
+reduces the regulator integrals for the motivic cohomology classes
+:math:`\alpha_P,\alpha_Q` to path integrals. The coordinate
+:math:`x:C\to\mathbb P^1` presents the curve as a two-sheeted cover.
+The catalog retains
 the successful genus-two survey curves of conductor below 1300, excluding
 conductor 1116, and their 100-digit reference determinants and L-values.
 
 Using the viewer
 ----------------
 
-Choose a curve and a logarithmic weight. Changing the weight updates the
-path integrals and pairings without changing the geometry. Click an edge
+Choose a curve. The page follows the spanning tree on the base, its lifted
+integration paths on the curve, and the resulting regulator matrix.
+The matrix displays the two regulator columns and the period column in the
+row basis :math:`(1,2\operatorname{Re}(x),|x|^2)`, together with its determinant
+:math:`D`.
+
+Open **Inspect the path integrals** to choose a logarithmic factor.
+Changing this factor updates the path integrals and logarithmic pairings
+without changing the geometry or the two-class matrix. Click an edge
 in the two-dimensional tree to select it, or a colored path in the sheet
 view to select both an edge and a positive-side sheet. The selected tree
 edge and both of its lifted paths are highlighted and follow the edge selector. The selectors also let
@@ -28,9 +39,13 @@ For :math:`\omega_j=x^{j-1}dx/y`, the table displays
    I_j(e)=\int_e\omega_j,\qquad
    L_{j,a}^{\pm}(e)=\int_e\log^{\pm}(x-a)\,\omega_j.
 
-The cut is a Euclidean minimum spanning tree of all branch values and
-selected logarithmic centers, with an outward ray to infinity at the
-rightmost vertex. Different branches share a single diagram. Logarithmic jumps can vary between edges:
+The finite cut is a Euclidean minimum spanning tree of the complete graph
+on the critical values of :math:`x` (the images of the ramification points)
+together with :math:`x(P)` and :math:`x(Q)`. Coincident coordinates give one
+vertex. An outward ray from the rightmost vertex extends the cut to infinity;
+infinity is also a critical value for odd-degree models. Lifting the cut
+to :math:`C` gives the sheet boundaries used in Stokes' theorem.
+All logarithmic factors share this diagram. Logarithmic jumps can vary between edges:
 
 .. math::
 
@@ -49,7 +64,8 @@ Geometry and pairings
 ---------------------
 
 The two-dimensional plot shows the MST in the x-plane with equal axis
-scales. Circles mark branch values, diamonds mark logarithmic centers, and
+scales. Circles mark critical values of :math:`x`, diamonds mark the
+marked x-coordinates, and
 the dashed ray continues to infinity. Edge numbers match the integral
 selectors. The three-dimensional sheet view uses the projection
 
@@ -75,6 +91,13 @@ unweighted period vector. Genus-two vectors use weights
 :math:`(1,\operatorname{Re}(x),|x|^2)`; double the middle entry for the
 Beilinson determinant. For a finite common pole b, subtract its logarithmic
 column from each marked-point column.
+
+The interface calls the two marked points :math:`P,Q` and the common pole
+:math:`O`. In the saved catalog, ``points[0]`` and ``points[1]`` have these
+roles respectively; older descriptions called them :math:`P,R`.
+This is a display convention and does not change the exported data.
+For custom imports, diamonds mark every supplied logarithmic center;
+the two-class matrix is shown only for catalog curves.
 
 The table recomputes determinants and full periods with the current MST
 code at a 100-digit target. L-values are reused from the cache after the

@@ -1,65 +1,121 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore the two sheets of hyperelliptic curves and their logarithmic regulator integrals.">
-  <title>Curve explorer · hyperell-regulator</title>
-  <link rel="stylesheet" href="explorer.css?v=mst-current-1">
-  <script defer src="plotly.min.js"></script><script defer src="explorer.js?v=mst-current-1"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="See how Stokes’ theorem computes the regulator of two motivic cohomology classes on a genus 2 curve: from a spanning tree on the x-line to integration paths on the curve.">
+  <title>Genus 2 regulator explorer · hyperell-regulator</title>
+  <link rel="stylesheet" href="explorer.css?v=regulator-story-1">
+  <script defer src="plotly.min.js"></script>
+  <script defer src="explorer.js?v=regulator-story-1"></script>
 </head>
 <body>
-<header><a class="wordmark" href="../index.html">hyperell-regulator</a><nav><a href="../explorer-guide.html">Guide &amp; conventions</a><a href="https://github.com/LAC1213/hyperell-regulator">Source ↗</a></nav></header>
-<main>
-  <section class="intro"><p class="eyebrow">BEILINSON SURVEY · CONDUCTOR &lt; 1300</p><h1>Two sheets. One curve.</h1><p>Explore each curve through its hyperelliptic map x. A minimum spanning tree connects the branch values and logarithmic centers. All weights share this diagram and its ordinary edge integrals.</p></section>
-  <section class="workspace" aria-label="Choose a curve">
-    <div class="section-label"><h2>Curve</h2></div>
-    <div class="catalog-controls">
-      <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
-      <label>Logarithmic weight<select id="weight-select" disabled></select></label>
-      <button type="button" class="secondary" id="export" disabled>↓ Export full data</button>
-      <label class="file-button" for="import">Import local result<input type="file" id="import" accept="application/json,.json"></label>
-    </div>
-    <p id="point-info" class="hint"></p><details><summary>Exact curve &amp; marked coordinates</summary><pre id="exact-inputs"></pre></details>
-    <p class="hint">All calculations are precomputed. Changing the weight updates the integrals on this same diagram. <a href="../explorer-guide.html">Compute another curve</a></p>
-  </section>
-  <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
-  <section id="results" hidden>
-    <div class="result-heading"><div><p class="eyebrow" id="result-source"></p><h2 id="result-model"></h2></div><p id="metadata"></p></div>
-    <div class="plots">
-    <section class="panel">
-      <div class="section-label"><h2>Spanning tree in the x-plane</h2><span>drag to pan</span></div>
-      <div id="base-plot" class="plot" aria-label="Interactive two-dimensional spanning tree of branch values and logarithmic centers"></div>
-      <p class="caption">Click an edge to inspect its integrals. Circles mark branch values; diamonds mark logarithmic centers. The dashed ray continues to infinity. Both axes use the same scale.</p>
+  <a class="skip-link" href="#main">Skip to explorer</a>
+  <header>
+    <a class="wordmark" href="../index.html">hyperell-regulator</a>
+    <nav aria-label="Documentation"><a href="../explorer-guide.html">Guide &amp; conventions</a><a href="https://github.com/LAC1213/hyperell-regulator">Source ↗</a></nav>
+  </header>
+  <main id="main">
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">GENUS 2 · BEILINSON REGULATORS</p>
+      <h1 id="page-title">From the curve to its regulator.</h1>
+      <p>Start with a hyperelliptic curve <i>C</i> and two marked points <i>P</i>, <i>Q</i>.
+        We evaluate the regulator matrix of their motivic cohomology classes
+        <span class="math">α<sub>P</sub></span> and <span class="math">α<sub>Q</sub></span> using Stokes’ theorem.</p>
     </section>
-    <section class="panel">
-      <div class="section-label"><h2>Sheets &amp; integration paths</h2><span>drag to rotate</span></div>
-      <div class="surface-controls"><label>Display sheets<select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label><label class="check-control"><input id="show-mesh" type="checkbox" checked> Surface mesh</label><button type="button" class="secondary" id="camera-home">⌂ Home</button></div>
-      <div id="curve-plot" class="plot" aria-label="Interactive three-dimensional plot of the two curve sheets"></div>
-      <p class="caption" id="mesh-caption">Select a colored path to inspect its integrals. Height is asinh(Re(exp(−0.55i)y)); projection crossings can occur. The displayed ray is truncated; integrals include infinity.</p>
-    </section>
-    </div>
-    <div class="analysis">
-      <section class="panel integral-panel">
-        <div class="section-label"><h2>Path integrals</h2><span id="path-label"></span></div>
-        <div class="selectors">
-          <label>Cut edge<select id="edge"></select></label><label>Positive-side sheet<select id="sheet"><option value="0">1</option><option value="1">2</option></select></label>
-          <label>Logarithm bank<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>
-          <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Away from ∞</option></select></label>
+    <section class="workspace" aria-label="Choose a curve">
+      <div class="catalog-controls">
+        <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
+        <p id="point-info" class="marked-points"></p>
+        <div class="data-actions">
+          <button type="button" class="secondary" id="export" disabled>Export data ↓</button>
+          <label class="file-button" for="import">Import result<input type="file" id="import" accept="application/json,.json"></label>
         </div>
-        <p id="gluing" class="hint"></p><div class="table-scroll"><table><thead><tr><th>Form</th><th>∫ ωₐ</th><th>∫ log(x−a) ωₐ</th></tr></thead><tbody id="integrals"></tbody></table></div><p id="jump" class="caption"></p>
+      </div>
+    </section>
+    <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
+    <section id="results" hidden aria-label="Curve geometry and regulator">
+      <div class="result-heading">
+        <div><p class="eyebrow" id="result-source"></p><h2 id="result-model"></h2></div>
+        <p class="map-label math">x : C → ℙ¹</p>
+      </div>
+      <div class="plots">
+        <section class="panel">
+          <div class="section-label"><h2><span class="step">01</span> A spanning tree on ℙ¹</h2></div>
+          <p class="panel-description">The vertices are the critical values of <i>x</i> (images of ramification points), <span class="math">x(P)</span>, and <span class="math">x(Q)</span>. A minimum spanning tree of their complete graph gives the cut.</p>
+          <div class="plot-tools"><span class="gesture">Click an edge to follow its lifts</span></div>
+          <div id="base-plot" class="plot" aria-label="Spanning tree connecting the critical values of x and the x-coordinates of P and Q"></div>
+          <p class="caption">Circles: critical values of <i>x</i>. Diamonds: marked x-coordinates. The dashed ray extends the cut to ∞.</p>
+        </section>
+        <section class="panel">
+          <div class="section-label"><h2><span class="step">02</span> Integration paths on C</h2></div>
+          <p class="panel-description">The coordinate <i>x</i> makes <i>C</i> a two-sheeted cover of ℙ¹. The tree lifts to paths on <i>C</i>, forming the sheet boundaries along which we integrate.</p>
+          <div class="plot-tools surface-controls">
+            <label class="sheet-control"><span class="sr-only">Display sheets</span><select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label>
+            <label class="check-control"><input id="show-mesh" type="checkbox" checked> Show surface</label>
+            <button type="button" class="text-button" id="camera-home">Reset view</button>
+          </div>
+          <div id="curve-plot" class="plot" aria-label="Two-sheeted cover C with the lifted integration paths"></div>
+          <p class="caption" id="mesh-caption">Drag to rotate. Click a colored path to inspect its integrals. This is a projection; crossings need not be intersections on C.</p>
+        </section>
+      </div>
+      <section class="panel matrix-panel" aria-labelledby="matrix-title">
+        <div class="matrix-explanation">
+          <div class="section-label"><h2 id="matrix-title"><span class="step">03</span> The regulator matrix</h2></div>
+          <p>Stokes’ theorem turns surface integrals on <i>C</i> into path integrals along the lifted boundaries.</p>
+          <p class="caption">The two regulator columns, completed by the period column, give the determinant <i>D</i>.</p>
+          <p id="determinant" class="determinant math"></p>
+        </div>
+        <div class="table-scroll" id="matrix-values">
+          <table class="regulator-matrix">
+            <caption class="sr-only">Regulator columns for alpha P and alpha Q and the period column</caption>
+            <thead><tr><th scope="col">Row</th><th scope="col"><span class="math">α<sub>P</sub></span></th><th scope="col"><span class="math">α<sub>Q</sub></span></th><th scope="col">Period</th></tr></thead>
+            <tbody id="regulator-matrix"></tbody>
+          </table>
+        </div>
+        <p id="matrix-unavailable" class="hint" hidden>This import contains logarithmic pairings. Choose a catalog curve to see its two-class regulator matrix.</p>
       </section>
-      <section class="panel pairing-panel">
-        <div class="section-label"><h2>Logarithmic pairings</h2><span>ωₐ = xᵃ⁻¹ dx/y</span></div>
-        <div class="table-scroll"><table><thead><tr><th>(a, b)</th><th>−4Rₐᵦ/π</th><th>Rₐᵦ</th><th>Period Pₐᵦ</th></tr></thead><tbody id="pairings"></tbody></table></div>
-        <p class="caption">Rₐᵦ = −¼ Im ∫ log|x−a| ωₐ ∧ ω̄ᵦ, after symmetrization. Vectors use (1, Re(x), |x|²); double the middle entry for the genus-two determinant. For a finite common pole b, subtract its logarithmic column.</p>
-      </section>
-    </div>
-    <details class="notes"><summary>Numerical conventions</summary><p id="geometry"></p><p>Cut topology and display geometry use float64. Numerical quadrature uses guarded precision. Decimal precision targets are not certified interval bounds.</p><p id="warnings"></p></details>
-  </section>
-  <section class="panel curve-table">
-    <div class="section-label"><h2>Genus 2 curves of small conductor</h2><span>select a row to explore</span></div>
-    <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>R</th><th>nP</th><th>nR</th><th>D</th><th>c⁺</th><th>c⁻</th><th>L″(std,1)</th><th>q</th><th>Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
-    <p class="caption">D, c⁺, c⁻ and q are computed with the current MST code at a 100-digit target. L-values reuse cached 100-digit computations after checking precision and coefficient counts against the current code. Downloads record numerical source hashes. Path integrals use the same method at 15 digits. q = π c⁺c⁻L″(std,1)/D; rational q values are shown only when agreement exceeds 95 digits. Orders certify the algebraic cycles. Conductor 1116 is excluded from this collection.</p>
-  </section>
-</main><footer><span>hyperell-regulator</span><span>Exact curves. Direct integrals. Visible paths.</span></footer>
-</body></html>
+      <details class="technical-details">
+        <summary>Inspect the path integrals <span class="summary-hint">Edges, sheets &amp; logarithms</span></summary>
+        <div class="analysis">
+          <section class="panel integral-panel">
+            <div class="section-label"><h2>Selected path</h2><span id="path-label"></span></div>
+            <div class="selectors">
+              <label>Logarithmic factor<select id="weight-select" disabled></select></label>
+              <label>Tree edge<select id="edge"></select></label>
+              <label>Positive-side sheet<select id="sheet"><option value="0">Sheet 1</option><option value="1">Sheet 2</option></select></label>
+              <label>Logarithm side<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>
+              <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Away from ∞</option></select></label>
+            </div>
+            <p id="gluing" class="hint"></p>
+            <div class="table-scroll"><table><thead><tr><th scope="col">Form</th><th scope="col">∫ ωᵢ</th><th scope="col">∫ log(x−a) ωᵢ</th></tr></thead><tbody id="integrals"></tbody></table></div>
+            <p id="jump" class="caption"></p>
+          </section>
+          <section class="panel pairing-panel">
+            <div class="section-label"><h2>Selected logarithmic pairings</h2></div>
+            <p class="hint" id="weight-info"></p>
+            <div class="table-scroll"><table><thead><tr><th scope="col">(i, j)</th><th scope="col">−4Rᵢⱼ/π</th><th scope="col">Rᵢⱼ</th><th scope="col">Period Pᵢⱼ</th></tr></thead><tbody id="pairings"></tbody></table></div>
+            <p class="caption">ωᵢ = xⁱ⁻¹ dx/y. Rᵢⱼ = −¼ Im ∫<sub>C</sub> log|x−a| ωᵢ ∧ ω̄ⱼ, symmetrized. The matrix above includes the row weights (1, 2, 1).</p>
+          </section>
+        </div>
+      </details>
+      <details class="notes">
+        <summary>Exact inputs &amp; numerical conventions</summary>
+        <pre id="exact-inputs"></pre>
+        <p id="metadata"></p><p id="geometry"></p>
+        <p>The plotted ray is truncated; integration includes its full tail. Geometry uses float64; quadrature uses guarded precision. Precision targets are not certified error bounds.</p>
+        <p id="warnings"></p>
+        <p><a href="../explorer-guide.html">Full conventions &amp; computing another curve ↗</a></p>
+      </details>
+    </section>
+    <details class="survey">
+      <summary>Full survey <span class="summary-hint">Genus 2 · conductor &lt; 1300</span></summary>
+      <div class="panel curve-table">
+        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col">P</th><th scope="col">Q</th><th scope="col">n<sub>P</sub></th><th scope="col">n<sub>Q</sub></th><th scope="col">D</th><th scope="col">c⁺</th><th scope="col">c⁻</th><th scope="col">L″(std,1)</th><th scope="col">q</th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
+        <p class="caption">q = π c⁺c⁻L″(std,1)/D. Survey values target 100 digits; a rational q is shown when agreement exceeds 95 digits. n<sub>P</sub> and n<sub>Q</sub> are torsion orders relative to the common pole. Conductor 1116 is excluded.</p>
+      </div>
+    </details>
+  </main>
+  <footer><span>hyperell-regulator</span><span>Precomputed values · 10 significant digits shown</span></footer>
+</body>
+</html>

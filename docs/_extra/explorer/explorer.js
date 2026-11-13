@@ -7,6 +7,13 @@ const HOME_CAMERA = {eye:{x:1.5,y:-1.6,z:1.2},center:{x:0,y:0,z:0},up:{x:0,y:0,z
 let catalog, current, mesh = null, version = 0, label = "";
 const decimal = v => Number(v) === 0 ? "0" : Number(v).toPrecision(10);
 const pointTuple = p => Array.isArray(p)?"("+p.map(String).join(", ")+")":p==="infinity"?"∞":String(p);
+const polynomial = source => source.replace(/\^(\d+)/g,(_,power)=>[...power].map(d=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[d]).join("")).replace(/\*/g,"").replace(/-/g,"−");
+const rational = value => String(value).split("/").map(Number).reduce((a,b)=>a/b);
+function centerNames(center) {
+  const names=(current.collection?.points||[]).flatMap((p,i)=>rational(p[0])===rational(center)?[i===0?"P":"Q"]:[]);
+  if (Array.isArray(current.collection?.pole) && rational(current.collection.pole[0])===rational(center)) names.push("O");
+  return names.map(name=>"x("+name+")").join(", ");
+}
 function status(message, error=false) { $("status").textContent=message; $("status").classList.toggle("error",error); }
 function option(select,value,text) { const n=document.createElement("option"); n.value=value; n.textContent=text; select.append(n); }
 function cell(row,text) { const n=document.createElement("td"); n.textContent=text; row.append(n); return n; }
@@ -40,6 +47,20 @@ function validateMesh(m) {
   m.sheets.forEach(s=>{ if (!Array.isArray(s.vertices) || !s.vertices.every(p=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)) || !m.triangles.every(t=>Array.isArray(t)&&t.length===3&&t.every(i=>Number.isInteger(i)&&i>=0&&i<s.vertices.length))) throw Error("Invalid surface vertices"); });
   return m;
 }
+function renderMatrix(curve) {
+  const matrix=curve?.normalized_matrix;
+  const available=Array.isArray(matrix) && matrix.length===3 && matrix.every(row=>Array.isArray(row)&&row.length===3);
+  $("matrix-values").hidden=!available;
+  $("matrix-unavailable").hidden=available;
+  $("determinant").textContent=available?"D = "+decimal(curve.numerical.det):"";
+  $("regulator-matrix").replaceChildren();
+  if (!available) return;
+  matrix.forEach((values,i)=>{
+    const row=document.createElement("tr"), heading=document.createElement("th");
+    heading.scope="row"; heading.textContent=["1","2 Re(x)","|x|²"][i]; row.append(heading);
+    values.forEach(value=>cell(row,decimal(value))); $("regulator-matrix").append(row);
+  });
+}
 function renderIntegrals() {
   if (!current) return;
   const k=Number($("weight-select").value), e=Number($("edge").value), s=Number($("sheet").value);
@@ -48,8 +69,15 @@ function renderIntegrals() {
   lift.ordinary.forEach((v,a)=>{const row=document.createElement("tr"); cell(row,"ω"+(a+1)); cell(row,complex(v,sign)); cell(row,complex(lift.logs[k][$("bank").value][a],sign)); $("integrals").append(row);});
   current.weights[k].pairings.forEach(p=>{const row=document.createElement("tr"); cell(row,p.forms.join(", ")); [p.pairing,p.regulator,p.period].forEach(v=>cell(row,decimal(v))); $("pairings").append(row);});
   $("path-label").textContent="Edge "+(e+1)+", sheet "+(s+1);
-  $("gluing").textContent="Positive bank sheet "+(s+1)+" meets negative bank sheet "+lift.minus_sheet+".";
-  $("jump").textContent="Logarithm jump on this edge: "+complex(edge.jumps[k])+". Both banks use the selected geometric orientation.";
+  $("gluing").textContent="This path borders sheet "+(s+1)+" on its positive side and sheet "+lift.minus_sheet+" on its negative side.";
+  $("jump").textContent="The logarithm changes by "+complex(edge.jumps[k])+" between the two sides. Both integrals use the selected orientation.";
+  $("weight-info").textContent="a = "+current.weights[k].center+(centerNames(current.weights[k].center)?" = "+centerNames(current.weights[k].center):"")+". These pairings use log|x−a| over the whole curve.";
+}
+function inspectPath(edge,sheet) {
+  $("edge").value=edge;
+  if (sheet!==undefined) $("sheet").value=sheet;
+  document.querySelector(".technical-details").open=true;
+  renderIntegrals(); highlightSelection();
 }
 function saveCamera() {
   const plot=$("curve-plot"), scene=plot._fullLayout?.scene?._scene;
@@ -105,20 +133,21 @@ async function renderTree() {
     hovertemplate:"Edge "+e.index+(e.infinite?" → ∞":"")+"<br>Re(x) = %{x:.10g}<br>Im(x) = %{y:.10g}<extra></extra>"
   }));
   traces.push({type:"scatter",mode:"markers",x:current.roots.map(p=>Number(p[0])),y:current.roots.map(p=>Number(p[1])),
-    marker:{size:8,color:"#253d3c"},name:"Branch values",hovertemplate:"Branch value<br>Re(x) = %{x:.10g}<br>Im(x) = %{y:.10g}<extra></extra>"});
-  traces.push({type:"scatter",mode:"markers",x:current.weights.map(w=>Number(w.center)),y:current.weights.map(()=>0),
-    marker:{size:13,symbol:"diamond-open",color:"#bc542e",line:{width:2}},name:"Logarithmic centers",
-    hovertemplate:"Logarithmic center<br>x=%{x:.10g}<extra></extra>"});
+    marker:{size:8,color:"#253d3c"},name:"Critical values of x",showlegend:false,hovertemplate:"Critical value of x<br>Re(x) = %{x:.10g}<br>Im(x) = %{y:.10g}<extra></extra>"});
+  traces.push({type:"scatter",mode:"markers+text",x:current.weights.map(w=>rational(w.center)),y:current.weights.map(()=>0),
+    text:current.weights.map(w=>centerNames(w.center)||"a = "+w.center),textposition:"bottom center",textfont:{size:11,color:"#bc542e"},
+    marker:{size:13,symbol:"diamond-open",color:"#bc542e",line:{width:2}},name:"Marked x-coordinates",showlegend:false,
+    hovertemplate:current.weights.map(w=>(centerNames(w.center)||"Logarithmic center")+"<br>x=%{x:.10g}<extra></extra>")});
   const rays=current.edges.filter(e=>e.infinite).map(e=>e.base[e.base.length-1]);
   traces.push({type:"scatter",mode:"text",x:rays.map(p=>Number(p[0])),y:rays.map(p=>Number(p[1])),
     text:rays.map(()=>"∞"),textposition:"top right",showlegend:false,hoverinfo:"skip"});
   const plot=$("base-plot");
-  await Plotly.react(plot,traces,{margin:{l:55,r:25,t:15,b:75},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
+  await Plotly.react(plot,traces,{margin:{l:45,r:20,t:15,b:45},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
     uirevision:label||current.input.F,dragmode:"pan",hovermode:"closest",font:{color:"#183e3b",size:11},
     xaxis:{title:"Re(x)",zeroline:false},yaxis:{title:"Im(x)",scaleanchor:"x",scaleratio:1,zeroline:false},
     legend:{orientation:"h",y:-.22}},{responsive:true,displaylogo:false});
   plot.removeAllListeners("plotly_click");
-  plot.on("plotly_click",event=>{const edge=event.points[0].customdata;if(Number.isInteger(edge)){$("edge").value=edge;renderIntegrals();highlightSelection();}});
+  plot.on("plotly_click",event=>{const edge=event.points[0].customdata;if(Number.isInteger(edge))inspectPath(edge);});
 }
 async function renderPlot() {
   if (!current) return;
@@ -134,24 +163,27 @@ async function renderPlot() {
     if (visible && s+1!==visible && l.minus_sheet!==visible) return;
     traces.push({type:"scatter3d",mode:"lines",x:l.xyz.map(p=>p[0]),y:l.xyz.map(p=>p[1]),z:l.xyz.map(p=>p[2]),line:{color:COLORS[s],width:i===selected?8:3},opacity:i===selected?1:.4,meta:{kind:"path",edge:i,sheet:s},name:"Edge "+(i+1)+", sheet "+(s+1),showlegend:false,customdata:l.xyz.map(()=>[i,s]),hovertemplate:"Edge "+(i+1)+" · sheet "+(s+1)+"<extra></extra>"});
   }));
-  traces.push({type:"scatter3d",mode:"markers",x:current.roots.map(p=>Number(p[0])),y:current.roots.map(p=>Number(p[1])),z:current.roots.map(()=>0),marker:{size:2,color:"#253d3c"},showlegend:false,name:"Branch values",hovertemplate:"Branch value<br>x=%{x} + %{y} i<extra></extra>"});
+  traces.push({type:"scatter3d",mode:"markers",x:current.roots.map(p=>Number(p[0])),y:current.roots.map(p=>Number(p[1])),z:current.roots.map(()=>0),marker:{size:2,color:"#253d3c"},showlegend:false,name:"Ramification points",hovertemplate:"Ramification point on C<br>x=%{x} + %{y} i<extra></extra>"});
   const plot=$("curve-plot");
   await Plotly.react(plot,traces,{margin:{l:0,r:0,t:0,b:0},paper_bgcolor:"rgba(0,0,0,0)",uirevision:"keep-camera",scene:{xaxis:{title:"Re(x)"},yaxis:{title:"Im(x)"},zaxis:{title:"Projected y"},aspectmode:"cube",camera:structuredClone(camera),dragmode,uirevision:"keep-camera"},legend:{orientation:"h"}},{responsive:true,displaylogo:false,scrollZoom:true,doubleClick:false,modeBarButtonsToRemove:["resetCameraDefault3d","resetCameraLastSave3d"]});
   restoreCamera(camera);
   plot.removeAllListeners("plotly_click");
-  plot.on("plotly_click",event=>{ const c=event.points[0].customdata; if(c){$("edge").value=c[0];$("sheet").value=c[1];renderIntegrals();highlightSelection();} });
+  plot.on("plotly_click",event=>{ const c=event.points[0].customdata; if(c)inspectPath(c[0],c[1]); });
 }
-function display(data,name) {
+function display(data,name,curve=null) {
   current=validate(data); label=name;
-  $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,w.label)); $("weight-select").disabled=false;
+  $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,(centerNames(w.center)?centerNames(w.center)+" · a = "+w.center:w.label))); $("weight-select").disabled=false;
   $("edge").replaceChildren(); current.edges.forEach((e,k)=>option($("edge"),k,"Edge "+e.index+(e.infinite?" → ∞":"")));
-  $("result-source").textContent=name||"Imported curve"; $("result-model").textContent="y² = "+current.input.F;
+  $("result-source").textContent=name||"Imported curve"; $("result-model").textContent="C : y² = "+polynomial(current.input.F);
   $("metadata").textContent="Genus "+current.genus+" · 2 sheets · "+current.precision+"-digit path integrals";
-  $("exact-inputs").textContent="F(x) = "+current.input.F+"\nLogarithmic centers: "+current.input.centers.join(", ");
-  $("point-info").textContent=current.collection?"P = "+pointTuple(current.collection.points[0])+"; R = "+pointTuple(current.collection.points[1])+"; common pole: "+pointTuple(current.collection.pole):"";
+  $("exact-inputs").textContent="F(x) = "+current.input.F+"\nLogarithmic centers: "+current.input.centers.join(", ")+(current.collection?"\nP = "+pointTuple(current.collection.points[0])+"\nQ = "+pointTuple(current.collection.points[1])+"\nCommon pole O = "+pointTuple(current.collection.pole):"");
+  $("point-info").textContent=current.collection?"P = "+pointTuple(current.collection.points[0])+"   ·   Q = "+pointTuple(current.collection.points[1]):"Imported logarithmic centers: "+current.input.centers.join(", ");
+  $("show-mesh").disabled=!mesh;
+  $("mesh-caption").textContent="Drag to rotate. Click a colored path to inspect its integrals. "+(mesh?"This is a projection; crossings need not be intersections on C.":"Surface mesh unavailable; the lifted paths are shown.");
   $("geometry").textContent=current.conventions.geometry;
   $("warnings").textContent=(current.warnings||[]).join(" ");
   $("results").hidden=false; $("export").disabled=false;
+  renderMatrix(curve);
   renderIntegrals(); return Promise.all([renderTree(),renderPlot()]);
 }
 async function chooseCurve(index) {
@@ -161,15 +193,18 @@ async function chooseCurve(index) {
     const response=await fetch(c.file+"?v="+DATA_VERSION); if(!response.ok) throw Error("Curve data could not be loaded");
     const data=await response.json(); let nextMesh=null;
     if (c.mesh && /^meshes\/[\w.-]+\.json$/.test(c.mesh)) { const r=await fetch(c.mesh+"?v="+DATA_VERSION); if(r.ok) nextMesh=validateMesh(await r.json()); }
-    if(token!==version)return; mesh=nextMesh; await display(data,c.label); status("Loaded "+c.label+" · shared tree and sheet views for all weights.");
-    $("mesh-caption").textContent=mesh?"Select a colored path. The two translucent sheets use the same validated cut. Drag to rotate; projection crossings can occur.":"Select a colored path. The displayed ray is truncated; integrals include infinity.";
+    if(token!==version)return; mesh=nextMesh; await display(data,c.label,c);
+    if(token!==version)return;
+    for (const row of $("catalog-rows").children) row.classList.toggle("selected",row.dataset.label===c.label);
+    history.replaceState(null,"","#"+encodeURIComponent(c.label));
+    status((data.warnings||[]).join(" "),Boolean(data.warnings?.length));
   } catch(e) {if(token===version)status(e.message,true);}
 }
 function renderCatalog() {
   $("curve-select").replaceChildren(); $("catalog-rows").replaceChildren();
   catalog.curves.forEach((c,i)=>{
     option($("curve-select"),i,c.label);
-    const row=document.createElement("tr"), link=document.createElement("button"); link.type="button"; link.className="secondary"; link.textContent=c.label; link.addEventListener("click",()=>{$("curve-select").value=i;chooseCurve(i);}); cell(row,"").append(link);
+    const row=document.createElement("tr"), link=document.createElement("button"); row.dataset.label=c.label; link.type="button"; link.className="secondary"; link.textContent=c.label; link.addEventListener("click",()=>{$("curve-select").value=i;chooseCurve(i);}); cell(row,"").append(link);
     c.points.forEach(p=>cell(row,pointTuple(p))); c.orders.forEach(v=>cell(row,v));
     ["det","c_plus","c_minus","L_second_derivative"].forEach(k=>cell(row,c.numerical[k]==null?"—":decimal(c.numerical[k])));
     cell(row,c.comparison_verified?c.q:(c.quotient?decimal(c.quotient):"—"));cell(row,c.relative_agreement?Number(c.relative_agreement).toExponential(2):"—");$("catalog-rows").append(row);
@@ -179,5 +214,5 @@ $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-sele
 ["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();}));
 ["visible-sheet","show-mesh"].forEach(id=>$(id).addEventListener("change",renderPlot));
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-$("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});
-fetch("catalog.json?v="+DATA_VERSION).then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{if(data.schema_version!==2||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");catalog=data;renderCatalog();return chooseCurve(0);}).catch(e=>status(e.message,true));
+$("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;$("curve-select").value="";for(const row of $("catalog-rows").children)row.classList.remove("selected");await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});
+fetch("catalog.json?v="+DATA_VERSION).then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{if(data.schema_version!==2||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");catalog=data;renderCatalog();const saved=catalog.curves.findIndex(c=>c.label===decodeURIComponent(location.hash.slice(1)).split("/")[0]);$("curve-select").value=Math.max(0,saved);return chooseCurve(Math.max(0,saved));}).catch(e=>status(e.message,true));
