@@ -30,7 +30,7 @@ def test_scope_precision_policy_and_failures():
     low_precision = saved_row("277.a.277.1", 277)
     low_precision["settings"]["regulator_digits"] = 15
     obsolete = saved_row("295.a.295.1", 295)
-    obsolete["settings"]["report_version"] = b.REPORT_VERSION - 2
+    obsolete["settings"]["report_version"] = 8
     failure = dict(label="997.a.997.1", cond=997, status="numerical_failure",
                    error="quadrature limit", settings=deepcopy(current["settings"]))
     selected = report.select_results([high_conductor, low_precision, failure, obsolete, current])

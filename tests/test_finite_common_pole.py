@@ -16,9 +16,9 @@ CURVE_353 = {"label": "353.a.353.1",
 def test_finite_pole_column_equals_difference_of_infinity_columns():
     x=ring().gen();F=x*(x-1)*(x**3+x+1)
     with IntegrationMonitor(max_edge_seconds=15) as monitor:
-        finite=b.regulator_column_stokes(F,(0,0),2,pole=(1,0))
-        p=b.regulator_column_stokes(F,(0,0),2)
-        r=b.regulator_column_stokes(F,(1,0),2)
+        finite=b.regulator_column_stokes(F,(0,0),pole=(1,0))
+        p=b.regulator_column_stokes(F,(0,0))
+        r=b.regulator_column_stokes(F,(1,0))
     np.testing.assert_allclose(np.asarray(finite,float),np.asarray(p,float)-np.asarray(r,float),atol=1e-8,rtol=0)
     assert all(e['status']=='ok' for e in monitor.records)
 
@@ -41,5 +41,5 @@ def test_rank_zero_orders_and_conjugate_zero_weight():
     assert pole!='infinity'
     b._resolve_triple_orders(F,images,pole,t)
     assert (t['order_P'],t['order_Q'])==(11,11)
-    column = b.regulator_column_stokes(F, images[0], 11, pole=pole, digits=20)
+    column = b.regulator_column_stokes(F, images[0], pole=pole, digits=20)
     assert all(v == 0 for v in column)

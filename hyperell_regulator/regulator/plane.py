@@ -327,63 +327,45 @@ def regulator_vector_2(f, cluster_threshold=0.4):
                           cluster_threshold=cluster_threshold)
 
 
-# f : a list of rational numbers, corresponding to the polynomial f[0] * x**n + ... + f[n]
-# Compute the period matrix of the hyperelliptic curve y^2 = f(x)
+def _period_digits(epsabs, epsrel):
+    """Translate legacy tolerances to a guarded decimal accuracy target."""
+    tolerances = np.asarray([epsabs, epsrel], dtype=float)
+    if not np.isfinite(tolerances).all() or not np.any(tolerances > 0):
+        raise ValueError('period tolerances must be finite with at least one positive value')
+    return max(15, int(np.ceil(-np.log10(min(tolerances[tolerances > 0])))))
+
+
 def period_matrix(f, epsabs=1.49e-8, epsrel=1.49e-8):
     r"""
-    Full cycle periods along a validated semilunar branch-point chain.
+    Full cycle periods on the branch-value minimum spanning tree.
 
-    Start at the finite root of largest absolute value (ties by real then
-    imaginary part), then follow increasing argument about a perturbed
-    centroid. Detours use the same path builder and validation as regulator
-    cuts. Each row is twice the integral along one lifted branch-to-branch
-    path, for the differentials ``x^i dx/y``, ``0 <= i < g``.
+    Each row is twice the integral along one lifted MST edge, for the
+    differentials ``x^i dx/y``, ``0 <= i < g``. In even degree omit the
+    leaf edge at the branch value of largest modulus to remove the one
+    relation; real and imaginary parts break ties.
 
-    ``epsabs``/``epsrel`` are forwarded to SciPy's ``quad``. Its defaults
-    give roughly eight digits; tighten them for more float64 accuracy.
+    Uses the shared guarded quadrature engine, returning a NumPy complex128
+    array. Positive ``epsabs``/``epsrel`` select the internal decimal target,
+    with a minimum of 15 digits. A nonpositive tolerance is disabled; at
+    least one must be positive. Output accuracy remains limited by float64.
     """
-    from ._periods import period_paths, segment_differential
+    from .precision import period_matrix_mp
 
-    f = _coeffs(f)
-    g = (len(f) - 2) // 2
-    roots = np.roots(f).astype(complex)
-    periods = []
-    for path in period_paths(roots, g, root_tol=128*np.finfo(float).eps):
-        row = np.zeros(g, complex)
-        previous_y = None
-        for (a, ia), (b, ib) in zip(path[:-1], path[1:]):
-            evaluate, previous_y = segment_differential(
-                roots, complex(f[0]), a, b, ia, ib, g,
-                sqrt=np.sqrt, sin=np.sin, cos=np.cos, pi=np.pi,
-                sign_tol=128*np.finfo(float).eps, previous_y=previous_y)
-            for i in range(g):
-                re, _ = spyint.quad(lambda t: evaluate(t)[i].real, 0, 1,
-                                    epsabs=epsabs, epsrel=epsrel)
-                im, _ = spyint.quad(lambda t: evaluate(t)[i].imag, 0, 1,
-                                    epsabs=epsabs, epsrel=epsrel)
-                row[i] += re + 1j * im
-        periods.append(2 * row)
-    return np.asarray(periods, complex)
-
-
-def _period_minor(periods, epsabs, epsrel):
-    from ._periods import pivoted_minor
-
-    return pivoted_minor(periods, max(epsabs, epsrel, 128*np.finfo(float).eps))
+    return np.asarray(period_matrix_mp(f, _period_digits(epsabs, epsrel)), complex)
 
 
 def cplus(f, epsabs=1.49e-8, epsrel=1.49e-8):
     """Signed real minor of full cycle periods, with deterministic pivot ties."""
-    return _period_minor(period_matrix(f, epsabs, epsrel).real, epsabs, epsrel)
+    return _c_invariants(f, epsabs, epsrel)[0]
 
 
 def cminus(f, epsabs=1.49e-8, epsrel=1.49e-8):
     """Signed imaginary minor of full cycle periods, with deterministic pivot ties."""
-    return _period_minor(period_matrix(f, epsabs, epsrel).imag, epsabs, epsrel)
+    return _c_invariants(f, epsabs, epsrel)[1]
 
 
 def _c_invariants(f, epsabs=1.49e-8, epsrel=1.49e-8):
     """Both signed minors from one period-matrix integration."""
-    periods = period_matrix(f, epsabs, epsrel)
-    return tuple(float(_period_minor(part, epsabs, epsrel))
-                 for part in (periods.real, periods.imag))
+    from .precision import c_invariants_mp
+
+    return tuple(float(v) for v in c_invariants_mp(f, _period_digits(epsabs, epsrel)))

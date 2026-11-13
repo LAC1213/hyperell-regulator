@@ -5,12 +5,12 @@
   <meta name="description" content="Explore the two sheets of hyperelliptic curves and their logarithmic regulator integrals.">
   <title>Curve explorer · hyperell-regulator</title>
   <link rel="stylesheet" href="explorer.css?v=x-cuts-2">
-  <script defer src="plotly.min.js"></script><script defer src="explorer.js?v=x-cuts-2"></script>
+  <script defer src="plotly.min.js"></script><script defer src="explorer.js?v=mst-cuts-1"></script>
 </head>
 <body>
 <header><a class="wordmark" href="../index.html">hyperell-regulator</a><nav><a href="../explorer-guide.html">Guide &amp; conventions</a><a href="https://github.com/LAC1213/hyperell-regulator">Source ↗</a></nav></header>
 <main>
-  <section class="intro"><p class="eyebrow">BEILINSON SURVEY · CONDUCTOR &lt; 1300</p><h1>Two sheets. One curve.</h1><p>Explore each curve through its hyperelliptic map x. All logarithmic weights share the same branch diagram and ordinary edge integrals.</p></section>
+  <section class="intro"><p class="eyebrow">BEILINSON SURVEY · CONDUCTOR &lt; 1300</p><h1>Two sheets. One curve.</h1><p>Explore each curve through its hyperelliptic map x. A minimum spanning tree connects the branch values and logarithmic centers. All weights share this diagram and its ordinary edge integrals.</p></section>
   <section class="workspace" aria-label="Choose a curve">
     <div class="section-label"><h2>Curve</h2></div>
     <div class="catalog-controls">
@@ -52,7 +52,7 @@
   <section class="panel curve-table">
     <div class="section-label"><h2>Genus 2 curves of small conductor</h2><span>select a row to explore</span></div>
     <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>R</th><th>nP</th><th>nR</th><th>Survey D</th><th>c⁺</th><th>c⁻</th><th>L″(std,1)</th><th>q</th><th>Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
-    <p class="caption">The table retains the 100-digit survey references. Path integrals are freshly exported at 15 digits on one shared cut per curve and checked against the survey determinant. q = π c⁺c⁻L″(std,1)/D. Orders certify the algebraic cycles and do not affect integration complexity. Rational q values are shown only when the saved agreement exceeds 95 digits. Conductor 1116 is excluded from this collection.</p>
+    <p class="caption">The table retains the 100-digit survey references in their original cycle basis. Current full-period calculations use MST cycles and can give different c⁺, c⁻ and q normalizations. Path integrals are freshly exported at 15 digits on one shared cut per curve and checked against the survey determinant. q = π c⁺c⁻L″(std,1)/D. Orders certify the algebraic cycles and do not affect integration complexity. Rational q values are shown only when the saved agreement exceeds 95 digits. Conductor 1116 is excluded from this collection.</p>
   </section>
 </main><footer><span>hyperell-regulator</span><span>Exact curves. Direct integrals. Visible paths.</span></footer>
 </body></html>

@@ -31,7 +31,7 @@ def test_entire_saved_survey_at_twenty_digits():
     assert len(successful)==22
     for row in successful:
         F=ring()(row['model'].replace('u','x'))
-        det,M,_=beilinson_determinant_stokes(F,(row['u_P'],0),1,(row['u_Q'],0),1,
+        det,M,_=beilinson_determinant_stokes(F,(row['u_P'],0),(row['u_Q'],0),
                                            digits=20,pole=row.get('pole','infinity'))
         error=max(abs(R(a)-R(b)) for rr,ss in zip(M,row['matrix']) for a,b in zip(rr,ss))
         assert error<R('1e-18'),(row['label'],error)

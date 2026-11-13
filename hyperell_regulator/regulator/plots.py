@@ -6,10 +6,12 @@ def plot_cut_system(F, centers=(0,), path=None):
     """Draw one branch diagram, marking optional logarithmic zeros."""
     import matplotlib.pyplot as plt
     cut = Cut(F, centers)
-    nodes = [complex(z) for z in cut.nodes]
-    nodes.append(nodes[-1]+1.3*float(cut.span)*complex(cut.direction))
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot([z.real for z in nodes], [z.imag for z in nodes], '-', color='#267f91', label='Integration cut')
+    for i, (a, b) in enumerate(cut.edges):
+        start = complex(cut.nodes[a])
+        end = complex(cut.nodes[b]) if b is not None else start+1.3*float(cut.span)*complex(cut.direction)
+        ax.plot([start.real, end.real], [start.imag, end.imag], '-', color='#267f91',
+                label='Integration cut' if i == 0 else None)
     roots = [complex(r) for r in cut.roots]
     ax.scatter([z.real for z in roots], [z.imag for z in roots], color='#bd5034', label='Branch values', zorder=3)
     for a in cut.centers:

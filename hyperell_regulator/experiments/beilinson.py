@@ -129,7 +129,7 @@ from hyperell_regulator.paths import data_path, ensure_parent
 from hyperell_regulator.regulator import c_invariants
 
 DEFAULT_CONDUCTOR_BOUND = 1000
-REPORT_VERSION = 10  # weights (1, 2 Re(z), |z|^2); q = pi c+ c- L'' / D
+REPORT_VERSION = 12  # weights (1, 2 Re(z), |z|^2); q = pi c+ c- L'' / D
 DETERMINANT_WEIGHTS = (1, 2, 1)
 
 LVALUES = data_path("results", "lvalue_cache.json")
@@ -380,7 +380,7 @@ def _resolve_triple_orders(G, images, pole, t):
         t[key] = int(order)
 
 
-def triple_conditioning(C, t, mp=False):
+def triple_conditioning(C, t):
     """Rank shared x-cuts by span/gap and edge count, independently of orders."""
     from hyperell_regulator.regulator.stokes import Cut, cut_scale
     try:
@@ -397,7 +397,7 @@ def triple_conditioning(C, t, mp=False):
         return None
 
 
-def rank_triples(C, triples, verbose=False, mp=False, usable_only=False):
+def rank_triples(C, triples, *, verbose=False, usable_only=False):
     r"""
     ``triples`` best first, by :func:`triple_conditioning`.
 
@@ -406,7 +406,7 @@ def rank_triples(C, triples, verbose=False, mp=False, usable_only=False):
     """
     scored, rest = [], []
     for k, t in enumerate(triples):
-        got = triple_conditioning(C, t, mp=mp)
+        got = triple_conditioning(C, t)
         (scored if got is not None else rest).append(
             (got[0], k, t, got[1]) if got is not None else (k, t))
     scored.sort(key=lambda r: r[0])
@@ -422,16 +422,15 @@ def rank_triples(C, triples, verbose=False, mp=False, usable_only=False):
 # the regulator determinant
 # ---------------------------------------------------------------------------
 
-def regulator_column_stokes(f, point, order=None, digits=None, pole="infinity"):
+def regulator_column_stokes(f, point, *, digits=None, pole="infinity"):
     """Direct log|x-x(P)| column; a finite pole gives the logarithmic ratio.
 
-    ``order`` is retained for callers carrying torsion metadata; it does not
-    enter the integration. Entries use weights ``(1, 2 Re(x), |x|^2)``.
+    Entries use weights ``(1, 2 Re(x), |x|^2)``.
     """
-    return _regulator_column_and_periods(f, point, order, digits, pole)[0]
+    return _regulator_column_and_periods(f, point, digits=digits, pole=pole)[0]
 
 
-def _regulator_column_and_periods(f, point, order=None, digits=None, pole="infinity"):
+def _regulator_column_and_periods(f, point, *, digits=None, pole="infinity"):
     from hyperell_regulator.regulator import periods_and_regulator_stokes
     per, reg = periods_and_regulator_stokes(f, point[0],
                     pole=None if pole == "infinity" else pole[0], prec=digits)
@@ -451,7 +450,7 @@ def _sage_real(v, digits):
     return R(v)
 
 
-def beilinson_determinant_stokes(G, imP, nP, imQ, nQ, digits=None, pole="infinity"):
+def beilinson_determinant_stokes(G, imP, imQ, *, digits=None, pole="infinity"):
     """Two logarithmic columns and periods from a single shared two-sheet cut."""
     from sage.all import Matrix
     from hyperell_regulator.regulator import regulators_stokes
@@ -688,7 +687,7 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
     clock = time.time()
     try:
         det, M, Err = beilinson_determinant_stokes(
-            G, imP, int(nP), imQ, int(nQ), digits=reg_digits, pole=pole)
+            G, imP, imQ, digits=reg_digits, pole=pole)
         res["regulator_digits"] = reg_digits
     except Exception as exc:
         res.update(status="numerical_failure",
@@ -697,6 +696,8 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
             print("   failed: %s" % res["error"])
         return res
     res["regulator_method"] = "stokes"
+    res["regulator_cut"] = "mst"
+    res["period_basis"] = "mst"
     res["regulator_seconds"] = round(time.time() - clock, 1)
     number = float if reg_digits is None else lambda v: _sage_real(v, reg_digits).str(truncate=False)
     res["det"] = number(det)
@@ -802,8 +803,7 @@ def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
         return {"label": record["label"], "cond": record["cond"],
                 "status": "no_admissible_triple"}
     n_triples = len(triples)
-    triples = rank_triples(C, triples, verbose=verbose,
-                           mp=reg_digits is not None, usable_only=True)
+    triples = rank_triples(C, triples, verbose=verbose, usable_only=True)
     if not triples:
         return {"label": record["label"], "cond": record["cond"],
                 "status": "no_usable_model"}
@@ -893,6 +893,8 @@ def _stored_result_satisfies(old, settings):
         return False
     if settings.get("with_lvalue"):
         if int(stored["lvalue_digits"]) < int(settings["lvalue_digits"]):
+            return False
+        if old.get("L_status") and old.get("L_second_derivative") is None:
             return False
     return True
 

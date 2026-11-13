@@ -21,6 +21,12 @@ Regulators and L-values target 100 decimal digits. The determinant uses weights
 `Undecided` in the integrality column. Precision targets are not certified
 error bounds.
 
+Period normalizations follow the cycle basis used in each record. The saved
+pre-MST snapshot uses its original cycle basis; current calculations use MST
+cycles. Selected signed minors and quotients can therefore differ by rational
+factors. See [the MST period comparison](mst_periods.md) for all successful
+saved models, including the change from 28 to 14 for conductor 249.
+
 The numerical table displays 10 significant digits. The JSON preserves the
 complete saved decimal strings, matrices, precision settings, component
 verdicts and integration models. Table points use the displayed integration

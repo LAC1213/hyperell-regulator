@@ -66,7 +66,7 @@ def regulator_plane(F, a=0, *, pole=None, **kwds):
 
 
 def c_invariants(F, prec=None):
-    """Signed minors of full cycle periods on the semilunar branch chain."""
+    """Signed minors of full cycle periods on an MST cycle basis."""
     if prec is None:
         return plane._c_invariants(F)
     from .precision import c_invariants_mp

@@ -82,6 +82,8 @@ def parse_request(request):
     prec = request.get('prec', 15)
     if type(prec) is not int or not 10 <= prec <= 100:
         raise ValueError('prec must be an integer from 10 through 100')
+    if request.get('cut', 'mst') != 'mst':
+        raise ValueError('Only MST cut exports are supported; regenerate older exports')
     return F, centers, prec
 
 
@@ -97,8 +99,9 @@ def cut_system_data(F, centers=(0,), prec=15, *, samples=40):
     cnumber = lambda z: [number(z.real()), number(z.imag())]
     point = lambda z: [float(z.real), float(z.imag)]
     edges = []
-    for i, a in enumerate(cut.nodes):
-        b = cut.nodes[i+1] if i+1 < len(cut.nodes) else a+ar.R('1.5')*cut.span*cut.direction
+    for i, (a_index, b_index) in enumerate(cut.edges):
+        a = cut.nodes[a_index]
+        b = cut.nodes[b_index] if b_index is not None else a+ar.R('1.5')*cut.span*cut.direction
         ref, yr = complex(cut.references[i]), complex(cut.reference_y[i])
         roots = [complex(r) for r in cut.roots]
         base = np.linspace(complex(a), complex(b), samples)
@@ -121,7 +124,7 @@ def cut_system_data(F, centers=(0,), prec=15, *, samples=40):
             lifts.append(dict(sheet=sheet+1, minus_sheet=cut.lower[i].index(s)+1,
                               ordinary=[cnumber(z) for z in I], logs=logs, xyz=xyz))
         edges.append(dict(index=i+1, base=[point(z) for z in base], lifts=lifts,
-                          infinite=i+1 == len(cut.nodes),
+                          infinite=b_index is None, vertices=[a_index, b_index],
                           jumps=[cnumber(j[i]) for j in cut.jumps]))
     weights = []
     for a, reg in zip(cut.centers, regulators):
@@ -132,11 +135,12 @@ def cut_system_data(F, centers=(0,), prec=15, *, samples=40):
                                      regulator=str(reg[k]), pairing=number(-4*ar.R(reg[k])/ar.R.pi())))
                 k += 1
         weights.append(dict(center=str(a), label='log|x - (%s)|' % a, pairings=pairings))
-    return dict(schema_version=2, input=dict(F=str(cut.F), centers=[str(a) for a in cut.centers], prec=prec),
+    return dict(schema_version=2, input=dict(F=str(cut.F), centers=[str(a) for a in cut.centers], prec=prec, cut="mst"),
                 degree=2, genus=g, precision=prec, weights=weights, edges=edges,
                 nodes=[point(complex(z)) for z in cut.nodes],
                 roots=[point(complex(z)) for z in cut.roots],
                 direction=point(complex(cut.direction)), warnings=[],
+                boundary_word=[list(bank) for bank in cut.boundary_word],
                 conventions=dict(forms='omega_a = x^(a-1) dx/y',
                     geometry='(Re x, Im x, asinh(Re(exp(-0.55i) y))). Display rays are truncated; integrals include infinity.',
                     normalization='Vectors use (1, Re(x), |x|^2); double the middle entry in genus-two determinants.'))

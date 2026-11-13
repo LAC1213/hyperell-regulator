@@ -174,7 +174,7 @@ def _regulator_precision(reg_digits, dps):
 def family_determinant(G, dps=None, *, reg_digits=None):
     """Compute both regulator columns and periods using one shared two-sheet cut."""
     precision = _regulator_precision(reg_digits, dps)
-    return b.beilinson_determinant_stokes(G, (0, 0), 2, (1, 0), 2,
+    return b.beilinson_determinant_stokes(G, (0, 0), (1, 0),
                                         digits=precision)
 
 

@@ -28,7 +28,7 @@ Frobenius eigenvalues which uses [rforest](https://math.mit.edu/~drew/rforest.ht
 
 ## Examples
 
-The numerical integrator computes periods and integrals weighted by `log |x-a|` directly on the two sheets of a hyperelliptic curve. Several weights share one set of cut edges; no torsion functions or general chart machinery are needed.
+The numerical integrator computes periods and integrals weighted by `log |x-a|` directly on the two sheets of a hyperelliptic curve. A minimum spanning tree joins the branch values and logarithmic centers. Several weights share one set of cut edges; no torsion functions or general chart machinery are needed.
 For example you can run the following in Sage or with `sage -python`:
 
 ```python

@@ -10,7 +10,7 @@ import pytest
 from sage.all import PolynomialRing, QQ
 
 from hyperell_regulator.regulator.explorer import parse_request
-from hyperell_regulator.regulator.surfaces import _bank_radius, _label_seed, _ray_endpoint
+from hyperell_regulator.regulator.surfaces import _bank_radius, _ray_endpoint
 
 
 def test_bank_probe_stays_between_long_nearby_cut_segments():
@@ -18,7 +18,7 @@ def test_bank_probe_stays_between_long_nearby_cut_segments():
     # branch value is roughly half a billion units away (the 603 geometry).
     cut = np.array([0j, 1e9+0j, 2j, -1e9+2j])
     midpoint = 5e8+0j
-    radius = _bank_radius(midpoint, cut[:-1], cut, 0)
+    radius = _bank_radius(midpoint, cut[:-1], list(zip(cut[:-1],cut[1:])), 0)
     assert 0 < radius < .5
 
 
@@ -33,12 +33,6 @@ def test_diagonal_ray_is_attached_exactly_to_the_mesh_boundary():
     assert end.imag == bounds[2]
     assert bounds[0] <= end.real <= bounds[1]
     assert abs(((end-start)/direction).imag) < 1e-14
-
-
-def test_mesh_seed_matches_the_integrators_racetrack():
-    from hyperell_regulator.regulator.stokes import racetrack
-    nodes = np.array([0j, 1+2j, -1+3j])
-    assert _label_seed(nodes) == racetrack(nodes, 1j)[0][0]
 
 
 @pytest.mark.parametrize('expression', ["__import__('os').getcwd()", "x.__class__", "[x]", "x**10000"])
@@ -72,11 +66,13 @@ def _assemble_export(data, logarithmic, weight=0):
                    for e in edges] for a in range(g)]) if logarithmic else u
     jumps = [_complex(e['jumps'][weight]) if logarithmic else 0j for e in edges]
     boundaries = []
+    word=data.get('boundary_word',[(j,1) for j in range(r)]+[(j,-1) for j in reversed(range(r))])
     for sheet in range(n):
-        forward = [(j, sheet, 1) for j in range(r)]
-        backward = [(j, next(i for i, lift in enumerate(edges[j]['lifts'])
-                             if lift['minus_sheet'] == sheet+1), -1) for j in reversed(range(r))]
-        boundaries.append(forward+backward)
+        walk=[]
+        for j,side in word:
+            s=sheet if side>0 else next(i for i,lift in enumerate(edges[j]['lifts']) if lift['minus_sheet']==sheet+1)
+            walk.append((j,s,side))
+        boundaries.append(walk)
     H = np.zeros((g, g), complex)
     for a in range(g):
         primitives = []
@@ -112,6 +108,9 @@ def test_catalog_has_one_two_sheet_plot_per_curve_and_reassembles_all_weights():
         assert float(curve['validation']['determinant_relative_error'])<1e-10
         data=json.loads((site/curve['file']).read_text())
         assert data['schema_version']==2 and data['degree']==2
+        assert data['input']['cut']=='mst'
+        assert len(data['boundary_word'])==2*len(data['edges'])
+        assert len(data['edges'])==len(data['nodes'])
         assert len(data['weights'])>=2
         expected_periods=[float(p['period']) for p in data['weights'][0]['pairings']]
         np.testing.assert_allclose(_assemble_export(data,False),expected_periods,atol=1e-10,rtol=1e-10)

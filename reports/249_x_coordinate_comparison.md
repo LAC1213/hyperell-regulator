@@ -1,5 +1,10 @@
 # Direct x-coordinate Stokes integration, conductor 249
 
+This initial comparison uses semilunar cuts. The package now defaults to
+minimum spanning trees; the verification driver now uses MST cuts. Original
+timings below are historical. See the [paired MST comparison](mst_cut_comparison.md)
+and [MST full-cycle periods](mst_periods.md).
+
 The proposed simplification works. The numerical integrals need only the
 degree-two hyperelliptic map. Functions with divisor `n(P-Q)` remain relevant
 to constructing and certifying the algebraic cycles, but need not be used

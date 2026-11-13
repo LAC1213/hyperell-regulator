@@ -24,8 +24,9 @@ For :math:`\omega_j=x^{j-1}dx/y`, the table displays
    I_j(e)=\int_e\omega_j,\qquad
    L_{j,a}^{\pm}(e)=\int_e\log^{\pm}(x-a)\,\omega_j.
 
-The cut includes all branch values, all selected logarithmic centers and
-a ray to infinity. Logarithmic jumps can vary between edges:
+The cut is a Euclidean minimum spanning tree of all branch values and
+selected logarithmic centers, with an outward ray to infinity at the
+rightmost vertex. Different branches share a single diagram. Logarithmic jumps can vary between edges:
 
 .. math::
 
@@ -33,7 +34,11 @@ a ray to infinity. Logarithmic jumps can vary between edges:
    \qquad \Delta_a(e)\in 2\pi i\mathbb Z.
 
 Both banks use the same geometric orientation toward infinity. To traverse
-a sheet boundary, reverse the negative bank. Numerical values are displayed
+a sheet boundary, reverse the negative bank and follow the cyclic edge
+order at each junction. Downloads include this boundary order as
+``boundary_word`` entries ``[edge_index, orientation]``. These edge indices
+and the vertex indices in ``edges[].vertices`` are zero based; a null vertex
+is infinity. The viewer displays edge numbers starting at one. Numerical values are displayed
 to 10 significant digits; downloads retain the full exported decimal strings.
 
 Geometry and pairings
@@ -64,7 +69,9 @@ unweighted period vector. Genus-two vectors use weights
 Beilinson determinant. For a finite common pole b, subtract its logarithmic
 column from each marked-point column.
 
-The survey table uses :math:`q=\pi c^+c^-L''(\mathrm{std},1)/D` and full
+The survey table retains its archived cycle basis. Current full-period
+calculations use an MST cycle basis, so their signed-minor normalization
+can differ. The survey table uses :math:`q=\pi c^+c^-L''(\mathrm{std},1)/D` and full
 cycle periods. Rational guesses are shown when their saved agreement
 exceeds 95 digits. Orders and component verdicts concern the algebraic
 cycles; the numerical cover always has degree two. Precision targets and

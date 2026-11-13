@@ -18,7 +18,7 @@ def test_conductor_249_determinant_matches_plane_with_bounded_edges():
     weights = np.array([1., 2., 1.])
     with IntegrationMonitor(max_edge_seconds=15) as monitor:
         det, matrix, errors = beilinson_determinant_stokes(
-            F, (-1, 0), 7, (0, -1), 14, digits=None)
+            F, (-1, 0), (0, -1), digits=None)
     values = np.asarray(matrix, dtype=float)
     assert np.isfinite(values).all()
     # Compare the individual weights too: a determinant alone can conceal

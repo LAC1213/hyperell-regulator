@@ -66,6 +66,17 @@ def test_component_policy_change_invalidates_cached_reports():
     assert b._stored_result_satisfies(old, dict(settings, allow_undecided=False))
 
 
+def test_completed_regulator_with_failed_lvalue_is_retried():
+    settings = dict(report_version=b.REPORT_VERSION, regulator_digits=100,
+                    lvalue_digits=100, with_lvalue=True)
+    old = dict(status='ok', settings=settings, det='5.071007759569784',
+               L_second_derivative=None,
+               L_status='PariError: the PARI stack overflows')
+    assert not b._stored_result_satisfies(old, settings)
+    recovered = dict(old, L_status=None, L_second_derivative='0.123456789')
+    assert b._stored_result_satisfies(recovered, settings)
+
+
 def test_triples_exclude_conjugate_pairs_including_infinity():
     x=ring().gen()
     C=SimpleNamespace(F=x**6+x+1,h=ring()(0),genus=lambda:2)

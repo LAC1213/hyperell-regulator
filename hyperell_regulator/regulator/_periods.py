@@ -1,6 +1,6 @@
-"""Period paths and regularised differentials for both precision backends."""
+"""MST cycle paths and regularised square-root differentials."""
 
-from ._paths import semilunar_path
+from ._tree import minimum_spanning_tree
 
 
 def _part(z, name):
@@ -9,28 +9,34 @@ def _part(z, name):
 
 
 def period_paths(roots, g, root_tol=0):
-    """First ``2*g`` branch-to-branch paths, starting at the largest modulus.
+    """An integral cycle basis from doubled branch-to-branch MST edges.
 
-    Real and imaginary parts break modulus ties. Root endpoints retain their
-    input precision; only ordinary detour corners come from float64 geometry.
-    All roots, including the unused sextic endpoint, enter path validation.
+    With 2g+1 finite branch values, all 2g edges give a basis. With 2g+2,
+    the lifted edges have one relation. A leaf edge has coefficient +/-1
+    in that relation, so omitting it gives an integral basis. Omit the
+    leaf of largest modulus, with real/imaginary parts breaking ties.
+    Exact input roots are retained; float64 chooses only the tree topology.
     """
-    candidates = list(range(len(roots)))
-    for key in (abs, lambda z: _part(z, 'real'), lambda z: _part(z, 'imag')):
-        largest = max(key(roots[i]) for i in candidates)
-        tolerance = root_tol * max(abs(roots[i]) for i in candidates)
-        candidates = [i for i in candidates if largest - key(roots[i]) <= tolerance]
-    start = candidates[0]
-    nodes, labels, _ = semilunar_path(roots, start, include_ray=False)
-    paths, current = [], []
-    for node, label in zip(nodes, labels):
-        current.append((roots[label] if label is not None else node, label))
-        if label is not None and len(current) > 1:
-            paths.append(current)
-            if len(paths) == 2 * g:
-                break
-            current = [current[-1]]
-    return paths
+    if len(roots) not in (2*g+1, 2*g+2) or g < 1:
+        raise ValueError('branch values do not match the genus')
+    # Input root solvers need not return the same ordering. Give tied MST
+    # edges a geometric order, independent of the solver's list order.
+    order = sorted(range(len(roots)), key=lambda i: (float(_part(roots[i], 'real')),
+                                                    float(_part(roots[i], 'imag'))))
+    edges = [(order[a], order[b]) for a,b in minimum_spanning_tree([roots[i] for i in order])]
+    if len(roots) == 2*g+2:
+        degree = [0]*len(roots)
+        for a, b in edges:
+            degree[a] += 1
+            degree[b] += 1
+        candidates = [i for i, d in enumerate(degree) if d == 1]
+        for key in (abs, lambda z: _part(z, 'real'), lambda z: _part(z, 'imag')):
+            largest = max(key(roots[i]) for i in candidates)
+            tolerance = root_tol*max(abs(roots[i]) for i in candidates)
+            candidates = [i for i in candidates if largest-key(roots[i]) <= tolerance]
+        omitted = candidates[0]
+        edges = [(a,b) for a,b in edges if omitted not in (a,b)]
+    return [[(roots[a],a), (roots[b],b)] for a,b in edges]
 
 
 def pivoted_minor(rows, tol):
@@ -59,8 +65,8 @@ def pivoted_minor(rows, tol):
 
 
 def segment_differential(roots, leading, a, b, ia, ib, g, *,
-                         sqrt, sin, cos, pi, sign_tol, previous_y=None):
-    """Regularise endpoints and continue the square root through corners.
+                         sqrt, sin, cos, pi, sign_tol):
+    """Regularise endpoints and continue the square root along an edge.
 
     Set ``x=a+(b-a)*sin(pi*t/2)^2``. Endpoint root factors cancel
     analytically. All other factors are continued relative to the midpoint;
@@ -84,11 +90,6 @@ def segment_differential(roots, leading, a, b, ia, ib, g, *,
         for r in others:
             value *= sqrt((x - r) / (mid - r))
         return value
-
-    if previous_y is not None:
-        ya = scaled_y(a)
-        if abs(ya - previous_y) > abs(ya + previous_y):
-            ymid = -ymid
 
     def evaluate(t):
         s, c = sin(pi * t / 2), cos(pi * t / 2)

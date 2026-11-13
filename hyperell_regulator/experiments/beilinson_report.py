@@ -32,7 +32,7 @@ def select_results(results):
     for original in results:
         settings = original.get("settings", {})
         if not (0 < int(original["cond"]) < BOUND
-                and settings.get("report_version") in (9, REPORT_VERSION)
+                and settings.get("report_version") in (9, 10, 11, REPORT_VERSION)
                 and settings.get("regulator_digits") == DIGITS
                 and settings.get("lvalue_digits") == DIGITS
                 and settings.get("with_lvalue") is True):
@@ -311,6 +311,12 @@ Regulators and L-values target 100 decimal digits. The determinant uses weights
 `abs(q/rational - 1)`. An undecided component verdict is displayed as
 `Undecided` in the integrality column. Precision targets are not certified
 error bounds.
+
+Period normalizations follow the cycle basis used in each record. The saved
+pre-MST snapshot uses its original cycle basis; current calculations use MST
+cycles. Selected signed minors and quotients can therefore differ by rational
+factors. See [the MST period comparison](mst_periods.md) for all successful
+saved models, including the change from 28 to 14 for conductor 249.
 
 The numerical table displays 10 significant digits. The JSON preserves the
 complete saved decimal strings, matrices, precision settings, component

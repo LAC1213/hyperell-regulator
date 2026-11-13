@@ -46,6 +46,9 @@ and is what the experiments use.
 """
 
 from contextlib import contextmanager
+from struct import calcsize
+
+from cypari2 import PariError
 
 from sage.all import (
     prime_range,
@@ -74,6 +77,34 @@ def _bits(digits):
     ``pari.set_real_precision`` alone leaves them at their default precision.
     """
     return int(3.33 * int(digits)) + 64
+
+
+def _pari_lfun_call(function, *args, coefficient_count=0, digits=10, **kwargs):
+    """Give coefficient vectors and L-function workspace room to grow.
+
+    Reserve a conservative budget per coefficient, including several
+    precision-sized temporaries. This raises the virtual stack ceiling,
+    leaving PARI to commit memory as needed. Workspace can exceed this
+    estimate: retry only PARI's stack exhaustion error with twice the
+    ceiling. Coefficients already computed in Python are reused on retry.
+    Never reduce a caller's larger stack or maximum.
+    """
+    if coefficient_count:
+        word_bytes = calcsize('l')
+        precision_words = (_bits(digits) + 8*word_bytes - 1) // (8*word_bytes)
+        budget = int(coefficient_count) * word_bytes * (64 + 8*precision_words)
+        ceiling = 1 << max(26, (budget-1).bit_length())
+        if ceiling > pari.stacksizemax():
+            pari.allocatemem(pari.stacksize(), ceiling, silent=True)
+    while True:
+        try:
+            return function(*args, **kwargs)
+        except PariError as exc:
+            if str(pari.errname(exc.errdata())) != 'e_STACK':
+                raise
+            size = pari.stacksize()
+            ceiling = max(size, pari.stacksizemax())
+            pari.allocatemem(size, 2*ceiling, silent=True)
 
 
 def _real_field(digits):
@@ -661,8 +692,10 @@ class StandardLFunction(SageObject):
             num_coeffs = max(200, self._coeffs_needed(digits))
         an = self.dirichlet_coefficients(num_coeffs, progress=progress)
         with _pari_precision(digits):
-            L = pari.lfuncreate([[QQ(c) for c in an], 0,
-                                 [-1, -1, 0, 0, 1], 3, N, 1])
+            L = _pari_lfun_call(
+                pari.lfuncreate, [[QQ(c) for c in an], 0,
+                                 [-1, -1, 0, 0, 1], 3, N, 1],
+                coefficient_count=len(an), digits=digits)
         self._cache[key] = L
         return L
 
@@ -677,7 +710,8 @@ class StandardLFunction(SageObject):
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
         with _pari_precision(digits):
-            return K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits)))
+            return K(2) ** K(_pari_lfun_call(
+                pari.lfuncheckfeq, L, precision=_bits(digits)))
 
     def vanishing_order(self, s=1, max_order=4, num_coeffs=None, digits=10,
                         tol=None):
@@ -717,7 +751,8 @@ class StandardLFunction(SageObject):
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
         with _pari_precision(digits):
-            return K(pari.lfun(L, s, derivative, precision=_bits(digits)))
+            return K(_pari_lfun_call(
+                pari.lfun, L, s, derivative, precision=_bits(digits)))
 
 
 def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
@@ -866,10 +901,12 @@ class CurveLFunction(SageObject):
         best, score = 1, None
         with _pari_precision(digits):
             for eps in (1, -1):
-                L = pari.lfuncreate([[QQ(c) for c in an], 0, [0, 0, 1, 1],
-                                     2, N, eps])
+                L = _pari_lfun_call(
+                    pari.lfuncreate, [[QQ(c) for c in an], 0, [0, 0, 1, 1],
+                                     2, N, eps], coefficient_count=len(an), digits=digits)
                 K = _real_field(digits)
-                v = K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits)))
+                v = K(2) ** K(_pari_lfun_call(
+                    pari.lfuncheckfeq, L, precision=_bits(digits)))
                 if score is None or v < score:
                     best, score = eps, v
         self._eps = best
@@ -900,8 +937,10 @@ class CurveLFunction(SageObject):
         an = self.dirichlet_coefficients(num_coeffs)[1:]
         eps = self.root_number(min(num_coeffs, 400), digits)
         with _pari_precision(digits):
-            L = pari.lfuncreate([[QQ(c) for c in an], 0, [0, 0, 1, 1],
-                                 2, self.conductor(), eps])
+            L = _pari_lfun_call(
+                pari.lfuncreate, [[QQ(c) for c in an], 0, [0, 0, 1, 1],
+                                 2, self.conductor(), eps],
+                coefficient_count=len(an), digits=digits)
         self._cache[key] = L
         return L
 
@@ -910,7 +949,8 @@ class CurveLFunction(SageObject):
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
         with _pari_precision(digits):
-            return K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits)))
+            return K(2) ** K(_pari_lfun_call(
+                pari.lfuncheckfeq, L, precision=_bits(digits)))
 
     def value(self, s=1, derivative=0, num_coeffs=None, digits=10):
         r"""
@@ -930,7 +970,8 @@ class CurveLFunction(SageObject):
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
         with _pari_precision(digits):
-            return K(pari.lfun(L, s, derivative, precision=_bits(digits)))
+            return K(_pari_lfun_call(
+                pari.lfun, L, s, derivative, precision=_bits(digits)))
 
 
 def curve_lvalue(C, s=1, derivative=0, num_coeffs=None, digits=10,

@@ -11,7 +11,7 @@ from .stokes import Cut, cut_scale
 def _bank_radius(w, critical, cut, index):
     """Stay on the chosen cut bank, including between nearby parallel slits."""
     radius = min(abs(w-z) for z in critical)*1e-5
-    for other, (left, right) in enumerate(zip(cut[:-1], cut[1:])):
+    for other, (left, right) in enumerate(cut):
         if other == index:
             continue
         fraction = np.clip(((w-left)/(right-left)).real, 0, 1)
@@ -36,22 +36,17 @@ def _ray_endpoint(start, direction, bounds):
     return complex(wall, end.imag) if axis == 0 else complex(end.real, wall)
 
 
-def _label_seed(nodes):
-    """The integrator's first racetrack point, without constructing its path."""
-    _, gap = cut_scale(nodes)
-    tangent = (nodes[1]-nodes[0])/abs(nodes[1]-nodes[0])
-    return nodes[0]+.02j*gap*tangent
-
-
 def surface_mesh(data, density=20):
     import triangle
 
-    F, centers, prec = parse_request(data['input'])
+    request = data['input']
+    if request.get('cut') != 'mst':
+        raise ValueError('Surface meshes require an MST export; regenerate older exports')
+    F, centers, prec = parse_request(request)
     cut_data = Cut(F, centers, prec)
     nodes = np.array([complex(z) for z in cut_data.nodes])
     direction = complex(cut_data.direction)
     upper, lower = cut_data.upper, cut_data.lower
-    integration_direction = direction
     direction = complex(0 if abs(direction.real) < 1e-12 else direction.real,
                         0 if abs(direction.imag) < 1e-12 else direction.imag)
     critical = np.array([complex(r) for r in cut_data.roots])
@@ -59,15 +54,15 @@ def surface_mesh(data, density=20):
     def continue_y(start, end, y):
         return y*np.prod(np.sqrt((end-critical)/(start-critical)))
     base = np.array([complex(*p) for edge in data["edges"] for p in edge["base"]])
-    seed = _label_seed(nodes)
+    seed = cut_data.seed
     base = np.r_[base, seed]
     span = max(np.ptp(base.real), np.ptp(base.imag))
     pad = span*.13
     bounds = [base.real.min()-pad, base.real.max()+pad,
               base.imag.min()-pad, base.imag.max()+pad]
     center = complex((bounds[0]+bounds[1])/2, (bounds[2]+bounds[3])/2)
-    end = _ray_endpoint(nodes[-1], direction, bounds)
-    cut = np.r_[nodes, end]
+    end = _ray_endpoint(nodes[cut_data.ray_vertex], direction, bounds)
+    cut = [(nodes[a], nodes[b] if b is not None else end) for a, b in cut_data.edges]
     gridx, gridy = np.meshgrid(np.linspace(bounds[0], bounds[1], density),
                               np.linspace(bounds[2], bounds[3], density))
     sites = list((gridx+1j*gridy).ravel())
@@ -87,7 +82,7 @@ def surface_mesh(data, density=20):
 
     for z in sites:
         on_cut = False
-        for a, b in zip(cut[:-1], cut[1:]):
+        for a, b in cut:
             t = np.clip(((z-a)/(b-a)).real, 0, 1)
             if abs(z-(a+t*(b-a))) < span*1e-13:
                 on_cut = True
@@ -96,7 +91,7 @@ def surface_mesh(data, density=20):
             add(z)
     constraints = []
     step = span/density/3
-    for a, b in zip(cut[:-1], cut[1:]):
+    for a, b in cut:
         samples = np.linspace(a, b, max(2, int(np.ceil(abs(b-a)/step))+1))
         constraints.extend((add(a), add(b)) for a, b in zip(samples[:-1], samples[1:]))
     # Constrained triangulation preserves tiny critical-value clusters that
@@ -162,11 +157,8 @@ def surface_mesh(data, density=20):
     if cycle_error > 1e-6:
         raise RuntimeError("Inconsistent sheet continuation over the slit mesh: %g" % cycle_error)
     boundary_error = 0.0
-    for j, a in enumerate(nodes):
-        b = nodes[j+1] if j+1 < len(nodes) else data["edges"][-1]["base"][-1]
-        b = complex(*b) if isinstance(b, list) else complex(b)
-        w = ((a+b)/2 if j+1 < len(nodes)
-             else a+cut_scale(nodes)[0]*integration_direction)
+    for j, (a, b) in enumerate(cut):
+        w = complex(cut_data.references[j])
         normal = 1j*(b-a)/abs(b-a)
         radius = _bank_radius(w, critical, cut, j)
         y = complex(cut_data.reference_y[j])

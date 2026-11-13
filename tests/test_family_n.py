@@ -28,7 +28,7 @@ def test_family_cli_defaults_and_precision_alias():
 def test_family_determinant_dispatch_keeps_precision():
     with patch.object(f.b, 'beilinson_determinant_stokes', return_value=('det', 'matrix', None)) as calc:
         assert f.family_determinant('F', dps=30) == ('det', 'matrix', None)
-    calc.assert_called_once_with('F', (0, 0), 2, (1, 0), 2, digits=30)
+    calc.assert_called_once_with('F', (0, 0), (1, 0), digits=30)
     try:
         f.family_determinant('F', dps=30, reg_digits=40)
     except ValueError:
@@ -76,13 +76,16 @@ def test_family_nonreal_member_runs_at_arbitrary_precision():
     assert 'L_second_derivative' not in high
 
 
-def test_family_real_slit_member_uses_detoured_cuts():
+def test_family_real_slit_member_uses_straight_tree_edges():
     assert f.is_real_slit_member(-4)
     model, h = f.family_polynomial(-4)
     G = 4*model+h*h
     with IntegrationMonitor(max_edge_seconds=30, max_edge_steps=100000) as monitor:
         det, matrix, _ = f.family_determinant(G, reg_digits=20)
-    assert det != 0 and len(monitor.records) > 10
+    from hyperell_regulator.regulator.stokes import Cut
+    cut=Cut(G,[0,1])
+    assert det != 0 and len(monitor.records)==len(cut.edges)
+    assert len(cut.nodes)<=G.degree()+2
     assert all(e['status'] == 'ok' for e in monitor.records)
     assert all(v.parent().precision() > 64 for row in matrix for v in row)
 

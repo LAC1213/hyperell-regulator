@@ -14,7 +14,7 @@ is the bug the arbitrary-precision path had to fix.
 
 import os
 import subprocess
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -29,7 +29,7 @@ from hyperell_regulator.frobenius import (
     odd_model,
 )
 from hyperell_regulator.lfunction import (CurveLFunction, StandardLFunction,
-                                          _pari_precision, _real_field)
+                                          _pari_lfun_call, _pari_precision, _real_field)
 
 R = PolynomialRing(ZZ, "x")
 X = R.gen()
@@ -211,6 +211,61 @@ def test_arbitrary_precision_really_is():
 def test_real_field_is_wide_enough():
     for d in (10, 30, 60):
         assert _real_field(d).precision() >= int(d * 3.32)
+
+
+def test_large_coefficient_budget_can_exceed_one_gib_without_shrinking_stack():
+    """The 1717.a.1717.2 count needs more than Sage's default 1 GiB ceiling."""
+    engine = Mock(wraps=pari)
+    engine.allocatemem = Mock()
+    engine.stacksize.return_value = 8_000_000
+    engine.stacksizemax.return_value = 2**30
+    with patch('hyperell_regulator.lfunction.pari', engine):
+        assert _pari_lfun_call(lambda: 42, coefficient_count=2_329_751, digits=100) == 42
+    size, ceiling = engine.allocatemem.call_args.args
+    assert size == 8_000_000 and ceiling > 2**30
+    engine.allocatemem.reset_mock()
+    engine.stacksize.return_value = 2**30
+    engine.stacksizemax.return_value = 2**34
+    with patch('hyperell_regulator.lfunction.pari', engine):
+        _pari_lfun_call(lambda: 42, coefficient_count=2_329_751, digits=100)
+    engine.allocatemem.assert_not_called()
+
+
+def test_pari_stack_exhaustion_retries_the_operation():
+    """Use a real exhausted PARI stack, including more than one enlargement."""
+    previous = pari.stacksize(), pari.stacksizemax()
+    attempts = 0
+
+    def build_vector():
+        nonlocal attempts
+        attempts += 1
+        return pari('vector(100000,i,i)')
+
+    try:
+        pari.allocatemem(2**18, 2**19, silent=True)
+        vector = _pari_lfun_call(build_vector)
+        assert len(vector) == 100_000 and vector[99_999] == 100_000
+        assert attempts > 1
+    finally:
+        pari.allocatemem(*previous, silent=True)
+
+
+def test_other_pari_errors_propagate_without_retry():
+    from cypari2 import PariError
+
+    attempts = 0
+    previous = pari.stacksize(), pari.stacksizemax(), pari.get_real_precision()
+
+    def fail():
+        nonlocal attempts
+        attempts += 1
+        return pari('1/0')
+
+    with pytest.raises(PariError, match='impossible inverse'):
+        with _pari_precision(100):
+            _pari_lfun_call(fail)
+    assert attempts == 1
+    assert (pari.stacksize(), pari.stacksizemax(), pari.get_real_precision()) == previous
 
 
 @pytest.mark.parametrize('cls', [CurveLFunction, StandardLFunction])

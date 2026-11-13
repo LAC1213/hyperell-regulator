@@ -15,6 +15,10 @@ function validate(data) {
       !data.input || typeof data.input.F!=="string" || data.input.F.length>4000 || !Array.isArray(data.weights) || !data.weights.length || data.weights.length>8 ||
       !Array.isArray(data.edges) || !data.edges.length || data.edges.length>200) throw Error("Expected a direct two-sheet result (schema version 2)");
   if (!Array.isArray(data.roots) || !data.roots.every(pair)) throw Error("Invalid branch values");
+  if (data.boundary_word !== undefined) {
+    const word=data.boundary_word;
+    if (!Array.isArray(word) || word.length!==2*data.edges.length || !word.every(b=>Array.isArray(b)&&b.length===2&&Number.isInteger(b[0])&&b[0]>=0&&b[0]<data.edges.length&&[1,-1].includes(b[1])) || new Set(word.map(b=>b.join(","))).size!==word.length) throw Error("Invalid tree boundary order");
+  }
   data.weights.forEach(w => {
     if (!number(w.center) || typeof w.label!=="string" || !Array.isArray(w.pairings) || w.pairings.length!==data.genus*(data.genus+1)/2) throw Error("Invalid logarithmic weight");
     w.pairings.forEach(p => { if (![p.period,p.regulator,p.pairing].every(number) || !Array.isArray(p.forms) || p.forms.length!==2 || !p.forms.every(v => Number.isInteger(v)&&v>=1&&v<=data.genus)) throw Error("Invalid pairing"); });
@@ -79,9 +83,9 @@ async function chooseCurve(index) {
   const token=++version, c=catalog.curves[index]; status("Loading "+c.label+"…");
   try {
     if (!/^data\/[\w.-]+\.json$/.test(c.file)) throw Error("Invalid curve file");
-    const response=await fetch(c.file); if(!response.ok) throw Error("Curve data could not be loaded");
+    const response=await fetch(c.file+"?v=mst-cuts-1"); if(!response.ok) throw Error("Curve data could not be loaded");
     const data=await response.json(); let nextMesh=null;
-    if (c.mesh && /^meshes\/[\w.-]+\.json$/.test(c.mesh)) { const r=await fetch(c.mesh); if(r.ok) nextMesh=validateMesh(await r.json()); }
+    if (c.mesh && /^meshes\/[\w.-]+\.json$/.test(c.mesh)) { const r=await fetch(c.mesh+"?v=mst-cuts-1"); if(r.ok) nextMesh=validateMesh(await r.json()); }
     if(token!==version)return; mesh=nextMesh; await display(data,c.label); status("Loaded "+c.label+" · one diagram for all weights.");
     $("mesh-caption").textContent=mesh?"Select a colored path. The two translucent sheets use the same validated cut. Drag to rotate; projection crossings can occur.":"Select a colored path. The displayed ray is truncated; integrals include infinity.";
   } catch(e) {if(token===version)status(e.message,true);}
@@ -101,4 +105,4 @@ $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-sele
 ["visible-sheet","show-mesh"].forEach(id=>$(id).addEventListener("change",renderPlot));
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});
-fetch("catalog.json?v=x-cuts-2").then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{if(data.schema_version!==2||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");catalog=data;renderCatalog();return chooseCurve(0);}).catch(e=>status(e.message,true));
+fetch("catalog.json?v=mst-cuts-1").then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{if(data.schema_version!==2||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");catalog=data;renderCatalog();return chooseCurve(0);}).catch(e=>status(e.message,true));
