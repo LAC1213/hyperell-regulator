@@ -1,4 +1,4 @@
-/* One shared two-sheet diagram per curve; numerical data are precomputed. */
+/* Shared tree and two-sheet views per curve; numerical data are precomputed. */
 "use strict";
 const $ = id => document.getElementById(id);
 const COLORS = ["#bd5034", "#267f91"];
@@ -48,6 +48,40 @@ function renderIntegrals() {
   $("gluing").textContent="Positive bank sheet "+(s+1)+" meets negative bank sheet "+lift.minus_sheet+".";
   $("jump").textContent="Logarithm jump on this edge: "+complex(edge.jumps[k])+". Both banks use the selected geometric orientation.";
 }
+function highlightTree() {
+  if (!current || !$("base-plot").data) return;
+  const selected=Number($("edge").value);
+  return Plotly.restyle($("base-plot"), {
+    "line.color":current.edges.map((_,i)=>i===selected?"#bc542e":"#44736a"),
+    "line.width":current.edges.map((_,i)=>i===selected?4:2)
+  }, current.edges.map((_,i)=>i));
+}
+async function renderTree() {
+  if (!current) return;
+  const selected=Number($("edge").value);
+  const traces=current.edges.map((e,i)=>({
+    type:"scatter",mode:"lines+text",x:e.base.map(p=>Number(p[0])),y:e.base.map(p=>Number(p[1])),
+    text:e.base.map((_,j)=>j===Math.floor(e.base.length/2)?String(e.index):""),textposition:"top center",
+    line:{color:i===selected?"#bc542e":"#44736a",width:i===selected?4:2,dash:e.infinite?"dash":"solid"},
+    customdata:e.base.map(()=>i),name:"Edge "+e.index+(e.infinite?" → ∞":""),showlegend:false,
+    hovertemplate:"Edge "+e.index+(e.infinite?" → ∞":"")+"<br>Re(x) = %{x:.10g}<br>Im(x) = %{y:.10g}<extra></extra>"
+  }));
+  traces.push({type:"scatter",mode:"markers",x:current.roots.map(p=>Number(p[0])),y:current.roots.map(p=>Number(p[1])),
+    marker:{size:8,color:"#253d3c"},name:"Branch values",hovertemplate:"Branch value<br>Re(x) = %{x:.10g}<br>Im(x) = %{y:.10g}<extra></extra>"});
+  traces.push({type:"scatter",mode:"markers",x:current.weights.map(w=>Number(w.center)),y:current.weights.map(()=>0),
+    marker:{size:13,symbol:"diamond-open",color:"#bc542e",line:{width:2}},name:"Logarithmic centers",
+    hovertemplate:"Logarithmic center<br>x=%{x:.10g}<extra></extra>"});
+  const rays=current.edges.filter(e=>e.infinite).map(e=>e.base[e.base.length-1]);
+  traces.push({type:"scatter",mode:"text",x:rays.map(p=>Number(p[0])),y:rays.map(p=>Number(p[1])),
+    text:rays.map(()=>"∞"),textposition:"top right",showlegend:false,hoverinfo:"skip"});
+  const plot=$("base-plot");
+  await Plotly.react(plot,traces,{margin:{l:55,r:25,t:15,b:75},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
+    uirevision:label||current.input.F,dragmode:"pan",hovermode:"closest",font:{color:"#183e3b",size:11},
+    xaxis:{title:"Re(x)",zeroline:false},yaxis:{title:"Im(x)",scaleanchor:"x",scaleratio:1,zeroline:false},
+    legend:{orientation:"h",y:-.22}},{responsive:true,displaylogo:false});
+  plot.removeAllListeners("plotly_click");
+  plot.on("plotly_click",event=>{const edge=event.points[0].customdata;if(Number.isInteger(edge)){$("edge").value=edge;renderIntegrals();highlightTree();}});
+}
 async function renderPlot() {
   if (!current) return;
   const traces=[], visible=Number($("visible-sheet").value), showMesh=$("show-mesh").checked;
@@ -64,7 +98,7 @@ async function renderPlot() {
   const plot=$("curve-plot");
   await Plotly.react(plot,traces,{margin:{l:0,r:0,t:0,b:0},paper_bgcolor:"rgba(0,0,0,0)",uirevision:label||current.input.F,scene:{xaxis:{title:"Re(x)"},yaxis:{title:"Im(x)"},zaxis:{title:"Projected y"},aspectmode:"data"},legend:{orientation:"h"}},{responsive:true,displaylogo:false});
   plot.removeAllListeners("plotly_click");
-  plot.on("plotly_click",event=>{ const c=event.points[0].customdata; if(c){$("edge").value=c[0];$("sheet").value=c[1];renderIntegrals();} });
+  plot.on("plotly_click",event=>{ const c=event.points[0].customdata; if(c){$("edge").value=c[0];$("sheet").value=c[1];renderIntegrals();highlightTree();} });
 }
 function display(data,name) {
   current=validate(data); label=name;
@@ -77,7 +111,7 @@ function display(data,name) {
   $("geometry").textContent=current.conventions.geometry;
   $("warnings").textContent=(current.warnings||[]).join(" ");
   $("results").hidden=false; $("export").disabled=false;
-  renderIntegrals(); return renderPlot();
+  renderIntegrals(); return Promise.all([renderTree(),renderPlot()]);
 }
 async function chooseCurve(index) {
   const token=++version, c=catalog.curves[index]; status("Loading "+c.label+"…");
@@ -86,7 +120,7 @@ async function chooseCurve(index) {
     const response=await fetch(c.file+"?v=mst-cuts-1"); if(!response.ok) throw Error("Curve data could not be loaded");
     const data=await response.json(); let nextMesh=null;
     if (c.mesh && /^meshes\/[\w.-]+\.json$/.test(c.mesh)) { const r=await fetch(c.mesh+"?v=mst-cuts-1"); if(r.ok) nextMesh=validateMesh(await r.json()); }
-    if(token!==version)return; mesh=nextMesh; await display(data,c.label); status("Loaded "+c.label+" · one diagram for all weights.");
+    if(token!==version)return; mesh=nextMesh; await display(data,c.label); status("Loaded "+c.label+" · shared tree and sheet views for all weights.");
     $("mesh-caption").textContent=mesh?"Select a colored path. The two translucent sheets use the same validated cut. Drag to rotate; projection crossings can occur.":"Select a colored path. The displayed ray is truncated; integrals include infinity.";
   } catch(e) {if(token===version)status(e.message,true);}
 }
@@ -101,7 +135,7 @@ function renderCatalog() {
   }); $("curve-select").disabled=false;
 }
 $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-select").value)));
-["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",renderIntegrals));
+["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightTree();}));
 ["visible-sheet","show-mesh"].forEach(id=>$(id).addEventListener("change",renderPlot));
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});

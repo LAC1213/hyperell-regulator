@@ -1,8 +1,8 @@
 Interactive curve explorer
 ===========================
 
-`Open the explorer <explorer/index.html>`_. Each curve has one branch diagram
-with two sheets, shared by all its logarithmic weights. The catalog retains
+`Open the explorer <explorer/index.html>`_. Each curve has a two-dimensional spanning tree
+and a three-dimensional sheet view, shared by all its logarithmic weights. The catalog retains
 the successful genus-two survey curves of conductor below 1300, excluding
 conductor 1116, and their 100-digit reference determinants and L-values.
 
@@ -10,8 +10,10 @@ Using the viewer
 ----------------
 
 Choose a curve and a logarithmic weight. Changing the weight updates the
-path integrals and pairings without changing the geometry. Click a colored
-path to select an edge and a positive-side sheet. The selectors also let
+path integrals and pairings without changing the geometry. Click an edge
+in the two-dimensional tree to select it, or a colored path in the sheet
+view to select both an edge and a positive-side sheet. The selected tree
+edge is highlighted and follows the edge selector. The selectors also let
 you choose the logarithm bank and reverse the path orientation. Drag the
 plot to rotate; use its toolbar to zoom or pan. The sheet selector isolates
 one sheet and both banks of its boundary. The mesh checkbox hides the
@@ -44,7 +46,10 @@ to 10 significant digits; downloads retain the full exported decimal strings.
 Geometry and pairings
 ---------------------
 
-The single plot uses the projection
+The two-dimensional plot shows the MST in the x-plane with equal axis
+scales. Circles mark branch values, diamonds mark logarithmic centers, and
+the dashed ray continues to infinity. Edge numbers match the integral
+selectors. The three-dimensional sheet view uses the projection
 
 .. math::
 
