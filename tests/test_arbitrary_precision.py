@@ -38,10 +38,10 @@ def test_lvalue_cache_retains_precision_and_rejects_old_float_records():
         path.write_text(json.dumps({'curve':dict(L_second_derivative=float(value),
             L_pari_precision=True,L_digits=30,L_num_coeffs=100)}))
         with patch.object(b,'StandardLFunction',return_value=lf):
-            result=b.standard_lvalue_cached('curve',None,digits=30,path=path,progress=False)
+            result=b.standard_lvalue_cached('curve',None,digits=30,path=path)
             assert lf.value.call_count==1
             assert abs(R(result['L_second_derivative'])-value)<R('1e-35')
-            cached=b.standard_lvalue_cached('curve',None,digits=30,path=path,progress=False)
+            cached=b.standard_lvalue_cached('curve',None,digits=30,path=path)
             assert cached['L_cached'] and lf.value.call_count==1
 
 

@@ -149,15 +149,10 @@ def _coefficient_count(conductor, gamma, weight, digits, derivative):
         gp.eval('default(realprecision, %s)' % previous)
 
 
-def _dirichlet_coefficients(L, num, progress=None):
+def _dirichlet_coefficients(L, num):
     """Expand Euler factors once per prime; index zero is a sentinel."""
-    import sys
-    import time
-    if progress is True:
-        progress = max(500, num // 20)
     a = [ZZ(0)] * (num + 1)
     a[1] = ZZ(1)
-    t0 = time.time()
     L.precompute_h1(prime_range(num + 1))
 
     # Expand 1/P_p once per prime, up to the greatest power of p <= num.
@@ -176,19 +171,6 @@ def _dirichlet_coefficients(L, num, progress=None):
         for p, e in ZZ(n).factor():
             coeff *= local(p, e)
         a[n] = coeff
-        if progress and n % progress == 0:
-            el = time.time() - t0
-            # The fallback's Euler-factor cost grows with p; a linear
-            # extrapolation substantially underestimates the remaining time.
-            left = el * ((float(num) / n) ** 2.6 - 1.0)
-            sys.stdout.write(
-                "\r      Euler factors: %d/%d (%.0f%%)  %.0fs elapsed, "
-                "~%.0fs left   " % (n, num, 100.0 * n / num, el, left))
-            sys.stdout.flush()
-    if progress:
-        sys.stdout.write("\r      Euler factors: %d/%d done in %.0fs"
-                         "%s\n" % (num, num, time.time() - t0, " " * 20))
-        sys.stdout.flush()
     return a
 
 
@@ -651,16 +633,15 @@ class StandardLFunction(SageObject):
 
     # -- the L-function ----------------------------------------------------
 
-    def dirichlet_coefficients(self, num, progress=None):
+    def dirichlet_coefficients(self, num):
         r"""
         The first ``num`` Dirichlet coefficients of `L(\mathrm{std}, s)`,
         expanded from the Euler product.
 
-        ``progress`` is the number of coefficients between reports, or
-        ``True`` for a default interval. Euler factors are batched before
-        expanding the product, and each local series is inverted once.
+        Euler factors are batched before expanding the product, and each
+        local series is inverted once.
         """
-        return _dirichlet_coefficients(self, num, progress)[1:]
+        return _dirichlet_coefficients(self, num)[1:]
 
     def _coeffs_needed(self, digits, der=2):
         r"""
@@ -675,7 +656,7 @@ class StandardLFunction(SageObject):
         """
         return _coefficient_count(self.conductor(), [-1, -1, 0, 0, 1], 3, digits, der)
 
-    def lfun(self, num_coeffs=None, digits=10, progress=None):
+    def lfun(self, num_coeffs=None, digits=10):
         r"""
         The PARI `L`-function object, with gamma factors `[-1,-1,0,0,1]`,
         weight 3 and root number `+1`, matching ``standardlfuntame.gp``.
@@ -684,13 +665,13 @@ class StandardLFunction(SageObject):
         Dirichlet coefficients needed grows with it and with the conductor;
         :meth:`_coeffs_needed` supplies PARI's estimate for the default count.
         """
-        key = ("lfun", num_coeffs, digits)          # progress is cosmetic
+        key = ("lfun", num_coeffs, digits)
         if key in self._cache:
             return self._cache[key]
         N = self.conductor()
         if num_coeffs is None:
             num_coeffs = max(200, self._coeffs_needed(digits))
-        an = self.dirichlet_coefficients(num_coeffs, progress=progress)
+        an = self.dirichlet_coefficients(num_coeffs)
         with _pari_precision(digits):
             L = _pari_lfun_call(
                 pari.lfuncreate, [[QQ(c) for c in an], 0,
@@ -756,7 +737,7 @@ class StandardLFunction(SageObject):
 
 
 def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
-                    digits=10, verbose=True, progress=None):
+                    digits=10, verbose=True):
     r"""
     `L''(\mathrm{std}, 1)` for the genus 2 curve ``C``, with the bad Euler
     factors computed from the cluster picture wherever `C` is semistable at an
@@ -773,9 +754,8 @@ def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
         out["euler_factors"][p] = str(L.euler_factor(p))
     out["conductor"] = L.conductor()
     out["digits"] = digits
-    # build (and cache) the coefficients once, with progress; everything below
-    # then hits the cache
-    L.lfun(num_coeffs, digits, progress=progress)
+    # Build and cache the coefficients once for all evaluations below.
+    L.lfun(num_coeffs, digits)
     out["feq_check"] = L.check_functional_equation(num_coeffs, digits)
     out["value"] = L.value(1, derivative, num_coeffs, digits)
     out["L_at_1"] = L.value(1, 0, num_coeffs, digits)

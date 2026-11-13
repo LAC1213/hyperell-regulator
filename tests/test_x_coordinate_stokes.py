@@ -24,7 +24,8 @@ def test_regular_zero_has_identity_gluing_and_piecewise_log_jumps():
 def test_conductor_249_at_one_hundred_digits():
     row=next(r for r in json.loads((Path(__file__).parents[1]/'reports/beilinson_100_digits.json').read_text()) if r['label']=='249.a.249.1')
     F=ring()(row['model'].replace('u','x'))
-    det,M,_=beilinson_determinant_stokes(F,(-1,0),(0,-1),digits=100)
+    det,M,_=beilinson_determinant_stokes(F,(row['u_P'],0),(row['u_Q'],0),
+                                       digits=100,pole=row.get('pole','infinity'))
     R=RealField(400)
     assert max(abs(R(a)-R(b)) for rr,ss in zip(M,row['matrix']) for a,b in zip(rr,ss))<R('1e-97')
     assert abs(R(det)-R(row['det']))<R('1e-96')

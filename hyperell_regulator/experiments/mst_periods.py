@@ -42,7 +42,7 @@ def compare(row, digits):
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--digits',type=int,default=100)
-    parser.add_argument('--output',type=Path,default=Path('reports/mst_periods.json'))
+    parser.add_argument('--output',type=Path,default=Path('results/mst_periods.json'))
     args=parser.parse_args(argv)
     source=Path('reports/beilinson_100_digits.json')
     rows=[r for r in json.loads(source.read_text()) if r.get('status')=='ok']

@@ -279,9 +279,10 @@ def export(source, output, cache):
     rows = select_results(json.loads(raw))
     if not rows:
         raise ValueError("No current 100-digit results below conductor 1300")
-    curves = {r["label"]: r for r in json.loads(Path(cache).read_text())}
+    needs_models = any(row.get('status') == 'ok' and not row.get('algebraic_data') for row in rows)
+    curves = {r["label"]: r for r in json.loads(Path(cache).read_text())} if needs_models else {}
     for row in rows:
-        if row.get("status") == "ok":
+        if row.get("status") == "ok" and not row.get('algebraic_data'):
             row["algebraic_data"] = algebraic_data(row, curves[row["label"]])
     checksum = hashlib.sha256(raw).hexdigest()
     tex = render(rows, checksum)
@@ -289,6 +290,9 @@ def export(source, output, cache):
     compared = sum(bool(row.get("comparison")) for row in rows)
     displayed = sum(row.get("status") == "ok" and int(row["cond"]) not in EXCLUDED_DISPLAY_CONDUCTORS
                     for row in rows)
+    source_name = Path(source)
+    if source_name.is_absolute() and source_name.is_relative_to(Path.cwd()):
+        source_name = source_name.relative_to(Path.cwd())
     readme = f"""# Beilinson survey: conductor < 1300, 100 digits
 
 This directory contains the current 100-digit Beilinson survey:
@@ -312,11 +316,10 @@ Regulators and L-values target 100 decimal digits. The determinant uses weights
 `Undecided` in the integrality column. Precision targets are not certified
 error bounds.
 
-Period normalizations follow the cycle basis used in each record. The saved
-pre-MST snapshot uses its original cycle basis; current calculations use MST
-cycles. Selected signed minors and quotients can therefore differ by rational
-factors. See [the MST period comparison](mst_periods.md) for all successful
-saved models, including the change from 28 to 14 for conductor 249.
+Full cycle periods use the MST cycle basis recorded in each successful row.
+The current code computes D and the signed period minors at a 100-digit target.
+L-values use the precision-validated coefficient cache. The quotient uses
+these ingredients in the same integration model as its displayed points.
 
 The numerical table displays 10 significant digits. The JSON preserves the
 complete saved decimal strings, matrices, precision settings, component
@@ -325,13 +328,36 @@ models. Reciprocal coordinate changes are marked by a dagger in the model
 table, with their shift and scale given explicitly. The JSON retains both
 the original points and their integration-model images.
 
-After the calculation has finished, regenerate without repeating integrations:
+From the repository root in SageMath, recompute the survey (network access is
+needed to fetch curve data; cached L-values are reused after validation):
 
 ```sh
+sage -python -m hyperell_regulator.experiments.beilinson 1300 --fetch --force --digits 100 --reg-digits 100 --edge-seconds 600
 sage -python -m hyperell_regulator.experiments.beilinson_report
 ```
 
-Source: `results/beilinson_results.json` (read without modification).
+The bound is strict: conductor < 1300. A fresh cache also recomputes L-values
+and can take substantially longer. Component/reduction computations require
+the package's Sage dependencies. The command retains failed attempts and
+does not claim that the locally cached curves form a complete list.
+
+To rebuild the tables from the versioned JSON without repeating numerical
+calculations or requiring local curve caches:
+
+```sh
+sage -python -m hyperell_regulator.experiments.beilinson_report --input reports/beilinson_100_digits.json
+```
+
+To typeset the survey, install the LaTeX packages in its preamble, including
+`arydshln`. Compile into a separate directory to keep this folder tidy.
+Run the final command twice to resolve cross-references:
+
+```sh
+mkdir -p /tmp/beilinson-survey
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory=/tmp/beilinson-survey reports/beilinson_100_digits.tex
+```
+
+Source: `{source_name}` (read without modification).
 Source SHA-256: `{checksum}`.
 """
     output = Path(output)

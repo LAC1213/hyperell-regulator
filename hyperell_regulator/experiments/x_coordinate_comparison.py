@@ -41,7 +41,7 @@ def compare(reference, digits):
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--digits',type=int,default=100)
-    parser.add_argument('--output',type=Path,default=Path('reports/249_x_coordinate_comparison.json'))
+    parser.add_argument('--output',type=Path,default=Path('results/249_x_coordinate_comparison.json'))
     args=parser.parse_args(argv)
     rows=json.loads(Path('reports/beilinson_100_digits.json').read_text())
     references=[next(r for r in rows if r['label']=='249.a.249.1'),

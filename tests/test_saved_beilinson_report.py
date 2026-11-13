@@ -87,6 +87,9 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
     assert exported["algebraic_data"]["shift"] == "0"
     assert exported["algebraic_data"]["scale"] == "1"
     assert "functions" not in exported["algebraic_data"]
+    reproduced = tmp_path/'reproduced'
+    report.export(out/'beilinson_100_digits.json', reproduced, tmp_path/'missing-cache.json')
+    assert json.loads((reproduced/'beilinson_100_digits.json').read_text()) == rows
     tex = (out/"beilinson_100_digits.tex").read_text()
     assert r"q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D" in tex
     assert r"2\operatorname{Re}(z)" in tex

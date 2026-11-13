@@ -13,11 +13,13 @@ Choose a curve and a logarithmic weight. Changing the weight updates the
 path integrals and pairings without changing the geometry. Click an edge
 in the two-dimensional tree to select it, or a colored path in the sheet
 view to select both an edge and a positive-side sheet. The selected tree
-edge is highlighted and follows the edge selector. The selectors also let
+edge and both of its lifted paths are highlighted and follow the edge selector. The selectors also let
 you choose the logarithm bank and reverse the path orientation. Drag the
 plot to rotate; use its toolbar to zoom or pan. The sheet selector isolates
 one sheet and both banks of its boundary. The mesh checkbox hides the
-translucent surfaces while retaining paths.
+translucent surfaces while retaining paths. Switching between pan, zoom and
+rotation, changing curves, or updating a selection preserves the camera.
+Use **Home** to reset it; double-clicking does not reset the camera.
 
 For :math:`\omega_j=x^{j-1}dx/y`, the table displays
 
@@ -74,10 +76,12 @@ unweighted period vector. Genus-two vectors use weights
 Beilinson determinant. For a finite common pole b, subtract its logarithmic
 column from each marked-point column.
 
-The survey table retains its archived cycle basis. Current full-period
-calculations use an MST cycle basis, so their signed-minor normalization
-can differ. The survey table uses :math:`q=\pi c^+c^-L''(\mathrm{std},1)/D` and full
-cycle periods. Rational guesses are shown when their saved agreement
+The table recomputes determinants and full periods with the current MST
+code at a 100-digit target. L-values are reused from the cache after the
+current precision and coefficient-count checks. Quotients and their
+relative agreement are recomputed from these ingredients. The table uses
+:math:`q=\pi c^+c^-L''(\mathrm{std},1)/D` and full
+cycle periods. Rational guesses are shown when their recomputed agreement
 exceeds 95 digits. Orders and component verdicts concern the algebraic
 cycles; the numerical cover always has degree two. Precision targets and
 convergence checks are not certified interval error bounds.
@@ -96,8 +100,10 @@ From the repository root:
 
 The first command exports integration models, marked points and survey
 references without constructing torsion functions. The second integrates
-one shared cut per curve and verifies its determinant against the saved
-reference. The third installs Triangle, the optional constrained
+one shared cut per curve, recomputes the 100-digit numerical table, and
+verifies its determinants against the saved reference. Numerical source
+hashes and L-value cache checks are included in the catalog. The third
+installs Triangle, the optional constrained
 triangulation dependency. Mesh generation does not recompute integrals.
 
 Sphinx copies the static files in ``docs/_extra/explorer`` to the published

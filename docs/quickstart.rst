@@ -79,8 +79,9 @@ of the period matrix. A change of cycle basis can multiply these chosen
 minors by rational factors, in addition to changing signs. For example,
 on the saved conductor-249 model the MST convention halves ``c_minus`` and
 changes the displayed quotient from 28 to 14; its regulator determinant
-and L-value are unchanged. Archived survey values retain their original
-basis. New experiment records identify the MST period basis, and their
+and L-value are unchanged. The saved survey and explorer use the current
+MST normalization.
+New experiment records identify the MST period basis, and their
 cache policy is separate from older records.
 
 The semilunar integration backend and its selector have been removed.

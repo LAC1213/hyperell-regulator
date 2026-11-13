@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from sage.all import PolynomialRing, QQ
+from sage.all import PolynomialRing, QQ, RealField
 
 from hyperell_regulator.regulator.explorer import parse_request
 from hyperell_regulator.regulator.surfaces import _bank_radius, _ray_endpoint
@@ -99,6 +99,9 @@ def test_catalog_has_one_two_sheet_plot_per_curve_and_reassembles_all_weights():
     catalog=json.loads((site/'catalog.json').read_text())
     inputs=json.loads((root/'docs/explorer_inputs.json').read_text())
     assert catalog['schema_version']==2
+    assert catalog['period_basis']=='mst' and catalog['table_digits']==100
+    for name, checksum in catalog['numerical_source_sha256'].items():
+        assert hashlib.sha256((root/name).read_bytes()).hexdigest()==checksum,name
     assert [c['label'] for c in catalog['curves']]==[c['label'] for c in inputs['curves']]
     assert len(catalog['curves'])==21
     assert len({c['file'] for c in catalog['curves']})==21
@@ -130,3 +133,22 @@ def test_catalog_has_one_two_sheet_plot_per_curve_and_reassembles_all_weights():
             assert mesh['validation'][key]<1e-6,(curve['label'],key)
         matrix=np.array(curve['normalized_matrix'],float)
         assert abs(np.linalg.det(matrix)/float(curve['determinant'])-1)<1e-10
+
+
+def test_table_uses_current_mst_periods_and_recomputed_quotients():
+    root=Path(__file__).resolve().parents[1]
+    catalog=json.loads((root/'docs/_extra/explorer/catalog.json').read_text())
+    periods={r['label']:r for r in json.loads((root/'reports/beilinson_100_digits.json').read_text()) if r['status']=='ok'}
+    R=RealField(400)
+    for curve in catalog['curves']:
+        reference=periods[curve['label']]
+        assert curve['period_basis']=='mst' and curve['regulator_digits']==100
+        assert curve['L_digits']>=100 and curve['validation']['L_num_coeffs']>0
+        assert curve['validation']['feq_check']<1e-100
+        for key in ('c_plus','c_minus'):
+            assert abs(R(curve['numerical'][key])/R(reference[key])-1)<R('1e-97'),curve['label']
+        q=R.pi()*R(curve['numerical']['c_plus'])*R(curve['numerical']['c_minus'])*R(curve['numerical']['L_second_derivative'])/R(curve['numerical']['det'])
+        assert abs(q/R(curve['quotient'])-1)<R('1e-99')
+        assert curve['q']==reference['comparison']['rational'] and curve['comparison_verified']
+        assert abs(q/R(QQ(curve['q']))-1)<R('1e-95')
+    assert catalog['curves'][0]['q']=='14'

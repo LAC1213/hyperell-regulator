@@ -488,8 +488,7 @@ def save_lvalue(label, data, path=LVALUES):
     return have
 
 
-def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
-                           progress=True):
+def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False):
     r"""
     `L''(\mathrm{std}, 1)` for ``C``, reusing ``path`` when it already holds a
     value computed with at least as many coefficients as ``digits`` now
@@ -529,11 +528,8 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
             return rec
     try:
         num_coeffs = LF._coeffs_needed(digits)
-        if progress:
-            print("  L-value: %s coefficients ..." % num_coeffs, flush=True)
-        # warm the coefficient cache first, reporting progress: this is the
-        # slow step and everything after it is instant
-        LF.lfun(num_coeffs, digits, progress=progress)
+        # Build and cache the coefficients once for both evaluations.
+        LF.lfun(num_coeffs, digits)
         rec = {"standard_conductor": int(LF.conductor()),
                "feq_check": float(LF.check_functional_equation(num_coeffs,
                                                                digits)),
@@ -549,8 +545,6 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
             rec["L_precision_warning"] = (
                 "the functional equation holds only to %.1e, short of the %d "
                 "digits asked for" % (rec["feq_check"], int(digits)))
-            if progress:
-                print("   WARNING: %s" % rec["L_precision_warning"])
     except NotImplementedError as exc:
         rec = {"L_second_derivative": None, "L_status": str(exc),
                "L_digits": int(digits)}
@@ -722,8 +716,7 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
     # --- cached by label and reused rather than recomputed
     if with_lvalue:
         clock = time.time()
-        res.update(standard_lvalue_cached(record["label"], C, digits=digits,
-                                           progress=verbose))
+        res.update(standard_lvalue_cached(record["label"], C, digits=digits))
         res["lvalue_seconds"] = round(time.time() - clock, 1)
 
     res["comparison"] = beilinson_comparison(
