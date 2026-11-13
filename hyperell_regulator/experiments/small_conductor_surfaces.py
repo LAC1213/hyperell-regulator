@@ -48,7 +48,7 @@ def main(argv=None):
         return
     catalog_path = args.site/"catalog.json"
     catalog = json.loads(catalog_path.read_text())
-    functions = [f for c in catalog["curves"] for f in c["functions"]]
+    curves = catalog["curves"]
     def run(f):
         command = [sys.executable, "-m", "hyperell_regulator.experiments.small_conductor_surfaces",
                    "--site", str(args.site), "--density", str(args.density), "--worker", f["file"]]
@@ -63,7 +63,7 @@ def main(argv=None):
         return f
     errors = []
     with ThreadPoolExecutor(max_workers=args.jobs) as executor:
-        futures = {executor.submit(run, f): f for f in functions}
+        futures = {executor.submit(run, f): f for f in curves}
         for future in as_completed(futures):
             try:
                 f = future.result()
@@ -78,8 +78,8 @@ def main(argv=None):
                     (args.site/"meshes"/Path(f["file"]).name).unlink(missing_ok=True)
     if errors and not args.allow_missing:
         raise SystemExit("%d surface exports need attention" % len(errors))
-    catalog["surface_meshes"] = dict(available=sum("mesh" in f for f in functions),
-                                    unavailable=sum("mesh" not in f for f in functions))
+    catalog["surface_meshes"] = dict(available=sum("mesh" in f for f in curves),
+                                    unavailable=sum("mesh" not in f for f in curves))
     catalog_path.write_text(json.dumps(catalog, indent=2)+"\n")
 
 

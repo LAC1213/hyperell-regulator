@@ -10,7 +10,8 @@ from sage.all import ComplexField
 from hyperell_regulator.regulator import c_invariants
 from hyperell_regulator.regulator import _paths
 from hyperell_regulator.regulator._periods import period_paths
-from hyperell_regulator.regulator.cover import Cover, check_path_embedded
+from hyperell_regulator.regulator._paths import check_path_embedded
+from hyperell_regulator.regulator.stokes import Cut
 from hyperell_regulator.regulator.plane import period_matrix
 from hyperell_regulator.regulator.polynomials import ring
 from hyperell_regulator.regulator.precision import period_matrix_mp
@@ -29,12 +30,13 @@ def test_period_and_regulator_paths_share_validation_and_detours():
     check_path_embedded(nodes, crit=roots, include_ray=False)
 
     x = ring().gen()
-    cov = Cover(x**5 - 5*x**3 + 4*x, x, 0)
+    cut = Cut(x**5 - 5*x**3 + 4*x, [0])
     with patch.object(_paths, 'check_path_embedded', wraps=check_path_embedded) as check:
-        nodes, kinds, ray = cov.cut_path()
+        cut = Cut(x**5 - 5*x**3 + 4*x, [0])
+        nodes, kinds, ray = cut.nodes, cut.kinds, cut.direction
         assert check.called
-    assert 'none' in kinds
-    check_path_embedded(nodes, ray, cov.critical_values())
+    assert 'regular' in kinds
+    check_path_embedded(nodes, ray, cut.roots)
 
 
 def test_largest_modulus_start_and_exact_root_endpoints():
@@ -62,7 +64,7 @@ def test_distant_critical_value_does_not_hide_a_backtracking_cut():
     # The degree-28 cover for 249.a.6723.1 has this badly scaled geometry.
     values = np.array([-3.5733102834628396, -1.523892144098351,
                        0, 8387456858.080941], complex)
-    with pytest.raises(NotImplementedError, match="lies on the segment"):
+    with pytest.raises(NotImplementedError, match="lies on the segment|backtrack"):
         check_path_embedded(values[[2, 3, 0, 1]], crit=values,
                             include_ray=False)
     # A nearby point beyond an endpoint is outside this segment, even when

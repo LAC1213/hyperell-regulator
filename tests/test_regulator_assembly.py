@@ -1,91 +1,28 @@
-"""Shared Stokes assembly, with independent plane values and call-count checks."""
-
+"""One common set of edge periods supplies the entire determinant."""
 from unittest.mock import patch
-
 import numpy as np
-
-from hyperell_regulator.regulator import periods_and_regulator_stokes
-from hyperell_regulator.regulator import stokes
+from hyperell_regulator.regulator import regulators_stokes, IntegrationMonitor
 from hyperell_regulator.regulator.polynomials import ring
-
-x = ring().gen()
-F = x**5 + x**2 + x
-PHI = (x, 0)
-PERIODS = np.array([9.22548668, -1.22108503, 8.98356248])
-REGULATOR = np.array([-5.80825813, 0.45209334, 5.53626738])
+from hyperell_regulator.experiments import beilinson as b
 
 
-def test_combined_stokes_integrates_each_edge_once():
-    # These values come from the independent plane quadrature, not from a
-    # second Stokes assembly that could share the same algebraic mistake.
-    with patch.object(stokes, "edge_data", wraps=stokes.edge_data) as edges:
-        per, reg = periods_and_regulator_stokes(F, PHI)
-    assert edges.call_count == 1
-    np.testing.assert_allclose(per, PERIODS, rtol=1e-7, atol=1e-8)
-    np.testing.assert_allclose(reg, REGULATOR, rtol=1e-7, atol=1e-8)
+def test_shared_columns_integrate_each_edge_once():
+    from hyperell_regulator.regulator.stokes import Cut
+    x=ring().gen();F=x**6+4*x**5+4*x**4+2*x**3+1
+    with IntegrationMonitor(max_edge_seconds=15) as monitor:
+        det,M,_=b.beilinson_determinant_stokes(F,(-1,0),7,(0,-1),14)
+    assert len(monitor.records)==len(Cut(F,[-1,0]).nodes)
+    assert all(e['degree']==2 for e in monitor.records)
+    assert abs(float(det)-33.48773151266456)<1e-12
 
 
-def test_combined_stokes_preserves_integrated_moments():
-    with patch.object(stokes, "edge_data", wraps=stokes.edge_data) as edges:
-        per, reg = periods_and_regulator_stokes(F, PHI, fast=False)
-    assert edges.call_count == 1
-    assert edges.call_args.args[-1] is True
-    np.testing.assert_allclose(per, PERIODS, rtol=1e-7, atol=1e-8)
-    np.testing.assert_allclose(reg, REGULATOR, rtol=1e-7, atol=1e-8)
-
-
-def test_combined_stokes_preserves_precision_dispatch():
-    from hyperell_regulator.regulator import precision
-
-    expected_per, expected_reg = [1, 2, 3], [4, 5, 6]
-    with patch.object(precision, "periods_and_regulator_stokes_mp",
-                      return_value=(expected_per, expected_reg)) as combined:
-        assert periods_and_regulator_stokes(
-            F, PHI, prec=30, check_tol=1e-8) == (expected_per, expected_reg)
-    combined.assert_called_once_with(F, PHI, 30, check_tol=1e-8)
-    try:
-        periods_and_regulator_stokes(F, PHI, fast=False, prec=30)
-    except ValueError as exc:
-        assert "only for the fast version" in str(exc)
-    else:
-        raise AssertionError("arbitrary precision must still reject fast=False")
-
-
-def test_beilinson_determinant_integrates_two_covers():
-    from hyperell_regulator.experiments.beilinson import beilinson_determinant_stokes
-
-    # Both points are Weierstrass, with phi=x and x-1 of order two.  Their
-    # norms are squares. Only the mixed row gains a factor of two.
-    f = x * (x - 1) * (x**3 + x + 1)
-    p_per = np.array([2., -1., 3.])
-    q_per = np.array([2. + 1e-12, -1., 3.])
-    p_reg, q_reg = np.array([1., 2., 3.]), np.array([4., 5., 7.])
-    # Mock the expensive integration only: divisor construction, normalization
-    # of the columns, reuse of P's periods, and the determinant remain real.
+def test_torsion_orders_do_not_enter_numerical_integration():
     from hyperell_regulator import regulator
-    with patch.object(regulator, "periods_and_regulator_stokes",
-                      side_effect=[(p_per, p_reg), (q_per, q_reg)]) as integrate:
-        det, matrix, error = beilinson_determinant_stokes(
-            f, (0, 0), 2, (1, 0), 2)
-    assert integrate.call_count == 2
-    expected = np.array([1., 2., 1.])[:, None] * np.column_stack([p_reg, q_reg, p_per])
-    np.testing.assert_allclose(np.asarray(matrix, float), expected, rtol=0, atol=0)
-    assert abs(float(det) - np.linalg.det(expected)) < 1e-12
-    assert error is None
-
-
-def test_normalized_column_is_invariant_under_a_large_positive_scalar():
-    from sage.all import QQ, RealField
-    from hyperell_regulator import regulator
-    from hyperell_regulator.experiments.beilinson import _regulator_column_and_periods
-
-    R=RealField(300)
-    per=[R(2),R(-1),R(3)];reg=[R(1),R(4),R(-2)]
-    scale=QQ(2**400+13)/(3**80+1)
-    columns=[]
-    for scalar in (QQ(1),scale):
-        shifted=[v+R(scalar).log()*p for v,p in zip(reg,per)]
-        with patch.object(regulator,'function_with_divisor',return_value=(scalar*x,0)), \
-                patch.object(regulator,'periods_and_regulator_stokes',return_value=(per,shifted)):
-            columns.append(_regulator_column_and_periods(F,(0,0),2,digits=60)[0])
-    assert max(abs(a-b) for a,b in zip(*columns))<R('1e-80')
+    per=np.array([2.,-1.,3.]);cols=[np.array([1.,2.,3.]),np.array([4.,5.,7.])]
+    x=ring().gen();F=x**5+x+1
+    with patch.object(regulator,'regulators_stokes',return_value=(per,cols)) as integrate:
+        det,M,_=b.beilinson_determinant_stokes(F,(0,1),100000,(1,1),999999)
+    integrate.assert_called_once_with(F,[0,1],pole=None,prec=None)
+    expected=np.array([1,2,1])[:,None]*np.column_stack(cols+[per])
+    np.testing.assert_array_equal(np.array(M),expected)
+    assert abs(float(det)-np.linalg.det(expected))<1e-12

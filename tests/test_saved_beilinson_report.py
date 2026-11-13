@@ -30,7 +30,7 @@ def test_scope_precision_policy_and_failures():
     low_precision = saved_row("277.a.277.1", 277)
     low_precision["settings"]["regulator_digits"] = 15
     obsolete = saved_row("295.a.295.1", 295)
-    obsolete["settings"]["report_version"] = b.REPORT_VERSION - 1
+    obsolete["settings"]["report_version"] = b.REPORT_VERSION - 2
     failure = dict(label="997.a.997.1", cond=997, status="numerical_failure",
                    error="quadrature limit", settings=deepcopy(current["settings"]))
     selected = report.select_results([high_conductor, low_precision, failure, obsolete, current])
@@ -86,7 +86,7 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
     assert exported["algebraic_data"]["image_points"] == [["-1", "0"], ["0", "-1"], "infinity"]
     assert exported["algebraic_data"]["shift"] == "0"
     assert exported["algebraic_data"]["scale"] == "1"
-    assert set(exported["algebraic_data"]["functions"]) == {"P", "Q"}
+    assert "functions" not in exported["algebraic_data"]
     tex = (out/"beilinson_100_digits.tex").read_text()
     assert r"q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D" in tex
     assert r"2\operatorname{Re}(z)" in tex
@@ -111,7 +111,7 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
     assert entry["q"] is None and not entry["comparison_verified"]
     assert entry["rational_guess"] == "28"
     assert entry["quotient"] == row["comparison"]["ratio"]
-    assert entry["pole"] == "infinity" and len(entry["exact_functions"]) == 2
+    assert entry["pole"] == "infinity" and "exact_functions" not in entry
     assert "u" not in entry["F"]
     rows[0]["comparison"]["relative_agreement"] = "1e-101"
     (out/"beilinson_100_digits.json").write_text(json.dumps(rows))

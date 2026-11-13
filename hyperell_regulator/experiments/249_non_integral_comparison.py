@@ -34,8 +34,8 @@ def report_edge(event):
           flush=True)
 
 
-# The degree-28 cover needs a larger budget than the order-two examples.
-with IntegrationMonitor(max_edge_seconds=900, max_edge_steps=1_000_000,
+# Both logarithmic columns share a degree-two x-cut.
+with IntegrationMonitor(max_edge_seconds=120, max_edge_steps=1_000_000,
                         callback=report_edge, progress_interval=5):
     result = _analyse_triple(
         {"label": "249.a.6723.1", "cond": 249},

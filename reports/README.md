@@ -2,7 +2,7 @@
 
 This directory contains the current 100-digit Beilinson survey:
 
-- [Full saved data and exact functions](beilinson_100_digits.json).
+- [Full saved data and integration models](beilinson_100_digits.json).
 - [Three LaTeX tables: torsion/integrality, models, and numerical data](beilinson_100_digits.tex).
 
 The snapshot has 154 curve records, 22 successful
@@ -23,7 +23,7 @@ error bounds.
 
 The numerical table displays 10 significant digits. The JSON preserves the
 complete saved decimal strings, matrices, precision settings, component
-verdicts and exact functions. Table points use the displayed integration
+verdicts and integration models. Table points use the displayed integration
 models. Reciprocal coordinate changes are marked by a dagger in the model
 table, with their shift and scale given explicitly. The JSON retains both
 the original points and their integration-model images.

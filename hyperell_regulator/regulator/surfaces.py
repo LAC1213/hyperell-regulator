@@ -1,48 +1,12 @@
-"""Triangulated, consistently labelled sheets of the slit phi-plane.
+"""Two slit-sheet display meshes from explicit square-root factors.
 
-Display geometry is independent of the saved quadrature. Triangulation edges
-recover the entire cut, including its detours and the ray to the window edge.
-Labels are continued across triangle edges only in the slit complement and
-checked against both banks of the integrator's cut.
+The constrained triangulation stays independent of numerical integration.
+Sheet labels are checked around mesh cycles and against both cut banks.
 """
-
 from collections import deque
-
 import numpy as np
-
-from .cover import Cover
 from .explorer import parse_request
-from .stokes import cut_data, cut_scale, follow
-
-
-def _continue(cov, start, end, x, y):
-    if getattr(cov, "_surface_guarded", False):
-        current, target = complex(start), complex(end)
-        for _ in range(4000):
-            remaining = abs(target-current)
-            if not remaining:
-                return x, y
-            radius = .05 * float(np.min(abs(current-cov._surface_branch_values)))
-            following = target if remaining <= radius else current+(target-current)*(radius/remaining)
-            if following == current:
-                raise RuntimeError("Surface continuation cannot resolve the next step")
-            x, y = _follow_segment(cov, current, following, x, y)
-            if following == target:
-                return x, y
-            current = following
-        raise RuntimeError("Surface continuation exceeded its subdivision limit")
-    return _follow_segment(cov, start, end, x, y)
-
-
-def _follow_segment(cov, start, end, x, y):
-    try:
-        return follow(cov, start, end, x, y)
-    except RuntimeError:
-        from ._legs import leg_in_w
-        xx, yy, _, _ = leg_in_w(cov, start, end, x, y,
-                                np.zeros(len(x), complex), integrate=False)
-        return xx, yy
-
+from .stokes import Cut, cut_scale
 
 def _bank_radius(w, critical, cut, index):
     """Stay on the chosen cut bank, including between nearby parallel slits."""
@@ -79,28 +43,21 @@ def _label_seed(nodes):
     return nodes[0]+.02j*gap*tangent
 
 
-def surface_mesh(data, density=20, *, _guarded=False):
-    """Return one finite-window mesh per globally labelled sheet.
-
-    Faces approach their vertices by a small relative inset, avoiding exact
-    ramification points and finite-value poles of the display projection.
-    All vertices are actual continued points of the curve, not interpolated
-    heights or independently sorted fibres.
-    """
+def surface_mesh(data, density=20):
     import triangle
 
-    F, phi, _ = parse_request(data["input"])
-    cov = Cover(F, *phi)
-    nodes, kinds, direction = cov.cut_path()
-    upper, lower, _, _ = cut_data(cov, nodes, direction)
+    F, centers, prec = parse_request(data['input'])
+    cut_data = Cut(F, centers, prec)
+    nodes = np.array([complex(z) for z in cut_data.nodes])
+    direction = complex(cut_data.direction)
+    upper, lower = cut_data.upper, cut_data.lower
     integration_direction = direction
-    # Cardinal rays inherit tiny trig roundoff. Qhull must see exactly
-    # collinear real nodes, rather than an artificial 1e-15-wide sliver.
     direction = complex(0 if abs(direction.real) < 1e-12 else direction.real,
                         0 if abs(direction.imag) < 1e-12 else direction.imag)
-    critical = nodes[np.array(kinds) != "none"]
-    cov._surface_guarded = _guarded
-    cov._surface_branch_values = critical
+    critical = np.array([complex(r) for r in cut_data.roots])
+    leading = complex(F.leading_coefficient())
+    def continue_y(start, end, y):
+        return y*np.prod(np.sqrt((end-critical)/(start-critical)))
     base = np.array([complex(*p) for edge in data["edges"] for p in edge["base"]])
     seed = _label_seed(nodes)
     base = np.r_[base, seed]
@@ -169,15 +126,15 @@ def surface_mesh(data, density=20, *, _guarded=False):
     first = face_at(seed)
     if first < 0:
         raise RuntimeError("Sheet-label seed is outside the surface window")
-    x, y = cov.fibre(seed)
-    labels = {first: _continue(cov, seed, centers[first], x, y)}
+    y = np.sqrt(leading)*np.prod(np.sqrt(seed-critical))
+    labels = {first: continue_y(seed, centers[first], y)}
     queue = deque([first])
     cycle_error = 0.0
     cycle_count = 0
     visited_edges = set()
     while queue:
         index = queue.popleft()
-        x, y = labels[index]
+        y = labels[index]
         face = faces[index]
         for opposite, neighbor in enumerate(neighbors[index]):
             if neighbor < 0:
@@ -188,19 +145,17 @@ def surface_mesh(data, density=20, *, _guarded=False):
                 continue
             visited_edges.add(pair)
             midpoint = (coordinates[edge[0]]+coordinates[edge[1]])/2
-            xx, yy = _continue(cov, centers[index], midpoint, x, y)
-            xx, yy = _continue(cov, midpoint, centers[neighbor], xx, yy)
+            yy = continue_y(centers[index], midpoint, y)
+            yy = continue_y(midpoint, centers[neighbor], yy)
             if neighbor in labels:
-                ex, ey = labels[neighbor]
-                defect = np.max((abs(xx-ex)+abs(yy-ey))/(1+abs(ex)+abs(ey)))
+                ey = labels[neighbor]
+                defect = abs(yy-ey)/(1+abs(ey))
                 cycle_error = max(cycle_error, float(defect))
                 cycle_count += 1
                 if defect > 1e-6:
-                    if not _guarded:
-                        return surface_mesh(data, density, _guarded=True)
                     raise RuntimeError("Inconsistent sheet continuation over the slit mesh: %g" % defect)
             else:
-                labels[int(neighbor)] = (xx, yy)
+                labels[int(neighbor)] = yy
                 queue.append(int(neighbor))
     if len(labels) != len(faces):
         raise RuntimeError("Cut mesh has disconnected regions at floating point precision")
@@ -214,49 +169,44 @@ def surface_mesh(data, density=20, *, _guarded=False):
              else a+cut_scale(nodes)[0]*integration_direction)
         normal = 1j*(b-a)/abs(b-a)
         radius = _bank_radius(w, critical, cut, j)
-        x, y = cov.fibre(w)
+        y = complex(cut_data.reference_y[j])
         for sign, permutation in ((1, upper[j]), (-1, lower[j])):
             target = w+sign*radius*normal
             index = face_at(target)
             if index < 0:
                 raise RuntimeError("Cut bank is outside the mesh")
-            rx, ry = labels[index]
-            mx, my = _continue(cov, centers[index], target, rx, ry)
-            ex, ey = _continue(cov, w, target, x, y)
-            ex, ey = ex[permutation], ey[permutation]
-            defect = np.max((abs(mx-ex)+abs(my-ey))/(1+abs(ex)+abs(ey)))
+            my = continue_y(centers[index], target, labels[index])
+            ey = continue_y(w, target, y)*(1 if permutation[0] == 0 else -1)
+            defect = abs(my-ey)/(1+abs(ey))
             boundary_error = max(boundary_error, float(defect))
     if boundary_error > 1e-6:
-        if not _guarded:
-            return surface_mesh(data, density, _guarded=True)
         raise RuntimeError("Mesh sheets disagree with the cut's bank labels: %g" % boundary_error)
-    vertices = [[] for _ in range(cov.N)]
+    vertices = [[] for _ in range(2)]
     triangles = []
-    curve_error = function_error = 0.0
+    curve_error = 0.0
     for index, face in enumerate(faces):
-        x, y = labels[index]
+        y = labels[index]
         projected = []
         for target in coordinates[face]:
             # Separate cut banks and avoid exactly singular fibres. These
             # subpixel insets also keep finite-value infinities out of GL.
             target += (centers[index]-target)*1e-6
-            xx, yy = _continue(cov, centers[index], target, x, y)
-            fx = np.polyval(cov.F, xx)
-            ce = float(np.max(abs(yy*yy-fx)/(1+abs(fx))))
-            fe = float(np.max(abs(cov.phi_stable(xx, yy)-target)/(1+abs(target))))
-            curve_error, function_error = max(curve_error, ce), max(function_error, fe)
-            if not np.isfinite(ce+fe) or max(ce, fe) > 1e-6:
-                raise RuntimeError("Surface vertex residual is too large (%g, %g)" % (ce, fe))
-            height = np.arcsinh((np.exp(-.55j)*(yy if cov.pure_x else xx)).real)
-            projected.append([[float(target.real), float(target.imag), float(h)] for h in height])
+            yy = continue_y(centers[index], target, y)
+            fx = leading*np.prod(target-critical)
+            ce = float(abs(yy*yy-fx)/(1+abs(fx)))
+            curve_error = max(curve_error, ce)
+            if not np.isfinite(ce) or ce > 1e-6:
+                raise RuntimeError('Surface curve residual is too large')
+            height = float(np.arcsinh((np.exp(-.55j)*yy).real))
+            projected.append([[float(target.real), float(target.imag), height],
+                              [float(target.real), float(target.imag), -height]])
         start = len(vertices[0])
         triangles.append([start, start+1, start+2])
-        for sheet in range(cov.N):
+        for sheet in range(2):
             vertices[sheet].extend(p[sheet] for p in projected)
-    return dict(schema_version=1, degree=cov.N, bounds=[float(v) for v in bounds],
+    return dict(schema_version=1, degree=2, bounds=[float(v) for v in bounds],
                 triangles=triangles, sheets=[dict(sheet=i+1, vertices=v) for i, v in enumerate(vertices)],
                 validation=dict(triangles_per_sheet=len(triangles), checked_continuation_cycles=cycle_count,
                                 max_relative_sheet_cycle_defect=cycle_error,
                                 max_relative_sheet_boundary_defect=boundary_error,
-                                max_relative_curve_residual=curve_error,
-                                max_relative_function_residual=function_error))
+                                max_relative_curve_residual=curve_error))

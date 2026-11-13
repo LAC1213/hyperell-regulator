@@ -10,7 +10,7 @@ from hyperell_regulator.components import (
     _order_by_principality,
 )
 from hyperell_regulator.experiments import beilinson as b
-from hyperell_regulator.regulator import function_with_divisor, torsion_order
+from hyperell_regulator.regulator import torsion_order
 
 
 x = PolynomialRing(QQ, 'x').gen()
@@ -88,15 +88,6 @@ def test_nonmonic_square_model_infinity_coordinates():
     F = 9*curve_388().F
     assert torsion_order(F, (0, 3), ('infinity', 3), multiple=21) == 7
     assert torsion_order(F, (0, 3), ('infinity', -3), multiple=21) == 21
-    # The returned functions have the stated valuations at both infinities.
-    from hyperell_regulator.regulator.functions import _field, _place
-    K, L = _field(F)
-    for eta, order in ((3, 7), (-3, 21)):
-        A, B = function_with_divisor(F, (0, 3), ('infinity', eta), order)
-        function = L(K(A))+L(K(B))*L.gen()
-        expected = order*(_place(K, L, (0, 3)).divisor()
-                          - _place(K, L, ('infinity', eta)).divisor())
-        assert function.divisor() == expected
 
 
 def test_invalid_or_nonrational_infinity_is_rejected():

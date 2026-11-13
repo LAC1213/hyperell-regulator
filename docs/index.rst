@@ -38,4 +38,4 @@ reference generated from the package's docstrings.
 * :ref:`search`
 
 `Open the interactive cut-system explorer <explorer/index.html>`_ for the
-successful 100-digit survey curves and their torsion functions.
+successful 100-digit survey curves, with one shared two-sheet diagram per curve.

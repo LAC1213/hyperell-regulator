@@ -1,83 +1,58 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore hyperelliptic cut systems, regulator pairings and individual line integrals.">
-  <title>Cut system explorer · hyperell-regulator</title>
-  <link rel="stylesheet" href="explorer.css?v=labels-1">
-  <script defer src="plotly.min.js"></script>
-  <script defer src="explorer.js?v=camera-1"></script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore the two sheets of hyperelliptic curves and their logarithmic regulator integrals.">
+  <title>Curve explorer · hyperell-regulator</title>
+  <link rel="stylesheet" href="explorer.css?v=x-cuts-2">
+  <script defer src="plotly.min.js"></script><script defer src="explorer.js?v=x-cuts-2"></script>
 </head>
 <body>
-  <header>
-    <a class="wordmark" href="../index.html">hyperell-regulator</a>
-    <nav><a href="../explorer-guide.html">Guide &amp; conventions</a><a href="https://github.com/LAC1213/hyperell-regulator">Source ↗</a></nav>
-  </header>
-  <main>
-    <section class="intro">
-      <p class="eyebrow">BEILINSON SURVEY · CONDUCTOR &lt; 1300 · 100-DIGIT TARGETS</p>
-      <h1>Follow the cuts.</h1>
-      <p>Explore the 100-digit Beilinson regulator computations for genus 2 curves of conductor below 1300. Select a lifted path to inspect its ordinary and logarithmic integrals, displayed to 10 significant digits.</p>
+<header><a class="wordmark" href="../index.html">hyperell-regulator</a><nav><a href="../explorer-guide.html">Guide &amp; conventions</a><a href="https://github.com/LAC1213/hyperell-regulator">Source ↗</a></nav></header>
+<main>
+  <section class="intro"><p class="eyebrow">BEILINSON SURVEY · CONDUCTOR &lt; 1300</p><h1>Two sheets. One curve.</h1><p>Explore each curve through its hyperelliptic map x. All logarithmic weights share the same branch diagram and ordinary edge integrals.</p></section>
+  <section class="workspace" aria-label="Choose a curve">
+    <div class="section-label"><h2>Curve</h2></div>
+    <div class="catalog-controls">
+      <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
+      <label>Logarithmic weight<select id="weight-select" disabled></select></label>
+      <button type="button" class="secondary" id="export" disabled>↓ Export full data</button>
+      <label class="file-button" for="import">Import local result<input type="file" id="import" accept="application/json,.json"></label>
+    </div>
+    <p id="point-info" class="hint"></p><details><summary>Exact curve &amp; marked coordinates</summary><pre id="exact-inputs"></pre></details>
+    <p class="hint">All calculations are precomputed. Changing the weight updates the integrals on this same diagram. <a href="../explorer-guide.html">Compute another curve</a></p>
+  </section>
+  <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
+  <section id="results" hidden>
+    <div class="result-heading"><div><p class="eyebrow" id="result-source"></p><h2 id="result-model"></h2></div><p id="metadata"></p></div>
+    <section class="panel">
+      <div class="section-label"><h2>Sheets &amp; integration paths</h2><span>x-plane · drag to rotate</span></div>
+      <div class="surface-controls"><label>Display sheets<select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label><label class="check-control"><input id="show-mesh" type="checkbox" checked> Surface mesh</label></div>
+      <div id="curve-plot" class="plot" style="height:560px" aria-label="Interactive three-dimensional plot of the two curve sheets"></div>
+      <p class="caption" id="mesh-caption">Select a colored path to inspect its integrals. Height is asinh(Re(exp(−0.55i)y)); projection crossings can occur. The displayed ray is truncated; integrals include infinity.</p>
     </section>
-    <section class="workspace" aria-label="Choose a curve and a function">
-      <div class="section-label"><h2>Curve &amp; function</h2></div>
-      <div class="catalog-controls">
-        <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
-        <label>Function<select id="function-select" disabled><option>Loading functions…</option></select></label>
-        <button type="button" class="secondary" id="export" disabled>↓ Export full data</button>
-        <label class="file-button" for="import">Import local result<input type="file" id="import" accept="application/json,.json"></label>
-      </div>
-      <p id="point-info" class="hint"></p>
-      <details><summary>Exact curve &amp; function</summary><pre id="exact-inputs"></pre></details>
-      <p class="hint">All calculations are precomputed. Choosing a curve or path runs entirely in your browser. <a href="../explorer-guide.html">Compute and import another curve</a></p>
-    </section>
-    <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
-    <section id="results" hidden>
-      <div class="result-heading"><div><p class="eyebrow" id="result-source"></p><h2 id="result-model"></h2></div><p id="metadata"></p></div>
-      <div class="plots">
-        <section class="panel">
-          <div class="section-label"><h2>The base cut Γ</h2><span>w = φ</span></div>
-          <div id="base-plot" class="plot" aria-label="Interactive plot of the cut in the w plane"></div>
-          <p class="caption">Select a cut edge. Polygonal detours follow the integration code.</p>
-        </section>
-        <section class="panel">
-          <div class="section-label"><h2>Sheets &amp; lifted paths on C</h2><span>drag to rotate</span></div>
-          <div class="surface-controls">
-            <label>Display sheets<select id="visible-sheet"><option value="0">All sheets</option></select></label>
-            <label class="check-control"><input id="show-mesh" type="checkbox" checked> Surface mesh</label>
-          </div>
-          <div id="lift-plot" class="plot" aria-label="Interactive three-dimensional projection of the lifted paths"></div>
-          <p class="caption" id="mesh-caption">Select a colored lift. A single-sheet view includes both sides of its boundary. This is a projection of the curve; projection crossings can occur.</p>
-        </section>
-      </div>
-      <div class="analysis">
-        <section class="panel integral-panel">
-          <div class="section-label"><h2>Path integrals</h2><span id="path-label"></span></div>
-          <div class="selectors">
-            <label>Cut edge<select id="edge"></select></label>
-            <label>Positive-side sheet<select id="sheet"></select></label>
-            <label>Logarithm side<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>
-            <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Toward 0</option></select></label>
-          </div>
-          <p id="gluing" class="hint"></p>
-          <div class="table-scroll"><table><thead><tr><th>Form</th><th>∫ ωₐ</th><th>∫ log(φ) ωₐ</th></tr></thead><tbody id="integrals"></tbody></table></div>
-          <p class="caption" id="jump"></p>
-        </section>
-        <section class="panel pairing-panel">
-          <div class="section-label"><h2>Regulator pairings</h2><span>ωₐ = xᵃ⁻¹ dx/y</span></div>
-          <div class="table-scroll"><table><thead><tr><th>(a, b)</th><th>Pairing −4Rₐᵦ/π</th><th>Package Rₐᵦ</th><th>Period Pₐᵦ</th></tr></thead><tbody id="pairings"></tbody></table></div>
-          <p class="caption">Rₐᵦ = −¼ Im ∫<sub>C</sub> log|φ| ωₐ ∧ ω̄ᵦ, after symmetrization. The period column is unweighted by log|φ|. These pairings use the exact function shown above; the determinant uses normalized columns with d₁₁ = 1, d₁₂ = 2 Re(z), d₂₂ = |z|².</p>
-        </section>
-      </div>
-      <details class="notes"><summary>Numerical conventions &amp; display limits</summary><p id="geometry"></p><p>Values retain the decimal strings exported by SageMath. Cut topology and display continuation use float64.</p><p>Both sides use the selected geometric orientation. To traverse a sheet boundary, use the positive side toward ∞ and the negative side toward 0.</p><p id="divisor"></p><p id="warnings"></p></details>
-    </section>
-    <section class="panel curve-table">
-      <div class="section-label"><h2>Genus 2 curves of small conductor</h2><span>select a row to explore</span></div>
-      <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>R</th><th>n<sub>P</sub></th><th>n<sub>R</sub></th><th>Survey D</th><th>c⁺</th><th>c⁻</th><th>L″(std,1)</th><th>q</th><th>Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
-      <p class="caption">Models, points, exact functions, determinants and q come from the 100-digit survey. The viewer labels its two zeros P and R and its common pole Q; the report stores these as P, Q and R respectively. Here q = π c⁺c⁻L″(std,1)/D, using full cycle periods. Rational guesses are shown when agreement exceeds 95 digits; otherwise q is displayed as a decimal. Relative error refers to the saved rational guess. A dash denotes a missing comparison. † marks an undecided component verdict. Path integrals are independently exported at 15 digits and checked against the survey determinant; the catalog retains the full survey values. Conductor 1116 is excluded from this collection.</p>
-    </section>
-  </main>
-  <footer><span>hyperell-regulator</span><span>Exact inputs. Numerical integrals. Visible paths.</span></footer>
-</body>
-</html>
+    <div class="analysis">
+      <section class="panel integral-panel">
+        <div class="section-label"><h2>Path integrals</h2><span id="path-label"></span></div>
+        <div class="selectors">
+          <label>Cut edge<select id="edge"></select></label><label>Positive-side sheet<select id="sheet"><option value="0">1</option><option value="1">2</option></select></label>
+          <label>Logarithm bank<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>
+          <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Away from ∞</option></select></label>
+        </div>
+        <p id="gluing" class="hint"></p><div class="table-scroll"><table><thead><tr><th>Form</th><th>∫ ωₐ</th><th>∫ log(x−a) ωₐ</th></tr></thead><tbody id="integrals"></tbody></table></div><p id="jump" class="caption"></p>
+      </section>
+      <section class="panel pairing-panel">
+        <div class="section-label"><h2>Logarithmic pairings</h2><span>ωₐ = xᵃ⁻¹ dx/y</span></div>
+        <div class="table-scroll"><table><thead><tr><th>(a, b)</th><th>−4Rₐᵦ/π</th><th>Rₐᵦ</th><th>Period Pₐᵦ</th></tr></thead><tbody id="pairings"></tbody></table></div>
+        <p class="caption">Rₐᵦ = −¼ Im ∫ log|x−a| ωₐ ∧ ω̄ᵦ, after symmetrization. Vectors use (1, Re(x), |x|²); double the middle entry for the genus-two determinant. For a finite common pole b, subtract its logarithmic column.</p>
+      </section>
+    </div>
+    <details class="notes"><summary>Numerical conventions</summary><p id="geometry"></p><p>Cut topology and display geometry use float64. Numerical quadrature uses guarded precision. Decimal precision targets are not certified interval bounds.</p><p id="warnings"></p></details>
+  </section>
+  <section class="panel curve-table">
+    <div class="section-label"><h2>Genus 2 curves of small conductor</h2><span>select a row to explore</span></div>
+    <div class="table-scroll"><table><thead><tr><th>Curve</th><th>P</th><th>R</th><th>nP</th><th>nR</th><th>Survey D</th><th>c⁺</th><th>c⁻</th><th>L″(std,1)</th><th>q</th><th>Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
+    <p class="caption">The table retains the 100-digit survey references. Path integrals are freshly exported at 15 digits on one shared cut per curve and checked against the survey determinant. q = π c⁺c⁻L″(std,1)/D. Orders certify the algebraic cycles and do not affect integration complexity. Rational q values are shown only when the saved agreement exceeds 95 digits. Conductor 1116 is excluded from this collection.</p>
+  </section>
+</main><footer><span>hyperell-regulator</span><span>Exact curves. Direct integrals. Visible paths.</span></footer>
+</body></html>

@@ -3,7 +3,7 @@
     sage -python -m hyperell_regulator.experiments.beilinson_report
 
 This reads saved results without repeating numerical integrations or L-values.
-Exact functions are reconstructed on the saved integration models. Failures and
+Exact integration models and marked coordinates are reconstructed. Failures and
 component verdicts remain in the JSON and are described separately in the TeX.
 """
 
@@ -32,7 +32,7 @@ def select_results(results):
     for original in results:
         settings = original.get("settings", {})
         if not (0 < int(original["cond"]) < BOUND
-                and settings.get("report_version") == REPORT_VERSION
+                and settings.get("report_version") in (9, REPORT_VERSION)
                 and settings.get("regulator_digits") == DIGITS
                 and settings.get("lvalue_digits") == DIGITS
                 and settings.get("with_lvalue") is True):
@@ -62,10 +62,9 @@ def select_results(results):
 
 
 def algebraic_data(row, curve_row):
-    """Reconstruct the exact functions used for this saved triple, without quadrature."""
+    """Reconstruct exact integration coordinates, without quadrature."""
     from sage.all import PolynomialRing, QQ, latex
     from hyperell_regulator.components import curve_from_row
-    from hyperell_regulator.regulator import function_with_divisor
     from . import beilinson as b
 
     curve = curve_from_row(curve_row)
@@ -76,14 +75,6 @@ def algebraic_data(row, curve_row):
     ring = PolynomialRing(QQ, "u")
     if ring(model) != ring(re.sub(r"\bx\b", "u", row["model"])):
         raise ValueError("Reconstructed integration model differs: " + row["label"])
-    functions = {}
-    for key, point in zip(("P", "Q"), images[:2]):
-        a, c = function_with_divisor(model, point, pole, int(triple["order_" + key]))
-        a, c = ring.fraction_field()(a), ring.fraction_field()(c)
-        expression = latex(a) if a else ""
-        if c:
-            expression += ("+" if a else "") + r"\left(" + latex(c) + r"\right)v"
-        functions[key] = dict(A=str(a), B=str(c), latex=expression or "0")
     scale = QQ(1)
     if shift is not None and pole == "infinity":
         from sage.all import lcm
@@ -95,7 +86,7 @@ def algebraic_data(row, curve_row):
                 original_f=str(curve.f), original_h=str(curve.h),
                 image_points=[point_json(p) for p in images],
                 shift=None if shift is None else str(shift), scale=str(scale),
-                pole=point_json(pole), functions=functions)
+                pole=point_json(pole))
 
 
 def number_tex(value, digits=10):
@@ -302,7 +293,7 @@ def export(source, output, cache):
 
 This directory contains the current 100-digit Beilinson survey:
 
-- [Full saved data and exact functions](beilinson_100_digits.json).
+- [Full saved data and integration models](beilinson_100_digits.json).
 - [Three LaTeX tables: torsion/integrality, models, and numerical data](beilinson_100_digits.tex).
 
 The snapshot has {len(rows)} curve records, {counts.get('ok', 0)} successful
@@ -323,7 +314,7 @@ error bounds.
 
 The numerical table displays 10 significant digits. The JSON preserves the
 complete saved decimal strings, matrices, precision settings, component
-verdicts and exact functions. Table points use the displayed integration
+verdicts and integration models. Table points use the displayed integration
 models. Reciprocal coordinate changes are marked by a dagger in the model
 table, with their shift and scale given explicitly. The JSON retains both
 the original points and their integration-model images.
@@ -349,7 +340,7 @@ Source SHA-256: `{checksum}`.
 
 
 def explorer_inputs(report, output):
-    """Use the report's exact models, functions and 100-digit references."""
+    """Use the report's exact models, marked points and 100-digit references."""
     raw = Path(report).read_bytes()
     rows = json.loads(raw)
     curves = []
@@ -365,8 +356,6 @@ def explorer_inputs(report, output):
                            F=x_expression(a["model"]), points=a["image_points"][:2],
                            orders=[int(t["order_P"]), int(t["order_Q"])],
                            pole=a["pole"],
-                           exact_functions=[{key: x_expression(a["functions"][name][key])
-                                             for key in ("A", "B")} for name in ("P", "Q")],
                            original_triple=t,
                            q=comparison.get("rational") if verified else None,
                            quotient=comparison.get("ratio"), rational_guess=comparison.get("rational"),

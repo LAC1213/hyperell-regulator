@@ -1,62 +1,77 @@
 Periods and regulators
 ======================
 
-Run the following in Sage or with ``sage -python``. Use Python syntax in
-scripts: exponentiation is ``**``.
+The numerical API takes a curve :math:`y^2=F(x)` and rational logarithmic
+centers. It integrates directly on the two sheets of the hyperelliptic map.
+Run examples in Sage or with ``sage -python``:
 
 .. code-block:: python
 
    from sage.all import QQ, PolynomialRing
    from hyperell_regulator.regulator import (
-       periods_and_regulator_stokes, c_invariants,
+       periods_and_regulator_stokes, regulators_stokes, c_invariants,
    )
 
    x = PolynomialRing(QQ, "x").gen()
-   F = x**5 + (x + 1)**2
-   phi = (x + 1, 1)
-
-   periods, regulator = periods_and_regulator_stokes(F, phi)
-   periods, regulator = periods_and_regulator_stokes(F, phi, prec=30)
+   F = x**6 + 4*x**5 + 4*x**4 + 2*x**3 + 1
+   periods, log_x = periods_and_regulator_stokes(F, a=0, prec=30)
+   periods, columns = regulators_stokes(F, [-1, 0], prec=100)
    c_plus, c_minus = c_invariants(F, prec=30)
 
-The curve is :math:`y^2 = F(x)`. A pair ``phi = (A, B)`` represents the
-function :math:`\varphi = A(x) + B(x)y`; here it is :math:`x + 1 + y`.
+``columns[0]`` uses :math:`\log|x+1|`, and ``columns[1]`` uses
+:math:`\log|x|`. Both columns and the ordinary periods share one set of cut
+edges. No torsion functions or divisors enter numerical integration.
 
-Precision
----------
+Pass ``pole=b`` to use :math:`\log|(x-a)/(x-b)|` instead. A finite pole adds
+its logarithmic center to the shared cut and its column is subtracted.
+The default ``pole=None`` means infinity.
 
-Without ``prec``, the regulator routines use float64 arithmetic. With
-``prec=30``, they target 30 decimal digits. Use exact rational coefficients
-for arbitrary precision. Convergence failures raise exceptions.
+Precision and normalization
+---------------------------
 
-The returned period and regulator vectors have entries indexed by
-:math:`(1,1), (1,2), (2,2)` in genus 2. The :math:`c^+` and :math:`c^-`
-invariants come from minors of the period matrix.
+Without ``prec``, results are float64 arrays; guarded quadrature is still
+used internally. With ``prec=30``, results retain 30 decimal digits. Exact
+rational coefficients are required, and failed convergence checks raise
+exceptions. Precision targets are not certified interval bounds.
 
-Period conventions
-------------------
+The returned vectors have entries indexed by :math:`a\le b`, for the
+weights :math:`\operatorname{Re}(x^a\bar{x}^b)/|F|`. In genus two their
+order is :math:`(1,\operatorname{Re}(x),|x|^2)`. Double the middle entry for
+the Beilinson determinant's convention :math:`(1,2\operatorname{Re}(x),|x|^2)`.
 
-For ``c_invariants``, finite branch points are ordered by increasing argument
-about a perturbed centroid, starting at the root of largest absolute value
-(ties by real, then imaginary part). Period paths use the regulator's
-semilunar detours and embeddedness checks. The period matrix contains full
-cycle integrals, twice the integrals along the lifted paths; ``c_plus`` and
-``c_minus`` are signed pivoted minors of its real and imaginary parts.
+The Stokes algorithm
+--------------------
 
-For genus two, full periods multiply each minor by four relative to
-half-periods on the same paths. Different paths can also change signs and
-rational normalizations. Saved reports retain their original conventions;
-experiment caches are invalidated automatically when rerun.
+A semilunar cut connects the branch values and logarithmic centers and ends
+with an outward ray to infinity. Its two lifted boundaries give the Stokes
+sum. Different logarithms can have different jumps on an edge, all read
+from the same cut. Second moments reduce to products of ordinary edge
+periods after taking the symmetric imaginary part.
 
-Integration methods
--------------------
+Finite edges use :math:`x=a+(b-a)\sin^2(\pi t/2)`. Endpoint root factors
+cancel analytically. The infinite ray uses a fixed reciprocal substitution.
+Square roots are evaluated as continuous products of linear factors.
+There is no general cover inversion, chart selection, or Newton tracking.
 
-The Stokes method lifts a cut system to the sheets of the function
-:math:`\varphi`. It supports float64 and arbitrary precision. The plane
-integrator uses adaptive quadrature over :math:`\mathbb{C}` and provides
-an independent float64 computation.
+``regulator_plane(F, a)`` and ``periods_plane(F)`` retain independent adaptive
+quadrature over :math:`\mathbb C` as a slower float64 reference.
 
-See :mod:`hyperell_regulator.regulator.api` for the numerical entry points,
-:mod:`hyperell_regulator.regulator.functions` for constructing functions
-with prescribed divisors, and :mod:`hyperell_regulator.regulator.plots`
-for plotting cut systems.
+Cycle periods
+-------------
+
+``c_invariants`` uses full cycle periods, twice the integrals on lifted
+branch-to-branch paths. The finite branch chain starts at the root of
+largest absolute value, breaking ties by real and imaginary parts.
+The invariants are signed pivoted minors of the real and imaginary parts
+of the period matrix. Changing a cycle basis can change their signs.
+
+Migration from the function-cover API
+-------------------------------------
+
+Replace ``periods_and_regulator_stokes(F, (x-a, 0))`` with
+``periods_and_regulator_stokes(F, a)``. For a genus-two determinant use
+``regulators_stokes(F, [a, b])`` to compute both columns together.
+The general :math:`A(x)+B(x)y` numerical API, fast/slow moment switch,
+cover classes and torsion-function constructors have been removed.
+``torsion_order`` and ``divisor_class_order`` still certify divisor classes
+for the algebraic-cycle and component computations.

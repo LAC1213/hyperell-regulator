@@ -98,7 +98,7 @@ def check_path_embedded(e, ray=None, crit=None, tol=1e-9, include_ray=True):
 
     EXAMPLES::
 
-        sage: from hyperell_regulator.regulator.cover import check_path_embedded
+        sage: from hyperell_regulator.regulator._paths import check_path_embedded
         sage: check_path_embedded([-2., -1., 0., 1., 2.])
         sage: check_path_embedded([0., 1., 2., -2., -1.])
         Traceback (most recent call last):
@@ -128,6 +128,16 @@ def check_path_embedded(e, ray=None, crit=None, tol=1e-9, include_ray=True):
         if positive.size:
             proximity = min(proximity, 0.01 * float(positive.min()))
     segs = list(zip(pts[:-1], pts[1:]))
+
+    # A ray almost reversing the preceding edge creates a slit narrower
+    # than float64 geometry can resolve. Treat nearly collinear adjacent
+    # backtracking just like overlapping nonadjacent edges.
+    for (a, b), (c, d) in zip(segs[:-1], segs[1:]):
+        u, v = b-a, d-c
+        if abs(u) and abs(v):
+            angle = u.conjugate()*v/(abs(u)*abs(v))
+            if angle.real < 0 and abs(angle.imag) < tol:
+                raise NotImplementedError('adjacent cut segments backtrack')
 
     def side(a, b, c):
         return ((b - a).conjugate() * (c - a)).imag

@@ -58,5 +58,5 @@ working directory. Set ``HYPERELL_REGULATOR_DATA`` to choose another location.
 
 The `saved 100-digit survey
 <https://github.com/LAC1213/hyperell-regulator/tree/main/reports>`_ includes
-LaTeX tables, full-precision values, exact functions and regeneration
+LaTeX tables, full-precision values, integration models and regeneration
 instructions.

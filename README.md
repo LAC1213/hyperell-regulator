@@ -9,7 +9,7 @@ Regulators, periods and L-values can be computed to arbitrary precision.
 The complete documentation can be found [here](https://lac1213.github.io/hyperell-regulator/).
 
 The [interactive cut-system explorer](https://lac1213.github.io/hyperell-regulator/explorer/)
-shows the paths of integration and functions used for some genus-two curves of small conductor.
+shows one two-sheet branch diagram per curve and its logarithmic integrals for some genus-two curves of small conductor.
 
 ## Installation
 
@@ -28,20 +28,19 @@ Frobenius eigenvalues which uses [rforest](https://math.mit.edu/~drew/rforest.ht
 
 ## Examples
 
-Given a function `phi` with divisor of the form `N P - N Q` on a genus-two curve `C`, we consider the integrals of `log |phi| w`, where w is a (1,1)-form on `C`.
+The numerical integrator computes periods and integrals weighted by `log |x-a|` directly on the two sheets of a hyperelliptic curve. Several weights share one set of cut edges; no torsion functions or general chart machinery are needed.
 For example you can run the following in Sage or with `sage -python`:
 
 ```python
 from sage.all import QQ, PolynomialRing
 from hyperell_regulator.regulator import (
-    periods_and_regulator_stokes, c_invariants,
+    periods_and_regulator_stokes, regulators_stokes, c_invariants,
 )
 
 x = PolynomialRing(QQ, "x").gen()
 F = x**5 + (x + 1)**2              # curve y^2 = F(x)
-phi = (x + 1, 1)                  # function (x + 1) + y with divisor 5 (0, -1) - 5 oo
-
-periods, regulator = periods_and_regulator_stokes(F, phi, prec=30)
+periods, regulator = periods_and_regulator_stokes(F, a=0, prec=30)
+periods, columns = regulators_stokes(F, [-1, 0], prec=30)
 c_plus, c_minus = c_invariants(F, prec=30)
 ```
 
@@ -92,7 +91,7 @@ Data and results are cached under
 `HYPERELL_REGULATOR_DATA` to choose another location.
 
 The [saved 100-digit survey for conductor < 1300](reports/README.md) includes LaTeX tables,
-full-precision values, exact functions, and regeneration instructions.
+full-precision values, integration models, and regeneration instructions.
 
 ## Tests
 

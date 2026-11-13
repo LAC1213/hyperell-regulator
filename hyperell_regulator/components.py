@@ -618,7 +618,7 @@ def _square_point(C, point):
 
 def _order_by_principality(C, P, Q, primes):
     """Order without requiring a rational Weierstrass point."""
-    from .regulator.functions import _field, _place, _order_from_multiple
+    from .regulator.torsion import _field, _place, _order_from_multiple
 
     key = "torsion_function_field"
     if key not in C._cache:

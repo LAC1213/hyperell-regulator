@@ -132,7 +132,6 @@ def test_verbose_lvalue_failure_preserves_completed_regulator():
     triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5)
     with patch.object(b, '_model_for_triple', return_value=(G, [(0, 1), (1, 1)], None, 'infinity')), \
             patch.object(b, '_resolve_triple_orders'), \
-            patch.object(b, 'phi_string', return_value='test function'), \
             patch.object(b, 'beilinson_determinant_stokes', return_value=(2.0, [[1.0]], None)), \
             patch.object(b, 'load_lvalues', return_value={}), \
             patch.object(b, 'save_lvalue') as save, \

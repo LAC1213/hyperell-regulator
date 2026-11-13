@@ -1,6 +1,6 @@
 """Optional work budgets and progress records for regulator integration.
 
-Checkpoints run inside continuation and ODE evaluation loops, so a difficult
+Checkpoints run inside quadrature loops, so a difficult
 edge can be interrupted without waiting for the numerical solver to return.
 These are cooperative limits; a single external linear algebra call cannot
 be interrupted.  Records contain only JSON-serializable values.
@@ -8,8 +8,6 @@ be interrupted.  Records contain only JSON-serializable values.
 
 from contextlib import contextmanager
 from contextvars import ContextVar
-from functools import wraps
-from inspect import signature
 import math
 from time import perf_counter
 
@@ -37,7 +35,7 @@ class IntegrationLimitError(TimeoutError):
     """An integration exceeded its time or work budget.
 
     This deliberately does not inherit from ``RuntimeError``: numerical
-    retry loops must not mistake a budget interruption for a rejected chart.
+    callers can distinguish a work limit from numerical nonconvergence.
     ``record`` describes the interrupted edge at the last checkpoint.
     """
 
@@ -52,8 +50,8 @@ class IntegrationMonitor:
     Use ``with IntegrationMonitor(...) as monitor:`` around a float64 or
     arbitrary-precision API call.  ``callback(event)`` receives ``start``, ``progress`` and ``end``
     events; progress is throttled to ``progress_interval`` seconds.  A step
-    is one continuation attempt or ODE RHS evaluation; auxiliary counters
-    (for example Newton iterations) do not count those operations twice.
+    is one newly evaluated quadrature node; auxiliary counters
+    (auxiliary diagnostics) do not count those operations twice.
     Set either limit to ``None`` to disable it.
     """
 
@@ -105,7 +103,7 @@ class IntegrationMonitor:
             return
         self._state.update(state)
         if counter is not None:
-            if counter in ("walk_attempts", "ode_evaluations"):
+            if counter in ("quadrature_nodes",):
                 record["steps"] += amount
             record["counters"][counter] = record["counters"].get(counter, 0) + amount
             for p in self._phases:
@@ -203,37 +201,3 @@ def phase(name, **state):
     else:
         with monitor.phase(name, **state):
             yield
-
-
-def traced(name, fields=(), is_edge=False):
-    """Instrument a function; argument inspection is skipped when disabled."""
-    def decorate(function):
-        sig = signature(function)
-
-        @wraps(function)
-        def wrapped(*args, **kwargs):
-            monitor = _active.get()
-            if monitor is None:
-                return function(*args, **kwargs)
-            bound = sig.bind(*args, **kwargs)
-            bound.apply_defaults()
-            state = {k: bound.arguments[k] for k in fields}
-            if is_edge:
-                context = monitor.edge(name, degree=bound.arguments["cov"].N, **state)
-            else:
-                context = monitor.phase(name, **state)
-            with context:
-                result = function(*args, **kwargs)
-                if (is_edge and isinstance(result, tuple) and len(result) == 2
-                        and hasattr(result[1], "dI")):
-                    # The trace of a holomorphic differential to P^1 is
-                    # zero. Keep this independent per-edge accuracy check
-                    # beside the work counters, before global assembly.
-                    leg = result[1]
-                    monitor._current["trace_periods"] = _json(
-                        leg.dI.sum(axis=-1).tolist())
-                    monitor._current["trace_log_periods"] = _json(
-                        leg.dL.sum(axis=-1).tolist())
-                return result
-        return wrapped
-    return decorate

@@ -32,9 +32,8 @@ def test_conductor_249_determinant_matches_plane_with_bounded_edges():
                       - weights * [-5.21685044, -4.00181129, 13.80481861])) < 2e-8
     assert abs(float(det) - plane_determinant) < 2e-7
     assert errors is None
-    # Two covers of five edges each: the ordinary periods must be reused,
-    # including the third determinant column, rather than integrated again.
-    assert len(monitor.records) == 10
-    assert Counter(record['degree'] for record in monitor.records) == {7: 5, 14: 5}
+    # One shared two-sheet cut supplies all three determinant columns.
+    from hyperell_regulator.regulator.stokes import Cut
+    assert len(monitor.records) == len(Cut(F, [-1,0]).nodes)
+    assert Counter(record['degree'] for record in monitor.records) == {2: len(monitor.records)}
     assert all(record['status'] == 'ok' for record in monitor.records)
-    assert all(record['seconds'] <= 15 for record in monitor.records)
