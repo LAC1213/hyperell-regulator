@@ -97,12 +97,12 @@ th { font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--m
 th > [data-tex] { font-size: 16px; }
 td { padding: 14px 10px; font-family: var(--serif); font-variant-numeric: tabular-nums; border-bottom: 1px solid #e8ebe3; font-size: 14px; white-space: nowrap; }
 .regulator-matrix thead [data-tex] { font-size: 20px; color: var(--ink); }
-.regulator-matrix th, .regulator-matrix td { text-align: right; }
+.regulator-matrix th, .regulator-matrix td { text-align: center; }
 .regulator-matrix td { font-size: 16px; }
-.regulator-matrix th:first-child { text-align: left; }
 .regulator-matrix tbody th { color: var(--ink); font-size: 16px; }
 .complex-value > span { display: block; line-height: 1.5; }
 .integral-table th > [data-tex] { display: block; padding: 5px 0; }
+.integral-table tbody td:first-child { font-size: 16px; vertical-align: middle; }
 .regulator-matrix tbody tr:last-child > * { border-bottom: 0; }
 details { font-size: 14px; color: var(--muted); line-height: 1.8; }
 summary { cursor: pointer; color: var(--ink); }

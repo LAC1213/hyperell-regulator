@@ -98,7 +98,7 @@ function renderMatrix(curve) {
   if (!available) return;
   matrix.forEach((values,i)=>{
     const row=document.createElement("tr"), heading=document.createElement("th");
-    heading.scope="row"; math(heading,["1","2\\operatorname{Re}(x)","|x|^2"][i]); row.append(heading);
+    heading.scope="row"; math(heading,["\\mathrm{d}x\\,\\mathrm{d}\\overline{x}","2\\operatorname{Re}(x)\\,\\mathrm{d}x\\,\\mathrm{d}\\overline{x}","|x|^2\\,\\mathrm{d}x\\,\\mathrm{d}\\overline{x}"][i]); row.append(heading);
     values.forEach(value=>mathCell(row,numberTex(value))); $("regulator-matrix").append(row);
   });
 }
@@ -162,7 +162,11 @@ function renderIntegrals() {
   const k=Number($("weight-select").value), e=Number($("edge").value), s=Number($("sheet").value);
   const edge=current.edges[e], lift=edge.lifts[s], sign=$("orientation").value==="reverse"?-1:1;
   $("integrals").replaceChildren(); $("pairings").replaceChildren();
-  lift.ordinary.forEach((v,a)=>{const row=document.createElement("tr"); mathCell(row,"\\omega_{"+(a+1)+"}"); complexCell(row,v,sign); complexCell(row,lift.logs[k][$("bank").value][a],sign); $("integrals").append(row);});
+  lift.ordinary.forEach((v,a)=>{
+    const row=document.createElement("tr"), factor=a===0?"":a===1?"x\\,":"x^{"+a+"}\\,";
+    mathCell(row,"\\omega_{"+(a+1)+"}=\\dfrac{"+factor+"\\mathrm{d}x}{y}");
+    complexCell(row,v,sign); complexCell(row,lift.logs[k][$("bank").value][a],sign); $("integrals").append(row);
+  });
   current.weights[k].pairings.forEach(p=>{const row=document.createElement("tr"); mathCell(row,"("+p.forms.join(",")+")"); [p.pairing,p.regulator,p.period].forEach(v=>mathCell(row,numberTex(v))); $("pairings").append(row);});
   $("path-label").textContent="Edge "+(e+1)+", sheet "+(s+1);
   $("gluing").textContent="This path borders sheet "+(s+1)+" on its positive side and sheet "+lift.minus_sheet+" on its negative side.";

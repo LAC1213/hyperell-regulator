@@ -7,11 +7,11 @@
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=matrix-conjecture-3">
+  <link rel="stylesheet" href="explorer.css?v=differential-forms-4">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
   <script defer src="curve-geometry.js?v=matrix-conjecture-3"></script>
-  <script defer src="explorer.js?v=matrix-conjecture-3"></script>
+  <script defer src="explorer.js?v=differential-forms-4"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -97,12 +97,12 @@
       </section>
       <section class="panel matrix-panel" aria-labelledby="matrix-title">
         <div class="section-label"><h2 id="matrix-title"><span class="step">04</span> <span id="matrix-name">The regulator matrix</span></h2></div>
-        <p class="matrix-caption" id="matrix-caption">Pairings for <span data-tex="\alpha_P">αP</span>, <span data-tex="\alpha_Q">αQ</span>,
-          and the Tate class, in the row basis <span data-tex="(1,2\operatorname{Re}(x),|x|^2)">(1, 2 Re(x), |x|²)</span>.</p>
+        <p class="matrix-caption" id="matrix-caption">Pairing of regulators of <span data-tex="\alpha_P">αP</span>, <span data-tex="\alpha_Q">αQ</span>,
+          and the Tate class <span data-tex="\Delta C">ΔC</span> with the differential forms <span data-tex="\delta_{ij}">δij</span>.</p>
         <div class="table-scroll" id="matrix-values">
           <table class="regulator-matrix">
             <caption class="sr-only">Regulator matrix for alpha P, alpha Q, and the Tate class</caption>
-            <thead><tr><th scope="col">Row</th><th scope="col"><span data-tex="\alpha_P">αP</span></th><th scope="col"><span data-tex="\alpha_Q">αQ</span></th><th scope="col">Tate class</th></tr></thead>
+            <thead><tr><th scope="col"><span class="sr-only">Differential form</span></th><th scope="col"><span data-tex="\alpha_P">αP</span></th><th scope="col"><span data-tex="\alpha_Q">αQ</span></th><th scope="col"><span data-tex="\Delta C">ΔC</span></th></tr></thead>
             <tbody id="regulator-matrix"></tbody>
           </table>
         </div>

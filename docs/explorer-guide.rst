@@ -23,9 +23,10 @@ with no real points are not joined. The graph can be panned and zoomed.
 The path integrals are always visible beneath these views, before the
 regulator matrix.
 The matrix displays columns for the motivic classes :math:`\alpha_P,\alpha_Q` and
-the Tate class (the period column), in the
-row basis :math:`(1,2\operatorname{Re}(x),|x|^2)`, together with its determinant
-:math:`D`.
+the Tate class :math:`\Delta C` (the period column), paired with the
+differential forms :math:`\delta_{ij}`. The row labels display
+:math:`dx\,d\overline{x}`, :math:`2\operatorname{Re}(x)\,dx\,d\overline{x}`
+and :math:`|x|^2\,dx\,d\overline{x}`. The determinant is :math:`D`.
 
 Use the path-integral selectors to choose a logarithmic factor.
 The center selector states an equality, for example :math:`a=x(P)=1`.
@@ -41,7 +42,8 @@ translucent surfaces while retaining paths. Switching between pan, zoom and
 rotation, changing curves, or updating a selection preserves the camera.
 Use **Reset view** to reset it; double-clicking does not reset the camera.
 
-For :math:`\omega_j=x^{j-1}dx/y`, the table displays
+The Form column gives :math:`\omega_1=dx/y` and :math:`\omega_2=x\,dx/y`
+explicitly. For :math:`\omega_j=x^{j-1}dx/y`, the table displays
 
 .. math::
 
