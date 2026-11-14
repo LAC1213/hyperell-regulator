@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore a real genus 2 curve, its marked points, and the paths used to compute its regulator by Stokes’ theorem.">
+  <meta name="description" content="Explore a real genus 2 curve, its marked points, and the graph used to compute its regulator by Stokes’ theorem.">
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
@@ -53,27 +53,27 @@
       <section class="method-note" aria-label="How the regulator is computed">
         <p>We view <span data-tex="C">C</span> as a double cover of <span data-tex="\mathbb P^1">ℙ¹</span> via
           <span data-tex="x\colon C\to\mathbb P^1">x : C → ℙ¹</span>.
-          We lift a well-chosen spanning tree in <span data-tex="\mathbb P^1">ℙ¹</span> to a path in <span data-tex="C">C</span>,
-          keeping track of its orientation on the two sheets. Applying Stokes’ theorem reduces the surface integral
-          to one-dimensional integrals along this path.</p>
+          We lift a well-chosen spanning tree in <span data-tex="\mathbb P^1">ℙ¹</span> to a graph in <span data-tex="C">C</span>,
+          keeping track of the edge orientations on the two sheets. Applying Stokes’ theorem reduces the surface integral
+          to one-dimensional integrals along the edges of this graph.</p>
       </section>
       <div class="plots">
         <section class="panel">
-          <div class="section-label"><h2>The path in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
+          <div class="section-label"><h2>The graph in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
           <p class="panel-description">The vertices are the critical values of <span data-tex="x">x</span> (images of ramification points), <span data-tex="x(P)">x(P)</span>, and <span data-tex="x(Q)">x(Q)</span>. A minimum spanning tree of their complete graph gives the cut.</p>
           <div class="plot-tools"><span class="gesture">Click a colored edge to inspect its integrals</span></div>
           <div id="base-plot" class="plot" aria-label="Spanning tree connecting the critical values of x and the x-coordinates of P and Q"></div>
           <p class="caption">Circles: critical values. Colored diamonds: <span data-tex="x(P)">x(P)</span> and <span data-tex="x(Q)">x(Q)</span>. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
         </section>
         <section class="panel">
-          <div class="section-label"><h2>The path in <span data-tex="C">C</span></h2></div>
+          <div class="section-label"><h2>The graph in <span data-tex="C">C</span></h2></div>
           <p class="panel-description">Each tree edge has two lifts to <span data-tex="C">C</span>. Their orientations determine the signs in the path integrals below.</p>
           <div class="plot-tools surface-controls">
             <label class="sheet-control"><span class="sr-only">Display sheets</span><select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label>
             <label class="check-control"><input id="show-mesh" type="checkbox" checked> Show surface</label>
             <button type="button" class="text-button" id="camera-home">Reset view</button>
           </div>
-          <div id="curve-plot" class="plot" aria-label="Two-sheeted cover C with the lifted integration paths"></div>
+          <div id="curve-plot" class="plot" aria-label="Two-sheeted cover C with the lifted integration graph"></div>
           <p class="caption" id="mesh-caption">Drag to rotate. Use the sheet selector to view either sheet.</p>
         </section>
       </div>
