@@ -1163,11 +1163,11 @@ class HyperellipticReduction:
                 continue
             return ("link", s, nxt, lev)
 
-    # The reduction map onto a component.  We do not use ``Cluster.red`` for
-    # points: at the time of writing it multiplies by `\pi^{\nu/2}` instead of
-    # dividing, and computes the exponent as ``-s.size()//2``, which Python
-    # evaluates as ``(-|s|)//2`` rather than ``-(|s|//2)`` -- wrong for odd
-    # children of relative depth > 1/2.  The formulas below are derived from
+    # The reduction map onto an übereven component is computed here because
+    # ``Cluster.red`` cannot construct its pair of projective lines when the
+    # component polynomial is constant.  Other components use the patched
+    # ``Cluster.red`` described in the module requirements.  The formulas are
+    # derived from
     #
     #     F(x)/\pi^{\nu_s} = \bar\theta_s^2 \prod_{s' child}(X - red(s'))^{|s'|},
     #     X = (x - z_s)/\pi^{d_s},
@@ -1213,7 +1213,10 @@ class HyperellipticReduction:
         The polynomial `\bar\theta_\mathfrak{s}^2 G_\mathfrak{s}(X)` cutting
         out `\Gamma_\mathfrak{s}`.
         """
-        return s.component_polynomial()
+        # Empty products in the dependency can leave a residue field scalar
+        # rather than a constant polynomial (notably for übereven clusters).
+        k = s.roots()[0].parent().residue_field()
+        return PolynomialRing(k, 'xL')(s.component_polynomial())
 
     def _theta_bar(self, s):
         r"""
@@ -1248,6 +1251,15 @@ class HyperellipticReduction:
         field.  Raises ``ArithmeticError`` if the point is not on the
         component.
         """
+        if s.is_ubereven():
+            X = self._red_x(s, xK)
+            Y = (yK / self._pi_pow(xK.parent(), s.nu() / 2)).residue()
+            Y *= prod((X - self._red_cluster(s, c)) ** (-(c.size() // 2))
+                      for c in s.children()
+                      if c.relative_depth() > QQ(1) / 2)
+            if Y**2 != self._component_polynomial(s)(X):
+                raise ArithmeticError("reduced point is not on the component")
+            return (X, Y)
         try:
             pt = s.red((xK, yK))
         except ValueError as exc:
