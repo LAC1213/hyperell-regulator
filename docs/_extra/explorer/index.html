@@ -3,11 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="See how Stokes’ theorem computes the regulator of two motivic cohomology classes on a genus 2 curve: from a spanning tree on the x-line to integration paths on the curve.">
+  <meta name="description" content="Explore a real genus 2 curve, its marked points, and the paths used to compute its regulator by Stokes’ theorem.">
   <title>Genus 2 regulator explorer · hyperell-regulator</title>
-  <link rel="stylesheet" href="explorer.css?v=regulator-story-1">
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="explorer.css?v=real-curve-2">
+  <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
-  <script defer src="explorer.js?v=regulator-story-1"></script>
+  <script defer src="curve-geometry.js?v=real-curve-2"></script>
+  <script defer src="explorer.js?v=real-curve-2"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -19,14 +23,13 @@
     <section class="intro" aria-labelledby="page-title">
       <p class="eyebrow">GENUS 2 · BEILINSON REGULATORS</p>
       <h1 id="page-title">From the curve to its regulator.</h1>
-      <p>Start with a hyperelliptic curve <i>C</i> and two marked points <i>P</i>, <i>Q</i>.
+      <p>Start with a hyperelliptic curve <span data-tex="C">C</span> and two marked points <span data-tex="P,Q">P, Q</span>.
         We evaluate the regulator matrix of their motivic cohomology classes
-        <span class="math">α<sub>P</sub></span> and <span class="math">α<sub>Q</sub></span> using Stokes’ theorem.</p>
+        <span data-tex="\alpha_P">\alpha_P</span> and <span data-tex="\alpha_Q">\alpha_Q</span> using Stokes’ theorem.</p>
     </section>
     <section class="workspace" aria-label="Choose a curve">
       <div class="catalog-controls">
         <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
-        <p id="point-info" class="marked-points"></p>
         <div class="data-actions">
           <button type="button" class="secondary" id="export" disabled>Export data ↓</button>
           <label class="file-button" for="import">Import result<input type="file" id="import" accept="application/json,.json"></label>
@@ -35,21 +38,30 @@
     </section>
     <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
     <section id="results" hidden aria-label="Curve geometry and regulator">
-      <div class="result-heading">
-        <div><p class="eyebrow" id="result-source"></p><h2 id="result-model"></h2></div>
-        <p class="map-label math">x : C → ℙ¹</p>
-      </div>
+      <section class="panel curve-overview" aria-label="The equation, marked points, and real curve">
+        <div class="curve-definition">
+          <p class="eyebrow" id="result-source"></p>
+          <h2 class="sr-only">The curve and its marked points</h2>
+          <div class="equation-scroll"><div id="result-model" class="curve-equation"></div></div>
+          <div id="point-info" class="marked-points"></div>
+          <p class="map-label"><span data-tex="x:C\longrightarrow\mathbb P^1">x : C → ℙ¹</span><span class="map-note">A two-sheeted cover</span></p>
+        </div>
+        <div class="real-curve">
+          <div class="real-plot-heading"><h2>The real curve</h2><span data-tex="C(\mathbb R)">C(ℝ)</span></div>
+          <div id="real-plot" class="real-plot" aria-label="Graph of the real points y squared equals F of x, with P and Q marked"></div>
+        </div>
+      </section>
       <div class="plots">
         <section class="panel">
-          <div class="section-label"><h2><span class="step">01</span> A spanning tree on ℙ¹</h2></div>
-          <p class="panel-description">The vertices are the critical values of <i>x</i> (images of ramification points), <span class="math">x(P)</span>, and <span class="math">x(Q)</span>. A minimum spanning tree of their complete graph gives the cut.</p>
+          <div class="section-label"><h2><span class="step">01</span> The path in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
+          <p class="panel-description">The vertices are the critical values of <span data-tex="x">x</span> (images of ramification points), <span data-tex="x(P)">x(P)</span>, and <span data-tex="x(Q)">x(Q)</span>. A minimum spanning tree of their complete graph gives the cut.</p>
           <div class="plot-tools"><span class="gesture">Click an edge to follow its lifts</span></div>
           <div id="base-plot" class="plot" aria-label="Spanning tree connecting the critical values of x and the x-coordinates of P and Q"></div>
-          <p class="caption">Circles: critical values of <i>x</i>. Diamonds: marked x-coordinates. The dashed ray extends the cut to ∞.</p>
+          <p class="caption">Circles: critical values of <span data-tex="x">x</span>. Diamonds: marked x-coordinates. The dashed ray extends the cut to <span data-tex="\infty">∞</span>.</p>
         </section>
         <section class="panel">
-          <div class="section-label"><h2><span class="step">02</span> Integration paths on C</h2></div>
-          <p class="panel-description">The coordinate <i>x</i> makes <i>C</i> a two-sheeted cover of ℙ¹. The tree lifts to paths on <i>C</i>, forming the sheet boundaries along which we integrate.</p>
+          <div class="section-label"><h2><span class="step">02</span> The path in <span data-tex="C">C</span></h2></div>
+          <p class="panel-description">The coordinate <span data-tex="x">x</span> makes <span data-tex="C">C</span> a two-sheeted cover of <span data-tex="\mathbb P^1">ℙ¹</span>. The tree lifts to paths on <span data-tex="C">C</span>, forming the sheet boundaries along which we integrate.</p>
           <div class="plot-tools surface-controls">
             <label class="sheet-control"><span class="sr-only">Display sheets</span><select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label>
             <label class="check-control"><input id="show-mesh" type="checkbox" checked> Show surface</label>
@@ -59,27 +71,11 @@
           <p class="caption" id="mesh-caption">Drag to rotate. Click a colored path to inspect its integrals. This is a projection; crossings need not be intersections on C.</p>
         </section>
       </div>
-      <section class="panel matrix-panel" aria-labelledby="matrix-title">
-        <div class="matrix-explanation">
-          <div class="section-label"><h2 id="matrix-title"><span class="step">03</span> The regulator matrix</h2></div>
-          <p>Stokes’ theorem turns surface integrals on <i>C</i> into path integrals along the lifted boundaries.</p>
-          <p class="caption">The two regulator columns, completed by the period column, give the determinant <i>D</i>.</p>
-          <p id="determinant" class="determinant math"></p>
-        </div>
-        <div class="table-scroll" id="matrix-values">
-          <table class="regulator-matrix">
-            <caption class="sr-only">Regulator columns for alpha P and alpha Q and the period column</caption>
-            <thead><tr><th scope="col">Row</th><th scope="col"><span class="math">α<sub>P</sub></span></th><th scope="col"><span class="math">α<sub>Q</sub></span></th><th scope="col">Period</th></tr></thead>
-            <tbody id="regulator-matrix"></tbody>
-          </table>
-        </div>
-        <p id="matrix-unavailable" class="hint" hidden>This import contains logarithmic pairings. Choose a catalog curve to see its two-class regulator matrix.</p>
-      </section>
-      <details class="technical-details">
-        <summary>Inspect the path integrals <span class="summary-hint">Edges, sheets &amp; logarithms</span></summary>
+      <section class="path-integrals" aria-labelledby="integral-title">
+        <div class="section-label section-heading"><h2 id="integral-title"><span class="step">03</span> Path integrals</h2><span>Choose an edge and a sheet above or below</span></div>
         <div class="analysis">
           <section class="panel integral-panel">
-            <div class="section-label"><h2>Selected path</h2><span id="path-label"></span></div>
+            <div class="section-label"><h3>Selected path</h3><span id="path-label"></span></div>
             <div class="selectors">
               <label>Logarithmic factor<select id="weight-select" disabled></select></label>
               <label>Tree edge<select id="edge"></select></label>
@@ -88,17 +84,33 @@
               <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Away from ∞</option></select></label>
             </div>
             <p id="gluing" class="hint"></p>
-            <div class="table-scroll"><table><thead><tr><th scope="col">Form</th><th scope="col">∫ ωᵢ</th><th scope="col">∫ log(x−a) ωᵢ</th></tr></thead><tbody id="integrals"></tbody></table></div>
+            <div class="table-scroll"><table class="integral-table"><thead><tr><th scope="col">Form</th><th scope="col"><span data-tex="\int_\gamma\omega_i">∫γ ωᵢ</span></th><th scope="col"><span data-tex="\int_\gamma\log(x-a)\,\omega_i">∫γ log(x−a) ωᵢ</span></th></tr></thead><tbody id="integrals"></tbody></table></div>
             <p id="jump" class="caption"></p>
           </section>
           <section class="panel pairing-panel">
-            <div class="section-label"><h2>Selected logarithmic pairings</h2></div>
+            <div class="section-label"><h3>Logarithmic pairings</h3><span data-tex="\omega_i=\frac{x^{i-1}\,dx}{y}">ωᵢ = xⁱ⁻¹ dx/y</span></div>
             <p class="hint" id="weight-info"></p>
-            <div class="table-scroll"><table><thead><tr><th scope="col">(i, j)</th><th scope="col">−4Rᵢⱼ/π</th><th scope="col">Rᵢⱼ</th><th scope="col">Period Pᵢⱼ</th></tr></thead><tbody id="pairings"></tbody></table></div>
-            <p class="caption">ωᵢ = xⁱ⁻¹ dx/y. Rᵢⱼ = −¼ Im ∫<sub>C</sub> log|x−a| ωᵢ ∧ ω̄ⱼ, symmetrized. The matrix above includes the row weights (1, 2, 1).</p>
+            <div class="table-scroll"><table><thead><tr><th scope="col"><span data-tex="(i,j)">(i, j)</span></th><th scope="col"><span data-tex="-4R_{ij}/\pi">−4Rᵢⱼ/π</span></th><th scope="col"><span data-tex="R_{ij}">Rᵢⱼ</span></th><th scope="col"><span data-tex="P_{ij}">Period Pᵢⱼ</span></th></tr></thead><tbody id="pairings"></tbody></table></div>
+            <p class="caption"><span data-tex="R_{ij}=-\frac14\operatorname{Im}\int_C\log|x-a|\,\omega_i\wedge\overline{\omega_j}">Rᵢⱼ = −¼ Im ∫C log|x−a| ωᵢ ∧ ω̄ⱼ</span>, symmetrized. The matrix below includes the row weights <span data-tex="(1,2,1)">(1, 2, 1)</span>.</p>
           </section>
         </div>
-      </details>
+      </section>
+      <section class="panel matrix-panel" aria-labelledby="matrix-title">
+        <div class="matrix-explanation">
+          <div class="section-label"><h2 id="matrix-title"><span class="step">04</span> The regulator matrix</h2></div>
+          <p>Stokes’ theorem turns surface integrals on <span data-tex="C">C</span> into path integrals along the lifted boundaries.</p>
+          <p class="caption">The two regulator columns, completed by the period column, give the determinant <span data-tex="D">D</span>.</p>
+          <p id="determinant" class="determinant"></p>
+        </div>
+        <div class="table-scroll" id="matrix-values">
+          <table class="regulator-matrix">
+            <caption class="sr-only">Regulator columns for alpha P and alpha Q and the period column</caption>
+            <thead><tr><th scope="col">Row</th><th scope="col"><span data-tex="\alpha_P">αP</span></th><th scope="col"><span data-tex="\alpha_Q">αQ</span></th><th scope="col">Period</th></tr></thead>
+            <tbody id="regulator-matrix"></tbody>
+          </table>
+        </div>
+        <p id="matrix-unavailable" class="hint" hidden>This import contains logarithmic pairings. Choose a catalog curve to see its two-class regulator matrix.</p>
+      </section>
       <details class="notes">
         <summary>Exact inputs &amp; numerical conventions</summary>
         <pre id="exact-inputs"></pre>
@@ -111,8 +123,8 @@
     <details class="survey">
       <summary>Full survey <span class="summary-hint">Genus 2 · conductor &lt; 1300</span></summary>
       <div class="panel curve-table">
-        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col">P</th><th scope="col">Q</th><th scope="col">n<sub>P</sub></th><th scope="col">n<sub>Q</sub></th><th scope="col">D</th><th scope="col">c⁺</th><th scope="col">c⁻</th><th scope="col">L″(std,1)</th><th scope="col">q</th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
-        <p class="caption">q = π c⁺c⁻L″(std,1)/D. Survey values target 100 digits; a rational q is shown when agreement exceeds 95 digits. n<sub>P</sub> and n<sub>Q</sub> are torsion orders relative to the common pole. Conductor 1116 is excluded.</p>
+        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col"><span data-tex="P">P</span></th><th scope="col"><span data-tex="Q">Q</span></th><th scope="col"><span data-tex="n_P">nP</span></th><th scope="col"><span data-tex="n_Q">nQ</span></th><th scope="col"><span data-tex="D">D</span></th><th scope="col"><span data-tex="c^+">c⁺</span></th><th scope="col"><span data-tex="c^-">c⁻</span></th><th scope="col"><span data-tex="L''(\mathrm{std},1)">L″(std,1)</span></th><th scope="col"><span data-tex="q">q</span></th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
+        <p class="caption"><span data-tex="q=\pi c^+c^-L''(\mathrm{std},1)/D">q = π c⁺c⁻L″(std,1)/D</span>. Survey values target 100 digits; a rational <span data-tex="q">q</span> is shown when agreement exceeds 95 digits. <span data-tex="n_P,n_Q">nP, nQ</span> are torsion orders relative to the common pole. Conductor 1116 is excluded.</p>
       </div>
     </details>
   </main>

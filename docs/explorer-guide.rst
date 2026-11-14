@@ -13,13 +13,20 @@ conductor 1116, and their 100-digit reference determinants and L-values.
 Using the viewer
 ----------------
 
-Choose a curve. The page follows the spanning tree on the base, its lifted
-integration paths on the curve, and the resulting regulator matrix.
+Choose a curve. The first panel gives its equation, the coordinates of
+:math:`P,Q`, and the affine real locus :math:`C(\mathbb R)` with both points
+marked. Real branches are drawn separately where :math:`F(x)\geq0`; gaps
+with no real points are not joined. The graph can be panned and zoomed.
+
+**The path in** :math:`\mathbb P^1` shows the spanning tree on the base;
+**The path in** :math:`C` shows its lifts to the complex curve.
+The path integrals are always visible beneath these views, before the
+regulator matrix.
 The matrix displays the two regulator columns and the period column in the
 row basis :math:`(1,2\operatorname{Re}(x),|x|^2)`, together with its determinant
 :math:`D`.
 
-Open **Inspect the path integrals** to choose a logarithmic factor.
+Use the path-integral selectors to choose a logarithmic factor.
 Changing this factor updates the path integrals and logarithmic pairings
 without changing the geometry or the two-class matrix. Click an edge
 in the two-dimensional tree to select it, or a colored path in the sheet
@@ -30,7 +37,7 @@ plot to rotate; use its toolbar to zoom or pan. The sheet selector isolates
 one sheet and both banks of its boundary. The mesh checkbox hides the
 translucent surfaces while retaining paths. Switching between pan, zoom and
 rotation, changing curves, or updating a selection preserves the camera.
-Use **Home** to reset it; double-clicking does not reset the camera.
+Use **Reset view** to reset it; double-clicking does not reset the camera.
 
 For :math:`\omega_j=x^{j-1}dx/y`, the table displays
 
@@ -132,6 +139,12 @@ triangulation dependency. Mesh generation does not recompute integrals.
 Sphinx copies the static files in ``docs/_extra/explorer`` to the published
 ``explorer/`` directory. Building the documentation does not run numerical
 integration.
+
+The explorer serves its text fonts and the KaTeX math typesetter locally.
+Equations, coordinates, integral values, class labels and determinants are
+typeset from TeX, while downloads retain the original exact inputs and
+decimal strings. KaTeX's MIT license is in ``explorer/vendor/katex/LICENSE``;
+the text-font licenses are in ``explorer/vendor/fonts/``.
 
 Explore another curve
 ---------------------
