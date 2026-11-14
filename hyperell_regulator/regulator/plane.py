@@ -9,48 +9,18 @@ quadratures for one `3\times3` determinant -- but it makes no assumption on
 the position of the branch points, so it is what the faster backend
 :mod:`hyperell_regulator.regulator.stokes` is checked against.
 
-The entry points are :func:`regulator_det_g` and :func:`regulator_vector_g`
-for the determinant and the weight rows, and :func:`period_matrix`,
-:func:`cplus`, :func:`cminus` for the periods.
+Use :func:`regulator_vector` for logarithmic weights and
+:func:`regulator_vector_2` for unweighted periods. :func:`period_matrix`,
+:func:`cplus` and :func:`cminus` compute full cycle periods and their minors.
 """
 
 import scipy.integrate as spyint
 import numpy as np
-import scipy as sp
 from scipy.special import psi
 
-# ============================================================
-# "Box trick" (v2: smooth partition of unity)
-#
-# See regulator_integral_boxed.py for the original box-decomposition
-# idea. That version used a HARD 0/1 mask to cut the near-singular
-# clusters out of the global (origin-centered, compactified-polar)
-# integral: masked(z) = 0 inside a box, f_corrected(z) outside.
-#
-# That hard mask is only piecewise continuous -- it has a genuine
-# jump discontinuity across each box's boundary. Adaptive quadrature
-# converges quickly for smooth integrands but only slowly (and, in
-# 2D with a boundary not aligned to the coordinate grid, unreliably)
-# across a jump. We only handed nquad exact breakpoints for where
-# that jump crosses the real axis (theta = 0, pi); everywhere else
-# the routine has to rediscover the jump on its own, which is what
-# was limiting the achievable precision to about 1e-5 in practice.
-#
-# The fix here: replace the hard mask with a SMOOTH cutoff weight
-# w(z), equal to 1 inside the box, 0 outside a slightly larger
-# buffer box, and a C^2 ("smoothstep") transition in between. Then:
-#
-#   local piece (per cluster)  = integral of   w(z)  * f_corrected(z)
-#                                 over the buffer box
-#   global piece               = integral of (1-w(z)) * f_corrected(z)
-#                                 over the whole plane (compactified)
-#
-# Since sum of the weights is exactly 1 everywhere (boxes are kept
-# disjoint, including their buffers), local + global again
-# reconstructs the exact integral of f_corrected over all of C --
-# but now with NO discontinuity anywhere in either integrand, so
-# ordinary adaptive quadrature converges quickly and reliably.
-# ============================================================
+# Integrate close branch points in local boxes with a C^2 cutoff.
+# The complementary weight covers the rest of the plane. Their sum is one,
+# so quadrature sees no discontinuity at box boundaries.
 
 
 def _find_clusters(points, threshold):
@@ -250,14 +220,12 @@ def regulator_integral_0(f, a=1, G=lambda z: 1, tol=1e-12, cluster_threshold=0.4
     const_1 = [G(roots1[i]) * np.log(np.abs(roots1[i] - a)) / np.abs(np.polyval(fder, roots1[i]))
                for i in range(deg - 1)]
     const_2 = G(a) / np.abs(np.polyval(fder, a))
-    # const_2 = G(root_a)/np.abs(np.polyval(fder, root_a))
 
     bump_1 = lambda z, z0: np.exp(-np.abs(z - z0) ** 2) / np.abs(z - z0)
     bump_2 = lambda z, z0: np.log(np.abs(z - z0)) * np.exp(-np.abs(z - z0) ** 2) / np.abs(z - z0)
 
     correction_1 = lambda z: sum([const_1[i] * bump_1(z, roots1[i]) for i in range(deg - 1)])
     correction_2 = lambda z: const_2 * bump_2(z, a)
-    # correction_2 = lambda z : const_2 * bump_2(z, root_a)
 
     f_corrected = lambda z: (G(z) * np.log(np.abs(z - a)) / np.abs(np.polyval(f, z))
                               - correction_1(z) - correction_2(z))
@@ -340,135 +308,64 @@ def regulator_integral(f, a=1, G=lambda z: 1, tol=1e-12, cluster_threshold=0.4):
         return regulator_integral_1(f, a, G, cluster_threshold)
 
 
-# integrals of log|a + z|/|f(z)|, Re(z) log|a + z|/|f(z)|,  |z^2| log|a + z|/|f(z)|
+def _weight_vector(integrate, f, **kwds):
+    """Genus-two weights, in the order (1, Re(z), |z|^2)."""
+    values = [integrate(f, G=weight, **kwds)
+              for weight in (lambda z: 1, np.real, lambda z: np.abs(z)**2)]
+    return [np.real(v) for v, _, _ in values], [err for _, err, _ in values]
+
+
 def regulator_vector(f, a=1, tol=1e-12, cluster_threshold=0.4):
-    f = _coeffs(f)
-    v1, err1, _ = regulator_integral(f, a, G=lambda z: 1, tol=tol, cluster_threshold=cluster_threshold)
-    v2, err2, _ = regulator_integral(f, a, G=lambda z: np.real(z), tol=tol, cluster_threshold=cluster_threshold)
-    v3, err3, _ = regulator_integral(f, a, G=lambda z: np.abs(z) ** 2, tol=tol, cluster_threshold=cluster_threshold)
-    reg_vec = [np.real(v1), np.real(v2), np.real(v3)]
-    err_vec = [err1, err2, err3]
-    return reg_vec, err_vec
+    r"""Integrals of `(1, \Re(z), |z|^2) \log|z-a| / |f(z)|` over the plane."""
+    return _weight_vector(regulator_integral, _coeffs(f), a=a, tol=tol,
+                          cluster_threshold=cluster_threshold)
 
 
-# integrals of 1/|f(z)|, Re(z)/|f(z)|,  |z^2|/|f(z)|
 def regulator_vector_2(f, cluster_threshold=0.4):
-    f = _coeffs(f)
-    v1, err1, _ = regulator_integral_2(f, G=lambda z: 1, cluster_threshold=cluster_threshold)
-    v2, err2, _ = regulator_integral_2(f, G=lambda z: np.real(z), cluster_threshold=cluster_threshold)
-    v3, err3, _ = regulator_integral_2(f, G=lambda z: np.abs(z) ** 2, cluster_threshold=cluster_threshold)
-    reg_vec = [np.real(v1), np.real(v2), np.real(v3)]
-    err_vec = [err1, err2, err3]
-    return reg_vec, err_vec
+    r"""Integrals of `(1, \Re(z), |z|^2) / |f(z)|` over the plane."""
+    return _weight_vector(regulator_integral_2, _coeffs(f),
+                          cluster_threshold=cluster_threshold)
 
 
-# f : a list of rational numbers, corresponding to the polynomial f[0] * x**n + ... + f[n]
-# Compute the period matrix of the hyperelliptic curve y^2 = f(x)
-# returns 2g x g matrix, where the ith row is given by the integrals of x^i dx/y over the line segments joining the first 2g + 1 roots of f.
-#
-# (unaffected by the box trick -- this is a 1D contour integral
-# between consecutive roots, not a 2D plane integral.)
+def _period_digits(epsabs, epsrel):
+    """Translate legacy tolerances to a guarded decimal accuracy target."""
+    tolerances = np.asarray([epsabs, epsrel], dtype=float)
+    if not np.isfinite(tolerances).all() or not np.any(tolerances > 0):
+        raise ValueError('period tolerances must be finite with at least one positive value')
+    return max(15, int(np.ceil(-np.log10(min(tolerances[tolerances > 0])))))
+
+
 def period_matrix(f, epsabs=1.49e-8, epsrel=1.49e-8):
     r"""
-    ``epsabs``/``epsrel`` are forwarded to ``quad``; scipy's own defaults
-    (``1.49e-8``, kept here so old callers see no change) cap the result at
-    about 8 correct digits -- tighten them (e.g. to ``1e-15``, the practical
-    floor of float64) for a period matrix good to more digits.
+    Full cycle periods on the branch-value minimum spanning tree.
+
+    Each row is twice the integral along one lifted MST edge, for the
+    differentials ``x^i dx/y``, ``0 <= i < g``. In even degree omit the
+    leaf edge at the branch value of largest modulus to remove the one
+    relation; real and imaginary parts break ties.
+
+    Uses the shared guarded quadrature engine, returning a NumPy complex128
+    array. Positive ``epsabs``/``epsrel`` select the internal decimal target,
+    with a minimum of 15 digits. A nonpositive tolerance is disabled; at
+    least one must be positive. Output accuracy remains limited by float64.
     """
-    f = _coeffs(f)
-    deg = len(f) - 1
-    g = int((deg - 1) / 2)
+    from .precision import period_matrix_mp
 
-    # np.roots returns a real (float64) array when every root happens to be
-    # real; the path between two consecutive real roots is then real too, and
-    # since f alternates sign between consecutive real roots, np.sqrt of a
-    # negative *real* returns nan rather than an imaginary number -- which
-    # makes quad raise "array must not contain infs or NaNs". Casting to
-    # complex keeps the whole computation in C, where the square root is fine.
-    roots = np.roots(f).astype(complex)
-    roots.sort()
-
-    periods = np.full((2 * g, g), 1j)
-
-    for i in range(g):
-        for j in range(2 * g):
-            a, b = roots[j], roots[j + 1]
-            delta, mid = b - a, (a + b) / 2
-            others = np.delete(roots, [j, j + 1])
-            ymid = np.sqrt(-delta**2 * f[0] * np.prod(mid - others))
-            if abs(ymid.real)<=128*np.finfo(float).eps*abs(ymid) and ymid.imag<0:
-                ymid=-ymid
-            def integrand(t):
-                # Cancel the endpoint square roots analytically. Continuing
-                # each remaining factor avoids principal-sqrt sign jumps.
-                z = a + delta * np.sin(np.pi * t / 2)**2
-                y = ymid * np.prod(np.sqrt((z - others) / (mid - others)))
-                return np.pi * delta * z**i / y
-            resre, _ = spyint.quad(lambda t: integrand(t).real, 0, 1,
-                                   epsabs=epsabs, epsrel=epsrel)
-            resim, _ = spyint.quad(lambda t: integrand(t).imag, 0, 1,
-                                   epsabs=epsabs, epsrel=epsrel)
-            periods[j, i] = resre + resim * 1j
-
-    return periods
+    return np.asarray(period_matrix_mp(f, _period_digits(epsabs, epsrel)), complex)
 
 
 def cplus(f, epsabs=1.49e-8, epsrel=1.49e-8):
-    f = _coeffs(f)
-    periods = period_matrix(f, epsabs=epsabs, epsrel=epsrel)
-    P, L, U = sp.linalg.lu(periods.real)
-    return np.linalg.det(P) * np.linalg.det(U)
+    """Signed real minor of full cycle periods, with deterministic pivot ties."""
+    return _c_invariants(f, epsabs, epsrel)[0]
 
 
 def cminus(f, epsabs=1.49e-8, epsrel=1.49e-8):
-    f = _coeffs(f)
-    periods = period_matrix(f, epsabs=epsabs, epsrel=epsrel)
-    P, L, U = sp.linalg.lu(periods.imag)
-    return np.linalg.det(P) * np.linalg.det(U)
-
-# ============================================================
-# Generalization: log|g(z)| in place of log|z - a|
-#
-# For a polynomial g(z) = c * prod_k (z - s_k)^{m_k}, we have the
-# elementary identity
-#
-#     log|g(z)| = log|c| + sum_k m_k * log|z - s_k|
-#
-# so
-#
-#     integral of  G(z) * log|g(z)| / |f(z)|  over C
-#   =  log|c| * [integral of G(z)/|f(z)|]                      <- regulator_integral_2
-#   +  sum_k  m_k * [integral of G(z) log|z - s_k| / |f(z)|]   <- regulator_integral (per root of g)
-#
-# Each term on the right is exactly what regulator_integral_2 /
-# regulator_integral (dispatching internally to the f(a)=0 or
-# f(a)!=0 case, per root s_k of g) already compute robustly via the
-# box trick above. So log|g(z)| needs no new numerics at all -- just
-# factoring g and summing the existing, already-validated pieces.
-#
-# Roots of g that coincide with a root of f are handled correctly
-# and automatically: regulator_integral(f, a=s_k, ...) itself checks
-# np.polyval(f, s_k) == 0 (within `tol`) and dispatches to
-# regulator_integral_0, which folds that log-pole in with any nearby
-# poles of f via the same box/cluster machinery.
-#
-# Multiplicities of g's roots are detected numerically (np.roots
-# returns each root of a repeated factor as its own, very-close-but-
-# not-exactly-equal floating point value) and collapsed via a tight
-# `mult_tol`, so a repeated root of g contributes m times a single
-# regulator_integral call rather than m separate (and needlessly
-# expensive) calls.
-#
-# Caveat: this does NOT protect against a root of g landing very
-# close to -- but not within `tol` of -- a root of f (i.e. an
-# "almost cancellation" between a zero of g and a pole of f that is
-# too far apart to trigger regulator_integral_0, but close enough to
-# be numerically delicate). This situation is not exercised by the
-# validation below; if you hit it, consider increasing `tol` so the
-# near-coincidence is treated as exact, or perturbing the polynomial.
-# ============================================================
+    """Signed imaginary minor of full cycle periods, with deterministic pivot ties."""
+    return _c_invariants(f, epsabs, epsrel)[1]
 
 
-# integrals of log|g(z)|/|f(z)|, Re(z) log|g(z)|/|f(z)|, |z^2| log|g(z)|/|f(z)|
-# Same as regulator_det(f, a1, a2), but with the scalars a1, a2
-# generalized to polynomials g1, g2 (log|z - a| -> log|g(z)|).
+def _c_invariants(f, epsabs=1.49e-8, epsrel=1.49e-8):
+    """Both signed minors from one period-matrix integration."""
+    from .precision import c_invariants_mp
+
+    return tuple(float(v) for v in c_invariants_mp(f, _period_digits(epsabs, epsrel)))

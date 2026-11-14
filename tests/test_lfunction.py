@@ -1,16 +1,8 @@
 r"""Tests for the batched Frobenius path and the two `L`-functions.
 
-The Euler factors at good primes now come from David Harvey's
-``hypellfrob``, handed the whole list of primes as one threaded job rather
-than one prime at a time.  The mathematics must be unchanged, so the first
-thing checked is that the batched factors are *identical* to Sage's, prime
-by prime; and that removing the program falls back to Sage rather than
-failing.
-
-An even degree model -- which is what `4f + h^2` gives when `h` has degree
-`g+1` -- is replaced by its odd model when the curve has a rational
-Weierstrass point to move to infinity, and otherwise goes through a routine
-linear in `p`: correct, but not the same speed.
+The good-prime Euler factors come from the simultaneous rforest algorithm,
+for either model parity. They must agree with Sage prime by prime, including
+when the native program declines a job or is unavailable.
 
 Then the two `L`-functions.  `L(C,s)` is checked against PARI's own
 ``lfungenus2`` -- coefficients and value both -- since that is an
@@ -21,6 +13,10 @@ is the bug the arbitrary-precision path had to fix.
 """
 
 import os
+import subprocess
+from unittest.mock import Mock, patch
+
+import pytest
 
 from sage.all import (GF, HyperellipticCurve, PolynomialRing, QQ, RR, ZZ,
                       pari, prime_range)
@@ -33,7 +29,7 @@ from hyperell_regulator.frobenius import (
     odd_model,
 )
 from hyperell_regulator.lfunction import (CurveLFunction, StandardLFunction,
-                                          _real_field)
+                                          _pari_lfun_call, _pari_precision, _real_field)
 
 R = PolynomialRing(ZZ, "x")
 X = R.gen()
@@ -115,16 +111,15 @@ def test_even_degree_with_a_weierstrass_point_takes_the_fast_path():
         assert got[p] == _sage_frobenius(f, p), p
 
 
-def test_even_degree_without_one_is_correct_if_slow():
+def test_even_degree_without_a_weierstrass_point():
     r"""
-    `4f + h^2` here has no rational Weierstrass point, so it goes through the
-    even degree routine: linear in `p`, and not able to reach the same speed,
-    but it must still be right.
+    The simultaneous even-degree algorithm handles models with no rational
+    Weierstrass point and must return the same Euler factors as Sage.
     """
     f = 4 * (X ** 5 - X + 1) + (X ** 3 + X + 1) ** 2
     assert odd_model(f) is None
     ps = [p for p in prime_range(7, 90) if f.discriminant() % p]
-    got = frobenius_polynomials(f, ps, nthreads=8)
+    got = frobenius_polynomials(f, ps, nthreads=4)
     for p in ps:
         assert got[p] == _sage_frobenius(f, p), p
 
@@ -216,3 +211,197 @@ def test_arbitrary_precision_really_is():
 def test_real_field_is_wide_enough():
     for d in (10, 30, 60):
         assert _real_field(d).precision() >= int(d * 3.32)
+
+
+def test_large_coefficient_budget_can_exceed_one_gib_without_shrinking_stack():
+    """The 1717.a.1717.2 count needs more than Sage's default 1 GiB ceiling."""
+    engine = Mock(wraps=pari)
+    engine.allocatemem = Mock()
+    engine.stacksize.return_value = 8_000_000
+    engine.stacksizemax.return_value = 2**30
+    with patch('hyperell_regulator.lfunction.pari', engine):
+        assert _pari_lfun_call(lambda: 42, coefficient_count=2_329_751, digits=100) == 42
+    size, ceiling = engine.allocatemem.call_args.args
+    assert size == 8_000_000 and ceiling > 2**30
+    engine.allocatemem.reset_mock()
+    engine.stacksize.return_value = 2**30
+    engine.stacksizemax.return_value = 2**34
+    with patch('hyperell_regulator.lfunction.pari', engine):
+        _pari_lfun_call(lambda: 42, coefficient_count=2_329_751, digits=100)
+    engine.allocatemem.assert_not_called()
+
+
+def test_pari_stack_exhaustion_retries_the_operation():
+    """Use a real exhausted PARI stack, including more than one enlargement."""
+    previous = pari.stacksize(), pari.stacksizemax()
+    attempts = 0
+
+    def build_vector():
+        nonlocal attempts
+        attempts += 1
+        return pari('vector(100000,i,i)')
+
+    try:
+        pari.allocatemem(2**18, 2**19, silent=True)
+        vector = _pari_lfun_call(build_vector)
+        assert len(vector) == 100_000 and vector[99_999] == 100_000
+        assert attempts > 1
+    finally:
+        pari.allocatemem(*previous, silent=True)
+
+
+def test_other_pari_errors_propagate_without_retry():
+    from cypari2 import PariError
+
+    attempts = 0
+    previous = pari.stacksize(), pari.stacksizemax(), pari.get_real_precision()
+
+    def fail():
+        nonlocal attempts
+        attempts += 1
+        return pari('1/0')
+
+    with pytest.raises(PariError, match='impossible inverse'):
+        with _pari_precision(100):
+            _pari_lfun_call(fail)
+    assert attempts == 1
+    assert (pari.stacksize(), pari.stacksizemax(), pari.get_real_precision()) == previous
+
+
+@pytest.mark.parametrize('cls', [CurveLFunction, StandardLFunction])
+def test_coefficient_expansion_matches_divisor_sums(cls):
+    """The Euler product for zeta(s)*zeta(s-1) has coefficients sigma_1(n)."""
+    L = cls(HyperellipticCurveWithReduction(F))
+    T = PolynomialRing(QQ, 'T').gen()
+    with patch.object(cls, 'precompute_h1'), patch.object(
+            cls, 'euler_factor', side_effect=lambda p: (1-T)*(1-p*T)):
+        coefficients = L.dirichlet_coefficients(40)
+    if cls is CurveLFunction:
+        assert coefficients[0] == 0
+        coefficients = coefficients[1:]
+    assert coefficients == [sum(ZZ(n).divisors()) for n in range(1, 41)]
+
+
+def test_pari_precision_restored_after_nested_failure():
+    previous = pari.get_real_precision()
+    with _pari_precision(30):
+        outer = pari.get_real_precision()
+        with pytest.raises(RuntimeError, match='failed'):
+            with _pari_precision(60):
+                assert pari.get_real_precision() > outer
+                raise RuntimeError('failed')
+        assert pari.get_real_precision() == outer
+    assert pari.get_real_precision() == previous
+
+
+@pytest.mark.parametrize('shift', [0, 1])
+def test_conductor_388_factor_at_two_is_detected_from_reduction(shift):
+    x = PolynomialRing(QQ, 'x').gen()
+    f, h = x+2*x**2-x**4, x**3+x+1
+    L = StandardLFunction(HyperellipticCurveWithReduction(f(x+shift), h(x+shift)))
+    T = L._RT.gen()
+    assert L.h1_euler_factor(2) == 1+T+T**2
+    assert L.wedge2_euler_factor(2) == (1-T)*(1-8*T**3)
+    assert L.euler_factor(2) == (1-T)*(1+2*T+4*T**2)
+    assert L.conductor() == 4*97**2
+    # An explicit wedge-square override still takes precedence.
+    L.bad_factors[2] = (1-2*T)*(1+T)
+    assert L.wedge2_euler_factor(2) == (1-2*T)*(1+T)
+
+
+def test_unsupported_reduction_at_two_still_requires_override():
+    L = StandardLFunction(HyperellipticCurveWithReduction(F))
+    with pytest.raises(NotImplementedError, match='at 2 only'):
+        L.wedge2_euler_factor(2)
+
+
+def test_1116_toric_homology_uses_submodule_coordinates():
+    C = HyperellipticCurveWithReduction(-X+X**2+2*X**3+X**4, 1+X**3)
+    L = StandardLFunction(C)
+    T = L._RT.gen()
+    # The totally toric h^1 factor is independently supplied by PARI.
+    assert L.toric_factor(3) == L.h1_euler_factor(3) == 1+T+T**2
+    assert L.wedge2_euler_factor(3) == (1-T)*(1-27*T**3)
+    assert L.euler_factor(3) == (1-T)*(1+3*T+9*T**2)
+    assert L.conductor() == 4*9*31**2
+
+
+@pytest.mark.parametrize('support_order', [(0, 1, 2), (2, 1, 0)])
+def test_toric_frobenius_uses_echelonized_cycle_basis(support_order):
+    """Changing the cycle basis must preserve order-three Frobenius."""
+    C = HyperellipticCurveWithReduction(-X+X**2+2*X**3+X**4, 1+X**3)
+    L = StandardLFunction(C)
+    R = C.cluster_picture(3)
+    H1, _, _ = R.homology_of_special_fibre()
+    ambient = H1.ambient()
+    edges = list(ambient.basis())
+    generators = [edges[1]-edges[0], edges[2]-edges[0]]
+    cycles = ambient.submodule(
+        generators, support_order=[edges[i].support()[0] for i in support_order])
+    # Reproduce the upstream map: its generator indices do not necessarily
+    # match the echelonized basis returned by Sage's submodule constructor.
+    def on_basis(i):
+        return ambient.sum_of_terms(
+            (s.frobenius(), n*s.epsilon(
+                lambda c: c.frobenius(), R.field_frobenius()))
+            for s, n in generators[i])
+    frob = cycles.module_morphism(on_basis=on_basis, codomain=cycles)
+    with patch.object(type(R), 'homology_of_special_fibre',
+                      return_value=(cycles, None, frob)):
+        assert L.toric_factor(3) == L.h1_euler_factor(3)
+
+
+@pytest.mark.parametrize('entries', [
+    [1, 0, 0, 1], [-1, 0, 0, -1], [1, 0, 0, -1],
+    [0, -1, 1, -1], [0, -1, 1, 0], [0, -1, 1, 1],
+])
+def test_toric_factor_matches_exterior_square_monodromy_kernel(entries):
+    """Compute the invariant subspace directly, including order 3, 4 and 6."""
+    from itertools import combinations
+    from sage.all import Matrix, block_diagonal_matrix, block_matrix, identity_matrix, zero_matrix
+
+    M = Matrix(QQ, 2, 2, entries)
+    p = 7
+    frobenius = block_diagonal_matrix(M, p*M)
+    N = block_matrix([[zero_matrix(QQ, 2), identity_matrix(QQ, 2)],
+                      [zero_matrix(QQ, 2), zero_matrix(QQ, 2)]])
+    pairs = list(combinations(range(4), 2))
+    Fw = Matrix(QQ, [[frobenius[a, i]*frobenius[b, j]-frobenius[b, i]*frobenius[a, j]
+                     for i, j in pairs] for a, b in pairs])
+    Nw = Matrix(QQ, [[N[a, i]*(b == j)-N[b, i]*(a == j)
+                     +(a == i)*N[b, j]-(b == i)*N[a, j]
+                     for i, j in pairs] for a, b in pairs])
+    invariant = Nw.right_kernel()
+    restricted = Matrix(QQ, [invariant.coordinate_vector(Fw*v) for v in invariant.basis()])
+    L = StandardLFunction(HyperellipticCurveWithReduction(F))
+    U = L._RT(M.charpoly().reverse())
+    expected = L._RT(restricted.charpoly().reverse())
+    assert L._wedge2_totally_toric(p, U) == expected
+
+
+@pytest.mark.parametrize("workers", [2, 4, 8, None])
+@pytest.mark.parametrize("f", [F, 4 * (X**5 - X + 1) + (X**3 + X + 1)**2])
+def test_native_parallel_matrices_match_serial_and_sage(workers, f):
+    """Exercise the binary directly so fallback cannot mask native failures."""
+    binary = euler_binary()
+    if binary is None:
+        pytest.skip("Frobenius accelerator not built")
+    from hyperell_regulator.frobenius import _lift
+    ps = [int(p) for p in prime_range(41, 60) if f.discriminant() % p]
+    batch = " ".join(map(str, f.list())) + "\n"
+    batch += "".join("%d 2\n" % p for p in ps)
+    def run(n):
+        command = [binary] if n is None else [binary, str(n)]
+        result = subprocess.run(command, input=batch, text=True,
+                                capture_output=True, check=True, timeout=30)
+        rows = [list(map(int, line.split())) for line in result.stdout.splitlines()]
+        assert len(rows) == len(ps)
+        for p, row in zip(ps, rows):
+            assert row[:3] == [p, 1, 4]
+            assert len(row) == 19
+            matrix = [row[3 + 4*i:7 + 4*i] for i in range(4)]
+            assert _lift(matrix, p, 2, 2) == _sage_frobenius(f, p)
+        return rows
+    serial = run(1)
+    for _ in range(3):
+        assert run(workers) == serial

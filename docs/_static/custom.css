@@ -1,0 +1,12 @@
+body { color: #243343; }
+div.document { margin-top: 36px; }
+div.body { padding: 0 36px 40px; }
+div.body h1, div.body h2, div.body h3 { color: #173e55; }
+div.body h1 { font-size: 2.25em; }
+a { color: #176480; }
+pre { padding: 14px 18px; border: 1px solid #e1e8eb; border-radius: 5px; }
+div.sphinxsidebar { font-size: 15px; }
+div.sphinxsidebar a { color: #315469; }
+@media screen and (max-width: 875px) {
+    div.body { padding: 0 20px 30px; }
+}

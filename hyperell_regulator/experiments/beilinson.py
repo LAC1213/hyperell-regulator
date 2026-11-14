@@ -3,83 +3,94 @@ Beilinson regulator determinants from torsion points.
 
 For each curve in ``same_component_results.json`` (written by
 :mod:`hyperell_regulator.components`) this looks for a triple of
-distinct rational points `P, Q, R` such that
+distinct rational points `P, R, Q` such that
 
-1. `[P] - [R]` and `[Q] - [R]` are torsion in the Jacobian,
-2. `(P, R)` and `(Q, R)` each reduce to a smooth point of the *same*
+1. `[P] - [Q]` and `[R] - [Q]` are torsion in the Jacobian,
+2. `(P, Q)` and `(R, Q)` each reduce to a smooth point of the *same*
    irreducible component of the special fibre at *every* prime, and
-3. no two of `P, Q, R` are hyperelliptic conjugates,
+3. no two of `P, R, Q` are hyperelliptic conjugates,
 
-then ranks the triples by cut conditioning and evaluates the
-`3 \times 3` regulator determinant of Corollary "3x3 matrix".
+then ranks the triples by the geometry of their shared x-cuts,
+and evaluates the
+`3 \times 3` regulator determinant.
 
-When moving `R` to infinity would also move `P` or `Q` there, all three
+When moving the common pole `Q` to infinity would also move `P` or `R` there, all three
 points are kept affine instead. The logarithmic weight is then
-`m_P = (x-x(P))/(x-x(R))`, and similarly for `Q`.
+`m_P = (x-x(P))/(x-x(Q))`, and similarly for `R`.
+
+The serialized API retains its legacy triple keys: ``P`` and ``Q`` store
+the two marked zeros, and ``R`` stores the common pole. In the mathematical
+notation here these points are called `P`, `R`, and `Q`, respectively.
 
 The construction (infinity normalization)
-=======================================
+============================================================
 
-With `\O^+ := R` moved to `[0:1:0]`, a torsion point `P^+ \in C(\QQ)` of order
-`n` gives `n P^+ - n \O^+ = \div(f^+)`; applying the hyperelliptic involution
-`F` gives `f^- := f^+ \circ F` with `\div(f^-) = n P^- - n \O^-`.  Setting
-`\varphi := f^+ f^-`, so that
-`\div(\varphi) = n(P^+ + P^- - \O^+ - \O^-)`, the cycle
+With the common pole `Q` at infinity, a torsion point `P \in C(\QQ)` of
+order `n` gives a function `\varphi` with `(\varphi)=n(P-Q)`. Write `\iota`
+for the hyperelliptic involution and
+`\operatorname{N}(\varphi)=\varphi(\varphi\circ\iota)`. Then
+`(\varphi\circ\iota)=n(\iota(P)-\iota(Q))`, and the cycle
 
 .. MATH::
 
-    \alpha_P = (\Delta C, \varphi \circ \pi_1) - (\Gamma_F, \varphi \circ \pi_1)
-      - (\{P^+\} \times C, \psi \circ \pi_2) + (\{P^-\} \times C, \psi \circ \pi_2)
-      - (C \times \{\O^+\}, \psi \circ \pi_1) + (C \times \{\O^-\}, \psi \circ \pi_1)
+    \alpha_P = (\Delta C, \operatorname{N}(\varphi) \circ \pi_1)
+      - (\Gamma_\iota, \operatorname{N}(\varphi) \circ \pi_1)
+      - (\{P\} \times C, \psi \circ \pi_2)
+      + (\{\iota(P)\} \times C, \psi \circ \pi_2)
+      - (C \times \{Q\}, \psi \circ \pi_1)
+      + (C \times \{\iota(Q)\}, \psi \circ \pi_1)
 
-with `\psi := f^+/f^-` defines a class in `\CH^2(C \times C, 1)`.  Since
-`\div(x - x(P)) = P^+ + P^- - \O^+ - \O^-`, one has
-`(x - x(P))^n = c\,\varphi` for some `c \in \QQ^\times`, whence the regulator
+with `\psi=\varphi/(\varphi\circ\iota)` defines a class in
+`\CH^2(C\times C,1)`. Since
+`(x-x(P))=P+\iota(P)-Q-\iota(Q)`, one has
+`(x-x(P))^n=c\operatorname{N}(\varphi)` for some `c\in\QQ^\times`, whence
 
 .. MATH::
 
     \langle \reg(\alpha_P), \delta_{ij} \rangle
       = \frac{1}{2\pi i} \int_{\CC} \frac{\log|m_P(z)|}{|f(z)|} d_{ij}(z)\,
-        dz\, d\overline z + \log|c|\, a_{ij},
+        dz\,d\overline z + \log|c|\,a_{ij}.
 
-`m_P` being the minimal polynomial of `x(P)` over `\QQ` -- here `x - x(P)`,
-since `P` is rational.  The `\log|c| a_{ij}` terms are killed by row
-operations against the third column, which is why the matrix below has the
-`1/|f|` integrals as its last column and needs no knowledge of `c`.
+Here `m_P=x-x(P)` since `P` is rational. The `\log|c|a_{ij}` terms are
+removed by column operations against the unweighted period column.
 
 What is computed
 ================
 
-For `d_{11} = 1`, `d_{12} = \Re(z)`, `d_{22} = |z|^2`, the matrix
+For `d_{11} = 1`, `d_{12} = 2\Re(z)`, `d_{22} = |z|^2`, the matrix
 
 .. MATH::
 
     \begin{pmatrix}
-      \int \frac{\log|m_P|}{|f|} d_{11} & \int \frac{\log|m_Q|}{|f|} d_{11} & \int \frac{d_{11}}{|f|} \\
-      \int \frac{\log|m_P|}{|f|} d_{12} & \int \frac{\log|m_Q|}{|f|} d_{12} & \int \frac{d_{12}}{|f|} \\
-      \int \frac{\log|m_P|}{|f|} d_{22} & \int \frac{\log|m_Q|}{|f|} d_{22} & \int \frac{d_{22}}{|f|}
+      \int \frac{\log|m_P|}{|f|} d_{11} & \int \frac{\log|m_R|}{|f|} d_{11} & \int \frac{d_{11}}{|f|} \\
+      \int \frac{\log|m_P|}{|f|} d_{12} & \int \frac{\log|m_R|}{|f|} d_{12} & \int \frac{d_{12}}{|f|} \\
+      \int \frac{\log|m_P|}{|f|} d_{22} & \int \frac{\log|m_R|}{|f|} d_{22} & \int \frac{d_{22}}{|f|}
     \end{pmatrix}
 
-and its determinant, by the Stokes regulator
+and its determinant `D`, by the Stokes regulator
 (:func:`hyperell_regulator.regulator.regulator_stokes`): the columns at `P`
-and `Q` come from functions with divisor `n P - n\O`, the third is the period
-vector.  A curve whose cut system the Stokes method cannot build is reported
+and `R` use logarithms of x-coordinate differences directly; the third is the period
+vector. All three columns share one degree-two cut.  A curve whose cut system the Stokes method cannot build is reported
 and skipped -- nothing here integrates over `\CC`.
-If the determinant is non-zero, Beilinson's conjecture predicts it is a
-rational multiple of `(2\pi i) c^+(C) c^-(C) L'''(\wedge^2 C, 1)`; the periods
-`c^\pm` are reported alongside, the cached standard `L`-value is computed when needed for the comparison.
+For non-zero `D`, the reported rational quotient is
+
+.. math:: q=\frac{\pi c^+(C)c^-(C)L''(\mathrm{std},1)}{D}.
+
+The signed minors `c^\pm` use full cycle periods. Integer rational guesses
+are identified in the result; numerical agreement is not an integrality proof.
 
 Caveats
 =======
 
 * Condition 2 is decided by :mod:`hyperell_regulator.reduction`, which
   cannot answer at `p = 2`.
-  A triple whose pairs are *undecided* at 2 is reported as such and skipped by
-  default; pass ``allow_undecided=True`` to use it anyway.
-* Triples are pairwise non-conjugate: conjugate `P,Q` give equal weights,
-  while a point conjugate to `R` gives the constant weight 1.
-* Integrality of `\alpha_P` -- the existence of a suitable `c` -- is exactly
-  what condition 2 is a proxy for.  It is not verified independently here.
+  Triples whose component verdicts are *undecided* are included by default,
+  with those verdicts retained in the report. Pass ``allow_undecided=False``
+  or ``--exclude-undecided`` to require affirmative component verdicts.
+* Triples are pairwise non-conjugate: conjugate `P,R` give equal weights,
+  while a point conjugate to the pole `Q` gives the constant weight 1.
+* Condition 2 is the package's test for integrality of `\alpha_P`;
+  integrality is not certified independently here.
 
 Run with::
 
@@ -91,6 +102,7 @@ strictly below N=1000. Use --help for comparison, cache and progress options.
 
 import json
 import time
+from contextlib import contextmanager
 
 from sage.all import (
     RealField,
@@ -109,6 +121,7 @@ from hyperell_regulator.components import (
     RESULTS,
     _fmt,
     curve_from_row,
+    divisor_class_order,
     odd_degree_model,
 )
 from hyperell_regulator.lfunction import StandardLFunction
@@ -116,7 +129,8 @@ from hyperell_regulator.paths import data_path, ensure_parent
 from hyperell_regulator.regulator import c_invariants
 
 DEFAULT_CONDUCTOR_BOUND = 1000
-REPORT_VERSION = 4  # continuous period branches and precision-preserving reports
+REPORT_VERSION = 12  # weights (1, 2 Re(z), |z|^2); q = pi c+ c- L'' / D
+DETERMINANT_WEIGHTS = (1, 2, 1)
 
 LVALUES = data_path("results", "lvalue_cache.json")
 RESULTS_OUT = data_path("results", "beilinson_results.json")
@@ -128,7 +142,7 @@ RESULTS_OUT = data_path("results", "beilinson_results.json")
 
 def _parse_point(v):
     r"""
-    Undo :func:`same_component_enumeration._jsonable` on a point: a list
+    Undo :func:`hyperell_regulator.components._jsonable` on a point: a list
     ``[x, y]`` of rationals-as-strings, or ``["infinity", Y]``.
     """
     if v is None:
@@ -200,20 +214,18 @@ def lmfdb_rank(row):
 # searching for a usable triple
 # ---------------------------------------------------------------------------
 
-def find_triples(record, C, row=None, allow_undecided=False):
+def find_triples(record, C, row=None, allow_undecided=True):
     r"""
-    All triples `(P, Q, R)` of distinct points of ``record`` meeting the three
-    conditions, as dictionaries.  ``R`` is the common point of the two pairs.
+    All triples of distinct points meeting the three conditions, as
+    dictionaries. The legacy key ``R`` stores the common pole `Q`.
 
-    A pair counts if its verdict is ``True`` (or ``None`` when
-    ``allow_undecided``) and the order of the difference is finite.
+    A pair counts if its verdict is ``True`` or, by default, ``None``, and
+    the order of the difference is finite. ``allow_undecided=False`` excludes
+    undecided pairs; a ``False`` verdict always excludes a pair.
     """
-    # How is torsion certified?  With a rational Weierstrass point the order of
-    # each difference was computed in J(QQ) and must be finite.  Without one
-    # there is no Mumford arithmetic and the stored order is None, so instead
-    # we accept LMFDB's Mordell-Weil rank being 0: then J(QQ) is all torsion
-    # and every difference is torsion automatically.  This fallback is used
-    # ONLY when there is no rational Weierstrass point.
+    # Exact orders are usable on either model. Recover missing even-model
+    # orders from older component caches by principality tests. Rank zero
+    # remains a fallback if the exact computation is unavailable.
     has_weierstrass = odd_degree_model(C) is not None
     rank = lmfdb_rank(row)
     rank_zero = (rank == 0)
@@ -221,23 +233,21 @@ def find_triples(record, C, row=None, allow_undecided=False):
     if isinstance(invariants, str):
         invariants = json.loads(invariants)
     exponent = int(lcm([ZZ(v) for v in invariants])) if rank_zero else None
-    via = "order in J(Q)" if has_weierstrass else (
-        "LMFDB rank 0" if rank_zero else None)
-
     ok = {}                      # R -> list of S with (S, R) usable
     for d in record["pairs"]:
         verdict = d["same_component_everywhere"]
         if verdict is not True and not (allow_undecided and verdict is None):
             continue
         order = d["order_of_P_minus_Q"]
-        if has_weierstrass:
-            if order is None or order == "Infinity":
-                continue         # not known to be torsion
-        else:
-            if not rank_zero:
-                continue         # cannot certify torsion at all
-            order = order if order not in (None, "Infinity") else "rank 0"
         P, Q = _parse_point(d["P"]), _parse_point(d["Q"])
+        if order is None and not has_weierstrass:
+            order = divisor_class_order(C, P, Q)
+        if str(order) in ("Infinity", "+Infinity"):
+            continue
+        if order is None:
+            if has_weierstrass or not rank_zero:
+                continue
+            order = "rank 0"
         ok.setdefault(P, []).append((Q, verdict, order))
         ok.setdefault(Q, []).append((P, verdict, order))
 
@@ -254,7 +264,8 @@ def find_triples(record, C, row=None, allow_undecided=False):
                             "order_P": nP, "order_Q": nQ,
                             "verdict_P": vP, "verdict_Q": vQ,
                             "pairwise_nonconjugate": True,
-                            "torsion_certified_by": via,
+                            "torsion_certified_by": "LMFDB rank 0" if "rank 0" in (nP, nQ)
+                                                    else "order in J(Q)",
                             "mw_rank": rank,
                             "torsion_exponent": exponent})
     return out
@@ -266,15 +277,16 @@ def find_triples(record, C, row=None, allow_undecided=False):
 
 def model_with_R_at_infinity(C, R, points):
     r"""
-    An isomorphic model `v^2 = G(u)` on which ``R`` is a point at infinity,
+    An isomorphic model `v^2 = G(u)` on which the common pole `Q` (argument
+    ``R``) is a point at infinity,
     together with the images of ``points``.
 
-    If ``R`` is already at infinity the square model `Y^2 = F(x)` is returned
-    unchanged.  Otherwise `u = 1/(x - x(R))`, `v = Y/(x - x(R))^{g+1}` with
-    `Y = 2y + h(x)`, giving `G(u) = u^{2g+2} F(x(R) + 1/u)`; then `x = x(R)`
-    goes to `u = \infty`, so `R` and its involution image are the points at
-    infinity, and `\deg G = 2g+2` minus the multiplicity of `x(R)` as a root of
-    `F` -- degree 5 exactly when `R` is a rational Weierstrass point.
+    If the pole is already at infinity the square model `Y^2 = F(x)` is returned
+    unchanged. Otherwise `u = 1/(x - x(Q))`, `v = Y/(x - x(Q))^{g+1}` with
+    `Y = 2y + h(x)`, giving `G(u) = u^{2g+2} F(x(Q) + 1/u)`; then `x = x(Q)`
+    goes to `u = \infty`, so `Q` and its involution image are the points at
+    infinity, and `\deg G = 2g+2` minus the multiplicity of `x(Q)` as a root of
+    `F` -- degree 5 exactly when `Q` is a rational Weierstrass point.
 
     Returns ``(G, images, xR)`` with ``G`` in `\ZZ[u]` and ``images`` a list
     parallel to ``points``, each an affine `(u, v)` or ``"infinity"``.
@@ -355,113 +367,54 @@ def _resolve_triple_orders(G, images, pole, t):
     Rank zero and the recorded finite group exponent give a proven multiple;
     testing its divisors avoids an arbitrary torsion-search cutoff.
     """
-    from hyperell_regulator.regulator import function_with_divisor
+    from hyperell_regulator.regulator import torsion_order
     for key, point in zip(("order_P", "order_Q"), images[:2]):
         if str(t.get(key)).isdigit():
             continue
         exponent = t.get("torsion_exponent")
         if not exponent:
             raise ValueError("no exact torsion order or proven exponent")
-        for n in ZZ(exponent).divisors():
-            try:
-                function_with_divisor(G, point, pole, int(n))
-            except ValueError:
-                continue
-            t[key] = int(n)
-            break
-        else:
+        order = torsion_order(G, point, pole, multiple=exponent)
+        if order is None:
             raise ArithmeticError("recorded torsion exponent is not principal")
+        t[key] = int(order)
 
 
-# ---------------------------------------------------------------------------
-# choosing which triple to integrate
-# ---------------------------------------------------------------------------
-
-def cut_conditioning(G, point, n, pole="infinity"):
-    r"""
-    ``(N, nodes, span, gap, detour)`` for the cut system of the `\varphi` with
-    `\operatorname{div}(\varphi) = nP - n\O` on `v^2 = G(u)`.
-
-    Everything the Stokes legs do is measured in ``span`` and ``gap`` --- the
-    largest and smallest distance between two nodes --- so their ratio is what
-    says how hard the cut system will be to integrate.  It costs a
-    :meth:`~hyperell_regulator.regulator.cover.Cover.cut_path` and **no
-    integral at all**, which is what makes it usable as a selection rule.
-    """
-    from hyperell_regulator.regulator import function_with_divisor
-    from hyperell_regulator.regulator.cover import Cover
-    from hyperell_regulator.regulator.stokes import cut_scale
-
-    cov = Cover(G, *function_with_divisor(G, point, pole, int(n)))
-    z, kinds, _ = cov.cut_path()
-    span, gap = cut_scale(z)
-    return cov.N, len(z), span, gap, "none" in kinds
-
-
-def triple_conditioning(C, t, mp=False):
-    r"""
-    How well conditioned a triple's two cut systems are, as a sort key, or
-    ``None`` when the triple has no usable model.
-
-    The key is ``(detours, worst span/gap, largest N)``: with ``mp`` a detoured
-    cut system goes last, since the arbitrary-precision pass declines those
-    outright -- in float64 they integrate perfectly well, so there ``mp=False``
-    drops that term and ranks on the conditioning alone.  Otherwise the
-    binding constraint is whichever of the two columns is worse.
-    ``N`` breaks ties because it sets the running time --- on LMFDB
-    249.a.249.1 the `N = 14` column costs `8\times` the `N = 7` one at fifteen
-    digits.
-
-    The spread this measures is not a detail.  On that curve the triples all
-    carry the same torsion orders, and their `Q` columns range from
-    ``span/gap = 34.5`` to ``819``; on 277.a.277.1 the range over triples runs
-    from ``6.95`` to ``2.4\cdot10^6``.  Ordering by torsion order alone, as
-    this used to, picks among them arbitrarily.
-    """
+def triple_conditioning(C, t):
+    """Rank shared x-cuts by span/gap and edge count, independently of orders."""
+    from hyperell_regulator.regulator.stokes import Cut, cut_scale
     try:
-        G, images, xR, pole = _model_for_triple(C, t)
+        G, images, _, pole = _model_for_triple(C, t)
         _resolve_triple_orders(G, images, pole, t)
-    except Exception:                                          # noqa: BLE001
+        centers = [p[0] for p in images[:2]]
+        if pole != "infinity":
+            centers.append(pole[0])
+        cut = Cut(G, centers)
+        span, gap = cut_scale(cut.nodes)
+        info = (2, len(cut.nodes), span, gap, 'regular' in cut.kinds)
+        return (span/gap, len(cut.nodes)), [info]
+    except (ValueError, ArithmeticError, NotImplementedError):
         return None
-    if images[0] == "infinity" or images[1] == "infinity":
-        return None
-    if G.degree() not in (5, 6):
-        return None
-    out = []
-    for im, n in ((images[0], t.get("order_P")), (images[1], t.get("order_Q"))):
-        if not (str(n).isdigit() or isinstance(n, (int, Integer))):
-            return None
-        try:
-            out.append(cut_conditioning(G, im, int(n), pole=pole))
-        except Exception:                                      # noqa: BLE001
-            return None
-    detours = sum(1 for r in out if r[4]) if mp else 0
-    ratio = max(r[2] / r[3] for r in out)
-    return (detours, ratio, max(r[0] for r in out)), out
 
 
-def rank_triples(C, triples, verbose=False, mp=False, usable_only=False):
+def rank_triples(C, triples, *, verbose=False, usable_only=False):
     r"""
     ``triples`` best first, by :func:`triple_conditioning`.
 
-    With ``usable_only=True``, discard triples whose covers cannot be built;
+    With ``usable_only=True``, discard triples whose shared cuts cannot be built;
     otherwise keep them in their original order at the end.
     """
     scored, rest = [], []
     for k, t in enumerate(triples):
-        got = triple_conditioning(C, t, mp=mp)
+        got = triple_conditioning(C, t)
         (scored if got is not None else rest).append(
             (got[0], k, t, got[1]) if got is not None else (k, t))
     scored.sort(key=lambda r: r[0])
     if verbose and scored:
-        print("  cut systems, best first (no integrals):")
-        for key, k, t, cols in scored[:4]:
-            print("    %-46s N = %-6s span/gap %9.1f%s"
-                  % ("%s / %s" % (_fmt(t["P"]), _fmt(t["Q"])),
-                     "%d, %d" % (cols[0][0], cols[1][0]), key[1],
-                     "   (detour)" if key[0] else ""))
-        if len(scored) > 4:
-            print("    ... and %d more" % (len(scored) - 4))
+        print("  shared x-cuts, best first (no integrals):")
+        for key, _, t, _ in scored[:4]:
+            print("    %s / %s: span/gap %.1f, %d edges" %
+                  (_fmt(t["P"]), _fmt(t["Q"]), key[0], key[1]))
     return [t for _, _, t, _ in scored] + ([] if usable_only else [t for _, t in rest])
 
 
@@ -469,94 +422,20 @@ def rank_triples(C, triples, verbose=False, mp=False, usable_only=False):
 # the regulator determinant
 # ---------------------------------------------------------------------------
 
-def regulator_column_stokes(f, point, order, digits=None, pole="infinity"):
-    r"""
-    The column `\bigl(\int \log|x - x(P)|\,d_{ij}/|f|\bigr)_{ij}`, by the
-    Stokes regulator rather than by quadrature over `\CC`.
+def regulator_column_stokes(f, point, *, digits=None, pole="infinity"):
+    """Direct log|x-x(P)| column; a finite pole gives the logarithmic ratio.
 
-    The Stokes method needs a function whose divisor is `N A - N B`, and
-    `x - x(P)` instead has divisor `P^+ + P^- - \O^+ - \O^-`.
-    We use `f^+` with `\div(f^+) = n P^+ - n\O^+`, the function defining
-    the cycle `\alpha_P`, and `f^- = f^+ \circ \iota`.  Pointwise,
-
-    .. math:: \log|f^+| + \log|f^-|
-              = \log|\operatorname{N}(f^+)|
-              = n\log|x - x(P)| - \log|c| ,
-
-    where `(x - x(P))^n = c\,f^+f^-`.  The differential weights are
-    invariant under the hyperelliptic involution `\iota`, so the integrals
-    weighted by `\log|f^+|` and `\log|f^-|` agree.  Consequently the column
-    is `\frac{2}{n}` times the `\log|f^+|` regulator plus
-    `\frac{\log|c|}{n}` times the periods.  The `\log|c|` term is the same
-    one the third column removes by row operations, but it costs nothing to
-    put it in and makes this column equal the plane integrator's outright.
-
-    ``point`` is `(x(P), y(P))` on `y^2 = f(x)` and ``order`` is `n`.
-    ``pole`` is the common pole `R`, either ``"infinity"`` (default) or an
-    affine pair. For finite `R`, replace `x-x(P)` throughout by
-    `(x-x(P))/(x-x(R))`. The same exact norm identity fixes the constant.
-    ``digits`` asks for that many decimal digits; ``None`` is float64.
+    Entries use weights ``(1, 2 Re(x), |x|^2)``.
     """
-    return _regulator_column_and_periods(f, point, order, digits=digits, pole=pole)[0]
+    return _regulator_column_and_periods(f, point, digits=digits, pole=pole)[0]
 
 
-def _regulator_column_and_periods(f, point, order, digits=None, pole="infinity"):
-    """The normalized logarithmic column and its already-computed periods."""
-    from sage.all import QQ, log
-
-    from hyperell_regulator.regulator import (
-        function_with_divisor, periods_and_regulator_stokes)
-    from hyperell_regulator.regulator.cover import Cover
-
-    n = int(order)
-    phi = function_with_divisor(f, point, pole, n)
-    per, reg = periods_and_regulator_stokes(f, phi, prec=digits)
-
-    # N(phi) = A^2 - B^2 f, and weight^n = c N(phi), c constant.
-    num, den = Cover(f, *phi).norm_exact()
-    x = num.parent().gen()
-    weight = x - QQ(point[0])
-    if pole != "infinity":
-        weight /= x - QQ(pole[0])
-    c = weight**n * den / num
-    if (c == 0 or c.numerator().degree() > 0
-            or c.denominator().degree() > 0):
-        raise ArithmeticError("the requested normalized weight does not match N(phi)")
-    field = RR if digits is None else per[0].parent()
-    logc = field(abs(QQ(c))).log()
-    column = [field(2) / n * reg[i] + logc / n * per[i] for i in range(3)]
-    return column, per
-
-
-def phi_string(f, point, n, width=200, pole="infinity"):
-    r"""
-    `\varphi = A(u) + B(u)v` with `\operatorname{div}(\varphi) = nP - nR`,
-    as a string over a common denominator, or the reason there is none.
-
-    Long ones are cut off at ``width``: the function for a point of order 14
-    has degree 7 with coefficients over a denominator of `2\cdot10^{11}`, and
-    printing it in full says less than saying how big it is.
-    """
-    from sage.all import QQ, PolynomialRing, lcm
-
-    from hyperell_regulator.regulator import function_with_divisor
-
-    try:
-        A, B = function_with_divisor(f, point, pole, n)
-    except Exception as exc:                                   # noqa: BLE001
-        return "unavailable (%s)" % str(exc)[:50]
-    R = PolynomialRing(QQ, "u")
-    common = A.denominator().lcm(B.denominator())
-    An, Bn = R(A * common), R(B * common)
-    out = str(An) if An else ""
-    if Bn:
-        out += "%s(%s)*v" % (" + " if out else "", Bn)
-    if common != 1:
-        out = "(%s) / (%s)" % (out, R(common))
-    if len(out) > width:
-        out = "%s... [numerator degrees %s, %s; denominator degree %s]" % (
-            out[:width], An.degree(), Bn.degree(), common.degree())
-    return out or "0"
+def _regulator_column_and_periods(f, point, *, digits=None, pole="infinity"):
+    from hyperell_regulator.regulator import periods_and_regulator_stokes
+    per, reg = periods_and_regulator_stokes(f, point[0],
+                    pole=None if pole == "infinity" else pole[0], prec=digits)
+    return ([w*r for w, r in zip(DETERMINANT_WEIGHTS, reg)],
+            [w*p for w, p in zip(DETERMINANT_WEIGHTS, per)])
 
 
 def _sage_real(v, digits):
@@ -571,27 +450,16 @@ def _sage_real(v, digits):
     return R(v)
 
 
-def beilinson_determinant_stokes(G, imP, nP, imQ, nQ, digits=None, pole="infinity"):
-    r"""
-    The `3\times 3` determinant by the Stokes regulator.
-
-    Columns one and two are :func:`regulator_column_stokes` at `P` and `Q`;
-    the third is the period vector `\int d_{ij}/|f|`.  In float64 each of
-    the two covers is integrated once, reusing its ordinary edge periods.
-    ``digits`` selects the existing arbitrary-precision implementation.
-
-    Returns ``(det, matrix, None)``, the ``None`` standing where the plane
-    integrator reports its per-entry error estimates.
-    """
+def beilinson_determinant_stokes(G, imP, imQ, *, digits=None, pole="infinity"):
+    """Two logarithmic columns and periods from a single shared two-sheet cut."""
     from sage.all import Matrix
-
-    colP, per = _regulator_column_and_periods(G, imP, nP, digits=digits, pole=pole)
-    colQ, _ = _regulator_column_and_periods(G, imQ, nQ, digits=digits, pole=pole)
-    # The unweighted period vector depends only on G, so P already supplies
-    # the third column as well as the correction to its logarithmic column.
-    f = (lambda v: v) if digits is None else (lambda v: _sage_real(v, digits))
-    M = [[f(colP[i]), f(colQ[i]), f(per[i])] for i in range(3)]
-    return Matrix(3, 3, [x for r in M for x in r]).determinant(), M, None
+    from hyperell_regulator.regulator import regulators_stokes
+    per, cols = regulators_stokes(G, [imP[0], imQ[0]],
+                    pole=None if pole == "infinity" else pole[0], prec=digits)
+    f = (lambda v: float(v)) if digits is None else (lambda v: _sage_real(v, digits))
+    M = [[f(w*cols[0][i]), f(w*cols[1][i]), f(w*per[i])]
+         for i, w in enumerate(DETERMINANT_WEIGHTS)]
+    return Matrix(3, 3, [x for row in M for x in row]).determinant(), M, None
 
 
 # ---------------------------------------------------------------------------
@@ -620,8 +488,7 @@ def save_lvalue(label, data, path=LVALUES):
     return have
 
 
-def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
-                           progress=True):
+def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False):
     r"""
     `L''(\mathrm{std}, 1)` for ``C``, reusing ``path`` when it already holds a
     value computed with at least as many coefficients as ``digits`` now
@@ -661,9 +528,8 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
             return rec
     try:
         num_coeffs = LF._coeffs_needed(digits)
-        # warm the coefficient cache first, reporting progress: this is the
-        # slow step and everything after it is instant
-        LF.lfun(num_coeffs, digits, progress=progress)
+        # Build and cache the coefficients once for both evaluations.
+        LF.lfun(num_coeffs, digits)
         rec = {"standard_conductor": int(LF.conductor()),
                "feq_check": float(LF.check_functional_equation(num_coeffs,
                                                                digits)),
@@ -679,8 +545,6 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
             rec["L_precision_warning"] = (
                 "the functional equation holds only to %.1e, short of the %d "
                 "digits asked for" % (rec["feq_check"], int(digits)))
-            if progress:
-                print("   WARNING: %s" % rec["L_precision_warning"])
     except NotImplementedError as exc:
         rec = {"L_second_derivative": None, "L_status": str(exc),
                "L_digits": int(digits)}
@@ -699,18 +563,12 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
 # ---------------------------------------------------------------------------
 
 def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
-    r"""
-    Compare the regulator determinant with `2\pi\, c^+(C)\, c^-(C)\, L''`.
+    r"""Guess the rational quotient `q=\pi c^+c^-L''(\mathrm{std},1)/D`.
 
-    Corollary "3x3 matrix" predicts a non-zero determinant is a *rational*
-    multiple of `(2\pi i)\, c^+(C)\, c^-(C)` times the leading `L`-derivative;
-    with `c^-` returned as the determinant of the imaginary part of the period
-    matrix, the normalisation that the data actually picks out is
-    `2\pi c^+ c^- L''(\mathrm{std}, 1)`.
-
-    Returns ``{}`` if any ingredient is missing, else a dictionary with the
-    ratio, the integer relation ``[m, n]`` from ``gp.lindep`` with
-    ``m*det + n*norm = 0``, the implied rational ``-n/m`` and the residual.
+    Returns ``{}`` for missing ingredients or a zero determinant. Otherwise
+    ``ratio`` is the numerical quotient, and ``relation=[m,n]`` means
+    ``m*norm+n*det=0``, with ``norm=pi*c_plus*c_minus*lval``. The rational
+    guess is ``-n/m``; ``rational_is_integer`` tests its denominator only.
     """
     if lval is None or c_plus is None or c_minus is None:
         return {}
@@ -719,17 +577,18 @@ def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
     F = RR if digits is None else RealField(int(3.33 * int(digits)) + 24)
     cv = (lambda v: RR(v)) if digits is None else (lambda v: _sage_real(v, digits))
     det, c_plus, c_minus, lval = (cv(det), cv(c_plus), cv(c_minus), cv(lval))
-    norm = 2 * F(pi) * c_plus * c_minus * lval
-    if norm == 0:
+    norm = F(pi) * c_plus * c_minus * lval
+    if det == 0 or norm == 0:
         return {}
-    out = {"normalisation": "2pi c+ c- L''(std,1)",
-           "norm_value": norm, "ratio": det / norm}
+    out = {"normalisation": "pi c+ c- L''(std,1) / D",
+           "norm_value": norm, "ratio": norm / det}
     try:
-        rel = [Integer(t) for t in gp.lindep([det, norm], bound)]
+        rel = [Integer(t) for t in gp.lindep([out["ratio"], F(1)], bound)]
         out["relation"] = rel
         if rel and rel[0] != 0:
             out["rational"] = -QQ(rel[1]) / QQ(rel[0])
-            out["residual"] = abs(rel[0] * det + rel[1] * norm)
+            out["rational_is_integer"] = out["rational"].denominator() == 1
+            out["residual"] = abs(rel[0] * norm + rel[1] * det)
             if out["rational"]:
                 out["relative_agreement"] = abs(out["ratio"] / out["rational"] - 1)
     except Exception as exc:
@@ -741,6 +600,23 @@ def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
 # driver
 # ---------------------------------------------------------------------------
 
+def _component_warning(triple):
+    """State missing component evidence separately from a known failure."""
+    pairs = [("P-R", triple.get("verdict_P")), ("Q-R", triple.get("verdict_Q"))]
+    failed = [name for name, verdict in pairs if verdict is False]
+    unknown = [name for name, verdict in pairs if verdict is not True and verdict is not False]
+    if not failed and not unknown:
+        return None
+    details = []
+    if failed:
+        details.append("failed for " + ", ".join(failed))
+    if unknown:
+        details.append("undecided for " + ", ".join(unknown))
+    message = ("triple fails the same-component criterion" if failed else
+               "triple is not known to satisfy the same-component criterion")
+    return message + " (" + "; ".join(details) + ")"
+
+
 def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
                     with_periods=True, with_lvalue=True, digits=15,
                     lindep_bound=8, reg_digits=None):
@@ -748,8 +624,8 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
     :func:`analyse` for one triple `(P, Q, R)`.
 
     Separate because a triple can fail on its own account -- the model it
-    gives may have poorly separated critical values, or the cut system for its
-    `\\varphi` may not close -- while another triple on the same curve is
+    gives may have poorly separated branch values, or its shared logarithmic
+    cut may be poorly conditioned -- while another triple on the same curve is
     perfectly good, and a curve is worth more than its first triple.
     """
     G, images, xR, pole = _model_for_triple(C, t)
@@ -783,17 +659,18 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
         print("  model  v^2 = %s   (deg %s%s)   u(P) = %s  u(Q) = %s"
               % (G, G.degree(),
                  "" if xR is None else ", u = 1/(x - %s)" % xR, uP, uQ))
-        print("  common pole R = %s" % (pole,))
-        for who, im, n in (("P", imP, nP), ("Q", imQ, nQ)):
-            if str(n).isdigit() or isinstance(n, (int, Integer)):
-                print("  phi_%s = %s" % (who, phi_string(G, im, int(n), pole=pole)))
+        print("  common pole Q = %s" % (pole,))
+
+    notice = _component_warning(t)
+    if notice:
+        res["component_warning"] = notice
+        print("  %s WARNING: %s" % (record["label"], notice), flush=True)
 
     usable = all(isinstance(n, (int, Integer)) or
                  (isinstance(n, str) and n.isdigit()) for n in (nP, nQ))
     if not usable:
-        # the Stokes route needs the order of each torsion point, to build a
-        # function with divisor n P - n O
-        res["status"] = "no order for P or Q, so no function with that divisor"
+        # Exact torsion metadata certifies the algebraic cycles.
+        res["status"] = "no certified torsion order for P or Q"
         if verbose:
             print("   skipped: %s" % res["status"])
         return res
@@ -804,7 +681,7 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
     clock = time.time()
     try:
         det, M, Err = beilinson_determinant_stokes(
-            G, imP, int(nP), imQ, int(nQ), digits=reg_digits, pole=pole)
+            G, imP, imQ, digits=reg_digits, pole=pole)
         res["regulator_digits"] = reg_digits
     except Exception as exc:
         res.update(status="numerical_failure",
@@ -813,6 +690,8 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
             print("   failed: %s" % res["error"])
         return res
     res["regulator_method"] = "stokes"
+    res["regulator_cut"] = "mst"
+    res["period_basis"] = "mst"
     res["regulator_seconds"] = round(time.time() - clock, 1)
     number = float if reg_digits is None else lambda v: _sage_real(v, reg_digits).str(truncate=False)
     res["det"] = number(det)
@@ -836,12 +715,8 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
     # --- the L-value: an invariant of the curve, not of the model, so it is
     # --- cached by label and reused rather than recomputed
     if with_lvalue:
-        if verbose:
-            print("  L-value: %s coefficients ..."
-                  % StandardLFunction(C)._coeffs_needed(digits), flush=True)
         clock = time.time()
-        res.update(standard_lvalue_cached(record["label"], C, digits=digits,
-                                           progress=verbose))
+        res.update(standard_lvalue_cached(record["label"], C, digits=digits))
         res["lvalue_seconds"] = round(time.time() - clock, 1)
 
     res["comparison"] = beilinson_comparison(
@@ -868,44 +743,43 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
             print("  WARNING: %s" % res["L_precision_warning"])
         e = res.get("comparison") or {}
         if "rational" in e:
-            print("  => det = (%s) * 2pi c+ c- L''(std,1)    residual %.2e"
+            print("  => pi c+ c- L''(std,1) = (%s) * D    residual %.2e"
                   "    [ratio % .14e]"
                   % (e["rational"], float(e["residual"]), float(e["ratio"])))
         elif "ratio" in e:
-            print("  => det / (2pi c+ c- L) = % .12e   (no relation found)"
+            print("  => pi c+ c- L / D = % .12e   (no relation found)"
                   % float(e["ratio"]))
         print("")
     return res
 
 
-def analyse(record, cache=CACHE, allow_undecided=False, verbose=True,
+def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
             with_periods=True, with_lvalue=True, digits=15,
             lindep_bound=8, geom_simple=True, reg_digits=None, tries=1):
     r"""
     Find the first usable triple for one curve and compute its regulator
     determinant.  Returns a dictionary, with ``"status"`` saying what happened.
 
-    The regulator is the Stokes one throughout.  It needs the order of each
-    torsion point, to build a function with divisor `n P - n\O`; a curve
-    without one, or whose cut system will not close, is reported in
-    ``"status"`` and skipped rather than integrated over `\CC`.
+    The regulator uses one shared two-sheet x-cut. Exact torsion orders
+    certify the algebraic cycles and do not enter numerical integration.
+    Model and quadrature failures are retained in ``"status"``.
 
     ``geom_simple`` restricts to curves whose Jacobian is geometrically
     simple, which is LMFDB's ``is_simple_geom``.
+
+    Undecided component verdicts are accepted by default and remain recorded
+    in the selected triple. Set ``allow_undecided=False`` to exclude them.
 
     ``digits`` is the `L`-value's precision and ``reg_digits`` the
     regulator's. The default regulator uses float64 (``reg_digits=None``);
     the L-value uses fifteen digits. Arbitrary precision is explicit and
     failures never silently switch implementations.
 
-    Which triple is integrated is decided by :func:`rank_triples`, on the
-    conditioning of the cut systems it would need; only ``tries`` of them are
-    integrated, the best first, and one is the default.  Ordering by torsion
-    order instead -- which is what this did -- picks arbitrarily among triples
-    that tie, and on LMFDB 249.a.249.1 that is the difference between a `Q`
-    column with ``span/gap = 34.5`` and one with ``819``.
+    Which triple is integrated is decided by :func:`rank_triples`: minimize
+    the shared cut span/gap, then its edge count. Only ``tries`` triples are integrated, best first; the default
+    is one.
     """
-    rows = {r["label"]: r for r in json.load(open(cache))}
+    rows = {r["label"]: r for r in load_results(cache)}
     row = rows.get(record["label"])
     if row is None:
         return {"label": record["label"], "status": "not in the curve cache"}
@@ -922,11 +796,10 @@ def analyse(record, cache=CACHE, allow_undecided=False, verbose=True,
         return {"label": record["label"], "cond": record["cond"],
                 "status": "no_admissible_triple"}
     n_triples = len(triples)
-    triples = rank_triples(C, triples, verbose=verbose,
-                           mp=reg_digits is not None, usable_only=True)
+    triples = rank_triples(C, triples, verbose=verbose, usable_only=True)
     if not triples:
         return {"label": record["label"], "cond": record["cond"],
-                "status": "no_usable_cover"}
+                "status": "no_usable_model"}
     first = None
     for k, t in enumerate(triples[:max(1, int(tries))]):
         res = _analyse_triple(record, C, t, n_triples, cache=cache,
@@ -988,6 +861,37 @@ def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
     return goodrecords
 
 
+def _stored_result_satisfies(old, settings):
+    """Reuse successful reports at equal or higher requested precision.
+
+    Float64 can satisfy only float64 requests; arbitrary precision of at
+    least 16 decimal digits can also satisfy a float64 request. Keep the
+    original result and settings, without rounding its saved decimal strings.
+    """
+    if old.get("status") != "ok" or not isinstance(old.get("settings"), dict):
+        return False
+    stored = old["settings"]
+    precision_keys = {"regulator_digits", "lvalue_digits"}
+    execution_keys = {"max_edge_seconds", "max_edge_steps", "tries"}
+    if any(stored.get(k) != v for k, v in settings.items()
+           if k not in precision_keys | execution_keys):
+        return False
+    if not precision_keys <= stored.keys():
+        return False
+    have, want = stored["regulator_digits"], settings["regulator_digits"]
+    if have is None:
+        if want is not None:
+            return False
+    elif int(have) < (16 if want is None else int(want)):
+        return False
+    if settings.get("with_lvalue"):
+        if int(stored["lvalue_digits"]) < int(settings["lvalue_digits"]):
+            return False
+        if old.get("L_status") and old.get("L_second_derivative") is None:
+            return False
+    return True
+
+
 def _report_row(result, stored=False):
     comparison = result.get("comparison") or {}
     def number(value):
@@ -1001,22 +905,52 @@ def _report_row(result, stored=False):
     for key in ("error", "periods_error", "L_status", "L_precision_warning"):
         if result.get(key):
             print("  %s: %s" % (key, result[key]), flush=True)
+    if stored and result.get("triple"):
+        notice = _component_warning(result["triple"])
+        if notice:
+            print("  WARNING: %s" % notice, flush=True)
+
+
+@contextmanager
+def _monitored_result(result, verbose, max_edge_seconds, max_edge_steps):
+    """Record progress, preparation failures and edge costs for either runner."""
+    from hyperell_regulator.regulator import IntegrationMonitor
+
+    def progress(event):
+        if verbose and event["event"] != "start":
+            print("  %s edge %d %s: %.1fs, %s" %
+                  (result["label"], event["index"], event["event"],
+                   event["seconds"], event["phase"]), flush=True)
+
+    monitor = IntegrationMonitor(max_edge_seconds=max_edge_seconds,
+                                 max_edge_steps=max_edge_steps,
+                                 callback=progress, progress_interval=5)
+    started = time.monotonic()
+    try:
+        with monitor:
+            yield
+    except Exception as exc:
+        result.update(status="preparation_error",
+                      error="%s: %s" % (type(exc).__name__, exc))
+    result.update(seconds=time.monotonic()-started,
+                  edges_attempted=len(monitor.records),
+                  slowest_edge_seconds=max((e["seconds"] for e in monitor.records), default=0))
 
 
 def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         out=RESULTS_OUT, force=False, digits=15, reg_digits=None,
-        allow_undecided=False, geom_simple=True, fetch=False,
+        allow_undecided=True, geom_simple=True, fetch=False,
         with_lvalue=True, tries=1, verbose=False, max_edge_seconds=15,
         max_edge_steps=100000):
     """Report cached curves with conductor < max_cond (default 1000).
 
-    The best-conditioned pairwise non-conjugate triple is tried first.
+    The pairwise non-conjugate triple with the best-conditioned shared
+    x-cut is tried first.
     Float64 and per-edge budgets are the defaults. Successful results are
-    reused only for the same report policy and requested precision; failures
+    reused for the same report policy at equal or higher precision; failures
     are saved with their reasons but retried on the next run.
     """
     from collections import Counter
-    from hyperell_regulator.regulator import IntegrationMonitor
 
     max_cond = int(max_cond)
     if max_cond < 1 or int(digits) < 1 or int(tries) < 1:
@@ -1037,35 +971,20 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
     for record in records:
         label = record["label"]
         old = have.get(label, {})
-        if (not force and old.get("status") == "ok"
-                and old.get("settings") == settings):
+        if not force and _stored_result_satisfies(old, settings):
             results.append(old)
             _report_row(old, stored=True)
             continue
-        def progress(event):
-            if verbose and event["event"] != "start":
-                print("  %s edge %d %s: %.1fs, %s" %
-                      (label, event["index"], event["event"],
-                       event["seconds"], event["phase"]), flush=True)
-        started = time.monotonic()
-        monitor = IntegrationMonitor(max_edge_seconds=max_edge_seconds,
-                                     max_edge_steps=max_edge_steps,
-                                     callback=progress, progress_interval=5)
         if verbose:
             print("Computing %s ..." % label, flush=True)
-        try:
-            with monitor:
-                res = analyse(record, cache=cache,
-                              allow_undecided=allow_undecided, verbose=verbose,
-                              with_periods=with_lvalue, with_lvalue=with_lvalue,
-                              digits=digits, geom_simple=geom_simple,
-                              reg_digits=reg_digits, tries=tries)
-        except Exception as exc:
-            res = dict(label=label, cond=record["cond"],
-                       status="preparation_error", error="%s: %s" % (type(exc).__name__, exc))
-        res.update(settings=settings, seconds=time.monotonic()-started,
-                   edges_attempted=len(monitor.records),
-                   slowest_edge_seconds=max((e["seconds"] for e in monitor.records), default=0))
+        res = dict(label=label, cond=record["cond"])
+        with _monitored_result(res, verbose, max_edge_seconds, max_edge_steps):
+            res.update(analyse(record, cache=cache,
+                               allow_undecided=allow_undecided, verbose=verbose,
+                               with_periods=with_lvalue, with_lvalue=with_lvalue,
+                               digits=digits, geom_simple=geom_simple,
+                               reg_digits=reg_digits, tries=tries, lindep_bound=int(digits/2)))
+        res["settings"] = settings
         results.append(res)
         have[label] = res
         if out is not None:
@@ -1075,13 +994,26 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         _report_row(res)
     counts = Counter(r["status"] for r in results)
     print("\n" + "; ".join("%s: %d" % item for item in sorted(counts.items())))
-    print("q = det / (2*pi*c+*c-*L''(std,1)); rel. error = abs(q/rational - 1).")
-    print("no_admissible_triple: no pairwise non-conjugate torsion triple passes the component test.")
-    print("no_usable_cover: triples exist, but their models or covering functions could not be constructed.")
-    print("numerical_failure: a selected cover failed continuation, quadrature, or an integration limit.")
+    print("q = pi*c+*c-*L''(std,1) / D; rel. error = abs(q/rational - 1).")
+    print("no_admissible_triple: no pairwise non-conjugate torsion triple satisfies the component policy.")
+    print("no_usable_model: triples exist, but their integration models or shared cuts could not be constructed.")
+    print("numerical_failure: a shared cut failed quadrature or an integration limit.")
     if out is not None:
         print("Results: %s" % out)
     return results
+
+
+def _add_report_arguments(parser, out):
+    """Shared numerical, progress and output options for experiment commands."""
+    parser.add_argument("--force", action="store_true", help="recompute saved successful regulators")
+    parser.add_argument("--no-lvalue", action="store_true", help="only compute regulator determinants")
+    parser.add_argument("--verbose", action="store_true", help="show triples and per-edge progress")
+    parser.add_argument("--digits", type=int, default=15, help="L-value precision (default: 15 digits)")
+    parser.add_argument("--reg-digits", "--prec", type=int, default=None,
+                        help="explicit arbitrary-precision regulator (default: float64)")
+    parser.add_argument("--edge-seconds", type=float, default=15, help="time limit per edge (default: 15 seconds)")
+    parser.add_argument("--edge-steps", type=int, default=100000, help="continuation step limit per edge")
+    parser.add_argument("--out", default=out, help="JSON report path")
 
 
 def main(argv=None):
@@ -1091,18 +1023,14 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("The construction")[0])
     parser.add_argument("N", nargs="?", type=int, default=DEFAULT_CONDUCTOR_BOUND,
                         help="exclusive conductor bound (default: 1000)")
-    parser.add_argument("--force", action="store_true", help="recompute saved successful regulators")
+    _add_report_arguments(parser, RESULTS_OUT)
     parser.add_argument("--fetch", action="store_true", help="extend the curve cache from LMFDB")
-    parser.add_argument("--no-lvalue", action="store_true", help="only compute regulator determinants")
-    parser.add_argument("--verbose", action="store_true", help="show triples and per-edge progress")
-    parser.add_argument("--allow-undecided", action="store_true")
-    parser.add_argument("--digits", type=int, default=15, help="L-value precision (default: 15 digits)")
-    parser.add_argument("--reg-digits", "--prec", type=int, default=None,
-                        help="explicit arbitrary-precision regulator (default: float64)")
-    parser.add_argument("--edge-seconds", type=float, default=15, help="time limit per edge (default: 15 seconds)")
-    parser.add_argument("--edge-steps", type=int, default=100000, help="continuation step limit per edge")
+    component_policy = parser.add_mutually_exclusive_group()
+    component_policy.add_argument("--allow-undecided", action="store_true", default=True,
+                                  help="include undecided component verdicts (default)")
+    component_policy.add_argument("--exclude-undecided", dest="allow_undecided", action="store_false",
+                                  help="require affirmative component verdicts")
     parser.add_argument("--tries", type=int, default=1, help="number of ranked triples to try per curve")
-    parser.add_argument("--out", default=RESULTS_OUT, help="JSON report path")
     args = parser.parse_args(argv)
     if args.N < 1 or args.digits < 1 or args.tries < 1 or (args.reg_digits is not None and args.reg_digits < 5):
         parser.error("N, digits and tries must be positive; regulator precision must be at least 5")

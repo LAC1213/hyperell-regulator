@@ -1,12 +1,18 @@
-# The bundled hypellfrob sources are GPL v2-or-later and must travel with any
-# distribution of this package. They are C++, built separately by their own
+# The bundled native Frobenius sources are GPL v2-or-later and must travel with any
+# distribution of this package. The native C/C++ code is built by its own
 # Makefile, so they are not a Python package; `packages.find` in
 # pyproject.toml already excludes them from the wheel.
 include README.md
+include docs/explorer_inputs.json
 recursive-include tests *.py
 recursive-include reports *.tex *.json *.md
-recursive-include hypellfrob-threaded *.cpp *.h *.md *.example
-include hypellfrob-threaded/Makefile
-include hypellfrob-threaded/COPYING
-prune hypellfrob-threaded/build
+recursive-include hyperell-frobenius *.cpp *.h *.md *.example
+recursive-include hyperell-frobenius/rforest *.c LICENSE COPYING
+include hyperell-frobenius/Makefile
+include hyperell-frobenius/benchmark_rforest.py
+include hyperell-frobenius/COPYING
+prune hyperell-frobenius/build
 global-exclude *.pyc __pycache__
+
+include hyperell_regulator/NTL-COPYING.txt
+include hyperell_regulator/RFOREST-COPYING.txt

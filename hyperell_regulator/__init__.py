@@ -16,7 +16,7 @@ Three things, for a hyperelliptic (in practice genus 2) curve `C/\QQ`:
 
 * :mod:`hyperell_regulator.regulator` -- the Beilinson regulator of the
   `K_2` element `\{f, g\}` attached to a pair of 2-torsion (Weierstrass)
-  points, as a numerical integral, in four independent ways.
+  points, using plane quadrature or Stokes integration.
 
 :mod:`hyperell_regulator.experiments` puts the three together and compares
 the regulator determinant with the `L`-value.

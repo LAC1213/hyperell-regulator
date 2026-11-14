@@ -35,7 +35,8 @@ EXAMPLES::
     sage: from hyperell_regulator.reduction import HyperellipticCurveWithReduction
     sage: R.<x> = ZZ[]
     sage: C = HyperellipticCurveWithReduction(x^5 + x^3 + 1)
-    sage: L = StandardLFunction(C, bad_factors={2: None})  # 2 is bad and even
+    sage: L = StandardLFunction(C, bad_factors={2: None})  # doctest: +ELLIPSIS
+    ...Warning: unknown valuation of conductor at 2.
     sage: L.euler_factor(53).degree()
     3
 
@@ -43,6 +44,11 @@ EXAMPLES::
 conductor, functional equation check, `L''(\mathrm{std}, 1)` -- in one call,
 and is what the experiments use.
 """
+
+from contextlib import contextmanager
+from struct import calcsize
+
+from cypari2 import PariError
 
 from sage.all import (
     prime_range,
@@ -56,9 +62,9 @@ from sage.all import (
     SageObject,
     ZZ,
     gp,
-    identity_matrix,
     pari,
 )
+from sage.modules.with_basis.subquotient import SubmoduleWithBasis
 
 from hyperell_regulator.reduction import potential_toric_rank
 
@@ -67,16 +73,38 @@ def _bits(digits):
     r"""
     Bits for a PARI call asked for ``digits`` decimals, with room to spare.
 
-    ``pari.set_real_precision`` does **not** reach ``lfun`` or
-    ``lfuncheckfeq``: with it alone they answer at 64 bits whatever it is set
-    to, so a value asked for at 25 or 50 digits came back with 19 correct
-    ones and noise after them, and the functional equation checked to
-    `3.6\cdot10^{-15}` and no better however much precision was requested.
-    The precision has to be passed to the call itself, which is what this is
-    for.  (The same is true of ``lfuncost``, and
-    :meth:`StandardLFunction._coeffs_needed` says so.)
+    ``lfun`` and ``lfuncheckfeq`` need an explicit bit precision;
+    ``pari.set_real_precision`` alone leaves them at their default precision.
     """
     return int(3.33 * int(digits)) + 64
+
+
+def _pari_lfun_call(function, *args, coefficient_count=0, digits=10, **kwargs):
+    """Give coefficient vectors and L-function workspace room to grow.
+
+    Reserve a conservative budget per coefficient, including several
+    precision-sized temporaries. This raises the virtual stack ceiling,
+    leaving PARI to commit memory as needed. Workspace can exceed this
+    estimate: retry only PARI's stack exhaustion error with twice the
+    ceiling. Coefficients already computed in Python are reused on retry.
+    Never reduce a caller's larger stack or maximum.
+    """
+    if coefficient_count:
+        word_bytes = calcsize('l')
+        precision_words = (_bits(digits) + 8*word_bytes - 1) // (8*word_bytes)
+        budget = int(coefficient_count) * word_bytes * (64 + 8*precision_words)
+        ceiling = 1 << max(26, (budget-1).bit_length())
+        if ceiling > pari.stacksizemax():
+            pari.allocatemem(pari.stacksize(), ceiling, silent=True)
+    while True:
+        try:
+            return function(*args, **kwargs)
+        except PariError as exc:
+            if str(pari.errname(exc.errdata())) != 'e_STACK':
+                raise
+            size = pari.stacksize()
+            ceiling = max(size, pari.stacksizemax())
+            pari.allocatemem(size, 2*ceiling, silent=True)
 
 
 def _real_field(digits):
@@ -96,6 +124,68 @@ def _real_field(digits):
     from sage.all import RealField
 
     return RealField(int(RR(digits) * RR(10).log2()) + 12)
+
+
+@contextmanager
+def _pari_precision(digits):
+    """Temporarily set embedded PARI precision, restoring it on failure too."""
+    previous = pari.get_real_precision()
+    pari.set_real_precision(digits)
+    try:
+        yield
+    finally:
+        pari.set_real_precision(previous)
+
+
+def _coefficient_count(conductor, gamma, weight, digits, derivative):
+    """Ask GP for lfuncost at its own decimal working precision."""
+    previous = gp.eval('default(realprecision)')
+    gp.eval('default(realprecision, %d)' % int(digits))
+    try:
+        L = pari.lfuncreate([[QQ(0)], 0, gamma, weight, conductor, 1])
+        cost = gp.eval('lfuncost(%s, [1,0,0], %d)' % (L, int(derivative)))
+        return int(ZZ(str(cost).strip('[]').split(',')[0].strip()))
+    finally:
+        gp.eval('default(realprecision, %s)' % previous)
+
+
+def _dirichlet_coefficients(L, num):
+    """Expand Euler factors once per prime; index zero is a sentinel."""
+    a = [ZZ(0)] * (num + 1)
+    a[1] = ZZ(1)
+    L.precompute_h1(prime_range(num + 1))
+
+    # Expand 1/P_p once per prime, up to the greatest power of p <= num.
+    inv = {}
+
+    def local(p, e):
+        if p not in inv:
+            depth = ZZ(num).exact_log(p)
+            RS = PowerSeriesRing(QQ, 'x', default_prec=depth + 1)
+            x = RS.gen()
+            inv[p] = (1 / RS(L.euler_factor(p)(x))).padded_list(depth + 1)
+        return inv[p][e]
+
+    for n in range(2, num + 1):
+        coeff = QQ(1)
+        for p, e in ZZ(n).factor():
+            coeff *= local(p, e)
+        a[n] = coeff
+    return a
+
+
+def _precompute_h1(L, primes, nthreads):
+    """Batch good odd primes into either L-function's H1 cache."""
+    from .frobenius import frobenius_polynomials
+
+    bad = set(L.C.bad_primes())
+    todo = [int(p) for p in primes
+            if int(p) != 2 and ZZ(p).is_prime() and ZZ(p) not in bad
+            and ZZ(p) not in L._h1cache]
+    if not todo:
+        return
+    for p, cp in frobenius_polynomials(L.C.F, todo, nthreads).items():
+        L._h1cache[ZZ(p)] = L._RT(list(reversed(cp.list())))
 
 
 def wedge2_euler_factor(P):
@@ -190,8 +280,12 @@ class StandardLFunction(SageObject):
 
       .. MATH::
 
-          P_p^{\wedge^2}(T) = (1 - u_2 T)(1 - pT)^2(1 - u_2 p T),
-          \qquad u_2 = \det(\mathrm{Frob} \mid U) = \pm 1.
+          P_p^{\wedge^2}(T) = (1-dT)S(pT),\qquad
+          S(X)=1-(s^2-d)X+d(s^2-d)X^2-d^3X^3,
+
+      where `s` and `d` are the trace and determinant of Frobenius on `U`.
+      Here `S` is the Euler polynomial of `\operatorname{Sym}^2 U`.
+      This includes order-three Frobenius, as occurs at 2 for 388.a.776.1.
 
     The toric factor is read off the Frobenius action on
     `H_1` of the dual graph, via ``Cluster.homology_of_special_fibre``; the
@@ -248,13 +342,14 @@ class StandardLFunction(SageObject):
     Assumptions, all checked at runtime
     ===================================
 
-    * `p` odd, and `C` either semistable at `p` or tame with potentially good
-      reduction -- otherwise the prime must be supplied in ``bad_factors``.  In
-      particular `p = 2` always needs an override, cluster pictures needing odd
-      residue characteristic.
-    * Frobenius acts on `H_1` of the dual graph with `M^2 = 1`, so that its
-      eigenvalues are `\pm 1`.  This is what makes the `t = 2` bookkeeping above
-      valid; a higher-order graph automorphism raises.
+    * At odd primes, `C` is semistable or tame with potentially good reduction.
+      At 2, the implemented case is a model reducing to two rational
+      components meeting transversely at three points: modulo 2,
+      `f=A(A+h)`, with `\deg A\leq3` and squarefree cubic `h`. Its dual graph
+      has two fixed vertices and three edges permuted as the roots of `h`.
+      This gives a semistable toric factor without a cluster picture, and
+      covers 388.a.776.1, where `A=x` and `h=x^3+x+1` modulo 2.
+      Other bad factors at 2 still require ``bad_factors`` overrides.
     * `(1 - pT)` divides `P_p^{\wedge^2}` exactly.
 
     The real check on all of this is the functional equation: see
@@ -267,7 +362,8 @@ class StandardLFunction(SageObject):
         sage: from hyperell_regulator.reduction import HyperellipticCurveWithReduction
         sage: R.<x> = ZZ[]
         sage: C = HyperellipticCurveWithReduction(x^5 + x^3 + 1)
-        sage: L = StandardLFunction(C, bad_factors={2: None})   # 2 needs care
+        sage: L = StandardLFunction(C, bad_factors={2: None})   # doctest: +ELLIPSIS
+        ...Warning: unknown valuation of conductor at 2.
         sage: L.euler_factor(53).degree()
         3
     """
@@ -345,20 +441,12 @@ class StandardLFunction(SageObject):
             sage: from hyperell_regulator.lfunction import StandardLFunction
             sage: R = PolynomialRing(ZZ, 'x'); x = R.gen()
             sage: L = StandardLFunction(HyperellipticCurveWithReduction(x**5 + x**3 + 1))
+            ...Warning: unknown valuation of conductor at 2.
             sage: L.precompute_h1([11, 13, 17])
             sage: sorted(L._h1cache)
             [11, 13, 17]
         """
-        from .frobenius import frobenius_polynomials
-
-        bad = set(self.C.bad_primes())
-        todo = [int(p) for p in primes
-                if int(p) != 2 and ZZ(p).is_prime() and ZZ(p) not in bad
-                and ZZ(p) not in self._h1cache]
-        if not todo:
-            return
-        for p, cp in frobenius_polynomials(self.C.F, todo, nthreads).items():
-            self._h1cache[ZZ(p)] = self._RT(list(reversed(cp.list())))
+        _precompute_h1(self, primes, nthreads)
 
     def toric_factor(self, p):
         r"""
@@ -373,17 +461,58 @@ class StandardLFunction(SageObject):
             return self._RT(1)
         rows = []
         for b in basis:
-            image = frob(b)
-            rows.append([QQ(image.coefficient(c.support()[0]))
-                         if hasattr(image, "coefficient") else QQ(0)
-                         for c in basis])
+            if isinstance(H1, SubmoduleWithBasis):
+                # The cluster package defines its map on the generators
+                # passed to submodule(), but Sage echelonizes that basis.
+                # Act on the actual lifted cycles, then retract to H1.
+                # Merely retracting frob(b) can give an invertible but
+                # incorrect matrix, depending on the cluster ordering.
+                image = H1.ambient().sum_of_terms(
+                    (s.frobenius(), n*s.epsilon(
+                        lambda c: c.frobenius(), R.field_frobenius()))
+                    for s, n in H1.lift(b))
+                image = H1.retract(image)
+            else:
+                image = frob(b)
+            rows.append([QQ(image.coefficient(c.support()[0])) for c in basis])
         Mfrob = Matrix(QQ, t, t, rows)
-        if Mfrob ** 2 != identity_matrix(QQ, t):
-            raise NotImplementedError(
-                "Frobenius acts on H_1 of the dual graph at %s with a matrix "
-                "of order > 2 (%s); the wedge^2 bookkeeping implemented here "
-                "assumes eigenvalues +-1" % (p, Mfrob.list()))
+        if Mfrob.det() not in (-1, 1):
+            raise ArithmeticError("Frobenius on graph homology is not invertible at %s" % p)
         return self._RT(Mfrob.charpoly().reverse())
+
+    def _wedge2_totally_toric(self, p, U):
+        """Exterior-square inertia invariants: wedge^2 U plus Sym^2 U(-1)."""
+        if U.degree() != 2 or U[0] != 1 or U[2] not in (-1, 1):
+            raise ArithmeticError("invalid rank-two toric Euler factor at %s: %s" % (p, U))
+        T = self._RT.gen()
+        trace, det = -U[1], U[2]
+        X = p*T
+        symmetric = 1-(trace**2-det)*X+det*(trace**2-det)*X**2-det**3*X**3
+        return (1-det*T)*symmetric
+
+    def _toric_factor_at_two(self):
+        """Detect two rational components joined at three ordinary nodes.
+
+        A squarefree cubic h and f=A(A+h) modulo 2 give the two components
+        y=A and y=A+h. Their intersections are exactly the roots of h;
+        h' nonzero there makes them nodes, and infinity is smooth. On graph
+        homology, Frobenius is the node permutation modulo its constant line.
+        """
+        S = PolynomialRing(GF(2), 'x')
+        try:
+            f, h = S(self.C.f), S(self.C.h)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return None
+        if h.degree() != 3 or not h.is_squarefree():
+            return None
+        if not any(A*(A+h) == f for A in
+                   (S([(bits >> i) & 1 for i in range(4)]) for bits in range(16))):
+            return None
+        T = self._RT.gen()
+        nodes = self._RT(1)
+        for factor, _ in h.factor():
+            nodes *= 1-T**factor.degree()
+        return nodes // (1-T)
 
     def wedge2_euler_factor(self, p):
         r"""
@@ -398,9 +527,15 @@ class StandardLFunction(SageObject):
             return wedge2_euler_factor(P)
 
         if p == 2:
+            U = self._toric_factor_at_two()
+            if U is not None:
+                if U != P:
+                    raise ArithmeticError("the nodal model's toric factor at 2 disagrees with h^1")
+                return self._wedge2_totally_toric(p, U)
             raise NotImplementedError(
-                "p = 2 is a bad prime and cluster pictures need odd residue "
-                "characteristic; supply the wedge^2 factor in bad_factors")
+                "at 2 only split nodal models with squarefree cubic h "
+                "are implemented; supply the wedge^2 "
+                "factor in bad_factors")
         if self.C.is_semistable_at(p) is not True:
             return self._wedge2_potentially_good(p, P)
 
@@ -418,8 +553,7 @@ class StandardLFunction(SageObject):
             b2 = A[2]
             W = A(gamma * T) * (1 - b2 * T) * (1 - gamma ** 2 * p * T)
         elif t == 2:
-            u2 = U[2]                           # det(Frob | U) = +-1
-            W = (1 - u2 * T) * (1 - p * T) ** 2 * (1 - u2 * p * T)
+            W = self._wedge2_totally_toric(p, U)
         else:
             raise NotImplementedError("toric rank %s at %s" % (t, p))
         return W
@@ -499,66 +633,15 @@ class StandardLFunction(SageObject):
 
     # -- the L-function ----------------------------------------------------
 
-    def dirichlet_coefficients(self, num, progress=None):
+    def dirichlet_coefficients(self, num):
         r"""
         The first ``num`` Dirichlet coefficients of `L(\mathrm{std}, s)`,
         expanded from the Euler product.
 
-        ``progress`` is a number of coefficients between reports, or ``True``
-        for a sensible default.  Without one this looks like a hang: obtaining
-        the Euler factors dominates, at roughly 138 ms per prime on a
-        conductor 5497 curve, and the cost grows with `p` (about 10 ms at
-        `p \approx 250`, 456 ms at `p \approx 2750`), so a run over tens of
-        thousands of coefficients spends nearly all of its time here.
+        Euler factors are batched before expanding the product, and each
+        local series is inverted once.
         """
-        import sys
-        import time
-        if progress is True:
-            progress = max(500, num // 20)
-        a = [ZZ(0)] * (num + 1)
-        a[1] = ZZ(1)
-        t0 = time.time()
-        self.precompute_h1(prime_range(num + 1))
-
-        # 1/P_p(x) expanded once per prime, to the greatest power of p below
-        # num, rather than re-inverted for every n divisible by p.  Measured on
-        # a conductor 5497 curve this is *not* where the time goes: with the
-        # Euler factors already cached the whole loop below runs in 0.1 s for
-        # 3000 coefficients, against 59 s to obtain the factors themselves
-        # (138 ms per prime, in PARI's lfuneuler).  Kept because it is free.
-        inv = {}
-
-        def local(p, e):
-            if p not in inv:
-                depth = ZZ(num).exact_log(p)
-                RS = PowerSeriesRing(QQ, 'x', default_prec=depth + 1)
-                x = RS.gen()
-                inv[p] = (1 / RS(self.euler_factor(p)(x))).padded_list(depth + 1)
-            return inv[p][e]
-
-        for n in range(2, num + 1):
-            coeff = QQ(1)
-            for p, e in ZZ(n).factor():
-                coeff *= local(p, e)
-            a[n] = coeff
-            if progress and n % progress == 0:
-                el = time.time() - t0
-                # the remaining primes are the *expensive* ones: the cost of a
-                # single Euler factor grows roughly like p^1.6, so the total to
-                # N scales about like N^2.6.  A linear extrapolation
-                # underestimates badly -- at the half way point of a 13842
-                # coefficient run it claimed 667 s left where the truth is
-                # nearer 3400 s.
-                left = el * ((float(num) / n) ** 2.6 - 1.0)
-                sys.stdout.write(
-                    "\r      Euler factors: %d/%d (%.0f%%)  %.0fs elapsed, "
-                    "~%.0fs left   " % (n, num, 100.0 * n / num, el, left))
-                sys.stdout.flush()
-        if progress:
-            sys.stdout.write("\r      Euler factors: %d/%d done in %.0fs"
-                             "%s\n" % (num, num, time.time() - t0, " " * 20))
-            sys.stdout.flush()
-        return a[1:]
+        return _dirichlet_coefficients(self, num)[1:]
 
     def _coeffs_needed(self, digits, der=2):
         r"""
@@ -566,73 +649,36 @@ class StandardLFunction(SageObject):
         needed for `L^{(\mathrm{der})}(\mathrm{std}, 1)` at ``digits`` decimal
         digits of working precision.
 
-        Replaces a hand-tuned heuristic (`\sim\mathrm{digits}\cdot\sqrt N`)
-        that was checked to undershoot substantially: at `\mathrm{digits}=15`
-        on a conductor `3\times10^7` curve it supplied `20713`-`82555`
-        coefficients (depending on which version of the heuristic), while
-        ``lfuncost`` says `160925` are actually needed there, and PARI's own
-        runtime warning on the resulting ``lfun`` call
-        (``#an = ... < 160925, results may be imprecise``) confirms the
-        heuristic's count was not enough -- the requested ``digits`` was
-        recorded as achieved without actually being achieved.
-
-        Uses ``gp.eval('default(realprecision, ...)')`` to set the precision
-        context for this call, not :func:`pari.set_real_precision`: the
-        latter was found empirically *not* to move ``lfuncost``'s answer at
-        all across `\mathrm{digits}=5..60` on the same example, while the
-        former scales correctly and matches the coefficient count that live
-        ``lfun``/``lfuncheckfeq`` calls actually warn about needing. ``der=2``
-        (matching :meth:`value`'s default) is used regardless of the caller,
-        since a higher derivative needs more terms and :meth:`lfun`'s result
-        is shared between :meth:`value` and :meth:`check_functional_equation`.
+        GP's ``default(realprecision)`` must be set separately from embedded
+        PARI's precision. A heuristic count can undershoot substantially.
+        The default ``der=2`` covers both :meth:`value` and
+        :meth:`check_functional_equation`, which share :meth:`lfun`'s result.
         """
-        N = self.conductor()
-        prev = gp.eval('default(realprecision)')
-        gp.eval('default(realprecision, %d)' % int(digits))
-        try:
-            L0 = pari.lfuncreate([[QQ(0)], 0, [-1, -1, 0, 0, 1], 3, N, 1])
-            cost = gp.eval('lfuncost(%s, [1,0,0], %d)' % (L0, int(der)))
-            return int(ZZ(str(cost).strip('[]').split(',')[0].strip()))
-        finally:
-            gp.eval('default(realprecision, %s)' % prev)
+        return _coefficient_count(self.conductor(), [-1, -1, 0, 0, 1], 3, digits, der)
 
-    def lfun(self, num_coeffs=None, digits=10, progress=None):
+    def lfun(self, num_coeffs=None, digits=10):
         r"""
         The PARI `L`-function object, with gamma factors `[-1,-1,0,0,1]`,
         weight 3 and root number `+1`, matching ``standardlfuntame.gp``.
 
         ``digits`` is the working precision in decimal digits. The number of
-        Dirichlet coefficients needed grows with it (and with the conductor);
-        it is taken from :meth:`_coeffs_needed`, PARI's own estimate, rather
-        than a hand-tuned formula -- see that method for why. Each coefficient
-        costs a Frobenius-polynomial evaluation, so this is genuinely more
-        expensive than the previous heuristic, not merely more careful: PARI's
-        own number can be several times larger.
+        Dirichlet coefficients needed grows with it and with the conductor;
+        :meth:`_coeffs_needed` supplies PARI's estimate for the default count.
         """
-        key = ("lfun", num_coeffs, digits)          # progress is cosmetic
+        key = ("lfun", num_coeffs, digits)
         if key in self._cache:
             return self._cache[key]
         N = self.conductor()
         if num_coeffs is None:
             num_coeffs = max(200, self._coeffs_needed(digits))
-        an = self.dirichlet_coefficients(num_coeffs, progress=progress)
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
-            L = pari.lfuncreate([[QQ(c) for c in an], 0,
-                                 [-1, -1, 0, 0, 1], 3, N, 1])
-        finally:
-            pari.set_real_precision(prev)
+        an = self.dirichlet_coefficients(num_coeffs)
+        with _pari_precision(digits):
+            L = _pari_lfun_call(
+                pari.lfuncreate, [[QQ(c) for c in an], 0,
+                                 [-1, -1, 0, 0, 1], 3, N, 1],
+                coefficient_count=len(an), digits=digits)
         self._cache[key] = L
         return L
-
-    def _at_precision(self, digits, fn):
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
-            return fn()
-        finally:
-            pari.set_real_precision(prev)
 
     def check_functional_equation(self, num_coeffs=None, digits=10):
         r"""
@@ -644,9 +690,9 @@ class StandardLFunction(SageObject):
         """
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
-        return self._at_precision(
-            digits,
-            lambda: K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits))))
+        with _pari_precision(digits):
+            return K(2) ** K(_pari_lfun_call(
+                pari.lfuncheckfeq, L, precision=_bits(digits)))
 
     def vanishing_order(self, s=1, max_order=4, num_coeffs=None, digits=10,
                         tol=None):
@@ -682,17 +728,16 @@ class StandardLFunction(SageObject):
             sage: from hyperell_regulator.reduction import HyperellipticCurveWithReduction
             sage: R.<x> = ZZ[]
             sage: C = HyperellipticCurveWithReduction(x^5 + x^3 + 1)
-            sage: L = StandardLFunction(C, bad_factors={2: None})  # not run
         """
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
-        return self._at_precision(
-            digits,
-            lambda: K(pari.lfun(L, s, derivative, precision=_bits(digits))))
+        with _pari_precision(digits):
+            return K(_pari_lfun_call(
+                pari.lfun, L, s, derivative, precision=_bits(digits)))
 
 
 def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
-                    digits=10, verbose=True, progress=None):
+                    digits=10, verbose=True):
     r"""
     `L''(\mathrm{std}, 1)` for the genus 2 curve ``C``, with the bad Euler
     factors computed from the cluster picture wherever `C` is semistable at an
@@ -709,9 +754,8 @@ def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
         out["euler_factors"][p] = str(L.euler_factor(p))
     out["conductor"] = L.conductor()
     out["digits"] = digits
-    # build (and cache) the coefficients once, with progress; everything below
-    # then hits the cache
-    L.lfun(num_coeffs, digits, progress=progress)
+    # Build and cache the coefficients once for all evaluations below.
+    L.lfun(num_coeffs, digits)
     out["feq_check"] = L.check_functional_equation(num_coeffs, digits)
     out["value"] = L.value(1, derivative, num_coeffs, digits)
     out["L_at_1"] = L.value(1, 0, num_coeffs, digits)
@@ -755,7 +799,8 @@ class CurveLFunction(SageObject):
         sage: from hyperell_regulator import HyperellipticCurveWithReduction
         sage: from hyperell_regulator.lfunction import CurveLFunction
         sage: R = PolynomialRing(ZZ, 'x'); x = R.gen()
-        sage: L = CurveLFunction(HyperellipticCurveWithReduction(x**5 + x**3 + 1))
+        sage: L = CurveLFunction(HyperellipticCurveWithReduction(x**5 + x**3 + 1))  # doctest: +ELLIPSIS
+        ...Warning: unknown valuation of conductor at 2.
         sage: L.euler_factor(11).degree()
         4
         sage: L.conductor()
@@ -776,16 +821,7 @@ class CurveLFunction(SageObject):
 
     def precompute_h1(self, primes, nthreads=None):
         r"""Fill the cache for the good odd primes in one batched call."""
-        from .frobenius import frobenius_polynomials
-
-        bad = set(self.C.bad_primes())
-        todo = [int(p) for p in primes
-                if int(p) != 2 and ZZ(p).is_prime() and ZZ(p) not in bad
-                and ZZ(p) not in self._h1cache]
-        if not todo:
-            return
-        for p, cp in frobenius_polynomials(self.C.F, todo, nthreads).items():
-            self._h1cache[ZZ(p)] = self._RT(list(reversed(cp.list())))
+        _precompute_h1(self, primes, nthreads)
 
     def euler_factor(self, p):
         r"""
@@ -802,6 +838,7 @@ class CurveLFunction(SageObject):
             sage: from hyperell_regulator.lfunction import CurveLFunction
             sage: R = PolynomialRing(ZZ, 'x'); x = R.gen()
             sage: L = CurveLFunction(HyperellipticCurveWithReduction(x**5 + x**3 + 1))
+            ...Warning: unknown valuation of conductor at 2.
             sage: L.euler_factor(11)[0]
             1
         """
@@ -825,26 +862,8 @@ class CurveLFunction(SageObject):
         return ZZ(self.C.conductor())
 
     def dirichlet_coefficients(self, num):
-        r"""The first ``num`` Dirichlet coefficients, from the Euler product."""
-        self.precompute_h1(prime_range(num + 1))
-        a = [ZZ(0)] * (num + 1)
-        a[1] = ZZ(1)
-        inv = {}
-
-        def local(p, e):
-            if p not in inv:
-                depth = ZZ(num).exact_log(p)
-                RS = PowerSeriesRing(QQ, 'x', default_prec=depth + 1)
-                x = RS.gen()
-                inv[p] = (1 / RS(self.euler_factor(p)(x))).padded_list(depth + 1)
-            return inv[p][e]
-
-        for n in range(2, num + 1):
-            coeff = QQ(1)
-            for p, e in ZZ(n).factor():
-                coeff *= local(p, e)
-            a[n] = coeff
-        return a
+        r"""Dirichlet coefficients indexed 1 through ``num``, with a zero sentinel."""
+        return _dirichlet_coefficients(self, num)
 
     def root_number(self, num_coeffs=200, digits=10):
         r"""
@@ -860,18 +879,16 @@ class CurveLFunction(SageObject):
         an = self.dirichlet_coefficients(num_coeffs)[1:]
         N = self.conductor()
         best, score = 1, None
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
+        with _pari_precision(digits):
             for eps in (1, -1):
-                L = pari.lfuncreate([[QQ(c) for c in an], 0, [0, 0, 1, 1],
-                                     2, N, eps])
+                L = _pari_lfun_call(
+                    pari.lfuncreate, [[QQ(c) for c in an], 0, [0, 0, 1, 1],
+                                     2, N, eps], coefficient_count=len(an), digits=digits)
                 K = _real_field(digits)
-                v = K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits)))
+                v = K(2) ** K(_pari_lfun_call(
+                    pari.lfuncheckfeq, L, precision=_bits(digits)))
                 if score is None or v < score:
                     best, score = eps, v
-        finally:
-            pari.set_real_precision(prev)
         self._eps = best
         return best
 
@@ -885,15 +902,7 @@ class CurveLFunction(SageObject):
         A hand-rolled `\sqrt N` heuristic is not good enough -- it left the
         functional equation failing at `8\times10^{-3}`.
         """
-        N = self.conductor()
-        prev = gp.eval('default(realprecision)')
-        gp.eval('default(realprecision, %d)' % int(digits))
-        try:
-            L0 = pari.lfuncreate([[QQ(0)], 0, [0, 0, 1, 1], 2, N, 1])
-            cost = gp.eval('lfuncost(%s, [1,0,0], %d)' % (L0, int(der)))
-            return int(ZZ(str(cost).strip('[]').split(',')[0].strip()))
-        finally:
-            gp.eval('default(realprecision, %s)' % prev)
+        return _coefficient_count(self.conductor(), [0, 0, 1, 1], 2, digits, der)
 
     def lfun(self, num_coeffs=None, digits=10, der=2):
         r"""
@@ -907,13 +916,11 @@ class CurveLFunction(SageObject):
             return self._cache[key]
         an = self.dirichlet_coefficients(num_coeffs)[1:]
         eps = self.root_number(min(num_coeffs, 400), digits)
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
-            L = pari.lfuncreate([[QQ(c) for c in an], 0, [0, 0, 1, 1],
-                                 2, self.conductor(), eps])
-        finally:
-            pari.set_real_precision(prev)
+        with _pari_precision(digits):
+            L = _pari_lfun_call(
+                pari.lfuncreate, [[QQ(c) for c in an], 0, [0, 0, 1, 1],
+                                 2, self.conductor(), eps],
+                coefficient_count=len(an), digits=digits)
         self._cache[key] = L
         return L
 
@@ -921,12 +928,9 @@ class CurveLFunction(SageObject):
         r"""``2^lfuncheckfeq``: small is good."""
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
-            return K(2) ** K(pari.lfuncheckfeq(L, precision=_bits(digits)))
-        finally:
-            pari.set_real_precision(prev)
+        with _pari_precision(digits):
+            return K(2) ** K(_pari_lfun_call(
+                pari.lfuncheckfeq, L, precision=_bits(digits)))
 
     def value(self, s=1, derivative=0, num_coeffs=None, digits=10):
         r"""
@@ -938,18 +942,16 @@ class CurveLFunction(SageObject):
             sage: from hyperell_regulator import HyperellipticCurveWithReduction
             sage: from hyperell_regulator.lfunction import CurveLFunction
             sage: R = PolynomialRing(ZZ, 'x'); x = R.gen()
-            sage: L = CurveLFunction(HyperellipticCurveWithReduction(x**5 + x**3 + 1))
+            sage: L = CurveLFunction(HyperellipticCurveWithReduction(x**5 + x**3 + 1))  # doctest: +ELLIPSIS
+            ...Warning: unknown valuation of conductor at 2.
             sage: bool(L.value(2, digits=10) > 0)            # long time
             True
         """
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
-        prev = pari.get_real_precision()
-        pari.set_real_precision(digits)
-        try:
-            return K(pari.lfun(L, s, derivative, precision=_bits(digits)))
-        finally:
-            pari.set_real_precision(prev)
+        with _pari_precision(digits):
+            return K(_pari_lfun_call(
+                pari.lfun, L, s, derivative, precision=_bits(digits)))
 
 
 def curve_lvalue(C, s=1, derivative=0, num_coeffs=None, digits=10,
@@ -967,8 +969,10 @@ def curve_lvalue(C, s=1, derivative=0, num_coeffs=None, digits=10,
         sage: from hyperell_regulator import HyperellipticCurveWithReduction
         sage: from hyperell_regulator.lfunction import curve_lvalue
         sage: R = PolynomialRing(ZZ, 'x'); x = R.gen()
-        sage: d = curve_lvalue(HyperellipticCurveWithReduction(x**5 + x**3 + 1),
+        sage: d = curve_lvalue(HyperellipticCurveWithReduction(x**5 + x**3 + 1),  # doctest: +ELLIPSIS
         ....:                  s=2, digits=12)                      # long time
+        ...Warning: unknown valuation of conductor at 2.
+        ...
         sage: d["conductor"]                                         # long time
         3233
     """

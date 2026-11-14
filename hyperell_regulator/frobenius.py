@@ -3,10 +3,9 @@ Frobenius polynomials at good primes, in bulk.
 
 An `L`-function needs the Euler factor at every good prime below a bound,
 and for a genus 2 curve that is thousands of `p`-adic Frobenius
-computations.  Sage will do them one at a time through its own
-``hypellfrob``; this module hands the whole list to David Harvey's
-``hypellfrob`` as a single batched, threaded job, so the per-call overhead
-is paid once and the primes run concurrently.
+computations. This module hands the whole list to a simultaneous,
+threaded implementation of Harvey's average polynomial time algorithm,
+sharing reduction products across primes through the rforest C library.
 
 The mathematics is unchanged.  The external program returns the matrix of
 Frobenius on `H^1_{\mathrm{dR}}` modulo `p^N`, and the characteristic
@@ -16,7 +15,11 @@ does: reduce `a_g, \dots, a_0` into the symmetric range mod `p^N`, with `N`
 Kedlaya's bound, and recover `a_{2g},\dots,a_{g+1}` from the functional
 equation `a_{2g-i} = a_i q^{g-i}`.
 
-The program is built from ``hypellfrob-threaded`` and ships with this
+The native implementation uses Harvey's simultaneous algorithm
+(arXiv:1210.8239) for both odd and even degree models. Unsupported jobs
+fall back to Sage; there is no native per-prime backend.
+
+The program is built from ``hyperell-frobenius`` and ships with this
 package: ``sage -pip install`` compiles it and puts it in
 ``hyperell_regulator/bin/euler``, and in a checkout ``make`` in that
 directory does the same job.  It is looked for at ``$HYPELLFROB_EULER``
@@ -47,9 +50,9 @@ def euler_binary():
         return env if os.path.isfile(env) and os.access(env, os.X_OK) else None
     here = os.path.dirname(os.path.abspath(__file__))
     # installed inside the package by setup.py; then the source tree, so a
-    # checkout that has run ``make`` in hypellfrob-threaded works uninstalled
+    # checkout that has run ``make`` in hyperell-frobenius works uninstalled
     for rel in (("bin", "euler"),
-                ("..", "hypellfrob-threaded", "build", "euler")):
+                ("..", "hyperell-frobenius", "build", "euler")):
         guess = os.path.normpath(os.path.join(here, *rel))
         if os.path.isfile(guess) and os.access(guess, os.X_OK):
             return guess
@@ -60,10 +63,9 @@ def odd_model(f):
     r"""
     A monic, integral, **odd** degree model of `y^2 = f(x)`, or ``None``.
 
-    The fast path needs `Q` monic of odd degree `2g+1`; `4f + h^2` has even
-    degree whenever `h` has degree `g+1`, and the only even degree routine
-    available is linear in `p`.  An odd degree model exists exactly when the
-    curve has a rational Weierstrass point, and then
+    Rforest handles either parity directly, but a rational Weierstrass
+    point permits a smaller odd degree model. An odd degree model exists
+    exactly when the curve has a rational Weierstrass point, and then
 
     .. math:: u \mapsto u^{\deg f}\,f(r + 1/u)
 
@@ -137,14 +139,22 @@ def _lift(M, p, g, N):
     return ZZ["x"](a)
 
 
-def _run(fcoeffs, jobs, nthreads):
+def _run(fcoeffs, jobs, nthreads, backend=None):
     """One call to the program: (ascending Q, [(p, N)]) -> {p: matrix}."""
+    backend = backend or os.environ.get("HYPELLFROB_BACKEND", "rforest")
+    if backend != "rforest":
+        raise ValueError("backend must be 'rforest'; the per-prime backends have been removed")
     binary = euler_binary()
     if binary is None or not jobs:
         return {}
     inp = " ".join(str(int(c)) for c in fcoeffs) + "\n"
     inp += "".join("%d %d\n" % (p, N) for p, N in jobs)
-    args = [binary] + ([str(int(nthreads))] if nthreads else [])
+    if nthreads is None:
+        configured = os.environ.get("HYPELLFROB_THREADS")
+        workers = max(1, int(configured)) if configured else (os.cpu_count() or 1)
+    else:
+        workers = max(1, int(nthreads))
+    args = [binary, str(workers), backend]
     try:
         out = subprocess.run(args, input=inp, capture_output=True, text=True,
                              check=True).stdout
@@ -161,7 +171,7 @@ def _run(fcoeffs, jobs, nthreads):
     return got
 
 
-def frobenius_polynomials(f, primes, nthreads=None):
+def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
     r"""
     `\{p : \text{charpoly of Frobenius on } y^2 = f(x) \bmod p\}`.
 
@@ -169,11 +179,25 @@ def frobenius_polynomials(f, primes, nthreads=None):
     are the primes to do, which must be of good reduction.  Any prime the
     batched program declines falls back to Sage.
 
-    An even degree ``f`` is replaced by :func:`odd_model` where one exists,
-    since only odd degree has the `O(\sqrt p)` path; without a rational
-    Weierstrass point it goes through the even degree routine, which is
-    correct but linear in `p`, so an even degree curve with no such point
-    cannot reach the same speed.
+    ``backend='rforest'`` selects the vendored upstream C remainder-forest
+    library, with polynomial factor cancellation and bounded forest storage.
+    Monic even degree models are handled directly, without a branch point
+    or a field extension, by avoiding singular reduction paths and
+    restricting affine Frobenius to the kernel of the residue at infinity.
+    Nonmonic even models use a common monic quadratic twist over the
+    rationals; its local character is removed from the returned polynomial.
+    Rforest is the only native backend. The optional ``backend`` keyword
+    and ``HYPELLFROB_BACKEND`` environment variable accept only ``'rforest'``.
+
+    An even degree ``f`` is replaced by :func:`odd_model` where one exists.
+    Otherwise rforest uses simultaneous even degree reductions.
+    Unsupported jobs retain Sage fallback.
+
+    The default uses ``HYPELLFROB_THREADS`` if set, otherwise one worker per
+    logical CPU (``os.cpu_count()``), or one if the CPU count is unavailable.
+    Pass ``nthreads`` to override this.
+    The installed accelerator includes a private thread-safe NTL; custom
+    binaries must also be linked to a thread-safe NTL.
 
     EXAMPLES::
 
@@ -193,24 +217,33 @@ def frobenius_polynomials(f, primes, nthreads=None):
     g = (fz.degree() - 1) // 2
     primes = [int(p) for p in primes]
     jobs = [(p, _bound(p, g)) for p in primes]
-    # the fast path wants a monic odd degree model; when the curve has a
-    # rational Weierstrass point there is one, isomorphic over QQ, and it is
-    # what gets sent. Without one the even degree model goes as it is, which
-    # is correct but linear in p.
+    # A rational Weierstrass point gives a smaller odd degree model,
+    # isomorphic over QQ. Otherwise use simultaneous even degree reductions.
+    selected_backend = backend or os.environ.get("HYPELLFROB_BACKEND", "rforest")
     model = odd_model(fz)
-    got = _run((model if model is not None else fz).list(), jobs, nthreads)
+    twist = ZZ(1)
+    if model is None and not fz.is_monic():
+        # c^(d-1)*f(X/c) is monic and integral. In even degree it is
+        # isomorphic over Q to the c-twist of the input curve. The common
+        # rational transformation preserves sharing between primes; undo
+        # the twist on characteristic polynomials via (c/p).
+        d = fz.degree()
+        twist = fz.leading_coefficient()
+        model = R([fz[i]*twist**(d-1-i) for i in range(d)]+[1])
+    got = _run((model if model is not None else fz).list(), jobs, nthreads, selected_backend)
 
     out = {}
     for p, N in jobs:
-        if p in got:
-            out[p] = _lift(got[p], p, g, N)
+        if p in got and twist%p:
+            cp = _lift(got[p], p, g, N)
+            out[p] = cp(-R.gen()) if twist != 1 and twist.kronecker(p) == -1 else cp
         else:
             H = HyperellipticCurve(PolynomialRing(GF(p), "x")(fz))
             out[p] = R(H.frobenius_polynomial())
     return out
 
 
-def frobenius_polynomial(f, p):
+def frobenius_polynomial(f, p, *, backend=None):
     r"""
     One prime's charpoly of Frobenius; a convenience over
     :func:`frobenius_polynomials`.
@@ -223,23 +256,72 @@ def frobenius_polynomial(f, p):
         sage: frobenius_polynomial(x**5 + x**3 + 1, 37).degree()
         4
     """
-    return frobenius_polynomials(f, [p])[int(p)]
+    return frobenius_polynomials(f, [p], backend=backend)[int(p)]
+
+
+# Fixed full-matrix references for odd and even degree, verified against
+# the former independent implementations and Sage characteristic polynomials.
+# Kept here so build isolation can check arithmetic without importing Sage.
+_CHECK_CASES = (
+    (
+        (
+            '1 0 0 1 0 1\n'
+            '101 3\n'
+            '103 3\n'
+            '107 3\n'
+            '109 3\n'
+            '31 3\n'
+        ),
+        (
+            '101 1 4 1011616 996870 945785 288208 460661 90799 98296 265518 397738 476518 632995 265953 658419 476922 143336 325199\n'
+            '103 1 4 689070 435175 295697 185257 399846 888272 442156 365773 1000336 732536 812626 320027 407777 109592 101499 888207\n'
+            '107 1 4 1037579 558968 609797 378854 503863 1165979 895436 1133730 193028 141775 1186127 1210054 474010 451540 119495 285437\n'
+            '109 1 4 1170878 640702 152452 271988 507286 748612 1080818 597880 992663 888786 543370 1020913 877559 412129 531249 127182\n'
+            '31 0\n'
+        ),
+    ),
+    (
+        (
+            '1 6 9 2 -2 0 1\n'
+            '41 2\n'
+            '43 2\n'
+            '31 2\n'
+        ),
+        (
+            '41 1 4 205 205 725 396 164 328 1490 402 779 861 5 40 1025 82 1659 1144\n'
+            '43 1 4 645 1763 1235 43 1247 129 1247 565 1075 0 1204 1806 0 1548 645 1720\n'
+            '31 0\n'
+        ),
+    ),
+)
+
+
+def _check_binary(binary):
+    """Check odd/even arithmetic and worker counts, without any fallback."""
+    workers = tuple(dict.fromkeys((1, 4, os.cpu_count() or 1)))
+    for batch, expected in _CHECK_CASES:
+        for count in workers:
+            result = subprocess.run([binary, str(count), "rforest"], input=batch, text=True,
+                                    capture_output=True, check=True, timeout=30)
+            if result.stdout != expected:
+                raise RuntimeError("Frobenius matrices differ from verified reference: " +
+                                   result.stdout)
+    return workers
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Check the installed Frobenius accelerator.")
     parser.add_argument("--check", action="store_true", required=True)
-    parser.parse_args()
-    binary = euler_binary()
+    parser.add_argument("--binary", help="check this executable instead of the installed one")
+    args = parser.parse_args()
+    binary = args.binary or euler_binary()
     if binary is None:
         parser.exit(1, "Frobenius accelerator not found; computations use Sage.\n")
     try:
-        result = subprocess.run([binary, "1"], input="1 0 0 1 0 1\n101 3\n",
-                                text=True, capture_output=True, check=True, timeout=30)
-        if result.stdout.split()[:2] != ["101", "1"]:
-            raise RuntimeError("unexpected driver output: " + result.stdout)
+        workers = _check_binary(binary)
     except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
         parser.exit(1, "Accelerator failed: %s\n%s\n" %
                     (exc, getattr(exc, "stderr", "")))
-    print("Frobenius accelerator runs successfully: " + binary)
+    print("Rforest Frobenius checks passed with worker counts %s: %s" %
+          (", ".join(map(str, workers)), binary))

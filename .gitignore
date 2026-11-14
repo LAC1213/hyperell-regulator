@@ -8,6 +8,7 @@ dist/
 .pytest_cache/
 .coverage
 htmlcov/
+/docs/_build/
 .vscode/
 
 # Local numerical caches, experiments, and compiler configuration.

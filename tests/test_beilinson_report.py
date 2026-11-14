@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 from hyperell_regulator.experiments import beilinson as b
 from hyperell_regulator.regulator.polynomials import ring
+from sage.all import RealField
 
 
 def test_float64_and_conductor_cli_defaults():
@@ -20,9 +21,60 @@ def test_float64_and_conductor_cli_defaults():
         assert run.call_args.args==(1000,)
         assert run.call_args.kwargs['reg_digits'] is None
         assert run.call_args.kwargs['digits']==15
+        assert run.call_args.kwargs['allow_undecided'] is True
         b.main(['500','--no-lvalue','--verbose'])
         assert run.call_args.args==(500,)
         assert not run.call_args.kwargs['with_lvalue']
+        b.main(['--exclude-undecided'])
+        assert run.call_args.kwargs['allow_undecided'] is False
+        b.main(['--allow-undecided'])
+        assert run.call_args.kwargs['allow_undecided'] is True
+
+
+def test_388_undecided_triple_reaches_analysis_by_default(tmp_path):
+    for fn in (b.find_triples, b.analyse, b.run):
+        assert inspect.signature(fn).parameters['allow_undecided'].default is True
+    row = dict(label='388.a.776.1', cond=388, is_simple_geom=True, mw_invs=[21],
+               eqn=[[0, 1, 2, 0, -1], [1, 1, 0, 1]])
+    P, R, Q = (0, 0), (-1, 1), ('infinity', 0)
+    pairs = [dict(P=p, Q=q, same_component_everywhere=verdict, order_of_P_minus_Q=7)
+             for p, q, verdict in ((P, Q, None), (R, Q, None), ((0, -1), Q, False))]
+    record = dict(label=row['label'], cond=388, pairs=pairs)
+    C = b.curve_from_row(row)
+    triples = b.find_triples(record, C, row=row)
+    assert len(triples) == 1
+    assert triples[0]['R'] == Q
+    assert triples[0]['verdict_P'] is triples[0]['verdict_Q'] is None
+    assert b.find_triples(record, C, row=row, allow_undecided=False) == []
+    cache = tmp_path/'curves.json'
+    cache.write_text(json.dumps([row]))
+    with patch.object(b, 'rank_triples', side_effect=lambda C, ts, **kw: ts), \
+            patch.object(b, '_analyse_triple', return_value=dict(status='ok')) as calculate:
+        assert b.analyse(record, cache=cache, verbose=False)['status'] == 'ok'
+        assert calculate.call_args.args[2]['verdict_P'] is None
+        calculate.reset_mock()
+        assert b.analyse(record, cache=cache, allow_undecided=False,
+                         verbose=False)['status'] == 'no_admissible_triple'
+        calculate.assert_not_called()
+
+
+def test_component_policy_change_invalidates_cached_reports():
+    settings = dict(report_version=b.REPORT_VERSION, regulator_digits=15,
+                    lvalue_digits=15, with_lvalue=True, allow_undecided=True)
+    old = dict(status='ok', settings=dict(settings, allow_undecided=False))
+    assert not b._stored_result_satisfies(old, settings)
+    assert b._stored_result_satisfies(old, dict(settings, allow_undecided=False))
+
+
+def test_completed_regulator_with_failed_lvalue_is_retried():
+    settings = dict(report_version=b.REPORT_VERSION, regulator_digits=100,
+                    lvalue_digits=100, with_lvalue=True)
+    old = dict(status='ok', settings=settings, det='5.071007759569784',
+               L_second_derivative=None,
+               L_status='PariError: the PARI stack overflows')
+    assert not b._stored_result_satisfies(old, settings)
+    recovered = dict(old, L_status=None, L_second_derivative='0.123456789')
+    assert b._stored_result_satisfies(recovered, settings)
 
 
 def test_triples_exclude_conjugate_pairs_including_infinity():
@@ -83,3 +135,115 @@ def test_explicit_precision_failure_does_not_silently_fall_back():
                 r=b._analyse_triple({'label':'test','cond':1},None,t,1,verbose=False,reg_digits=30)
     assert r['status']=='numerical_failure' and r['error']=='RuntimeError: failed'
     assert calc.call_count==1 and calc.call_args.kwargs['digits']==30
+
+
+def test_verbose_lvalue_failure_preserves_completed_regulator():
+    x = ring().gen()
+    G = x**5+x+1
+    triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5)
+    with patch.object(b, '_model_for_triple', return_value=(G, [(0, 1), (1, 1)], None, 'infinity')), \
+            patch.object(b, '_resolve_triple_orders'), \
+            patch.object(b, 'beilinson_determinant_stokes', return_value=(2.0, [[1.0]], None)), \
+            patch.object(b, 'load_lvalues', return_value={}), \
+            patch.object(b, 'save_lvalue') as save, \
+            patch.object(b, 'StandardLFunction') as lfunction, \
+            contextlib.redirect_stdout(io.StringIO()):
+        lfunction.return_value._coeffs_needed.side_effect = ArithmeticError('bad Euler factor')
+        result = b._analyse_triple(dict(label='test', cond=1), None, triple, 1,
+                                   verbose=True, with_periods=False)
+    assert result['status'] == 'ok' and result['det'] == 2.0
+    assert result['L_second_derivative'] is None
+    assert result['L_status'] == 'ArithmeticError: bad Euler factor'
+    assert result['comparison'] == {}
+    save.assert_called_once()
+
+
+def test_higher_precision_report_is_reused_without_rounding():
+    record = dict(label='a', cond=249)
+    def analyse(record, **kwargs):
+        return dict(record, status='ok', det='1.2345678901234567890123456789', comparison={})
+    with TemporaryDirectory() as d, contextlib.redirect_stdout(io.StringIO()):
+        out = Path(d)/'report.json'
+        with patch.object(b, 'ensure_records', return_value=[record]), patch.object(b, 'analyse', side_effect=analyse) as calc:
+            b.run(out=out, reg_digits=50, digits=50, max_edge_seconds=120)
+            saved = out.read_text()
+            calc.reset_mock()
+            b.run(out=out, reg_digits=30, digits=30)
+            b.run(out=out)
+            calc.assert_not_called()
+            assert out.read_text() == saved
+            b.run(out=out, reg_digits=60, digits=50)
+            assert calc.call_count == 1
+            b.run(out=out, reg_digits=30, digits=30, force=True)
+            assert calc.call_count == 2
+
+
+def test_precision_cache_boundaries():
+    settings = dict(report_version=b.REPORT_VERSION, regulator_digits=30,
+                    lvalue_digits=30, with_lvalue=True)
+    old = dict(status='ok', settings=dict(settings, regulator_digits=50, lvalue_digits=50))
+    assert b._stored_result_satisfies(old, settings)
+    assert not b._stored_result_satisfies(old, dict(settings, lvalue_digits=60))
+    assert not b._stored_result_satisfies(old, dict(settings, report_version=-1))
+    old['settings']['regulator_digits'] = None
+    assert not b._stored_result_satisfies(old, settings)
+
+    old['settings']['regulator_digits'] = 10
+    assert not b._stored_result_satisfies(old, dict(settings, regulator_digits=None))
+    old['status'] = 'numerical_failure'
+    assert not b._stored_result_satisfies(old, settings)
+
+
+def test_component_messages_distinguish_unknown_and_failed_pairs():
+    assert b._component_warning(dict(verdict_P=True, verdict_Q=True)) is None
+    unknown = b._component_warning(dict(verdict_P=True, verdict_Q=None))
+    assert 'not known to satisfy' in unknown and 'undecided for Q-R' in unknown
+    failed = b._component_warning(dict(verdict_P=False, verdict_Q=None))
+    assert 'triple fails' in failed and 'failed for P-R' in failed
+    assert 'undecided for Q-R' in failed
+
+
+def test_unproven_components_are_announced_even_without_verbose_output(capsys):
+    x = ring().gen()
+    G = x**5+x+1
+    triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5,
+                  verdict_P=True, verdict_Q=None)
+    with patch.object(b, '_model_for_triple', return_value=(G, [(0, 1), (1, 1)], None, 'infinity')), \
+            patch.object(b, '_resolve_triple_orders'), \
+            patch.object(b, 'beilinson_determinant_stokes', return_value=(2.0, [[1.0]], None)):
+        result = b._analyse_triple(dict(label='test', cond=1), None, triple, 1,
+                                   verbose=False, with_periods=False, with_lvalue=False)
+    output = capsys.readouterr().out
+    assert 'WARNING: triple is not known to satisfy the same-component criterion' in output
+    assert 'undecided for Q-R' in output
+    assert result['component_warning'] == b._component_warning(triple)
+    b._report_row(result, stored=True)
+    assert 'WARNING: triple is not known to satisfy' in capsys.readouterr().out
+
+
+def test_comparison_uses_pi_over_determinant_and_reports_integer_guesses():
+    R = RealField(180)
+    for q in (R(7), R(-28), R(3)/2):
+        result = b.beilinson_comparison(R.pi()*6/q, 2, 3, 1, digits=40)
+        assert abs(result['ratio']-q) < R('1e-39')
+        assert abs(R(result['rational'])-q) < R('1e-39')
+        assert result['rational_is_integer'] == (q in (7, -28))
+        assert result['relative_agreement'] < R('1e-39')
+    assert b.beilinson_comparison(0, 2, 3, 1) == {}
+    assert b.beilinson_comparison(1, 2, 3, None) == {}
+
+
+def test_old_determinant_convention_is_not_reused():
+    settings = dict(report_version=b.REPORT_VERSION, regulator_digits=30,
+                    lvalue_digits=30, with_lvalue=True)
+    old = dict(status='ok', settings=dict(settings, report_version=8))
+    assert not b._stored_result_satisfies(old, settings)
+
+
+def test_integer_relation_does_not_discard_tiny_determinants():
+    R = RealField(180)
+    det = R('1e-40')
+    result = b.beilinson_comparison(det, 1, 1, 40960*det/R.pi(), digits=40)
+    assert result['rational'] == 40960
+    assert result['rational_is_integer']
+    assert result['relative_agreement'] < R('1e-39')

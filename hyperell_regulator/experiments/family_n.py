@@ -8,6 +8,8 @@ The same-component condition holds throughout this family; the optional
 Like ``beilinson``, the runner uses float64 by default, shares ordinary and
 logarithmic edge integrals, supports ``--prec`` for arbitrary precision, and
 saves precision-preserving JSON with per-edge limits and retryable failures.
+The determinant uses weights `(1,2\Re(z),|z|^2)` and reports
+`q=\pi c^+c^-L''(\mathrm{std},1)/D`, as in ``beilinson``.
 The standard conductor can be large: ``--no-lvalue`` skips L-values, and
 ``--max-conductor`` caps their cost. Run ``--help`` for parameter selection.
 """
@@ -26,7 +28,6 @@ from hyperell_regulator.experiments import beilinson as b
 from hyperell_regulator.lfunction import StandardLFunction
 from hyperell_regulator.paths import data_path, ensure_parent
 from hyperell_regulator.reduction import HyperellipticCurveWithReduction
-from hyperell_regulator.regulator import IntegrationMonitor
 
 RESULTS = data_path("results", "family_n_beilinson.json")
 
@@ -171,9 +172,9 @@ def _regulator_precision(reg_digits, dps):
 
 
 def family_determinant(G, dps=None, *, reg_digits=None):
-    """Compute both regulator columns and periods using two shared cover passes."""
+    """Compute both regulator columns and periods using one shared two-sheet cut."""
     precision = _regulator_precision(reg_digits, dps)
-    return b.beilinson_determinant_stokes(G, (0, 0), 2, (1, 0), 2,
+    return b.beilinson_determinant_stokes(G, (0, 0), (1, 0),
                                         digits=precision)
 
 
@@ -186,21 +187,12 @@ def beilinson_for_n(n, digits=15, lindep_bound=8, verbose=False, prec=250,
     ``reg_digits`` (or the legacy ``dps`` alias) controls regulator decimals.
     The CLI's ``--prec`` means regulator decimals, as in ``beilinson``.
     """
-    import time
     reg_digits = _regulator_precision(reg_digits, dps)
     if int(digits) != digits or digits < 1:
         raise ValueError("L-value digits must be positive")
     label = "family_n(%s)" % int(n)
     result = dict(n=int(n), label=label)
-    def progress(event):
-        if verbose and event['event'] != 'start':
-            print("  %s edge %d %s: %.1fs, %s" %
-                  (label, event['index'], event['event'], event['seconds'],
-                   event['phase']), flush=True)
-    monitor = IntegrationMonitor(max_edge_seconds=max_edge_seconds,
-        max_edge_steps=max_edge_steps, callback=progress, progress_interval=5)
-    start = time.monotonic()
-    try:
+    with b._monitored_result(result, verbose, max_edge_seconds, max_edge_steps):
         C = family_curve(n, prec=prec)
         if C is None:
             result['status'] = 'singular'
@@ -208,20 +200,13 @@ def beilinson_for_n(n, digits=15, lindep_bound=8, verbose=False, prec=250,
             P, Q, R = family_points()
             triple = dict(P=P, Q=Q, R=R, order_P=2, order_Q=2,
                           pairwise_nonconjugate=True)
-            with monitor:
-                result.update(b._analyse_triple(
-                    dict(label=label, cond=int(C.conductor())), C, triple, 1,
-                    verbose=verbose, with_periods=with_lvalue,
-                    with_lvalue=with_lvalue, digits=digits,
-                    reg_digits=reg_digits, lindep_bound=lindep_bound))
+            result.update(b._analyse_triple(
+                dict(label=label, cond=int(C.conductor())), C, triple, 1,
+                verbose=verbose, with_periods=with_lvalue,
+                with_lvalue=with_lvalue, digits=digits,
+                reg_digits=reg_digits, lindep_bound=lindep_bound))
             result.update(f=str(C.f), h=str(C.h), conductor=result['cond'],
                           bad_primes=[int(p) for p in C.bad_primes()])
-    except Exception as exc:
-        result.update(status='preparation_error',
-                      error="%s: %s" % (type(exc).__name__, exc))
-    result.update(seconds=time.monotonic()-start,
-                  edges_attempted=len(monitor.records),
-                  slowest_edge_seconds=max((e['seconds'] for e in monitor.records), default=0))
     return result
 
 
@@ -281,7 +266,7 @@ def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
           ('curve', 'cond', 'status', 'determinant', 'q', 'rational', 'rel. error'))
     for n in ns:
         old = have.get(n, {})
-        cached = not force and old.get('status') == 'ok' and old.get('settings') == settings
+        cached = not force and b._stored_result_satisfies(old, settings)
         if cached:
             result = old
         else:
@@ -294,7 +279,7 @@ def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
         results.append(result)
         b._report_row(result, stored=cached)
     print("; ".join('%s: %d' % item for item in sorted(Counter(r['status'] for r in results).items())))
-    print("q = det / (2*pi*c+*c-*L''(std,1)); rel. error = abs(q/rational - 1).")
+    print("q = pi*c+*c-*L''(std,1) / D; rel. error = abs(q/rational - 1).")
     if out is not None:
         print('Results: %s' % out)
     return results
@@ -316,15 +301,7 @@ def main(argv=None):
                         help='inclusive standard-motive conductor bound (default: 100000000)')
     parser.add_argument('--order', choices=['cost', 'lex'], default='cost')
     parser.add_argument('--limit', type=int)
-    parser.add_argument('--digits', type=int, default=15, help='L-value decimal precision')
-    parser.add_argument('--reg-digits', '--prec', type=int, default=None,
-                        help='regulator decimal precision (default: float64)')
-    parser.add_argument('--edge-seconds', type=float, default=15)
-    parser.add_argument('--edge-steps', type=int, default=100000)
-    parser.add_argument('--no-lvalue', action='store_true')
-    parser.add_argument('--force', action='store_true')
-    parser.add_argument('--verbose', action='store_true')
-    parser.add_argument('--out', default=RESULTS)
+    b._add_report_arguments(parser, RESULTS)
     args = parser.parse_args(argv)
     if (args.max_conductor < 1 or args.digits < 1 or args.edge_seconds <= 0
             or args.edge_steps < 1 or (args.limit is not None and args.limit < 1)

@@ -396,7 +396,7 @@ def search_rational_points(C, bound=12):
         sage: R.<x> = ZZ[]
         sage: C = HyperellipticCurveWithReduction(-x^2 - x, x^3 + x^2 + x + 1)
         sage: sorted(search_rational_points(C), key=str)
-        [(-1, 0), (0, -1), (0, 0), ('infinity', -1), ('infinity', 0)]
+        [('infinity', -1), ('infinity', 0), (-1, 0), (0, -1), (0, 0)]
     """
     g = C.genus()
     RQ = PolynomialRing(QQ, 'x')
@@ -472,7 +472,7 @@ def affine_model(C, points):
         sage: from hyperell_regulator.components import HyperellipticCurveWithReduction, affine_model
         sage: R.<x> = ZZ[]
         sage: C = HyperellipticCurveWithReduction(x^5 + x^3 + 1)
-        sage: D, pts, a = affine_model(C, [(0, 1), None])
+        sage: D, pts, a = affine_model(C, [(0, 1), ('infinity', 0)])
         sage: all(p is not None for p in pts)
         True
     """
@@ -526,7 +526,7 @@ def affine_model(C, points):
 def odd_degree_model(C):
     r"""
     An isomorphic model `v^2 = G(u)` with `\deg G` odd, together with the map
-    on points, or ``None`` if `F = 4f + h^2` has no rational root.
+    on points, or ``None`` if `F = 4f + h^2` has even degree and no rational root.
 
     Sage's genus 2 Jacobian arithmetic (Mumford representation) needs a single
     rational point at infinity, i.e. an odd degree model.  A rational root `r`
@@ -535,10 +535,25 @@ def odd_degree_model(C):
     `F` by the multiplicity of `r`, giving `\deg G = 2g+1`.
 
     Returns ``(D, phi, r)`` where ``D`` is the Sage hyperelliptic curve
-    `v^2 = G(u)` and ``phi`` sends an affine `(x, y)` on ``C``, or the string
-    ``"infinity"``, to a point of ``D``.
+    `v^2 = G(u)` and ``phi`` sends an affine `(x, y)` or labelled
+    ``("infinity", eta)`` on ``C`` to a point of ``D``. If `F` already has
+    odd degree, only complete the square and return ``r=None``.
     """
     g = C.genus()
+    if C.F.degree() % 2:
+        D = C.square_model()
+
+        def phi(P):
+            if P is None:
+                return None
+            if P[0] == "infinity":
+                if 2*QQ(P[1])+QQ(C.h[g+1]) != 0:
+                    raise ValueError("invalid point at infinity")
+                return "infinity"
+            x0, y0 = C.to_square_model(P)
+            return D.point([x0, y0, QQ(1)])
+
+        return D, phi, None
     roots = C.F.change_ring(QQ).roots(QQ)
     if not roots:
         return None
@@ -571,6 +586,54 @@ def odd_degree_model(C):
     return D, phi, r
 
 
+def _torsion_multiple(C, primes):
+    """A multiple of every rational torsion order, from good odd reductions."""
+    key = ("torsion_multiple", int(primes))
+    if key in C._cache:
+        return C._cache[key]
+    # Retaining the degree as well as separability gives a smooth model at p.
+    bad = C.F.discriminant()*C.F.leading_coefficient()
+    multiple = None
+    for p in prime_range(3, primes):
+        if bad % p == 0:
+            continue
+        try:
+            reduced = HyperellipticCurve(C.F.change_ring(GF(p)))
+            size = ZZ(reduced.frobenius_polynomial()(1))
+        except (ArithmeticError, NotImplementedError, ValueError):
+            continue
+        multiple = size if multiple is None else gcd(multiple, size)
+        if multiple == 1:
+            break
+    C._cache[key] = multiple
+    return multiple
+
+
+def _square_point(C, point):
+    """Coordinates on Y^2=4f+h^2, including a labelled infinity."""
+    if point[0] == "infinity":
+        return ("infinity", 2*QQ(point[1])+QQ(C.h[C.genus()+1]))
+    return C.to_square_model(point)
+
+
+def _order_by_principality(C, P, Q, primes):
+    """Order without requiring a rational Weierstrass point."""
+    from .regulator.torsion import _field, _place, _order_from_multiple
+
+    key = "torsion_function_field"
+    if key not in C._cache:
+        C._cache[key] = _field(C.F)
+    K, L = C._cache[key]
+    p, q = (_place(K, L, _square_point(C, point)) for point in (P, Q))
+    if p == q:
+        return ZZ(1)
+    multiple = _torsion_multiple(C, primes)
+    if multiple is None:
+        return None
+    order = _order_from_multiple(q.divisor()-p.divisor(), multiple)
+    return Infinity if order is None else order
+
+
 def divisor_class_order(C, P, Q, primes=30):
     r"""
     The order of `[P] - [Q]` in `J(\QQ)`, or ``+Infinity`` if it is not
@@ -578,10 +641,17 @@ def divisor_class_order(C, P, Q, primes=30):
 
     Torsion of `J(\QQ)` injects into `J(\GF{p})` at a prime `p` of good
     reduction, so the order of a torsion class divides
-    `m = \gcd_p \# J(\GF{p})`.  We compute that gcd over the good primes up
-    to ``primes``, then test the divisors of `m` in increasing order; the first
-    that kills the class is the order, and if none does the class is not
-    torsion.
+    `m = \gcd_p \# J(\GF{p})`.  We compute that gcd over the good odd primes
+    below ``primes``. On an odd degree model, test the divisors of `m` using
+    Mumford arithmetic. If no rational Weierstrass point is available, test
+    principality of `m(P-Q)` by exact Riemann--Roch, then remove prime factors
+    of `m` to find the least order. This also detects nontorsion classes on
+    even degree models, without a rank assumption or a search cutoff.
+
+    Points use the original model `y^2+h(x)y=f(x)`. In particular,
+    ``("infinity", eta)`` means `eta=\lim y/x^{g+1}` on that model, and the
+    two rational infinities are distinguished. Good-reduction bounds and
+    the function field are cached on ``C`` for repeated point pairs.
 
     EXAMPLES:
 
@@ -592,10 +662,22 @@ def divisor_class_order(C, P, Q, primes=30):
         sage: C = HyperellipticCurveWithReduction(-x^2 - x, x^3 + x^2 + x + 1)
         sage: divisor_class_order(C, (0, 0), (0, -1))
         15
+
+    On 388.a.776.1 there is no rational Weierstrass point. Its two rational
+    infinities give different orders::
+
+        sage: C = HyperellipticCurveWithReduction(x + 2*x^2 - x^4, 1 + x + x^3)
+        sage: divisor_class_order(C, (0, 0), ("infinity", 0))
+        7
+        sage: divisor_class_order(C, (0, 0), ("infinity", -1))
+        21
     """
     m = odd_degree_model(C)
     if m is None:
-        return None
+        try:
+            return _order_by_principality(C, P, Q, primes)
+        except Exception:
+            return None
     D, phi, _ = m
     try:
         JQ = D.jacobian()(QQ)
@@ -609,18 +691,10 @@ def divisor_class_order(C, P, Q, primes=30):
     if cls == zero:
         return ZZ(1)
 
-    orders = []
-    bad = ZZ(D.hyperelliptic_polynomials()[0].discriminant()).prime_factors()
-    for q in prime_range(3, primes):
-        if q in bad:
-            continue
-        try:
-            orders.append(ZZ(D.change_ring(GF(q)).frobenius_polynomial()(1)))
-        except Exception:
-            pass
-    if not orders:
+    multiple = _torsion_multiple(C, primes)
+    if multiple is None:
         return None
-    for k in divisors(gcd(orders)):
+    for k in divisors(multiple):
         if k * cls == zero:
             return ZZ(k)
     return Infinity

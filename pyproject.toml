@@ -32,6 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+visualization = ["triangle"]
 
 [project.urls]
 Homepage = "https://github.com/LAC1213/hyperell-regulator"
@@ -39,9 +40,9 @@ Homepage = "https://github.com/LAC1213/hyperell-regulator"
 [tool.setuptools.packages.find]
 include = ["hyperell_regulator*"]
 
-# the hypellfrob driver, compiled by setup.py and installed inside the package
+# the rforest Frobenius driver, compiled by setup.py and installed inside the package
 [tool.setuptools.package-data]
-hyperell_regulator = ["bin/euler"]
+hyperell_regulator = ["bin/euler", "NTL-COPYING.txt", "RFOREST-COPYING.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

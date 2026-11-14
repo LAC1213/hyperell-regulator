@@ -1,32 +1,66 @@
-# Saved Beilinson survey
+# Beilinson survey: conductor < 1300, 100 digits
 
-`beilinson_100_digits.tex` contains all 16 entries marked `ok` in the saved
-100-digit survey. The numerical table and the accompanying algebraic table
-are linked by curve label. Decimal values are abbreviated for readability;
-`beilinson_100_digits.json` retains the full saved values and exact functions.
+This directory contains the current 100-digit Beilinson survey:
 
-The error column is the absolute difference `abs(q - rational)`, computed
-from the full decimal ratio. Three successful regulators have no L-value:
-the two conductor-603 curves have an unsupported Frobenius action, and
-1717.a.1717.2 exhausted the PARI stack. Their comparison cells are blank.
-The omitted rows were not marked `ok`.
+- [Full saved data and integration models](beilinson_100_digits.json).
+- [Three LaTeX tables: torsion/integrality, models, and numerical data](beilinson_100_digits.tex).
 
-Points use the original cached curve coordinates. Functions use the displayed
-integration model `v^2=G(u)`; the table gives its coordinate shift and scale.
-The scalar normalization of each exact function is the package's normalization.
-The normalized regulator includes the corresponding norm correction.
+The snapshot has 154 curve records, 22 successful
+regulators and 22 numerical comparisons. Unsuccessful attempts and their
+reasons are retained in the JSON. The three tables display completed
+comparisons. This is a survey of locally cached geometrically simple
+curves, without a claim of completeness over all curves.
+The conductor-1116 record is retained in the JSON, but omitted from the LaTeX
+tables and explorer.
+The LaTeX tables and explorer include 21 successful regulators.
 
-Regenerate without any LMFDB cache or numerical integration:
+Regulators and L-values target 100 decimal digits. The determinant uses weights
+`(1, 2 Re(z), |z|^2)`, full cycle periods, and
+`q = pi*c_plus*c_minus*L_second_derivative/D`. The comparison error is
+`abs(q/rational - 1)`. An undecided component verdict is displayed as
+`Undecided` in the integrality column. Precision targets are not certified
+error bounds.
+
+Full cycle periods use the MST cycle basis recorded in each successful row.
+The current code computes D and the signed period minors at a 100-digit target.
+L-values use the precision-validated coefficient cache. The quotient uses
+these ingredients in the same integration model as its displayed points.
+
+The numerical table displays 10 significant digits. The JSON preserves the
+complete saved decimal strings, matrices, precision settings, component
+verdicts and integration models. Table points use the displayed integration
+models. Reciprocal coordinate changes are marked by a dagger in the model
+table, with their shift and scale given explicitly. The JSON retains both
+the original points and their integration-model images.
+
+From the repository root in SageMath, recompute the survey (network access is
+needed to fetch curve data; cached L-values are reused after validation):
 
 ```sh
-sage -python -m hyperell_regulator.experiments.latex_report reports/beilinson_100_digits.json --out reports/beilinson_100_digits.tex
+sage -python -m hyperell_regulator.experiments.beilinson 1300 --fetch --force --digits 100 --reg-digits 100 --edge-seconds 600
+sage -python -m hyperell_regulator.experiments.beilinson_report
 ```
 
-The TeX uses `amsmath`, `amssymb`, `booktabs`, `longtable`, and `geometry`.
-It is a standalone landscape document. Compile with `pdflatex` twice where
-those LaTeX packages are installed; this workspace lacks a LaTeX format.
+The bound is strict: conductor < 1300. A fresh cache also recomputes L-values
+and can take substantially longer. Component/reduction computations require
+the package's Sage dependencies. The command retains failed attempts and
+does not claim that the locally cached curves form a complete list.
 
-Source: `results/beilinson_results.json` (kept locally, excluded from Git).
-Source SHA-256: `9179b3d7e7155adf507acae7b58da77a8c932454c6ef72e9086437e07340db31`.
-The source was read without modification; numerical failures at 100 digits
-were not rerun or suppressed.
+To rebuild the tables from the versioned JSON without repeating numerical
+calculations or requiring local curve caches:
+
+```sh
+sage -python -m hyperell_regulator.experiments.beilinson_report --input reports/beilinson_100_digits.json
+```
+
+To typeset the survey, install the LaTeX packages in its preamble, including
+`arydshln`. Compile into a separate directory to keep this folder tidy.
+Run the final command twice to resolve cross-references:
+
+```sh
+mkdir -p /tmp/beilinson-survey
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory=/tmp/beilinson-survey reports/beilinson_100_digits.tex
+```
+
+Source: `results/beilinson_results.json` (read without modification).
+Source SHA-256: `0148c0633c63ad769b7432fb57095844240b22c4dc68ad5141059e5ba1295514`.
