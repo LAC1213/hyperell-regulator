@@ -7,11 +7,11 @@
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=differential-forms-4">
+  <link rel="stylesheet" href="explorer.css?v=differential-basis-5">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
   <script defer src="curve-geometry.js?v=matrix-conjecture-3"></script>
-  <script defer src="explorer.js?v=differential-forms-4"></script>
+  <script defer src="explorer.js?v=differential-basis-5"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -59,14 +59,14 @@
       </section>
       <div class="plots">
         <section class="panel">
-          <div class="section-label"><h2><span class="step">01</span> The path in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
+          <div class="section-label"><h2>The path in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
           <p class="panel-description">The vertices are the critical values of <span data-tex="x">x</span> (images of ramification points), <span data-tex="x(P)">x(P)</span>, and <span data-tex="x(Q)">x(Q)</span>. A minimum spanning tree of their complete graph gives the cut.</p>
           <div class="plot-tools"><span class="gesture">Click a colored edge to inspect its integrals</span></div>
           <div id="base-plot" class="plot" aria-label="Spanning tree connecting the critical values of x and the x-coordinates of P and Q"></div>
           <p class="caption">Circles: critical values. Colored diamonds: <span data-tex="x(P)">x(P)</span> and <span data-tex="x(Q)">x(Q)</span>. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
         </section>
         <section class="panel">
-          <div class="section-label"><h2><span class="step">02</span> The path in <span data-tex="C">C</span></h2></div>
+          <div class="section-label"><h2>The path in <span data-tex="C">C</span></h2></div>
           <p class="panel-description">Each tree edge has two lifts to <span data-tex="C">C</span>. Their orientations determine the signs in the path integrals below.</p>
           <div class="plot-tools surface-controls">
             <label class="sheet-control"><span class="sr-only">Display sheets</span><select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label>
@@ -77,11 +77,8 @@
           <p class="caption" id="mesh-caption">Drag to rotate. Use the sheet selector to view either sheet.</p>
         </section>
       </div>
-      <section class="path-integrals" aria-labelledby="integral-title">
-        <div class="section-label section-heading"><h2 id="integral-title"><span class="step">03</span> Path integrals</h2><span>Choose an edge and a sheet above or below</span></div>
-        <div class="analysis">
-          <section class="panel integral-panel">
-            <div class="section-label"><h3>Selected path</h3><span id="path-label"></span></div>
+      <section class="panel integral-panel path-integrals" aria-labelledby="integral-title">
+            <div class="section-label"><h2 id="integral-title">Path integrals</h2><span id="path-label"></span></div>
             <div class="selectors">
               <label>Logarithm center<select id="weight-select" disabled></select></label>
               <label>Tree edge<select id="edge"></select></label>
@@ -92,17 +89,15 @@
             <p id="gluing" class="hint"></p>
             <div class="table-scroll"><table class="integral-table"><thead><tr><th scope="col">Form</th><th scope="col"><span data-tex="\int_\gamma\omega_i">∫γ ωᵢ</span></th><th scope="col"><span data-tex="\int_\gamma\log(x-a)\,\omega_i">∫γ log(x−a) ωᵢ</span></th></tr></thead><tbody id="integrals"></tbody></table></div>
             <p id="jump" class="caption"></p>
-          </section>
-        </div>
       </section>
       <section class="panel matrix-panel" aria-labelledby="matrix-title">
-        <div class="section-label"><h2 id="matrix-title"><span class="step">04</span> <span id="matrix-name">The regulator matrix</span></h2></div>
+        <div class="section-label"><h2 id="matrix-title"><span id="matrix-name">The regulator matrix</span></h2></div>
         <p class="matrix-caption" id="matrix-caption">Pairing of regulators of <span data-tex="\alpha_P">αP</span>, <span data-tex="\alpha_Q">αQ</span>,
           and the Tate class <span data-tex="\Delta C">ΔC</span> with the differential forms <span data-tex="\delta_{ij}">δij</span>.</p>
         <div class="table-scroll" id="matrix-values">
           <table class="regulator-matrix">
             <caption class="sr-only">Regulator matrix for alpha P, alpha Q, and the Tate class</caption>
-            <thead><tr><th scope="col"><span class="sr-only">Differential form</span></th><th scope="col"><span data-tex="\alpha_P">αP</span></th><th scope="col"><span data-tex="\alpha_Q">αQ</span></th><th scope="col"><span data-tex="\Delta C">ΔC</span></th></tr></thead>
+            <thead><tr><th scope="col"><span data-tex="\delta_{ij}">δij</span></th><th scope="col"><span data-tex="\alpha_P">αP</span></th><th scope="col"><span data-tex="\alpha_Q">αQ</span></th><th scope="col"><span data-tex="\Delta C">ΔC</span></th></tr></thead>
             <tbody id="regulator-matrix"></tbody>
           </table>
         </div>
@@ -114,18 +109,10 @@
         <p id="determinant" class="determinant"></p>
       </section>
       <section class="panel beilinson-panel" id="beilinson-panel" aria-labelledby="beilinson-title" hidden>
-        <div class="section-label"><h2 id="beilinson-title"><span class="step">05</span> Beilinson’s conjecture</h2></div>
+        <div class="section-label"><h2 id="beilinson-title">Beilinson’s conjecture</h2></div>
         <div class="conjecture-equation" id="beilinson-equation" data-tex="\pi\cdot c^+(C)\cdot c^-(C)\cdot L''(M_{\mathrm{std}}(C),1)=q\cdot D">π · c⁺(C) · c⁻(C) · L″(Mstd(C), 1) = q · D</div>
         <dl class="conjecture-values" id="beilinson-values"></dl>
       </section>
-      <details class="notes">
-        <summary>Exact inputs &amp; numerical conventions</summary>
-        <pre id="exact-inputs"></pre>
-        <p id="metadata"></p><p id="geometry"></p>
-        <p>The plotted ray is truncated; integration includes its full tail. Geometry uses float64; quadrature uses guarded precision. Precision targets are not certified error bounds.</p>
-        <p id="warnings"></p>
-        <p><a href="../explorer-guide.html">Full conventions &amp; computing another curve ↗</a></p>
-      </details>
     </section>
     <details class="survey">
       <summary>Full survey <span class="summary-hint">Genus 2 · conductor &lt; 1300</span></summary>

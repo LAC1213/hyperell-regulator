@@ -67,7 +67,6 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .section-label { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
 .section-label > span { font-family: var(--sans); font-size: 10px; color: var(--muted); }
 .section-label > [data-tex] { font-size: 15px; }
-.step { font-family: var(--sans); font-size: 10px; font-weight: 500; color: var(--accent); margin-right: 9px; vertical-align: 2px; }
 .panel-description { min-height: 75px; font-size: 15px; line-height: 1.65; color: var(--muted); margin: 0; max-width: 560px; }
 .plot-tools { min-height: 36px; margin-top: 14px; display: flex; align-items: center; gap: 16px; }
 .gesture { font-family: var(--sans); font-size: 10px; color: var(--muted); }
@@ -106,16 +105,13 @@ td { padding: 14px 10px; font-family: var(--serif); font-variant-numeric: tabula
 .regulator-matrix tbody tr:last-child > * { border-bottom: 0; }
 details { font-size: 14px; color: var(--muted); line-height: 1.8; }
 summary { cursor: pointer; color: var(--ink); }
-.notes, .survey { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 16px; }
-.notes > summary, .survey > summary { font-family: var(--sans); font-size: 12px; font-weight: 500; }
+.survey { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 16px; }
+.survey > summary { font-family: var(--sans); font-size: 12px; font-weight: 500; }
 .summary-hint { font-family: var(--sans); font-size: 10px; font-weight: 400; color: var(--muted); margin-left: 16px; }
 .path-integrals { margin-top: 28px; }
-.section-heading { margin-bottom: 14px; }
-.analysis { display: block; }
 .selectors { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; gap: 12px; }
 .hint { font-size: 14px; line-height: 1.65; color: var(--muted); overflow-wrap: anywhere; }
-.analysis td { vertical-align: top; }
-.notes p { max-width: 900px; }
+.integral-panel td { vertical-align: top; }
 pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
 .curve-table { margin-top: 16px; }
 .curve-table tr.selected { background: #edf2e9; }
@@ -166,8 +162,6 @@ footer { border-top: 1px solid var(--line); border-bottom: 0; font-family: var(-
   .real-plot { height: 270px; }
   .plot { height: 330px; }
   h2 { font-size: 18px; }
-  .section-heading { display: block; }
-  .section-heading > span { display: block; margin: 5px 0 0 25px; }
   .plot-tools { gap: 12px; }
   .sheet-control { width: 118px; }
   .surface-controls select, .check-control, .text-button { font-size: 10px; }

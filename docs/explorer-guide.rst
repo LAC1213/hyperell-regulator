@@ -24,9 +24,10 @@ The path integrals are always visible beneath these views, before the
 regulator matrix.
 The matrix displays columns for the motivic classes :math:`\alpha_P,\alpha_Q` and
 the Tate class :math:`\Delta C` (the period column), paired with the
-differential forms :math:`\delta_{ij}`. The row labels display
-:math:`dx\,d\overline{x}`, :math:`2\operatorname{Re}(x)\,dx\,d\overline{x}`
-and :math:`|x|^2\,dx\,d\overline{x}`. The determinant is :math:`D`.
+differential forms :math:`\delta_{ij}`. The first column labels these forms explicitly as
+:math:`\omega_1\wedge\overline{\omega_1}`,
+:math:`\omega_1\wedge\overline{\omega_2}+\omega_2\wedge\overline{\omega_1}`,
+and :math:`\omega_2\wedge\overline{\omega_2}`. The determinant is :math:`D`.
 
 Use the path-integral selectors to choose a logarithmic factor.
 The center selector states an equality, for example :math:`a=x(P)=1`.

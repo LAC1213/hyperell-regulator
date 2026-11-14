@@ -6,7 +6,6 @@ const DATA_VERSION = "mst-current-1";
 const HOME_CAMERA = {eye:{x:1.5,y:-1.6,z:1.2},center:{x:0,y:0,z:0},up:{x:0,y:0,z:1},projection:{type:"perspective"}};
 let catalog, current, mesh = null, version = 0, label = "";
 const decimal = (v,digits=10) => Number(v) === 0 ? "0" : Number(v).toPrecision(digits);
-const pointTuple = p => Array.isArray(p)?"("+p.map(String).join(", ")+")":p==="infinity"?"∞":String(p);
 const polynomial = source => source.replace(/\^(\d+)/g,(_,power)=>[...power].map(d=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[d]).join("")).replace(/\*/g,"").replace(/-/g,"−");
 const rational = value => String(value).split("/").map(Number).reduce((a,b)=>a/b);
 function math(node,tex) {
@@ -98,7 +97,7 @@ function renderMatrix(curve) {
   if (!available) return;
   matrix.forEach((values,i)=>{
     const row=document.createElement("tr"), heading=document.createElement("th");
-    heading.scope="row"; math(heading,["\\mathrm{d}x\\,\\mathrm{d}\\overline{x}","2\\operatorname{Re}(x)\\,\\mathrm{d}x\\,\\mathrm{d}\\overline{x}","|x|^2\\,\\mathrm{d}x\\,\\mathrm{d}\\overline{x}"][i]); row.append(heading);
+    heading.scope="row"; math(heading,["\\omega_1\\wedge\\overline{\\omega_1}","\\omega_1\\wedge\\overline{\\omega_2}+\\omega_2\\wedge\\overline{\\omega_1}","\\omega_2\\wedge\\overline{\\omega_2}"][i]); row.append(heading);
     values.forEach(value=>mathCell(row,numberTex(value))); $("regulator-matrix").append(row);
   });
 }
@@ -315,13 +314,9 @@ async function display(data,name,curve=null) {
   $("result-source").textContent=name||"Imported curve";
   try { math($("result-model"),CurveGeometry.equationTex(current.input.F)); }
   catch (error) { $("result-model").textContent="C : y² = "+polynomial(current.input.F); }
-  $("metadata").textContent="Genus "+current.genus+" · 2 sheets · "+current.precision+"-digit path integrals";
-  $("exact-inputs").textContent="F(x) = "+current.input.F+"\nLogarithmic centers: "+current.input.centers.join(", ")+(current.collection?"\nP = "+pointTuple(current.collection.points[0])+"\nQ = "+pointTuple(current.collection.points[1])+"\nCommon pole O = "+pointTuple(current.collection.pole):"");
   renderPoints();
   $("show-mesh").disabled=!mesh;
   $("mesh-caption").textContent=mesh?"Drag to rotate. Use the sheet selector to view either sheet.":"Drag to rotate the lifted paths. Surface mesh unavailable.";
-  $("geometry").textContent=current.conventions.geometry;
-  $("warnings").textContent=(current.warnings||[]).join(" ");
   $("results").hidden=false; $("export").disabled=false;
   renderMatrix(curve);
   renderBeilinson(curve);
