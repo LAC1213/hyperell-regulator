@@ -5,7 +5,7 @@ const COLORS = ["#bd5034", "#267f91"];
 const DATA_VERSION = "mst-current-1";
 const HOME_CAMERA = {eye:{x:1.5,y:-1.6,z:1.2},center:{x:0,y:0,z:0},up:{x:0,y:0,z:1},projection:{type:"perspective"}};
 let catalog, current, mesh = null, version = 0, label = "";
-const decimal = v => Number(v) === 0 ? "0" : Number(v).toPrecision(10);
+const decimal = (v,digits=10) => Number(v) === 0 ? "0" : Number(v).toPrecision(digits);
 const pointTuple = p => Array.isArray(p)?"("+p.map(String).join(", ")+")":p==="infinity"?"∞":String(p);
 const polynomial = source => source.replace(/\^(\d+)/g,(_,power)=>[...power].map(d=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[d]).join("")).replace(/\*/g,"").replace(/-/g,"−");
 const rational = value => String(value).split("/").map(Number).reduce((a,b)=>a/b);
@@ -14,8 +14,8 @@ function math(node,tex) {
   if (typeof katex==="undefined") { node.textContent=tex; return; }
   katex.render(tex,node,{throwOnError:false,trust:false,maxExpand:1000,output:"htmlAndMathml"});
 }
-function numberTex(value) {
-  const [mantissa,exponent]=decimal(value).split("e");
+function numberTex(value,digits=10) {
+  const [mantissa,exponent]=decimal(value,digits).split("e");
   return exponent===undefined?mantissa:mantissa+"\\times10^{"+Number(exponent)+"}";
 }
 function mathCell(row,tex) { const node=cell(row,""); math(node,tex); return node; }
@@ -40,10 +40,15 @@ function renderPoints() {
     math(node,(i===0?"P":"Q")+"="+pointTex(point)); $("point-info").append(node);
   });
 }
-function centerNames(center) {
+function centerReferences(center) {
   const names=(current.collection?.points||[]).flatMap((p,i)=>rational(p[0])===rational(center)?[i===0?"P":"Q"]:[]);
   if (Array.isArray(current.collection?.pole) && rational(current.collection.pole[0])===rational(center)) names.push("O");
-  return names.map(name=>"x("+name+")").join(", ");
+  return names.map(name=>"x("+name+")");
+}
+function centerNames(center) { return centerReferences(center).join(", "); }
+function centerColor(center) {
+  const index=(current.collection?.points||[]).findIndex(point=>rational(point[0])===rational(center));
+  return index>=0?COLORS[index%COLORS.length]:"#61716b";
 }
 function status(message, error=false) { $("status").textContent=message; $("status").classList.toggle("error",error); }
 function option(select,value,text) { const n=document.createElement("option"); n.value=value; n.textContent=text; select.append(n); }
@@ -83,6 +88,10 @@ function renderMatrix(curve) {
   const available=Array.isArray(matrix) && matrix.length===3 && matrix.every(row=>Array.isArray(row)&&row.length===3);
   $("matrix-values").hidden=!available;
   $("matrix-unavailable").hidden=available;
+  $("matrix-caption").hidden=!available;
+  $("import-pairings").hidden=available;
+  $("matrix-name").textContent=available?"The regulator matrix":"Logarithmic pairings";
+  $("determinant").hidden=!available;
   $("determinant").replaceChildren();
   if (available) math($("determinant"),"D="+numberTex(curve.numerical.det));
   $("regulator-matrix").replaceChildren();
@@ -93,6 +102,61 @@ function renderMatrix(curve) {
     values.forEach(value=>mathCell(row,numberTex(value))); $("regulator-matrix").append(row);
   });
 }
+function renderBeilinson(curve) {
+  const values=curve?.numerical;
+  const available=values && ["det","c_plus","c_minus","L_second_derivative"].every(key=>values[key]!=null&&Number.isFinite(Number(values[key]))) && (curve.comparison_verified||curve.quotient!=null);
+  $("beilinson-panel").hidden=!available;
+  $("beilinson-values").replaceChildren();
+  if (!available) return;
+  const items=[
+    ["\\pi",Math.PI],
+    ["c^+(C)",values.c_plus],
+    ["c^-(C)",values.c_minus],
+    ["L''",values.L_second_derivative],
+    ["q",curve.comparison_verified?curve.q:curve.quotient],
+    ["D",values.det]
+  ];
+  items.forEach(([label,value])=>{
+    const item=document.createElement("div"), term=document.createElement("dt"), definition=document.createElement("dd");
+    math(term,label);
+    math(definition,label==="q"&&curve.comparison_verified?"="+CurveGeometry.rationalTex(value):"\\approx"+numberTex(value,5));
+    item.append(term,definition); $("beilinson-values").append(item);
+  });
+}
+function fitCurveEquation() {
+  if (!current) return;
+  const node=$("result-model"), available=node.parentElement.clientWidth;
+  if (!available) return;
+  node.style.fontSize="";
+  try {
+    math(node,CurveGeometry.equationTex(current.input.F));
+    const width=node.querySelector(".katex").getBoundingClientRect().width;
+    const size=parseFloat(getComputedStyle(node).fontSize);
+    if (width<=available) return;
+    const fitted=size*(available-4)/width;
+    if (fitted>=17) node.style.fontSize=fitted+"px";
+    else math(node,CurveGeometry.equationTex(current.input.F,true));
+  } catch (error) { node.textContent="C : y² = "+polynomial(current.input.F); }
+}
+const conjectureFormula=$("beilinson-equation").dataset.tex;
+function fitConjectureEquation() {
+  if ($("beilinson-panel").hidden) return;
+  const node=$("beilinson-equation"), available=node.clientWidth;
+  if (!available) return;
+  node.style.fontSize="";
+  math(node,conjectureFormula);
+  const width=node.querySelector(".katex").getBoundingClientRect().width;
+  const size=parseFloat(getComputedStyle(node).fontSize);
+  if (width<=available) return;
+  const fitted=size*(available-4)/width;
+  if (fitted>=14) node.style.fontSize=fitted+"px";
+  else math(node,"\\begin{gathered}"+conjectureFormula.replace("\\cdot L''","\\\\ {}\\cdot L''")+"\\end{gathered}");
+}
+let mathResizeFrame=null;
+window.addEventListener("resize",()=>{
+  if (mathResizeFrame!==null) cancelAnimationFrame(mathResizeFrame);
+  mathResizeFrame=requestAnimationFrame(()=>{mathResizeFrame=null;fitCurveEquation();fitConjectureEquation();});
+});
 function renderIntegrals() {
   if (!current) return;
   const k=Number($("weight-select").value), e=Number($("edge").value), s=Number($("sheet").value);
@@ -108,7 +172,7 @@ function renderIntegrals() {
   $("jump").append(jump,". Both sides use the selected orientation.");
   $("weight-info").replaceChildren();
   const weight=document.createElement("span");
-  math(weight,"a="+CurveGeometry.rationalTex(current.weights[k].center)+(centerNames(current.weights[k].center)?"="+centerNames(current.weights[k].center):""));
+  math(weight,"a="+[...centerReferences(current.weights[k].center),CurveGeometry.rationalTex(current.weights[k].center)].join("="));
   $("weight-info").append(weight,". Pairings over the whole curve.");
 }
 function inspectPath(edge,sheet) {
@@ -201,10 +265,13 @@ async function renderTree() {
   }));
   traces.push({type:"scatter",mode:"markers",x:current.roots.map(p=>Number(p[0])),y:current.roots.map(p=>Number(p[1])),
     marker:{size:8,color:"#253d3c"},name:"Critical values of x",showlegend:false,hovertemplate:"Critical value of x<br>Re(x) = %{x:.10g}<br>Im(x) = %{y:.10g}<extra></extra>"});
-  traces.push({type:"scatter",mode:"markers+text",x:current.weights.map(w=>rational(w.center)),y:current.weights.map(()=>0),
-    text:current.weights.map(w=>centerNames(w.center)||"a = "+w.center),textposition:"bottom center",textfont:{size:11,color:"#bc542e"},
-    marker:{size:13,symbol:"diamond-open",color:"#bc542e",line:{width:2}},name:"Marked x-coordinates",showlegend:false,
-    hovertemplate:current.weights.map(w=>(centerNames(w.center)||"Logarithmic center")+"<br>x=%{x:.10g}<extra></extra>")});
+  current.weights.forEach(weight=>{
+    const color=centerColor(weight.center), name=centerNames(weight.center)||"a = "+weight.center;
+    traces.push({type:"scatter",mode:"markers+text",x:[rational(weight.center)],y:[0],
+      text:[name],textposition:"bottom center",textfont:{size:11,color},
+      marker:{size:13,symbol:"diamond-open",color,line:{width:2}},name,showlegend:false,
+      hovertemplate:name+"<br>x=%{x:.10g}<extra></extra>"});
+  });
   const rays=current.edges.filter(e=>e.infinite).map(e=>e.base[e.base.length-1]);
   traces.push({type:"scatter",mode:"text",x:rays.map(p=>Number(p[0])),y:rays.map(p=>Number(p[1])),
     text:rays.map(()=>"∞"),textposition:"top right",showlegend:false,hoverinfo:"skip"});
@@ -239,7 +306,7 @@ async function renderPlot() {
 }
 async function display(data,name,curve=null) {
   current=validate(data); label=name;
-  $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,(centerNames(w.center)?centerNames(w.center)+" · a = "+w.center:w.label))); $("weight-select").disabled=false;
+  $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,"a = "+[...centerReferences(w.center),w.center].join(" = "))); $("weight-select").disabled=false;
   $("edge").replaceChildren(); current.edges.forEach((e,k)=>option($("edge"),k,"Edge "+e.index+(e.infinite?" → ∞":"")));
   $("result-source").textContent=name||"Imported curve";
   try { math($("result-model"),CurveGeometry.equationTex(current.input.F)); }
@@ -248,13 +315,16 @@ async function display(data,name,curve=null) {
   $("exact-inputs").textContent="F(x) = "+current.input.F+"\nLogarithmic centers: "+current.input.centers.join(", ")+(current.collection?"\nP = "+pointTuple(current.collection.points[0])+"\nQ = "+pointTuple(current.collection.points[1])+"\nCommon pole O = "+pointTuple(current.collection.pole):"");
   renderPoints();
   $("show-mesh").disabled=!mesh;
-  $("mesh-caption").textContent="Drag to rotate. Click a colored path to inspect its integrals. "+(mesh?"This is a projection; crossings need not be intersections on C.":"Surface mesh unavailable; the lifted paths are shown.");
+  $("mesh-caption").textContent=mesh?"Drag to rotate. Use the sheet selector to view either sheet.":"Drag to rotate the lifted paths. Surface mesh unavailable.";
   $("geometry").textContent=current.conventions.geometry;
   $("warnings").textContent=(current.warnings||[]).join(" ");
   $("results").hidden=false; $("export").disabled=false;
   renderMatrix(curve);
+  renderBeilinson(curve);
   renderIntegrals();
   if (document.fonts) await document.fonts.ready;
+  fitCurveEquation();
+  fitConjectureEquation();
   return Promise.all([renderRealPlot(),renderTree(),renderPlot()]);
 }
 async function chooseCurve(index) {

@@ -22,13 +22,15 @@ with no real points are not joined. The graph can be panned and zoomed.
 **The path in** :math:`C` shows its lifts to the complex curve.
 The path integrals are always visible beneath these views, before the
 regulator matrix.
-The matrix displays the two regulator columns and the period column in the
+The matrix displays columns for the motivic classes :math:`\alpha_P,\alpha_Q` and
+the Tate class (the period column), in the
 row basis :math:`(1,2\operatorname{Re}(x),|x|^2)`, together with its determinant
 :math:`D`.
 
 Use the path-integral selectors to choose a logarithmic factor.
-Changing this factor updates the path integrals and logarithmic pairings
-without changing the geometry or the two-class matrix. Click an edge
+The center selector states an equality, for example :math:`a=x(P)=1`.
+Changing this center updates the path integrals without changing the geometry
+or the three-class matrix. Click an edge
 in the two-dimensional tree to select it, or a colored path in the sheet
 view to select both an edge and a positive-side sheet. The selected tree
 edge and both of its lifted paths are highlighted and follow the edge selector. The selectors also let
@@ -72,7 +74,7 @@ Geometry and pairings
 
 The two-dimensional plot shows the MST in the x-plane with equal axis
 scales. Circles mark critical values of :math:`x`, diamonds mark the
-marked x-coordinates, and
+marked x-coordinates in the same colors as the marked points above, and
 the dashed ray continues to infinity. Edge numbers match the integral
 selectors. The three-dimensional sheet view uses the projection
 
@@ -92,19 +94,29 @@ tail. Finite endpoints are included in quadrature but approached by the
 display samples. Float64 determines geometry and topology; guarded
 arbitrary precision determines the integrals.
 
-For the selected center a, the pairing table gives the plane regulator
-:math:`R_{ij}`, its associated pairing :math:`-4R_{ij}/\pi`, and the
-unweighted period vector. Genus-two vectors use weights
-:math:`(1,\operatorname{Re}(x),|x|^2)`; double the middle entry for the
-Beilinson determinant. For a finite common pole b, subtract its logarithmic
-column from each marked-point column.
+The matrix combines the two regulator columns and the Tate (period) column;
+its determinant :math:`D` is shown centrally below it. Genus-two rows use
+weights :math:`(1,2\operatorname{Re}(x),|x|^2)`.
+For a finite common pole b, subtract its logarithmic column from each
+marked-point column. Custom imports without class data instead show the
+selected logarithmic pairings in this section.
+
+The final box displays Beilinson's conjectural relation
+
+.. math::
+
+   \pi\,c^+(C)\,c^-(C)\,L''(M_{\mathrm{std}}(C),1)=qD.
+
+The individual quantities are shown to five significant digits, with an
+exact rational :math:`q` when verified by the saved comparison.
+This box is available for the catalog curves.
 
 The interface calls the two marked points :math:`P,Q` and the common pole
 :math:`O`. In the saved catalog, ``points[0]`` and ``points[1]`` have these
 roles respectively; older descriptions called them :math:`P,R`.
 This is a display convention and does not change the exported data.
 For custom imports, diamonds mark every supplied logarithmic center;
-the two-class matrix is shown only for catalog curves.
+the three-class matrix is shown only for catalog curves.
 
 The table recomputes determinants and full periods with the current MST
 code at a 100-digit target. L-values are reused from the cache after the

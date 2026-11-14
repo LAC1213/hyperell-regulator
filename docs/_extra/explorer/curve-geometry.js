@@ -46,10 +46,10 @@ const CurveGeometry = (() => {
     return {coefficients, terms};
   }
 
-  function equationTex(source) {
+  function equationTex(source, multiline = false) {
     const terms = parsePolynomial(source).terms;
     const signed = terms.map((term, i) => (term.negative ? "-" : i ? "+" : "") + term.tex);
-    if (terms.length <= 5 && signed.join("").length < 72) return "C:\\quad y^2=" + signed.join("");
+    if (!multiline || terms.length <= 3) return "C:\\quad y^2=" + signed.join("");
     const rows = [];
     for (let i = 0; i < signed.length; i += 3) {
       rows.push((i ? "&\\quad " : "C:\\quad y^2&=") + signed.slice(i, i + 3).join(""));
