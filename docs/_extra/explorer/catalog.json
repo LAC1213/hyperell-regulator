@@ -28,8 +28,8 @@
     "hyperell_regulator/regulator/_periods.py": "62dd8c5d120788c540d4d1e519acdfec5e5b991a5461d38bea12d12c813abf5a",
     "hyperell_regulator/regulator/quadrature.py": "a7fb601670fd3d90c671d77aa65a7e93a78bafdc3a73d5f37a14fe2c933ff9bc",
     "hyperell_regulator/regulator/precision.py": "5523442a844dbfae231b2115c99eece05ca1c7cf7b2a865d4aa8a3363539c731",
-    "hyperell_regulator/experiments/beilinson.py": "2fce36a9a49accae98b6e5667372eef81d52593fe38f966edf52700a711b52e5",
-    "hyperell_regulator/lfunction.py": "c22aa60830075e39fe6ca2df82aa81474662ae840d3bb756f607e3e03a3f5500",
+    "hyperell_regulator/experiments/beilinson.py": "353a4668e7ab0cc1712070a81b5afc66f0ccce84d9e5d7e12cb2ce06595f3c43",
+    "hyperell_regulator/lfunction.py": "b876bc4e80af3f7d402c6f81d0ad57868f3b7763fef5414b147323d14b16091c",
     "hyperell_regulator/frobenius.py": "e0e08fdbcf03963c59a40938de1c71b4d9d2863f2d55eff3b62ae84a4ce99401"
   },
   "input_sha256": "9b070a342333eeaf4faa2db42e6d89a28d85a37f0e11fb3f1ad961ae4c6f40e4",
