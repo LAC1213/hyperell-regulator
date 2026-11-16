@@ -7,11 +7,11 @@
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=differential-basis-5">
+  <link rel="stylesheet" href="explorer.css?v=torsion-precision-6">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
   <script defer src="curve-geometry.js?v=matrix-conjecture-3"></script>
-  <script defer src="explorer.js?v=differential-basis-5"></script>
+  <script defer src="explorer.js?v=torsion-precision-6"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -23,7 +23,8 @@
     <section class="intro" aria-labelledby="page-title">
       <p class="eyebrow">GENUS 2 · BEILINSON REGULATORS</p>
       <h1 id="page-title">Regulator matrix for genus 2 curve</h1>
-      <p>For a genus 2 curve <span data-tex="C">C</span> and two points <span data-tex="P">P</span> and <span data-tex="Q">Q</span>,
+      <p>For a genus 2 curve <span data-tex="C">C</span> and two points <span data-tex="P">P</span> and <span data-tex="Q">Q</span>
+        which become torsion in the Jacobian of <span data-tex="C">C</span>,
         we evaluate the <span data-tex="3\times3">3×3</span> regulator matrix associated with two motivic cohomology classes
         <span data-tex="\alpha_P">αP</span>, <span data-tex="\alpha_Q">αQ</span>, and the Tate class.</p>
     </section>
@@ -53,9 +54,11 @@
       <section class="method-note" aria-label="How the regulator is computed">
         <p>We view <span data-tex="C">C</span> as a double cover of <span data-tex="\mathbb P^1">ℙ¹</span> via
           <span data-tex="x\colon C\to\mathbb P^1">x : C → ℙ¹</span>.
-          We lift a well-chosen spanning tree in <span data-tex="\mathbb P^1">ℙ¹</span> to a graph in <span data-tex="C">C</span>,
-          keeping track of the edge orientations on the two sheets. Applying Stokes’ theorem reduces the surface integral
-          to one-dimensional integrals along the edges of this graph.</p>
+          Using this, we cut up the hyperelliptic curve into two simply connected sheets in order to convert the
+          two-dimensional regulator integral to an integral over the cut. By choosing the cut to be the preimage
+          of a convenient tree in the <span data-tex="x">x</span>-plane, we can moreover choose a convenient path
+          on the tree as the branch cut for the logarithmic factor of the integrand. With this choice, the integral
+          over the cut simplifies to a bilinear expression of line integrals.</p>
       </section>
       <div class="plots">
         <section class="panel">
@@ -92,8 +95,9 @@
       </section>
       <section class="panel matrix-panel" aria-labelledby="matrix-title">
         <div class="section-label"><h2 id="matrix-title"><span id="matrix-name">The regulator matrix</span></h2></div>
-        <p class="matrix-caption" id="matrix-caption">Pairing of regulators of <span data-tex="\alpha_P">αP</span>, <span data-tex="\alpha_Q">αQ</span>,
-          and the Tate class <span data-tex="\Delta C">ΔC</span> with the differential forms <span data-tex="\delta_{ij}">δij</span>.</p>
+        <p class="matrix-caption" id="matrix-caption">The pairing of the regulators of <span data-tex="\alpha_P">αP</span>, <span data-tex="\alpha_Q">αQ</span>,
+          and the Tate class <span data-tex="\Delta C">ΔC</span> with the differential forms <span data-tex="\delta_{ij}">δij</span>.
+          The actual values were computed to 100 digits, but we only display 10 digits.</p>
         <div class="table-scroll" id="matrix-values">
           <table class="regulator-matrix">
             <caption class="sr-only">Regulator matrix for alpha P, alpha Q, and the Tate class</caption>
@@ -110,6 +114,7 @@
       </section>
       <section class="panel beilinson-panel" id="beilinson-panel" aria-labelledby="beilinson-title" hidden>
         <div class="section-label"><h2 id="beilinson-title">Beilinson’s conjecture</h2></div>
+        <p class="matrix-caption">The following equality holds with 100 digits of precision (we only display 10 digits):</p>
         <div class="conjecture-equation" id="beilinson-equation" data-tex="\pi\cdot c^+(C)\cdot c^-(C)\cdot L''(M_{\mathrm{std}}(C),1)=q\cdot D">π · c⁺(C) · c⁻(C) · L″(Mstd(C), 1) = q · D</div>
         <dl class="conjecture-values" id="beilinson-values"></dl>
       </section>

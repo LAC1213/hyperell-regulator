@@ -14,7 +14,7 @@ Using the viewer
 ----------------
 
 Choose a curve. The first panel gives its equation, the coordinates of
-:math:`P,Q`, and the affine real locus :math:`C(\mathbb R)` with both points
+:math:`P,Q` and their orders in the Jacobian, and the affine real locus :math:`C(\mathbb R)` with both points
 marked. Real branches are drawn separately where :math:`F(x)\geq0`; gaps
 with no real points are not joined. The graph can be panned and zoomed.
 
@@ -110,7 +110,8 @@ The final box displays Beilinson's conjectural relation
 
    \pi\,c^+(C)\,c^-(C)\,L''(M_{\mathrm{std}}(C),1)=qD.
 
-The individual quantities are shown to five significant digits, with an
+The saved numerical equality holds at 100-digit precision.
+The individual quantities are shown to 10 significant digits, with an
 exact rational :math:`q` when verified by the saved comparison.
 This box is available for the catalog curves.
 

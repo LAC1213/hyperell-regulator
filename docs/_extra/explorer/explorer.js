@@ -28,7 +28,7 @@ function complexCell(row,z,sign) {
   math(imaginary,(sign*Number(z[1])<0?"-":"+")+numberTex(Math.abs(Number(z[1])))+"\\,i");
   node.append(real,imaginary);
 }
-function renderPoints() {
+function renderPoints(curve) {
   $("point-info").replaceChildren();
   if (!current.collection) {
     $("point-info").textContent="Logarithmic centers: "+current.input.centers.join(", ");
@@ -36,7 +36,13 @@ function renderPoints() {
   }
   current.collection.points.forEach((point,i)=>{
     const node=document.createElement("span"); node.className="point-coordinate point-"+i;
-    math(node,(i===0?"P":"Q")+"="+pointTex(point)); $("point-info").append(node);
+    const coordinate=document.createElement("span");
+    math(coordinate,(i===0?"P":"Q")+"="+pointTex(point)); node.append(coordinate);
+    if (curve?.orders?.[i]!=null) {
+      const order=document.createElement("span"); order.className="point-order";
+      order.textContent="order "+curve.orders[i]; node.append(order);
+    }
+    $("point-info").append(node);
   });
 }
 function centerReferences(center) {
@@ -118,7 +124,7 @@ function renderBeilinson(curve) {
   items.forEach(([label,value])=>{
     const item=document.createElement("div"), term=document.createElement("dt"), definition=document.createElement("dd");
     math(term,label);
-    math(definition,label==="q"&&curve.comparison_verified?"="+CurveGeometry.rationalTex(value):"\\approx"+numberTex(value,5));
+    math(definition,label==="q"&&curve.comparison_verified?"="+CurveGeometry.rationalTex(value):"\\approx"+numberTex(value,10));
     item.append(term,definition); $("beilinson-values").append(item);
   });
 }
@@ -314,7 +320,7 @@ async function display(data,name,curve=null) {
   $("result-source").textContent=name||"Imported curve";
   try { math($("result-model"),CurveGeometry.equationTex(current.input.F)); }
   catch (error) { $("result-model").textContent="C : y² = "+polynomial(current.input.F); }
-  renderPoints();
+  renderPoints(curve);
   $("show-mesh").disabled=!mesh;
   $("mesh-caption").textContent=mesh?"Drag to rotate. Use the sheet selector to view either sheet.":"Drag to rotate the lifted paths. Surface mesh unavailable.";
   $("results").hidden=false; $("export").disabled=false;

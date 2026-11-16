@@ -52,6 +52,7 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .point-coordinate { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
 .point-coordinate::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #bd5034; flex-shrink: 0; }
 .point-1::before { background: #267f91; }
+.point-order { font-family: var(--sans); font-size: 0.8em; color: var(--muted); }
 .real-curve { min-width: 0; }
 .real-plot-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--muted); }
 .real-plot-heading h2 { font-size: 16px; font-weight: 500; }
@@ -86,7 +87,7 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .beilinson-panel .section-label { justify-content: center; margin-bottom: 18px; }
 .conjecture-equation { text-align: center; font-size: 23px; white-space: nowrap; overflow-x: auto; padding: 12px 0 26px; }
 .conjecture-equation .katex { white-space: nowrap; }
-.conjecture-values { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; border-top: 1px solid var(--line); margin: 0; padding: 22px 0 2px; }
+.conjecture-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 12px; border-top: 1px solid var(--line); margin: 0; padding: 22px 0 2px; }
 .conjecture-values > div { min-width: 0; padding: 0 4px; }
 .conjecture-values dt { color: var(--muted); font-size: 16px; }
 .conjecture-values dd { margin: 8px 0 0; font-size: 18px; }
@@ -140,7 +141,7 @@ footer { border-top: 1px solid var(--line); border-bottom: 0; font-family: var(-
   .real-plot { height: 300px; }
   .data-actions { flex-direction: row; }
   .selectors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .conjecture-values { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 12px; }
+  .conjecture-values { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
   nav { gap: 16px; }
 }
 @media (max-width: 480px) {
