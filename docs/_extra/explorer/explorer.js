@@ -332,7 +332,11 @@ async function display(data,name,curve=null) {
   $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,"a = "+[...centerReferences(w.center),w.center].join(" = "))); $("weight-select").disabled=false;
   $("edge").replaceChildren(); current.edges.forEach((e,k)=>option($("edge"),k,"Edge "+e.index+(e.infinite?" → ∞":"")));
   $("result-source").replaceChildren();
-  if (curve) $("result-source").append(lmfdbLink(curve.label));
+  if (curve) {
+    const curveName=document.createElement("strong"), link=lmfdbLink(curve.label,"LMFDB ↗");
+    curveName.textContent=curve.label; link.className="lmfdb-link";
+    $("result-source").append(curveName,link);
+  }
   else $("result-source").textContent=name||"Imported curve";
   try { math($("result-model"),CurveGeometry.equationTex(current.input.F)); }
   catch (error) { $("result-model").textContent="C : y² = "+polynomial(current.input.F); }

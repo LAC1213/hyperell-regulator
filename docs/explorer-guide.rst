@@ -17,7 +17,7 @@ Choose a curve. The first panel gives its equation, the coordinates of
 :math:`P,Q` and their orders in the Jacobian, and the affine real locus :math:`C(\mathbb R)` with both points
 marked. Real branches are drawn separately where :math:`F(x)\geq0`; gaps
 with no real points are not joined. The graph can be panned and zoomed.
-The curve label links to its LMFDB entry. The full survey also provides
+The LMFDB link beside the curve label opens its database entry. The full survey also provides
 an LMFDB link for each curve.
 
 **The graph in** :math:`\mathbb P^1` shows the spanning tree on the base;
