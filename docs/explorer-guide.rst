@@ -20,8 +20,8 @@ with no real points are not joined. The graph can be panned and zoomed.
 The LMFDB link beside the curve label opens its database entry. The full survey also provides
 an LMFDB link for each curve.
 
-**The graph in** :math:`\mathbb P^1` shows the spanning tree on the base;
-**The graph in** :math:`C` shows its lifts to the complex curve.
+**The tree in** :math:`\mathbb P^1` shows the spanning tree on the base;
+**The lift to** :math:`C` shows its lifts to the complex curve.
 The path integrals are always visible beneath these views, before the
 regulator matrix.
 The matrix displays columns for the motivic classes :math:`\alpha_P,\alpha_Q` and
