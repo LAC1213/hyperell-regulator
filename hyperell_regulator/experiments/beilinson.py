@@ -87,6 +87,9 @@ Caveats
   Triples whose component verdicts are *undecided* are included by default,
   with those verdicts retained in the report. Pass ``allow_undecided=False``
   or ``--exclude-undecided`` to require affirmative component verdicts.
+  Pass ``ignore_component_criterion=True`` or
+  ``--ignore-component-criterion`` to skip this criterion and evaluate every
+  remaining torsion triple once up to permutations, retaining all outcomes.
 * Triples are pairwise non-conjugate: conjugate `P,R` give equal weights,
   while a point conjugate to the pole `Q` gives the constant weight 1.
 * Condition 2 is the package's test for integrality of `\alpha_P`;
@@ -103,6 +106,7 @@ strictly below N=1000. Use --help for comparison, cache and progress options.
 import json
 import time
 from contextlib import contextmanager
+from itertools import combinations
 
 from sage.all import (
     RealField,
@@ -214,14 +218,17 @@ def lmfdb_rank(row):
 # searching for a usable triple
 # ---------------------------------------------------------------------------
 
-def find_triples(record, C, row=None, allow_undecided=True):
+def find_triples(record, C, row=None, allow_undecided=True,
+                 ignore_component_criterion=False):
     r"""
     All triples of distinct points meeting the three conditions, as
     dictionaries. The legacy key ``R`` stores the common pole `Q`.
 
     A pair counts if its verdict is ``True`` or, by default, ``None``, and
     the order of the difference is finite. ``allow_undecided=False`` excludes
-    undecided pairs; a ``False`` verdict always excludes a pair.
+    undecided pairs; a ``False`` verdict excludes a pair unless
+    ``ignore_component_criterion=True``. That option retains torsion,
+    distinctness and non-conjugacy checks and recovers missing pair orders.
     """
     # Exact orders are usable on either model. Recover missing even-model
     # orders from older component caches by principality tests. Rank zero
@@ -236,11 +243,14 @@ def find_triples(record, C, row=None, allow_undecided=True):
     ok = {}                      # R -> list of S with (S, R) usable
     for d in record["pairs"]:
         verdict = d["same_component_everywhere"]
-        if verdict is not True and not (allow_undecided and verdict is None):
+        if (not ignore_component_criterion and verdict is not True
+                and not (allow_undecided and verdict is None)):
             continue
         order = d["order_of_P_minus_Q"]
         P, Q = _parse_point(d["P"]), _parse_point(d["Q"])
-        if order is None and not has_weierstrass:
+        if ignore_component_criterion and (P == Q or involution(C, P) == Q):
+            continue
+        if order is None and (ignore_component_criterion or not has_weierstrass):
             order = divisor_class_order(C, P, Q)
         if str(order) in ("Infinity", "+Infinity"):
             continue
@@ -488,7 +498,8 @@ def save_lvalue(label, data, path=LVALUES):
     return have
 
 
-def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False):
+def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
+                           h1_conductor=None):
     r"""
     `L''(\mathrm{std}, 1)` for ``C``, reusing ``path`` when it already holds a
     value computed with at least as many coefficients as ``digits`` now
@@ -508,25 +519,26 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False):
     regulator, so caching it by label is safe.  Returns a dictionary with keys
     ``L_second_derivative``, ``standard_conductor``, ``feq_check``,
     ``L_digits``, ``L_num_coeffs`` and, on failure, ``L_status``.
+    ``h1_conductor`` supplies the exact Jacobian conductor for wild cases
+    at 2 where PARI omits its local exponent.
     """
     have = load_lvalues(path)
-    LF = StandardLFunction(C)
-    if not force and label in have:
-        rec = have[label]
-        # ``L_pari_precision`` marks a record computed after the precision
-        # of the PARI calls was fixed: before that, ``lfun`` answered at 64
-        # bits whatever was asked of it, so a cached "25 digit" value has
-        # sixteen good ones and noise after them.  Records without the mark
-        # are recomputed.
-        if rec.get("L_second_derivative") is not None and \
-                rec.get("L_pari_precision") and \
-                (digits <= 15 or isinstance(rec.get("L_second_derivative"), str)) and \
-                ZZ(rec.get("L_digits", 0)) >= digits and \
-                ZZ(rec.get("L_num_coeffs", 0)) >= LF._coeffs_needed(digits):
-            rec = dict(rec)
-            rec["L_cached"] = True
-            return rec
     try:
+        LF = StandardLFunction(C, h1_conductor=h1_conductor)
+        if not force and label in have:
+            rec = have[label]
+            # Records before the PARI precision fix contain at most sixteen
+            # correct digits. Also reject a stale conductor or coefficient
+            # count before reusing an otherwise sufficiently precise value.
+            if rec.get("L_second_derivative") is not None and \
+                    rec.get("L_pari_precision") and \
+                    (digits <= 15 or isinstance(rec.get("L_second_derivative"), str)) and \
+                    ZZ(rec.get("L_digits", 0)) >= digits and \
+                    rec.get("standard_conductor") == LF.conductor() and \
+                    ZZ(rec.get("L_num_coeffs", 0)) >= LF._coeffs_needed(digits):
+                rec = dict(rec)
+                rec["L_cached"] = True
+                return rec
         num_coeffs = LF._coeffs_needed(digits)
         # Build and cache the coefficients once for both evaluations.
         LF.lfun(num_coeffs, digits)
@@ -600,21 +612,12 @@ def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
 # driver
 # ---------------------------------------------------------------------------
 
-def _component_warning(triple):
-    """State missing component evidence separately from a known failure."""
-    pairs = [("P-R", triple.get("verdict_P")), ("Q-R", triple.get("verdict_Q"))]
-    failed = [name for name, verdict in pairs if verdict is False]
-    unknown = [name for name, verdict in pairs if verdict is not True and verdict is not False]
-    if not failed and not unknown:
-        return None
-    details = []
-    if failed:
-        details.append("failed for " + ", ".join(failed))
-    if unknown:
-        details.append("undecided for " + ", ".join(unknown))
-    message = ("triple fails the same-component criterion" if failed else
-               "triple is not known to satisfy the same-component criterion")
-    return message + " (" + "; ".join(details) + ")"
+def _component_verdict(triple):
+    """The criterion holds iff both marked pairs pass; None means undecided."""
+    verdicts = (triple.get("verdict_P"), triple.get("verdict_Q"))
+    if any(v is False for v in verdicts):
+        return False
+    return True if all(v is True for v in verdicts) else None
 
 
 def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
@@ -647,6 +650,7 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
            "model_degree": int(G.degree()), "shift": xR, "pole": pole,
            "u_P": uP, "u_Q": uQ, "P_weierstrass": weier[0],
            "Q_weierstrass": weier[1],
+           "same_component_everywhere": _component_verdict(t),
            "n_triples": n_triples}
 
     nP, nQ = t.get("order_P"), t.get("order_Q")
@@ -660,11 +664,6 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
               % (G, G.degree(),
                  "" if xR is None else ", u = 1/(x - %s)" % xR, uP, uQ))
         print("  common pole Q = %s" % (pole,))
-
-    notice = _component_warning(t)
-    if notice:
-        res["component_warning"] = notice
-        print("  %s WARNING: %s" % (record["label"], notice), flush=True)
 
     usable = all(isinstance(n, (int, Integer)) or
                  (isinstance(n, str) and n.isdigit()) for n in (nP, nQ))
@@ -716,7 +715,8 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
     # --- cached by label and reused rather than recomputed
     if with_lvalue:
         clock = time.time()
-        res.update(standard_lvalue_cached(record["label"], C, digits=digits))
+        res.update(standard_lvalue_cached(record["label"], C, digits=digits,
+                                         h1_conductor=record["cond"]))
         res["lvalue_seconds"] = round(time.time() - clock, 1)
 
     res["comparison"] = beilinson_comparison(
@@ -755,7 +755,8 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
 
 def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
             with_periods=True, with_lvalue=True, digits=15,
-            lindep_bound=8, geom_simple=True, reg_digits=None, tries=1):
+            lindep_bound=8, geom_simple=True, reg_digits=None, tries=1,
+            ignore_component_criterion=False):
     r"""
     Find the first usable triple for one curve and compute its regulator
     determinant.  Returns a dictionary, with ``"status"`` saying what happened.
@@ -769,6 +770,11 @@ def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
 
     Undecided component verdicts are accepted by default and remain recorded
     in the selected triple. Set ``allow_undecided=False`` to exclude them.
+    With ``ignore_component_criterion=True``, evaluate every distinct,
+    pairwise non-conjugate torsion triple, once up to permutations. The best
+    ranked common pole represents each unordered triple. All outcomes are
+    saved in ``triple_results``; the first success (or first failure) also
+    supplies the usual top-level fields. ``tries`` does not limit this mode.
 
     ``digits`` is the `L`-value's precision and ``reg_digits`` the
     regulator's. The default regulator uses float64 (``reg_digits=None``);
@@ -776,7 +782,8 @@ def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
     failures never silently switch implementations.
 
     Which triple is integrated is decided by :func:`rank_triples`: minimize
-    the shared cut span/gap, then its edge count. Only ``tries`` triples are integrated, best first; the default
+    the shared cut span/gap, then its edge count. With the component criterion
+    enabled, at most ``tries`` triples are integrated, best first; the default
     is one.
     """
     rows = {r["label"]: r for r in load_results(cache)}
@@ -791,12 +798,43 @@ def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
                 "status": "Jacobian is not geometrically simple"}
     C = curve_from_row(row)
 
-    triples = find_triples(record, C, row=row, allow_undecided=allow_undecided)
+    triples = find_triples(record, C, row=row, allow_undecided=allow_undecided,
+                           ignore_component_criterion=ignore_component_criterion)
     if not triples:
         return {"label": record["label"], "cond": record["cond"],
                 "status": "no_admissible_triple"}
-    n_triples = len(triples)
-    triples = rank_triples(C, triples, verbose=verbose, usable_only=True)
+    n_triples = (len({frozenset((t["P"], t["Q"], t["R"])) for t in triples})
+                 if ignore_component_criterion else len(triples))
+    triples = rank_triples(C, triples, verbose=verbose,
+                           usable_only=not ignore_component_criterion)
+    if ignore_component_criterion:
+        seen, unique = set(), []
+        for t in triples:
+            key = frozenset((t["P"], t["Q"], t["R"]))
+            if key not in seen:
+                seen.add(key)
+                unique.append(t)
+        outcomes = []
+        for k, t in enumerate(unique):
+            if verbose:
+                print("  evaluating unordered triple %d of %d ..."
+                      % (k + 1, n_triples), flush=True)
+            try:
+                res = _analyse_triple(record, C, t, n_triples, cache=cache,
+                                      verbose=verbose, with_periods=with_periods,
+                                      with_lvalue=with_lvalue, digits=digits,
+                                      lindep_bound=lindep_bound, reg_digits=reg_digits)
+            except Exception as exc:
+                res = dict(label=record["label"], cond=record["cond"],
+                           status="preparation_error",
+                           error="%s: %s" % (type(exc).__name__, exc))
+            res.setdefault("triple", t)
+            res.setdefault("same_component_everywhere", _component_verdict(t))
+            outcomes.append(res)
+        representative = next((r for r in outcomes if r.get("status") == "ok"),
+                              outcomes[0])
+        return dict(representative, triple_results=outcomes,
+                    n_triples=n_triples, n_triples_attempted=len(outcomes))
     if not triples:
         return {"label": record["label"], "cond": record["cond"],
                 "status": "no_usable_model"}
@@ -830,14 +868,18 @@ def load_stored(out=RESULTS_OUT):
 
 
 def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
-                   results=RESULTS, geom_simple=True, fetch=False, verbose=False):
+                   results=RESULTS, geom_simple=True, fetch=False, verbose=False,
+                   ignore_component_criterion=False):
     """Component records for cached curves with conductor strictly below N.
 
     Enumerate missing component records. Only an explicit fetch requests
     more curves from LMFDB; cache-only reports do not claim completeness.
+    When ignoring the criterion, enumerate point pairs directly without
+    running reduction checks or saving unchecked component records. Reuse
+    any known verdicts and orders as report metadata.
     """
     from hyperell_regulator.components import (
-        fetch_lmfdb, load_curves, report_curve, save_results)
+        curve_points, fetch_lmfdb, load_curves, report_curve, save_results)
 
     if fetch:
         fetch_lmfdb(max_cond=max_cond-1, path=cache, geom_simple=geom_simple)
@@ -849,6 +891,22 @@ def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
         records = {}
     goodrecords = []
     for row in rows:
+        if ignore_component_criterion:
+            C = curve_from_row(row)
+            previous = records.get(row["label"], {})
+            known = {frozenset((_parse_point(d["P"]), _parse_point(d["Q"]))): d
+                     for d in previous.get("pairs", [])}
+            points = dict.fromkeys(p for p in curve_points(C, row) if p is not None)
+            for key in known:
+                points.update(dict.fromkeys(key))
+            pairs = []
+            for P, Q in combinations(points, 2):
+                old = known.get(frozenset((P, Q)), {})
+                pairs.append(dict(P=P, Q=Q,
+                                  same_component_everywhere=old.get("same_component_everywhere"),
+                                  order_of_P_minus_Q=old.get("order_of_P_minus_Q")))
+            goodrecords.append(dict(label=row["label"], cond=row["cond"], pairs=pairs))
+            continue
         if row["label"] not in records:
             try:
                 merged = save_results([report_curve(row, verbose=verbose)], results)
@@ -871,9 +929,17 @@ def _stored_result_satisfies(old, settings):
     if old.get("status") != "ok" or not isinstance(old.get("settings"), dict):
         return False
     stored = old["settings"]
+    if settings.get("ignore_component_criterion") and (
+            not old.get("triple_results") or
+            any(r.get("status") != "ok" or
+                (settings.get("with_lvalue") and r.get("L_status")
+                 and r.get("L_second_derivative") is None)
+                for r in old["triple_results"])):
+        return False
     precision_keys = {"regulator_digits", "lvalue_digits"}
     execution_keys = {"max_edge_seconds", "max_edge_steps", "tries"}
-    if any(stored.get(k) != v for k, v in settings.items()
+    if any(stored.get(k, False if k == "ignore_component_criterion" else None) != v
+           for k, v in settings.items()
            if k not in precision_keys | execution_keys):
         return False
     if not precision_keys <= stored.keys():
@@ -893,6 +959,15 @@ def _stored_result_satisfies(old, settings):
 
 
 def _report_row(result, stored=False):
+    if result.get("triple_results"):
+        print("%s: %d unordered triples%s" % (
+            result["label"], len(result["triple_results"]), " [stored]" if stored else ""))
+        for outcome in result["triple_results"]:
+            _report_row(outcome, stored=stored)
+            t = outcome["triple"]
+            print("  P %s  Q %s  R %s"
+                  % tuple(_fmt(_parse_point(t[key])) for key in ("P", "Q", "R")))
+        return
     comparison = result.get("comparison") or {}
     def number(value):
         return "-" if value is None else "%.8g" % float(value)
@@ -902,13 +977,13 @@ def _report_row(result, stored=False):
         str(comparison.get("rational", "-")),
         number(comparison.get("relative_agreement")),
         " [stored]" if stored else ""), flush=True)
+    if result.get("triple"):
+        verdict = result.get("same_component_everywhere", _component_verdict(result["triple"]))
+        label = "yes" if verdict is True else "no" if verdict is False else "undecided"
+        print("  component criterion: %s" % label, flush=True)
     for key in ("error", "periods_error", "L_status", "L_precision_warning"):
         if result.get(key):
             print("  %s: %s" % (key, result[key]), flush=True)
-    if stored and result.get("triple"):
-        notice = _component_warning(result["triple"])
-        if notice:
-            print("  WARNING: %s" % notice, flush=True)
 
 
 @contextmanager
@@ -941,7 +1016,7 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         out=RESULTS_OUT, force=False, digits=15, reg_digits=None,
         allow_undecided=True, geom_simple=True, fetch=False,
         with_lvalue=True, tries=1, verbose=False, max_edge_seconds=15,
-        max_edge_steps=100000):
+        max_edge_steps=100000, ignore_component_criterion=False):
     """Report cached curves with conductor < max_cond (default 1000).
 
     The pairwise non-conjugate triple with the best-conditioned shared
@@ -949,6 +1024,8 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
     Float64 and per-edge budgets are the defaults. Successful results are
     reused for the same report policy at equal or higher precision; failures
     are saved with their reasons but retried on the next run.
+    ``ignore_component_criterion=True`` evaluates all remaining triples up
+    to permutations, without component checks, regardless of ``tries``.
     """
     from collections import Counter
 
@@ -956,10 +1033,12 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
     if max_cond < 1 or int(digits) < 1 or int(tries) < 1:
         raise ValueError("conductor bound, digits and tries must be positive")
     records = ensure_records(max_cond, cache=cache, results=path,
-                             geom_simple=geom_simple, fetch=fetch, verbose=verbose)
+                             geom_simple=geom_simple, fetch=fetch, verbose=verbose,
+                             ignore_component_criterion=ignore_component_criterion)
     settings = dict(report_version=REPORT_VERSION, regulator_digits=reg_digits,
                     lvalue_digits=int(digits), with_lvalue=with_lvalue,
                     allow_undecided=allow_undecided, geom_simple=geom_simple,
+                    ignore_component_criterion=ignore_component_criterion,
                     tries=int(tries), max_edge_seconds=max_edge_seconds,
                     max_edge_steps=max_edge_steps)
     have, results = load_stored(out), []
@@ -981,6 +1060,7 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         with _monitored_result(res, verbose, max_edge_seconds, max_edge_steps):
             res.update(analyse(record, cache=cache,
                                allow_undecided=allow_undecided, verbose=verbose,
+                               ignore_component_criterion=ignore_component_criterion,
                                with_periods=with_lvalue, with_lvalue=with_lvalue,
                                digits=digits, geom_simple=geom_simple,
                                reg_digits=reg_digits, tries=tries, lindep_bound=int(digits/2)))
@@ -1030,6 +1110,9 @@ def main(argv=None):
                                   help="include undecided component verdicts (default)")
     component_policy.add_argument("--exclude-undecided", dest="allow_undecided", action="store_false",
                                   help="require affirmative component verdicts")
+    component_policy.add_argument("--ignore-component-criterion", action="store_true",
+                                  help="skip component checks and evaluate all non-conjugate "
+                                       "torsion triples up to permutations (ignores --tries)")
     parser.add_argument("--tries", type=int, default=1, help="number of ranked triples to try per curve")
     args = parser.parse_args(argv)
     if args.N < 1 or args.digits < 1 or args.tries < 1 or (args.reg_digits is not None and args.reg_digits < 5):
@@ -1039,6 +1122,7 @@ def main(argv=None):
     return run(args.N, out=args.out, force=args.force, fetch=args.fetch,
                with_lvalue=not args.no_lvalue, verbose=args.verbose,
                allow_undecided=args.allow_undecided, digits=args.digits,
+               ignore_component_criterion=args.ignore_component_criterion,
                reg_digits=args.reg_digits, tries=args.tries,
                max_edge_seconds=args.edge_seconds, max_edge_steps=args.edge_steps)
 

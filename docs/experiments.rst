@@ -54,7 +54,42 @@ The Beilinson survey includes triples with undecided component verdicts by
 default, so ``388.a.776.1`` is attempted despite the undecided condition at 2.
 The saved triple retains those verdicts. Use ``--exclude-undecided`` (or
 ``allow_undecided=False`` in Python) to require affirmative verdicts; known
-negative verdicts are always excluded.
+negative verdicts are excluded by default.
+
+To skip component checks and evaluate every remaining torsion triple, once
+up to permutations, use:
+
+.. code-block:: bash
+
+   sage -python -m hyperell_regulator.experiments.beilinson 1000 \
+       --ignore-component-criterion --out results/beilinson_all_triples.json
+
+This mode still excludes repeated points and hyperelliptic conjugate pairs,
+and requires torsion differences. It recovers missing torsion orders even
+for pairs with negative component verdicts. For each unordered triple, the
+best-ranked choice of common pole is used. All results, including failures,
+are printed and saved in the curve's ``triple_results`` list. The usual
+top-level fields describe the first success, or the first failure if none
+succeeded. ``--tries`` does not limit this mode. In Python, pass
+``ignore_component_criterion=True`` to ``run`` or ``analyse``.
+
+Existing component verdicts remain in the results as metadata. Missing
+component data is left undecided, and no component checks are run. Results
+from different component policies are not reused interchangeably.
+Each triple result records ``same_component_everywhere`` as ``true`` (both
+pairs pass), ``false`` (at least one fails), or ``null`` (undecided), alongside
+the individual pair verdicts. These verdicts do not produce console warnings.
+The terminal displays ``component criterion: yes``, ``no``, or ``undecided``
+for each triple, including cached results.
+
+At 2, the standard L-function now handles semistable reduction of either
+toric rank, and a two-dimensional ramified complement to an unramified
+elliptic or rank-one toric part, including wild reduction. The survey uses
+the exact Jacobian conductor from its curve cache to include the wild
+conductor contribution when PARI omits it. For standalone computations, pass
+``h1_conductor=...`` to ``StandardLFunction`` or ``standard_lvalue`` when
+needed. If the local H1 factor is 1, additional inertia data is still
+required; the error identifies these cases explicitly.
 
 Numerical helpers
 -----------------

@@ -194,16 +194,14 @@ def test_precision_cache_boundaries():
     assert not b._stored_result_satisfies(old, settings)
 
 
-def test_component_messages_distinguish_unknown_and_failed_pairs():
-    assert b._component_warning(dict(verdict_P=True, verdict_Q=True)) is None
-    unknown = b._component_warning(dict(verdict_P=True, verdict_Q=None))
-    assert 'not known to satisfy' in unknown and 'undecided for Q-R' in unknown
-    failed = b._component_warning(dict(verdict_P=False, verdict_Q=None))
-    assert 'triple fails' in failed and 'failed for P-R' in failed
-    assert 'undecided for Q-R' in failed
+def test_component_verdicts_distinguish_unknown_and_failed_pairs():
+    for vP, vQ in itertools.product((True, False, None), repeat=2):
+        expected = False if False in (vP, vQ) else True if (vP, vQ) == (True, True) else None
+        assert b._component_verdict(dict(verdict_P=vP, verdict_Q=vQ)) is expected
+    assert b._component_verdict({}) is None
 
 
-def test_unproven_components_are_announced_even_without_verbose_output(capsys):
+def test_components_are_recorded_without_warnings_for_new_or_stored_results(capsys):
     x = ring().gen()
     G = x**5+x+1
     triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5,
@@ -211,14 +209,29 @@ def test_unproven_components_are_announced_even_without_verbose_output(capsys):
     with patch.object(b, '_model_for_triple', return_value=(G, [(0, 1), (1, 1)], None, 'infinity')), \
             patch.object(b, '_resolve_triple_orders'), \
             patch.object(b, 'beilinson_determinant_stokes', return_value=(2.0, [[1.0]], None)):
-        result = b._analyse_triple(dict(label='test', cond=1), None, triple, 1,
-                                   verbose=False, with_periods=False, with_lvalue=False)
-    output = capsys.readouterr().out
-    assert 'WARNING: triple is not known to satisfy the same-component criterion' in output
-    assert 'undecided for Q-R' in output
-    assert result['component_warning'] == b._component_warning(triple)
-    b._report_row(result, stored=True)
-    assert 'WARNING: triple is not known to satisfy' in capsys.readouterr().out
+        for verdict in (True, False, None):
+            triple['verdict_Q'] = verdict
+            for verbose in (False, True):
+                result = b._analyse_triple(dict(label='test', cond=1), None, triple, 1,
+                                           verbose=verbose, with_periods=False, with_lvalue=False)
+                assert 'same-component criterion' not in capsys.readouterr().out
+                assert result['same_component_everywhere'] is verdict
+                assert result['triple']['verdict_P'] is True
+                assert result['triple']['verdict_Q'] is verdict
+                assert 'component_warning' not in result
+                label = 'yes' if verdict is True else 'no' if verdict is False else 'undecided'
+                b._report_row(result)
+                output = capsys.readouterr().out
+                assert 'component criterion: ' + label in output
+                assert 'WARNING' not in output
+                # Legacy reports may still contain the old warning metadata.
+                del result['same_component_everywhere']
+                result['component_warning'] = 'triple is not known to satisfy the same-component criterion'
+                b._report_row(result, stored=True)
+                output = capsys.readouterr().out
+                assert 'component criterion: ' + label in output
+                assert 'WARNING' not in output
+                assert 'same-component criterion' not in output
 
 
 def test_comparison_uses_pi_over_determinant_and_reports_integer_guesses():

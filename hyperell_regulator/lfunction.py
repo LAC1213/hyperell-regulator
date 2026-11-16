@@ -343,13 +343,18 @@ class StandardLFunction(SageObject):
     ===================================
 
     * At odd primes, `C` is semistable or tame with potentially good reduction.
-      At 2, the implemented case is a model reducing to two rational
-      components meeting transversely at three points: modulo 2,
-      `f=A(A+h)`, with `\deg A\leq3` and squarefree cubic `h`. Its dual graph
-      has two fixed vertices and three edges permuted as the roots of `h`.
-      This gives a semistable toric factor without a cluster picture, and
-      covers 388.a.776.1, where `A=x` and `h=x^3+x+1` modulo 2.
-      Other bad factors at 2 still require ``bad_factors`` overrides.
+      At 2, the `h^1` factor determines the answer whenever it has positive
+      degree. Degree three forces semistable toric rank one; a degree-two
+      toric factor forces semistable toric rank two, including nonsplit and
+      order-three Frobenius. A degree-two elliptic factor or a degree-one
+      toric factor leaves a two-dimensional ramified symplectic complement.
+      Both determinant lines contribute `1-2T`, so the standard factor is
+      `1-2T`, including wild reduction. The Swan conductor of the standard
+      representation is twice that of `h^1` in these last two cases.
+      Pass ``h1_conductor`` with the exact Jacobian conductor when PARI
+      cannot compute its 2-part; the Beilinson survey supplies LMFDB's value.
+      If the `h^1` factor at 2 is 1, additional inertia information is needed
+      and ``bad_factors`` overrides remain necessary.
     * `(1 - pT)` divides `P_p^{\wedge^2}` exactly.
 
     The real check on all of this is the functional equation: see
@@ -368,12 +373,15 @@ class StandardLFunction(SageObject):
         3
     """
 
-    def __init__(self, C, bad_factors=None, prec=None):
+    def __init__(self, C, bad_factors=None, prec=None, h1_conductor=None):
         self.C = C
         if C.genus() != 2:
             raise ValueError("the standard L-function here is for genus 2; "
                              "this curve has genus %s" % C.genus())
         self.bad_factors = dict(bad_factors or {})
+        self.h1_conductor = None if h1_conductor is None else ZZ(h1_conductor)
+        if self.h1_conductor is not None and self.h1_conductor < 1:
+            raise ValueError("h1_conductor must be positive")
         RQ = PolynomialRing(QQ, 'x')
         self._pari_L = pari.lfungenus2([pari(str(RQ(C.f))), pari(str(RQ(C.h)))])
         self._RT = PolynomialRing(QQ, 'T')
@@ -490,29 +498,50 @@ class StandardLFunction(SageObject):
         symmetric = 1-(trace**2-det)*X+det*(trace**2-det)*X**2-det**3*X**3
         return (1-det*T)*symmetric
 
-    def _toric_factor_at_two(self):
-        """Detect two rational components joined at three ordinary nodes.
+    def _wedge2_at_two(self, P):
+        r"""Recover the exterior square when H1 inertia invariants are nonzero.
 
-        A squarefree cubic h and f=A(A+h) modulo 2 give the two components
-        y=A and y=A+h. Their intersections are exactly the roots of h;
-        h' nonzero there makes them nodes, and infinity is smooth. On graph
-        homology, Frobenius is the node permutation modulo its constant line.
+        Weight-zero eigenvalues belong to the torus and weight-one ones to
+        the abelian part. In dimension four, a degree-three H1 factor forces
+        semistability of toric rank one. A degree-two factor with root-of-unity
+        eigenvalues forces semistability of toric rank two.
+
+        The remaining nonzero cases are an unramified elliptic summand, or
+        an unramified rank-one special summand, plus a two-dimensional
+        symplectic ramified complement with no inertia invariants. The cross
+        terms have no invariants, and both determinant lines have eigenvalue
+        2. Thus W=(1-2T)^2, even when the complement is wild. Its Swan
+        contribution to the standard representation is twice that of H1.
         """
-        S = PolynomialRing(GF(2), 'x')
-        try:
-            f, h = S(self.C.f), S(self.C.h)
-        except (TypeError, ValueError, ZeroDivisionError):
-            return None
-        if h.degree() != 3 or not h.is_squarefree():
-            return None
-        if not any(A*(A+h) == f for A in
-                   (S([(bits >> i) & 1 for i in range(4)]) for bits in range(16))):
-            return None
         T = self._RT.gen()
-        nodes = self._RT(1)
-        for factor, _ in h.factor():
-            nodes *= 1-T**factor.degree()
-        return nodes // (1-T)
+        if P.degree() == 4:
+            return wedge2_euler_factor(P)
+        if P.degree() == 3:
+            for gamma in (1, -1):
+                A, remainder = P.quo_rem(1-gamma*T)
+                if not remainder and A.degree() == 2 and A[2] == 2 and abs(A[1]) <= 2:
+                    return A(gamma*T)*(1-2*T)**2
+        if P in ((1-T)**2, (1+T)**2, 1-T**2, 1+T**2,
+                 1+T+T**2, 1-T+T**2):
+            return self._wedge2_totally_toric(2, P)
+        if ((P.degree() == 2 and P[2] == 2 and abs(P[1]) <= 2)
+                or (P.degree() == 1 and P[1] in (-1, 1))):
+            self._cache["two_adic_ramified_complement"] = True
+            return (1-2*T)**2
+        raise NotImplementedError(
+            "the h^1 factor at 2 is %s; the exterior-square factor requires "
+            "additional inertia data in this case; supply bad_factors[2]" % P)
+
+    def _h1_conductor_exponent(self, p):
+        """Use a supplied exact conductor when PARI omits its 2-part."""
+        if self.h1_conductor is not None:
+            return self.h1_conductor.valuation(p)
+        exponent = self.C.local_data(p)["conductor_exponent"]
+        if exponent is None:
+            raise NotImplementedError(
+                "the wild conductor at %s requires the exact Jacobian "
+                "conductor; pass h1_conductor to StandardLFunction" % p)
+        return ZZ(exponent)
 
     def wedge2_euler_factor(self, p):
         r"""
@@ -527,15 +556,7 @@ class StandardLFunction(SageObject):
             return wedge2_euler_factor(P)
 
         if p == 2:
-            U = self._toric_factor_at_two()
-            if U is not None:
-                if U != P:
-                    raise ArithmeticError("the nodal model's toric factor at 2 disagrees with h^1")
-                return self._wedge2_totally_toric(p, U)
-            raise NotImplementedError(
-                "at 2 only split nodal models with squarefree cubic h "
-                "are implemented; supply the wedge^2 "
-                "factor in bad_factors")
+            return self._wedge2_at_two(P)
         if self.C.is_semistable_at(p) is not True:
             return self._wedge2_potentially_good(p, P)
 
@@ -623,12 +644,19 @@ class StandardLFunction(SageObject):
 
     def conductor(self):
         r"""
-        `\prod_p p^{5 - \deg P_p^{\mathrm{std}}}`, the conductor of the standard
-        motive (no wild part, the tame case being assumed).
+        The conductor of the standard motive. At tame primes its exponent
+        is `5-\deg P_p^{\mathrm{std}}`. For the implemented ramified
+        two-dimensional complements at 2, add twice the H1 Swan conductor.
         """
         N = ZZ(1)
         for p in self.C.bad_primes():
-            N *= ZZ(p) ** (5 - self.euler_factor(p).degree())
+            exponent = 5-self.euler_factor(p).degree()
+            if p == 2 and self._cache.get("two_adic_ramified_complement"):
+                swan = self._h1_conductor_exponent(p)-(4-self.h1_euler_factor(p).degree())
+                if swan < 0:
+                    raise ArithmeticError("the supplied H1 conductor at 2 is smaller than its tame part")
+                exponent += 2*swan
+            N *= ZZ(p)**exponent
         return N
 
     # -- the L-function ----------------------------------------------------
@@ -737,16 +765,17 @@ class StandardLFunction(SageObject):
 
 
 def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
-                    digits=10, verbose=True):
+                    digits=10, verbose=True, h1_conductor=None):
     r"""
     `L''(\mathrm{std}, 1)` for the genus 2 curve ``C``, with the bad Euler
     factors computed from the cluster picture wherever `C` is semistable at an
     odd prime.
 
     Returns a dictionary with the value, the conductor, the Euler factors used
-    and the functional equation check.
+    and the functional equation check. ``h1_conductor`` is the exact conductor
+    of the Jacobian, used for wild reduction at 2 when PARI omits its 2-part.
     """
-    L = StandardLFunction(C, bad_factors=bad_factors)
+    L = StandardLFunction(C, bad_factors=bad_factors, h1_conductor=h1_conductor)
     out = {"curve": str(C), "bad_primes": C.bad_primes(),
            "euler_factors": {}, "conductor": None, "value": None,
            "derivative": derivative, "feq_check": None}

@@ -43,6 +43,14 @@ def test_lvalue_cache_retains_precision_and_rejects_old_float_records():
             assert abs(R(result['L_second_derivative'])-value)<R('1e-35')
             cached=b.standard_lvalue_cached('curve',None,digits=30,path=path)
             assert cached['L_cached'] and lf.value.call_count==1
+            stale = dict(cached, standard_conductor=1)
+            path.write_text(json.dumps({'curve': stale}))
+            corrected = b.standard_lvalue_cached('curve',None,digits=30,path=path)
+            assert corrected['standard_conductor'] == 249 and lf.value.call_count == 2
+            lf.conductor.side_effect = NotImplementedError('missing wild conductor')
+            failed = b.standard_lvalue_cached('curve',None,digits=30,path=path)
+            assert failed['L_second_derivative'] is None
+            assert failed['L_status'] == 'missing wild conductor'
 
 
 def test_709_periods_continue_across_principal_sqrt_cut():

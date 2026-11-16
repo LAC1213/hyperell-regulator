@@ -311,8 +311,41 @@ def test_conductor_388_factor_at_two_is_detected_from_reduction(shift):
 
 def test_unsupported_reduction_at_two_still_requires_override():
     L = StandardLFunction(HyperellipticCurveWithReduction(F))
-    with pytest.raises(NotImplementedError, match='at 2 only'):
+    with pytest.raises(NotImplementedError, match='additional inertia data'):
         L.wedge2_euler_factor(2)
+
+
+@pytest.mark.parametrize('f,h,conductor,local_factor,standard_conductor', [
+    (-X**5, 1+X, 394, [1, 0, -2, -4], 4*197**2),
+    (3-4*X-4*X**2+3*X**3+X**4+X**5, X+X**2, 826,
+     [1, -1, 0, -4], 4*413**2),
+    (-1-X+5*X**2-4*X**3-X**4+X**5, 1+X**3, 644,
+     [1, 3, 0, -4], 4*161**2),
+    (-2*X**2-4*X**3+3*X**4+8*X**5, 1+X, 464,
+     [1, -2], 256*29**2),
+    (-2*X**2-X**3+4*X**4+4*X**5, 1, 704,
+     [1, -2], 4096*11**2),
+    (X-X**3-X**4, X+X**3, 856, [1, -2], 16*107**2),
+])
+def test_two_adic_factors_and_wild_conductors_satisfy_functional_equation(
+        f, h, conductor, local_factor, standard_conductor):
+    """Independent global check of each newly supported local representation."""
+    L = StandardLFunction(HyperellipticCurveWithReduction(f, h), h1_conductor=conductor)
+    assert L.euler_factor(2) == L._RT(local_factor)
+    assert L.conductor() == standard_conductor
+    assert L.check_functional_equation(digits=10) < 1e-15
+
+
+def test_wild_conductor_is_not_silently_assumed_tame_when_pari_omits_it():
+    C = HyperellipticCurveWithReduction(-2*X**2-4*X**3+3*X**4+8*X**5, 1+X)
+    L = StandardLFunction(C)
+    T = L._RT.gen()
+    assert L.euler_factor(2) == 1-2*T
+    with pytest.raises(NotImplementedError, match='pass h1_conductor'):
+        L.conductor()
+    inconsistent = StandardLFunction(C, h1_conductor=29)
+    with pytest.raises(ArithmeticError, match='smaller than its tame part'):
+        inconsistent.conductor()
 
 
 def test_1116_toric_homology_uses_submodule_coordinates():
