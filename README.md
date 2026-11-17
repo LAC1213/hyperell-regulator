@@ -28,7 +28,7 @@ Frobenius eigenvalues which uses [rforest](https://math.mit.edu/~drew/rforest.ht
 
 ## Examples
 
-The numerical integrator computes periods and integrals weighted by `log |x-a|` directly on the two sheets of a hyperelliptic curve. A minimum spanning tree joins the branch values and logarithmic centers. Several weights share one set of cut edges; no torsion functions or general chart machinery are needed.
+The numerical integrator computes periods and integrals weighted by `log |x-a|`. A minimum spanning tree joins the branch values and logarithmic singularities and the two-dimensional regulator integral is computed as a bilinear expression of line integrals along the edges of the tree.
 For example you can run the following in Sage or with `sage -python`:
 
 ```python
@@ -77,7 +77,7 @@ print(result["value"])
 
 ```sh
 # Reuse cached data and request 100-digit regulators and L-values.
-sage -python -m hyperell_regulator.experiments.beilinson 1300 --edge-seconds 600 --digits 100 --reg-digits 100
+sage -python -m hyperell_regulator.experiments.beilinson 1300 --digits 100 --reg-digits 100
 
 # Test the parameter n=2 in the one-parameter family.
 sage -python -m hyperell_regulator.experiments.family_n 2

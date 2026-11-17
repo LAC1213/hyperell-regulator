@@ -5,53 +5,29 @@ For each curve in ``same_component_results.json`` (written by
 :mod:`hyperell_regulator.components`) this looks for a triple of
 distinct rational points `P, R, Q` such that
 
-1. `[P] - [Q]` and `[R] - [Q]` are torsion in the Jacobian,
+1. `P - Q` and `R - Q` are torsion in the Jacobian,
 2. `(P, Q)` and `(R, Q)` each reduce to a smooth point of the *same*
    irreducible component of the special fibre at *every* prime, and
 3. no two of `P, R, Q` are hyperelliptic conjugates,
 
-then ranks the triples by the geometry of their shared x-cuts,
-and evaluates the
+then evaluates the
 `3 \times 3` regulator determinant.
-
-When moving the common pole `Q` to infinity would also move `P` or `R` there, all three
-points are kept affine instead. The logarithmic weight is then
-`m_P = (x-x(P))/(x-x(Q))`, and similarly for `R`.
-
-The serialized API retains its legacy triple keys: ``P`` and ``Q`` store
-the two marked zeros, and ``R`` stores the common pole. In the mathematical
-notation here these points are called `P`, `R`, and `Q`, respectively.
 
 The construction (infinity normalization)
 ============================================================
 
 With the common pole `Q` at infinity, a torsion point `P \in C(\QQ)` of
-order `n` gives a function `\varphi` with `(\varphi)=n(P-Q)`. Write `\iota`
-for the hyperelliptic involution and
-`\operatorname{N}(\varphi)=\varphi(\varphi\circ\iota)`. Then
-`(\varphi\circ\iota)=n(\iota(P)-\iota(Q))`, and the cycle
-
-.. MATH::
-
-    \alpha_P = (\Delta C, \operatorname{N}(\varphi) \circ \pi_1)
-      - (\Gamma_\iota, \operatorname{N}(\varphi) \circ \pi_1)
-      - (\{P\} \times C, \psi \circ \pi_2)
-      + (\{\iota(P)\} \times C, \psi \circ \pi_2)
-      - (C \times \{Q\}, \psi \circ \pi_1)
-      + (C \times \{\iota(Q)\}, \psi \circ \pi_1)
-
-with `\psi=\varphi/(\varphi\circ\iota)` defines a class in
-`\CH^2(C\times C,1)`. Since
-`(x-x(P))=P+\iota(P)-Q-\iota(Q)`, one has
-`(x-x(P))^n=c\operatorname{N}(\varphi)` for some `c\in\QQ^\times`, whence
+order `n` gives a function `\varphi` with `(\varphi)=n(P-Q)` and
+a corresponding higher Chow cycle `\alpha_P` in `\CH^2(C\times C,1)`
+with regulator integral:
 
 .. MATH::
 
     \langle \reg(\alpha_P), \delta_{ij} \rangle
-      = \frac{1}{2\pi i} \int_{\CC} \frac{\log|m_P(z)|}{|f(z)|} d_{ij}(z)\,
+      = \frac{1}{2\pi i} \int_{\CC} \frac{\log|z - x(P)|}{|f(z)|} d_{ij}(z)\,
         dz\,d\overline z + \log|c|\,a_{ij}.
 
-Here `m_P=x-x(P)` since `P` is rational. The `\log|c|a_{ij}` terms are
+The `\log|c|a_{ij}` terms are
 removed by column operations against the unweighted period column.
 
 What is computed
@@ -62,22 +38,16 @@ For `d_{11} = 1`, `d_{12} = 2\Re(z)`, `d_{22} = |z|^2`, the matrix
 .. MATH::
 
     \begin{pmatrix}
-      \int \frac{\log|m_P|}{|f|} d_{11} & \int \frac{\log|m_R|}{|f|} d_{11} & \int \frac{d_{11}}{|f|} \\
-      \int \frac{\log|m_P|}{|f|} d_{12} & \int \frac{\log|m_R|}{|f|} d_{12} & \int \frac{d_{12}}{|f|} \\
-      \int \frac{\log|m_P|}{|f|} d_{22} & \int \frac{\log|m_R|}{|f|} d_{22} & \int \frac{d_{22}}{|f|}
+      \int \frac{\log|z - x(P)|}{|f|} d_{11} & \int \frac{\log|z - x(R)|}{|f|} d_{11} & \int \frac{d_{11}}{|f|} \\
+      \int \frac{\log|z - x(P)|}{|f|} d_{12} & \int \frac{\log|z - x(R)|}{|f|} d_{12} & \int \frac{d_{12}}{|f|} \\
+      \int \frac{\log|z - x(P)|}{|f|} d_{22} & \int \frac{\log|z - x(R)|}{|f|} d_{22} & \int \frac{d_{22}}{|f|}
     \end{pmatrix}
 
 and its determinant `D`, by the Stokes regulator
-(:func:`hyperell_regulator.regulator.regulator_stokes`): the columns at `P`
-and `R` use logarithms of x-coordinate differences directly; the third is the period
-vector. All three columns share one degree-two cut.  A curve whose cut system the Stokes method cannot build is reported
-and skipped -- nothing here integrates over `\CC`.
+(:func:`hyperell_regulator.regulator.regulator_stokes`). All three columns share one cut.  
 For non-zero `D`, the reported rational quotient is
 
 .. math:: q=\frac{\pi c^+(C)c^-(C)L''(\mathrm{std},1)}{D}.
-
-The signed minors `c^\pm` use full cycle periods. Integer rational guesses
-are identified in the result; numerical agreement is not an integrality proof.
 
 Caveats
 =======
@@ -90,10 +60,6 @@ Caveats
   Pass ``ignore_component_criterion=True`` or
   ``--ignore-component-criterion`` to skip this criterion and evaluate every
   remaining torsion triple once up to permutations, retaining all outcomes.
-* Triples are pairwise non-conjugate: conjugate `P,R` give equal weights,
-  while a point conjugate to the pole `Q` gives the constant weight 1.
-* Condition 2 is the package's test for integrality of `\alpha_P`;
-  integrality is not certified independently here.
 
 Run with::
 
