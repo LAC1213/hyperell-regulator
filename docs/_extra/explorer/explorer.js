@@ -21,6 +21,16 @@ function mathCell(row,tex) { const node=cell(row,""); math(node,tex); return nod
 function pointTex(point) {
   return Array.isArray(point)?"\\left("+point.map(CurveGeometry.rationalTex).join(",\\,")+"\\right)":"\\infty";
 }
+function lmfdbLink(label,text=label+" ↗") {
+  const parts=/^(\d+)\.([a-z]+)\.(\d+)\.(\d+)$/.exec(label);
+  const link=document.createElement(parts?"a":"span"); link.textContent=text;
+  if (parts) {
+    link.href="https://www.lmfdb.org/Genus2Curve/Q/"+parts.slice(1).join("/");
+    link.target="_blank"; link.rel="noopener noreferrer";
+    link.setAttribute("aria-label",label+" in the LMFDB (opens in a new tab)");
+  }
+  return link;
+}
 function complexCell(row,z,sign) {
   const node=cell(row,""); node.className="complex-value";
   const real=document.createElement("span"), imaginary=document.createElement("span");
@@ -28,7 +38,7 @@ function complexCell(row,z,sign) {
   math(imaginary,(sign*Number(z[1])<0?"-":"+")+numberTex(Math.abs(Number(z[1])))+"\\,i");
   node.append(real,imaginary);
 }
-function renderPoints() {
+function renderPoints(curve) {
   $("point-info").replaceChildren();
   if (!current.collection) {
     $("point-info").textContent="Logarithmic centers: "+current.input.centers.join(", ");
@@ -36,7 +46,13 @@ function renderPoints() {
   }
   current.collection.points.forEach((point,i)=>{
     const node=document.createElement("span"); node.className="point-coordinate point-"+i;
-    math(node,(i===0?"P":"Q")+"="+pointTex(point)); $("point-info").append(node);
+    const coordinate=document.createElement("span");
+    math(coordinate,(i===0?"P":"Q")+"="+pointTex(point)); node.append(coordinate);
+    if (curve?.orders?.[i]!=null) {
+      const order=document.createElement("span"); order.className="point-order";
+      order.textContent="order "+curve.orders[i]; node.append(order);
+    }
+    $("point-info").append(node);
   });
 }
 function centerReferences(center) {
@@ -92,7 +108,11 @@ function renderMatrix(curve) {
   $("matrix-name").textContent=available?"The regulator matrix":"Logarithmic pairings";
   $("determinant").hidden=!available;
   $("determinant").replaceChildren();
-  if (available) math($("determinant"),"D="+numberTex(curve.numerical.det));
+  if (available) {
+    const heading=document.createElement("span"), value=document.createElement("span");
+    heading.className="determinant-label"; heading.textContent="Determinant:";
+    math(value,"D="+numberTex(curve.numerical.det)); $("determinant").append(heading,value);
+  }
   $("regulator-matrix").replaceChildren();
   if (!available) return;
   matrix.forEach((values,i)=>{
@@ -118,7 +138,7 @@ function renderBeilinson(curve) {
   items.forEach(([label,value])=>{
     const item=document.createElement("div"), term=document.createElement("dt"), definition=document.createElement("dd");
     math(term,label);
-    math(definition,label==="q"&&curve.comparison_verified?"="+CurveGeometry.rationalTex(value):"\\approx"+numberTex(value,5));
+    math(definition,label==="q"&&curve.comparison_verified?"="+CurveGeometry.rationalTex(value):"\\approx"+numberTex(value,10));
     item.append(term,definition); $("beilinson-values").append(item);
   });
 }
@@ -311,10 +331,16 @@ async function display(data,name,curve=null) {
   current=validate(data); label=name;
   $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,"a = "+[...centerReferences(w.center),w.center].join(" = "))); $("weight-select").disabled=false;
   $("edge").replaceChildren(); current.edges.forEach((e,k)=>option($("edge"),k,"Edge "+e.index+(e.infinite?" → ∞":"")));
-  $("result-source").textContent=name||"Imported curve";
+  $("result-source").replaceChildren();
+  if (curve) {
+    const curveName=document.createElement("strong"), link=lmfdbLink(curve.label,"LMFDB ↗");
+    curveName.textContent=curve.label; link.className="lmfdb-link";
+    $("result-source").append(curveName,link);
+  }
+  else $("result-source").textContent=name||"Imported curve";
   try { math($("result-model"),CurveGeometry.equationTex(current.input.F)); }
   catch (error) { $("result-model").textContent="C : y² = "+polynomial(current.input.F); }
-  renderPoints();
+  renderPoints(curve);
   $("show-mesh").disabled=!mesh;
   $("mesh-caption").textContent=mesh?"Drag to rotate. Use the sheet selector to view either sheet.":"Drag to rotate the lifted paths. Surface mesh unavailable.";
   $("results").hidden=false; $("export").disabled=false;
@@ -344,7 +370,9 @@ function renderCatalog() {
   $("curve-select").replaceChildren(); $("catalog-rows").replaceChildren();
   catalog.curves.forEach((c,i)=>{
     option($("curve-select"),i,c.label);
-    const row=document.createElement("tr"), link=document.createElement("button"); row.dataset.label=c.label; link.type="button"; link.className="secondary"; link.textContent=c.label; link.addEventListener("click",()=>{$("curve-select").value=i;chooseCurve(i);}); cell(row,"").append(link);
+    const row=document.createElement("tr"), button=document.createElement("button"); row.dataset.label=c.label; button.type="button"; button.className="secondary"; button.textContent=c.label; button.addEventListener("click",()=>{$("curve-select").value=i;chooseCurve(i);});
+    const link=lmfdbLink(c.label,"LMFDB ↗"); link.className="lmfdb-link";
+    cell(row,"").append(button,link);
     c.points.forEach(p=>mathCell(row,pointTex(p))); c.orders.forEach(v=>mathCell(row,String(v)));
     ["det","c_plus","c_minus","L_second_derivative"].forEach(k=>c.numerical[k]==null?cell(row,"—"):mathCell(row,numberTex(c.numerical[k])));
     if(c.comparison_verified)mathCell(row,CurveGeometry.rationalTex(c.q));else if(c.quotient)mathCell(row,numberTex(c.quotient));else cell(row,"—");

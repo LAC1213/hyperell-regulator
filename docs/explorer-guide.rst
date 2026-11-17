@@ -14,12 +14,14 @@ Using the viewer
 ----------------
 
 Choose a curve. The first panel gives its equation, the coordinates of
-:math:`P,Q`, and the affine real locus :math:`C(\mathbb R)` with both points
+:math:`P,Q` and their orders in the Jacobian, and the affine real locus :math:`C(\mathbb R)` with both points
 marked. Real branches are drawn separately where :math:`F(x)\geq0`; gaps
 with no real points are not joined. The graph can be panned and zoomed.
+The LMFDB link beside the curve label opens its database entry. The full survey also provides
+an LMFDB link for each curve.
 
-**The graph in** :math:`\mathbb P^1` shows the spanning tree on the base;
-**The graph in** :math:`C` shows its lifts to the complex curve.
+**The tree in** :math:`\mathbb P^1` shows the spanning tree on the base;
+**The lift to** :math:`C` shows its lifts to the complex curve.
 The path integrals are always visible beneath these views, before the
 regulator matrix.
 The matrix displays columns for the motivic classes :math:`\alpha_P,\alpha_Q` and
@@ -110,7 +112,8 @@ The final box displays Beilinson's conjectural relation
 
    \pi\,c^+(C)\,c^-(C)\,L''(M_{\mathrm{std}}(C),1)=qD.
 
-The individual quantities are shown to five significant digits, with an
+The saved numerical equality holds at 100-digit precision.
+The individual quantities are shown to 10 significant digits, with an
 exact rational :math:`q` when verified by the saved comparison.
 This box is available for the catalog curves.
 
