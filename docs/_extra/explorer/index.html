@@ -7,11 +7,11 @@
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=initial-center-11">
+  <link rel="stylesheet" href="explorer.css?v=tree-selector-12">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
   <script defer src="curve-geometry.js?v=matrix-conjecture-3"></script>
-  <script defer src="explorer.js?v=initial-center-11"></script>
+  <script defer src="explorer.js?v=tree-selector-12"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -63,9 +63,12 @@
         <section class="panel">
           <div class="section-label"><h2>The tree in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
           <p class="panel-description">The vertices are the critical values of <span data-tex="x">x</span> (images of ramification points), <span data-tex="x(P)">x(P)</span>, and <span data-tex="x(Q)">x(Q)</span>. A minimum spanning tree of their complete graph gives the cut.</p>
-          <div class="plot-tools"><span class="gesture">Click an edge to inspect its integrals</span></div>
+          <div class="plot-tools tree-controls">
+            <label class="center-control"><span class="sr-only">Logarithm center</span><select id="weight-select" autocomplete="off" disabled></select></label>
+            <span class="gesture">Click an edge to inspect its integrals</span>
+          </div>
           <div id="base-plot" class="plot" aria-label="Spanning tree connecting the critical values of x and the x-coordinates of P and Q"></div>
-          <p class="caption">Circles: critical values. Colored diamonds: <span data-tex="x(P)">x(P)</span> and <span data-tex="x(Q)">x(Q)</span>. The selected logarithm center is centered in the view; edges in its branch cut <span data-tex="B">B</span> share its colour. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
+          <p class="caption">Circles: critical values. Colored diamonds: <span data-tex="x(P)">x(P)</span> and <span data-tex="x(Q)">x(Q)</span>. Edges in the selected logarithm's branch cut <span data-tex="B">B</span> share its diamond's colour. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
         </section>
         <section class="panel">
           <div class="section-label"><h2>The lift to <span data-tex="C">C</span></h2></div>
@@ -82,7 +85,6 @@
       <section class="panel integral-panel path-integrals" aria-labelledby="integral-title">
             <div class="section-label"><h2 id="integral-title">Path integrals</h2><span id="path-label"></span></div>
             <div class="selectors">
-              <label>Logarithm center<select id="weight-select" autocomplete="off" disabled></select></label>
               <label>Tree edge<select id="edge"></select></label>
               <label>Positive-side sheet<select id="sheet"><option value="0">Sheet 1</option><option value="1">Sheet 2</option></select></label>
               <label>Logarithm side<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>

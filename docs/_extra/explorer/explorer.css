@@ -74,9 +74,10 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .panel-description { min-height: 75px; font-size: 15px; line-height: 1.65; color: var(--muted); margin: 0; max-width: 560px; }
 .plot-tools { min-height: 36px; margin-top: 14px; display: flex; align-items: center; gap: 16px; }
 .gesture { font-family: var(--sans); font-size: 10px; color: var(--muted); }
-.surface-controls { flex-wrap: wrap; }
+.tree-controls, .surface-controls { flex-wrap: wrap; }
+.center-control { width: 180px; max-width: 100%; }
 .sheet-control { width: 133px; }
-.surface-controls select { padding: 7px 10px; font-family: inherit; font-size: 11px; }
+.tree-controls select, .surface-controls select { padding: 7px 10px; font-family: inherit; font-size: 11px; }
 .check-control { flex-direction: row; align-items: center; gap: 7px; font-size: 11px; }
 .check-control input { width: 14px; height: 14px; margin: 0; accent-color: var(--ink); }
 .text-button { padding: 6px 0; border: 0; font-size: 11px; text-decoration: underline; text-underline-offset: 3px; margin-left: auto; }
@@ -121,7 +122,7 @@ summary { cursor: pointer; color: var(--ink); }
 .survey { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 16px; }
 .survey > summary { font-family: var(--sans); font-size: 12px; font-weight: 500; }
 .path-integrals { margin-top: 28px; }
-.selectors { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; gap: 12px; }
+.selectors { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; gap: 12px; }
 .hint { font-size: 14px; line-height: 1.65; color: var(--muted); overflow-wrap: anywhere; }
 .integral-panel td { vertical-align: top; }
 pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
@@ -176,7 +177,7 @@ pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow
   h2 { font-size: 18px; }
   .plot-tools { gap: 12px; }
   .sheet-control { width: 118px; }
-  .surface-controls select, .check-control, .text-button { font-size: 10px; }
+  .tree-controls select, .surface-controls select, .check-control, .text-button { font-size: 10px; }
   .regulator-matrix td { font-size: 11.5px; padding: 12px 4px; }
   .regulator-matrix th { padding: 12px 4px; }
   .regulator-matrix tbody th { font-size: 12px; }

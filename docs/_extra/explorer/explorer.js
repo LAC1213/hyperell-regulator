@@ -316,6 +316,19 @@ async function highlightSelection() {
   },paths):Promise.resolve()]);
   restoreCamera(camera);
 }
+async function updateTreeSelection() {
+  const plot=$("base-plot");
+  if (!current || !plot.data) return;
+  const k=selectedWeight();
+  // Update the branch cut and active diamond without changing the axes or view.
+  await Promise.all([
+    Plotly.restyle(plot,{"line.color":current.edges.map(treeEdgeColor)},current.edges.map((_,i)=>i)),
+    Plotly.restyle(plot,{
+      "marker.size":current.weights.map((_,i)=>i===k?16:13),
+      "marker.line.width":current.weights.map((_,i)=>i===k?3:2)
+    },current.weights.map((_,i)=>current.edges.length+1+i))
+  ]);
+}
 async function renderTree() {
   if (!current) return;
   const data=current;
@@ -349,12 +362,13 @@ async function renderTree() {
     uirevision:(label||current.input.F)+"/"+current.weights[k].center,dragmode:"pan",hovermode:"closest",font:{family:"Source Serif 4, Georgia, serif",color:"#183e3b",size:13},
     xaxis:{title:"Re(x)",range:[center-halfX,center+halfX],autorange:false,zeroline:false},yaxis:{title:"Im(x)",range:[-halfY,halfY],autorange:false,scaleanchor:"x",scaleratio:1,zeroline:false},
     legend:{orientation:"h",y:-.22}},{responsive:true,displaylogo:false});
-  if (data!==current || k!==selectedWeight()) { renderIntegrals(); return renderTree(); }
+  if (data!==current) { renderIntegrals(); return renderTree(); }
   // Apply the selected centre even if Plotly retained a prior pan or autorange.
   await Plotly.relayout(plot,{
     "xaxis.range":[center-halfX,center+halfX],"xaxis.autorange":false,
     "yaxis.range":[-halfY,halfY],"yaxis.autorange":false
   });
+  if (k!==selectedWeight()) { renderIntegrals(); await updateTreeSelection(); }
   plot.removeAllListeners("plotly_click");
   plot.on("plotly_click",event=>{const edge=event.points[0].customdata;if(Number.isInteger(edge))inspectPath(edge);});
 }
@@ -433,9 +447,9 @@ function renderCatalog() {
   }); $("curve-select").disabled=false;
 }
 $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-select").value)));
-["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();if(id==="weight-select")renderTree();}));
+["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();if(id==="weight-select")updateTreeSelection();}));
 $("beilinson-digits").addEventListener("input",()=>renderBeilinson(currentCurve));
-window.addEventListener("pageshow",()=>{if(current){renderIntegrals();renderTree();}});
+window.addEventListener("pageshow",()=>{if(current){renderIntegrals();updateTreeSelection();}});
 ["visible-sheet","show-mesh"].forEach(id=>$(id).addEventListener("change",renderPlot));
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;$("curve-select").value="";for(const row of $("catalog-rows").children)row.classList.remove("selected");await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});

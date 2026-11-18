@@ -14,7 +14,8 @@ orders and real locus. The LMFDB link opens its database entry.
 **The tree in** :math:`\mathbb P^1` shows the cut on the base;
 **The lift to** :math:`C` shows its lift.
 
-Select a logarithmic center and an edge to inspect the path integrals.
+Select a logarithmic center in the tree panel and an edge to inspect the path integrals.
+Changing the center preserves the tree view's pan and zoom.
 Clicking a lifted path also selects its positive-side sheet.
 For :math:`\omega_j=x^{j-1}dx/y`, the path table gives
 
