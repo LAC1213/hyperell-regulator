@@ -1,142 +1,62 @@
-Interactive curve explorer
-===========================
+Curve explorer
+==============
 
-`Open the explorer <explorer/index.html>`_. For a genus-two hyperelliptic curve
-:math:`C` with marked points :math:`P,Q`, the explorer shows how Stokes' theorem
-reduces the regulator integrals for the motivic cohomology classes
-:math:`\alpha_P,\alpha_Q` to path integrals. The coordinate
-:math:`x:C\to\mathbb P^1` presents the curve as a two-sheeted cover.
-The catalog retains
-the successful genus-two survey curves of conductor below 1300, excluding
-conductor 1116, and their 100-digit reference determinants and L-values.
+`Open the explorer <explorer/index.html>`_ to inspect the Stokes computation
+for the classes :math:`\alpha_P,\alpha_Q` on a genus two curve
+:math:`C:y^2=F(x)`. The catalog contains 21 successful survey curves of
+conductor below 1300 with 100-digit reference data.
 
-Using the viewer
-----------------
+The viewer
+----------
 
-Choose a curve. The first panel gives its equation, the coordinates of
-:math:`P,Q` and their orders in the Jacobian, and the affine real locus :math:`C(\mathbb R)` with both points
-marked. Real branches are drawn separately where :math:`F(x)\geq0`; gaps
-with no real points are not joined. The graph can be panned and zoomed.
-The LMFDB link beside the curve label opens its database entry. The full survey also provides
-an LMFDB link for each curve.
+Choose a curve to see its equation, marked points :math:`P,Q`, torsion
+orders and real locus. The LMFDB link opens its database entry.
+**The tree in** :math:`\mathbb P^1` shows the cut on the base;
+**The lift to** :math:`C` shows its lift.
 
-**The tree in** :math:`\mathbb P^1` shows the spanning tree on the base;
-**The lift to** :math:`C` shows its lifts to the complex curve.
-The path integrals are always visible beneath these views, before the
-regulator matrix.
-The matrix displays columns for the motivic classes :math:`\alpha_P,\alpha_Q` and
-the Tate class :math:`\Delta C` (the period column), paired with the
-differential forms :math:`\delta_{ij}`. The first column labels these forms explicitly as
-:math:`\omega_1\wedge\overline{\omega_1}`,
-:math:`\omega_1\wedge\overline{\omega_2}+\omega_2\wedge\overline{\omega_1}`,
-and :math:`\omega_2\wedge\overline{\omega_2}`. The determinant is :math:`D`.
-
-Use the path-integral selectors to choose a logarithmic factor.
-The center selector states an equality, for example :math:`a=x(P)=1`.
-Changing this center updates the path integrals and centers the tree view on
-the selected singularity, including when the page first loads. Edges in its
-logarithmic branch cut :math:`B` have the same colour as its diamond; other
-edges are muted. The three-class matrix is unchanged. Click an edge
-in the two-dimensional tree to select it, or a colored path in the sheet
-view to select both an edge and a positive-side sheet. The selected tree
-edge and both of its lifted paths are highlighted and follow the edge selector. The selectors also let
-you choose the logarithm bank and reverse the path orientation. Drag the
-plot to rotate; use its toolbar to zoom or pan. The sheet selector isolates
-one sheet and both banks of its boundary. The mesh checkbox hides the
-translucent surfaces while retaining paths. Switching between pan, zoom and
-rotation, changing curves, or updating a selection preserves the camera.
-Use **Reset view** to reset it; double-clicking does not reset the camera.
-
-The Form column gives :math:`\omega_1=dx/y` and :math:`\omega_2=x\,dx/y`
-explicitly. For :math:`\omega_j=x^{j-1}dx/y`, the table displays
+Select a logarithmic center and an edge to inspect the path integrals.
+Clicking a lifted path also selects its positive-side sheet.
+For :math:`\omega_j=x^{j-1}dx/y`, the path table gives
 
 .. math::
 
    I_j(e)=\int_e\omega_j,\qquad
    L_{j,a}^{\pm}(e)=\int_e\log^{\pm}(x-a)\,\omega_j.
 
-The finite cut is a Euclidean minimum spanning tree of the complete graph
-on the critical values of :math:`x` (the images of the ramification points)
-together with :math:`x(P)` and :math:`x(Q)`. Coincident coordinates give one
-vertex. An outward ray from the rightmost vertex extends the cut to infinity;
-infinity is also a critical value for odd-degree models. Lifting the cut
-to :math:`C` gives the sheet boundaries used in Stokes' theorem.
-All logarithmic factors share this diagram. Logarithmic jumps can vary between edges:
+The regulator matrix pairs :math:`\alpha_P,\alpha_Q,\Delta C` with
+:math:`\delta_{11},\delta_{12},\delta_{22}`. Its row weights are
+:math:`(1,2\operatorname{Re}(x),|x|^2)` and its determinant is :math:`D`.
+A finite common pole contributes its logarithmic column with a minus sign
+to both marked-point columns.
+
+The comparison box displays
 
 .. math::
 
-   L_{j,a}^{+}(e)-L_{j,a}^{-}(e)=\Delta_a(e) I_j(e),
-   \qquad \Delta_a(e)\in 2\pi i\mathbb Z.
+   \pi c^+(C)c^-(C)L''(M_{\mathrm{std}}(C),1)=qD.
 
-Both banks use the same geometric orientation toward infinity. To traverse
-a sheet boundary, reverse the negative bank and follow the cyclic edge
-order at each junction. Downloads include this boundary order as
-``boundary_word`` entries ``[edge_index, orientation]``. These edge indices
-and the vertex indices in ``edges[].vertices`` are zero based; a null vertex
-is infinity. The viewer displays edge numbers starting at one. Path integrals,
-the matrix, and the survey display 10 significant digits; downloads retain
-the full exported decimal strings.
+**Digits to display** selects 10–100 significant digits from the saved
+values. The path table and matrix display 10 significant digits; downloads
+retain the full decimal strings. Rational factors are numerical guesses,
+shown when their relative agreement exceeds 95 digits.
 
-Geometry and pairings
----------------------
+Cuts and sheets
+---------------
 
-The two-dimensional plot shows the MST in the x-plane with equal axis
-scales. Circles mark critical values of :math:`x`, diamonds mark the
-marked x-coordinates in the same colors as the marked points above, and
-the dashed ray continues to infinity. Edge numbers match the integral
-selectors. The three-dimensional sheet view uses the projection
+A Euclidean minimum spanning tree joins the branch values and marked
+:math:`x`-coordinates. Circles mark branch values and diamonds mark
+logarithmic centers. Coincident coordinates give one vertex. A ray from the
+rightmost vertex extends the cut to infinity. Each logarithmic branch cut
+is the tree path from its center to infinity, highlighted in its colour.
+The sheet view uses the projection
 
 .. math::
 
    (\operatorname{Re}x,\operatorname{Im}x,
    \operatorname{arsinh}(\operatorname{Re}(e^{-0.55i}y))).
 
-Projection crossings need not be curve intersections. Meshes use continuous
-square-root factors on a triangulated slit domain. Their labels are checked
-around mesh cycles and against both banks of the integration cut. Mesh
-vertices are inset slightly from cuts. Meshes are display approximations
-and do not enter numerical quadrature.
-
-The plotted ray is truncated; its integrals include the entire infinite
-tail. Finite endpoints are included in quadrature but approached by the
-display samples. Float64 determines geometry and topology; guarded
-arbitrary precision determines the integrals.
-
-The matrix combines the two regulator columns and the Tate (period) column;
-its determinant :math:`D` is shown centrally below it. Genus-two rows use
-weights :math:`(1,2\operatorname{Re}(x),|x|^2)`.
-For a finite common pole b, subtract its logarithmic column from each
-marked-point column. Custom imports without class data instead show the
-selected logarithmic pairings in this section.
-
-The final box displays Beilinson's conjectural relation
-
-.. math::
-
-   \pi\,c^+(C)\,c^-(C)\,L''(M_{\mathrm{std}}(C),1)=qD.
-
-The saved numerical equality holds at 100-digit precision.
-The **Digits to display** slider selects 10–100 significant digits for the
-individual quantities, with an exact rational :math:`q` when verified by the
-saved comparison. Values are rounded directly from the saved decimal strings.
-This box is available for the catalog curves.
-
-The interface calls the two marked points :math:`P,Q` and the common pole
-:math:`O`. In the saved catalog, ``points[0]`` and ``points[1]`` have these
-roles respectively; older descriptions called them :math:`P,R`.
-This is a display convention and does not change the exported data.
-For custom imports, diamonds mark every supplied logarithmic center;
-the three-class matrix is shown only for catalog curves.
-
-The table recomputes determinants and full periods with the current MST
-code at a 100-digit target. L-values are reused from the cache after the
-current precision and coefficient-count checks. Quotients and their
-relative agreement are recomputed from these ingredients. The table uses
-:math:`q=\pi c^+c^-L''(\mathrm{std},1)/D` and full
-cycle periods. Rational guesses are shown when their recomputed agreement
-exceeds 95 digits. Orders and component verdicts concern the algebraic
-cycles; the numerical cover always has degree two. Precision targets and
-convergence checks are not certified interval error bounds.
+Projection crossings need not be intersections on the curve. The meshes
+are display approximations.
 
 Recompute the catalog
 ---------------------
@@ -150,44 +70,24 @@ From the repository root:
    sage -pip install '.[visualization]'
    sage -python -m hyperell_regulator.experiments.small_conductor_surfaces --jobs 4
 
-The first command exports integration models, marked points and survey
-references without constructing torsion functions. The second integrates
-one shared cut per curve, recomputes the 100-digit numerical table, and
-verifies its determinants against the saved reference. Numerical source
-hashes and L-value cache checks are included in the catalog. Source hashes
-cover the parsed Python code, ignoring docstrings, comments, and formatting;
-editing documentation alone does not invalidate the saved numerical data.
-The third
-installs Triangle, the optional constrained
-triangulation dependency. Mesh generation does not recompute integrals.
+These commands export the survey models, integrate their common cuts,
+install Triangle and build display meshes. Determinants are checked against
+the survey references. Source hashes ignore docstrings, comments and formatting.
 
-Sphinx copies the static files in ``docs/_extra/explorer`` to the published
-``explorer/`` directory. Building the documentation does not run numerical
-integration.
-
-The explorer serves its text fonts and the KaTeX math typesetter locally.
-Equations, coordinates, integral values, class labels and determinants are
-typeset from TeX, while downloads retain the original exact inputs and
-decimal strings. KaTeX's MIT license is in ``explorer/vendor/katex/LICENSE``;
-the text-font licenses are in ``explorer/vendor/fonts/``.
+Sphinx copies ``docs/_extra/explorer`` into the published site.
+Building the documentation does not repeat numerical integration.
+KaTeX and fonts are served locally; their licenses are under
+``explorer/vendor/``.
 
 Explore another curve
 ---------------------
 
-Compute a local result and select **Import local result**:
+Compute a result, then select **Import local result**:
 
 .. code-block:: sh
 
    sage -python -m hyperell_regulator.regulator.explorer \
-     --F='x^5+(x+1)^2' --centers -1 0 --prec=30 --out=curve.json
+       --F='x^5+(x+1)^2' --centers -1 0 --prec=30 --out=curve.json
 
 The exporter accepts squarefree polynomials of degree 5 through 12 and
-one through eight rational logarithmic centers. New exports use schema
-version 2; old function-cover exports must be regenerated.
-
-Preview documentation locally:
-
-.. code-block:: sh
-
-   sage -python -m sphinx -W --keep-going -b html docs docs/_build/html
-   python3 -m http.server --directory docs/_build/html 8000
+one through eight rational logarithmic centers.

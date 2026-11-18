@@ -1,9 +1,8 @@
 Periods and regulators
 ======================
 
-The numerical API takes a curve :math:`y^2=F(x)` and rational logarithmic
-centers. It integrates directly on the two sheets of the hyperelliptic map.
-Run examples in Sage or with ``sage -python``:
+For :math:`C:y^2=F(x)`, the numerical API integrates periods and logarithmic
+weights on a common cut. Run in Sage or with ``sage -python``:
 
 .. code-block:: python
 
@@ -18,81 +17,50 @@ Run examples in Sage or with ``sage -python``:
    periods, columns = regulators_stokes(F, [-1, 0], prec=100)
    c_plus, c_minus = c_invariants(F, prec=30)
 
-``columns[0]`` uses :math:`\log|x+1|`, and ``columns[1]`` uses
-:math:`\log|x|`. Both columns and the ordinary periods share one set of cut
-edges. No torsion functions or divisors enter numerical integration.
+The columns use :math:`\log|x+1|` and :math:`\log|x|`, respectively.
+Pass ``pole=b`` for :math:`\log|(x-a)/(x-b)|`; ``pole=None`` means infinity.
+Coefficients and logarithmic centers are rational.
 
-Pass ``pole=b`` to use :math:`\log|(x-a)/(x-b)|` instead. A finite pole adds
-its logarithmic center to the shared cut and its column is subtracted.
-The default ``pole=None`` means infinity.
-
-Precision and normalization
+Precision and normalisation
 ---------------------------
 
-Without ``prec``, results are float64 arrays; guarded quadrature is still
-used internally. With ``prec=30``, results retain 30 decimal digits. Exact
-rational coefficients are required, and failed convergence checks raise
-exceptions. Precision targets are not certified interval bounds.
+``prec`` is the decimal accuracy target. Omitting it returns float64
+arrays. Failed convergence checks raise exceptions; the accuracy target
+is not a certified error bound.
 
-The returned vectors have entries indexed by :math:`a\le b`, for the
-weights :math:`\operatorname{Re}(x^a\bar{x}^b)/|F|`. In genus two their
-order is :math:`(1,\operatorname{Re}(x),|x|^2)`. Double the middle entry for
-the Beilinson determinant's convention :math:`(1,2\operatorname{Re}(x),|x|^2)`.
+The vectors contain plane integrals with weights
+:math:`\operatorname{Re}(x^i\bar{x}^j)/|F(x)|`, for :math:`i\le j`.
+In genus two the order is :math:`(1,\operatorname{Re}(x),|x|^2)`.
+Double the middle entry for the determinant convention
+:math:`(1,2\operatorname{Re}(x),|x|^2)`.
 
-The Stokes algorithm
---------------------
+Stokes integration
+------------------
 
-A Euclidean minimum spanning tree connects the branch values and logarithmic
-centers. A ray from the rightmost vertex extends it to infinity without
-crossing a finite edge. Its two lifted boundaries give the Stokes sum.
-At a junction, the boundary walk follows the cyclic order of incident edges. Different logarithms can have different jumps on an edge, all read
-from the same cut. The jump of each logarithm is supported on its unique
-tree path to infinity. Second moments reduce to products of ordinary edge
-periods after taking the symmetric imaginary part.
+A Euclidean minimum spanning tree joins the branch values and logarithmic
+centers. A ray from its rightmost vertex extends the cut to infinity.
+The two lifted boundaries give the Stokes sum. Each logarithmic jump is
+supported on the tree path from its center to infinity.
 
-Finite edges use :math:`x=a+(b-a)\sin^2(\pi t/2)`. Endpoint root factors
-cancel analytically. The infinite ray uses a fixed reciprocal substitution.
-Square roots are evaluated as continuous products of linear factors.
-There is no general cover inversion, chart selection, or Newton tracking.
+Finite edges use :math:`x=a+(b-a)\sin^2(\pi t/2)`, with endpoint root
+factors cancelled analytically. The ray uses a reciprocal substitution.
+Second moments reduce to products of edge periods after taking the
+symmetric imaginary part.
 
-``regulator_plane(F, a)`` and ``periods_plane(F)`` retain independent adaptive
-quadrature over :math:`\mathbb C` as a slower float64 reference.
+``regulator_plane(F, a)`` and ``periods_plane(F)`` compute the corresponding
+integrals by independent float64 quadrature over :math:`\mathbb C`.
 
 Cycle periods
 -------------
 
-``c_invariants`` uses full cycle periods, twice the integrals along the
-branch-to-branch edges of their minimum spanning tree. In odd degree all
-``2*g`` finite edges give an integral basis. In even degree there is one
-relation among ``2*g+1`` lifted edges: omit a leaf edge, whose coefficient
-in the relation is a unit. The omitted leaf has largest absolute value,
-breaking ties by real and imaginary parts.
+``c_invariants`` returns signed pivoted minors of the real and imaginary
+parts of the full period matrix. Full periods are twice the integrals on
+lifted branch-to-branch tree edges.
 
-Float64 and arbitrary-precision cycle periods use the same guarded
-quadrature and minor calculations. Float64 results are converted only at
-the output. The legacy ``plane.period_matrix`` tolerance parameters select
-an internal decimal accuracy target, with a minimum of 15 digits; its
-returned NumPy array remains complex128.
+In odd degree all :math:`2g` edges give an integral cycle basis. In even
+degree omit the leaf edge at the branch value of largest modulus, breaking
+ties by real and imaginary parts. These choices fix the period normalisation;
+a change of cycle basis can change the chosen minors by rational factors.
 
-The invariants remain signed pivoted minors of the real and imaginary parts
-of the period matrix. A change of cycle basis can multiply these chosen
-minors by rational factors, in addition to changing signs. For example,
-on the saved conductor-249 model the MST convention halves ``c_minus`` and
-changes the displayed quotient from 28 to 14; its regulator determinant
-and L-value are unchanged. The saved survey and explorer use the current
-MST normalization.
-New experiment records identify the MST period basis, and their
-cache policy is separate from older records.
-
-The semilunar integration backend and its selector have been removed.
-
-Migration from the function-cover API
--------------------------------------
-
-Replace ``periods_and_regulator_stokes(F, (x-a, 0))`` with
-``periods_and_regulator_stokes(F, a)``. For a genus-two determinant use
-``regulators_stokes(F, [a, b])`` to compute both columns together.
-The general :math:`A(x)+B(x)y` numerical API, fast/slow moment switch,
-cover classes and torsion-function constructors have been removed.
-``torsion_order`` and ``divisor_class_order`` still certify divisor classes
-for the algebraic-cycle and component computations.
+``plane.period_matrix`` returns a complex128 array. Its tolerance parameters
+select an internal accuracy target of at least 15 decimal digits.

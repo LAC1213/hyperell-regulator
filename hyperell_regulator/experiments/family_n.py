@@ -122,7 +122,7 @@ def standard_conductor(n):
 # ---------------------------------------------------------------------------
 
 def _regulator_precision(reg_digits, dps):
-    """Resolve the decimal precision and its legacy ``dps`` alias."""
+    """Resolve the decimal precision and its ``dps`` alias."""
     if dps is not None:
         if reg_digits is not None and reg_digits != dps:
             raise ValueError("reg_digits and dps specify different precisions")

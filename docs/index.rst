@@ -1,22 +1,19 @@
 hyperell-regulator
 ==================
 
-Numerical tests of Beilinson's conjecture for the standard motive of genus 2
-curves over the rationals, using SageMath.
+Numerical tests of Beilinson's conjecture for genus two curves over the
+rationals, using SageMath. The package computes periods, regulators,
+standard :math:`L`-values and reduction data.
 
-The package computes periods, regulator integrals, standard :math:`L`-values,
-and reduction and component data. Regulators, periods and :math:`L`-values
-support both float64 and arbitrary precision.
-
-For a curve :math:`C`, the standard motive is the rank-5 summand
+For a curve :math:`C`, the standard motive is
 
 .. math::
 
-   \mathrm{std} = \ker\!\left(\bigwedge^2 h^1(C)
-                  \longrightarrow h^2(C)\right).
+   M_{\mathrm{std}}(C)=\ker\!\left(\bigwedge^2 h^1(C)
+                      \longrightarrow h^2(C)\right).
 
-Start with the installation guide and the worked example, or browse the API
-reference generated from the package's docstrings.
+`The curve explorer <explorer/index.html>`_ displays the cuts and path
+integrals for the successful 100-digit survey curves.
 
 .. toctree::
    :maxdepth: 2
@@ -36,6 +33,3 @@ reference generated from the package's docstrings.
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-`Open the interactive cut-system explorer <explorer/index.html>`_ for the
-successful 100-digit survey curves, with one shared two-sheet diagram per curve.

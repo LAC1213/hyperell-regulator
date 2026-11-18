@@ -1,100 +1,68 @@
 Beilinson experiments
 =====================
 
-The experiment commands combine regulator determinants, periods and standard
-:math:`L`-values, and compare
+The experiments compare the regulator determinant :math:`D` with
 
 .. math::
 
-   q = \frac{\pi\,c^+c^-\,L''(\mathrm{std},1)}{D}
+   \pi c^+c^-L''(M_{\mathrm{std}}(C),1)=qD,\qquad q\in\mathbb Q^\times.
 
-with a rational guess. The determinant :math:`D` uses weights
-:math:`d_{11}=1`, :math:`d_{12}=2\operatorname{Re}(z)`, and
-:math:`d_{22}=|z|^2`.
-``comparison.rational_is_integer`` reports whether the guessed rational
-has denominator one.
+The determinant uses weights :math:`(1,2\operatorname{Re}(z),|z|^2)`.
+``comparison.rational_is_integer`` tests whether the guessed rational
+factor has denominator one.
 
-Survey curves
--------------
+Survey and family
+-----------------
 
-Fetch curve data and test conductors below 1000 using float64:
+Fetch curves with conductor strictly below 1000 and test them:
 
 .. code-block:: bash
 
    sage -python -m hyperell_regulator.experiments.beilinson 1000 --fetch
 
-Reuse cached data and request 30-digit regulators and L-values:
+Use cached data with 30-digit regulators and :math:`L`-values:
 
 .. code-block:: bash
 
    sage -python -m hyperell_regulator.experiments.beilinson 250 \
-       --prec 30 --digits 30 --edge-seconds 120
+       --prec 30 --digits 30
 
-One-parameter family
---------------------
-
-Test parameter ``n=2`` without computing an L-value:
+For the family
+:math:`y^2+x(x-1)y=x(x-1)(x^3+nx^2-(n+1)x+1)`, test :math:`n=2`:
 
 .. code-block:: bash
 
    sage -python -m hyperell_regulator.experiments.family_n 2 --no-lvalue
 
-Both commands support ``--prec``, ``--digits``, ``--no-lvalue``, ``--verbose``,
-``--edge-seconds``, ``--force`` and ``--out``. Use ``--help`` for all options.
-The default edge time limit is 15 seconds. For ``family_n``,
-``--max-conductor`` bounds the standard motive's conductor.
+Regulators default to float64, :math:`L`-values to 15 decimal digits, and
+edge limits to 15 seconds. ``--prec`` sets regulator precision and
+``--digits`` sets :math:`L`-value precision. ``--no-lvalue`` skips
+:math:`L`-values. For the family, ``--max-conductor`` bounds the standard
+conductor inclusively. Use ``--help`` for all options.
 
-PARI's stack allowance grows with the number of L-function coefficients and
-the requested precision. Memory is committed as needed; if the workspace
-exceeds the initial estimate, the failed PARI operation is retried with a
-larger allowance, reusing the computed coefficients. Large coefficient
-counts can require several GiB of memory at high precision.
+Integrality criterion
+---------------------
 
-The Beilinson survey includes triples with undecided component verdicts by
-default, so ``388.a.776.1`` is attempted despite the undecided condition at 2.
-The saved triple retains those verdicts. Use ``--exclude-undecided`` (or
-``allow_undecided=False`` in Python) to require affirmative verdicts; known
-negative verdicts are excluded by default.
+Marked points are distinct and pairwise nonconjugate, with torsion
+differences from a common pole. The component criterion requires each
+marked pair to reduce smoothly on the same stable component at every prime.
+Undecided verdicts are accepted and recorded by default; use
+``--exclude-undecided`` to require affirmative verdicts.
 
-To skip component checks and evaluate every remaining torsion triple, once
-up to permutations, use:
+To evaluate all torsion triples up to permutation without component tests:
 
 .. code-block:: bash
 
    sage -python -m hyperell_regulator.experiments.beilinson 1000 \
        --ignore-component-criterion --out results/beilinson_all_triples.json
 
-This mode still excludes repeated points and hyperelliptic conjugate pairs,
-and requires torsion differences. It recovers missing torsion orders even
-for pairs with negative component verdicts. For each unordered triple, the
-best-ranked choice of common pole is used. All results, including failures,
-are printed and saved in the curve's ``triple_results`` list. The usual
-top-level fields describe the first success, or the first failure if none
-succeeded. ``--tries`` does not limit this mode. In Python, pass
-``ignore_component_criterion=True`` to ``run`` or ``analyse``.
-
-Existing component verdicts remain in the results as metadata. Missing
-component data is left undecided, and no component checks are run. Results
-from different component policies are not reused interchangeably.
-Each triple result records ``same_component_everywhere`` as ``true`` (both
-pairs pass), ``false`` (at least one fails), or ``null`` (undecided), alongside
-the individual pair verdicts. These verdicts do not produce console warnings.
-The terminal displays ``component criterion: yes``, ``no``, or ``undecided``
-for each triple, including cached results.
-
-At 2, the standard L-function now handles semistable reduction of either
-toric rank, and a two-dimensional ramified complement to an unramified
-elliptic or rank-one toric part, including wild reduction. The survey uses
-the exact Jacobian conductor from its curve cache to include the wild
-conductor contribution when PARI omits it. For standalone computations, pass
-``h1_conductor=...`` to ``StandardLFunction`` or ``standard_lvalue`` when
-needed. If the local H1 factor is 1, additional inertia data is still
-required; the error identifies these cases explicitly.
+For each unordered triple, the common pole is chosen by cut conditioning.
+All outcomes are saved in ``triple_results``; ``--tries`` does not limit
+this mode. The top-level fields give the first success, or the first failure.
+``same_component_everywhere`` is ``true``, ``false`` or ``null`` (undecided).
 
 Numerical helpers
 -----------------
-
-The determinant helper takes the curve and two point coordinates:
 
 .. code-block:: python
 
@@ -105,21 +73,23 @@ The determinant helper takes the curve and two point coordinates:
    det, matrix, errors = beilinson_determinant_stokes(F, P, Q, digits=30)
    column = regulator_column_stokes(F, P, digits=30)
 
-Torsion orders are no longer arguments to these numerical helpers. Orders
-remain part of exact cycle certification and report metadata. Pass numerical
-options such as ``digits`` and ``pole`` by keyword. ``triple_conditioning``
-and ``rank_triples`` no longer accept the unused ``mp`` flag; ranking uses
-the shared cut geometry.
+Here ``P`` and ``Q`` are point coordinates on :math:`y^2=F(x)`.
+``pole`` specifies a common finite pole; the default is infinity.
+Torsion orders certify the algebraic classes independently of integration.
+
+For computations at 2, ``h1_conductor`` supplies the exact Jacobian
+conductor when PARI omits its local exponent. A trivial local
+:math:`h^1` factor requires additional inertia data. High precision and
+large coefficient counts can require several GiB of PARI stack memory.
 
 Saved results
 -------------
 
-Data and results are cached under ``lmfdb_cache/`` and ``results/`` in the
-working directory. Set ``HYPERELL_REGULATOR_DATA`` to choose another location.
-A saved regulator whose L-value failed is retried on the next run requesting
-L-values.
+Caches are stored in ``lmfdb_cache/`` and ``results/`` relative to
+``HYPERELL_REGULATOR_DATA`` or the working directory. Successful results
+are reused when their precision and component policy suffice; failed
+computations are retried. ``--force`` recomputes successful regulators.
 
 The `saved 100-digit survey
-<https://github.com/LAC1213/hyperell-regulator/tree/main/reports>`_ includes
-LaTeX tables, full-precision values, integration models and regeneration
-instructions.
+<https://github.com/LAC1213/hyperell-regulator/tree/main/reports>`_
+contains tables, full-precision values and integration models.
