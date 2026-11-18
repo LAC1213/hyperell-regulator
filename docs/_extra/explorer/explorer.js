@@ -2,10 +2,29 @@
 "use strict";
 const $ = id => document.getElementById(id);
 const COLORS = ["#bd5034", "#267f91"];
+const POINT_COLORS = [...COLORS];
+const PI = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647";
 const DATA_VERSION = "mst-current-1";
 const HOME_CAMERA = {eye:{x:1.5,y:-1.6,z:1.2},center:{x:0,y:0,z:0},up:{x:0,y:0,z:1},projection:{type:"perspective"}};
-let catalog, current, mesh = null, version = 0, label = "";
-const decimal = (v,digits=10) => Number(v) === 0 ? "0" : Number(v).toPrecision(digits);
+let catalog, current, currentCurve = null, mesh = null, version = 0, label = "";
+// Round the saved decimal strings directly: Number would discard digits after ~16.
+function decimal(value,digits=10) {
+  const match=/^([+-]?)(\d*)(?:\.(\d*))?(?:e([+-]?\d+))?$/i.exec(String(value).trim());
+  if (!match || !(match[2] || match[3])) throw Error("Invalid decimal value");
+  const raw=match[2]+(match[3]||""), first=raw.search(/[1-9]/);
+  if (first<0) return "0";
+  let exponent=Number(match[4]||0)+match[2].length-first-1;
+  const significant=raw.slice(first);
+  let rounded=significant.slice(0,digits).padEnd(digits,"0");
+  if (Number(significant[digits]||0)>=5) {
+    rounded=(BigInt(rounded)+1n).toString();
+    if (rounded.length>digits) { exponent++; rounded=rounded.slice(0,digits); }
+  }
+  const sign=match[1]==="-"?"-":"";
+  if (exponent < -6 || exponent >= digits) return sign+rounded[0]+(digits>1?"."+rounded.slice(1):"")+"e"+(exponent>=0?"+":"")+exponent;
+  if (exponent<0) return sign+"0."+"0".repeat(-exponent-1)+rounded;
+  return sign+rounded.slice(0,exponent+1)+(exponent+1<digits?"."+rounded.slice(exponent+1):"");
+}
 const polynomial = source => source.replace(/\^(\d+)/g,(_,power)=>[...power].map(d=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[d]).join("")).replace(/\*/g,"").replace(/-/g,"−");
 const rational = value => String(value).split("/").map(Number).reduce((a,b)=>a/b);
 function math(node,tex) {
@@ -62,8 +81,15 @@ function centerReferences(center) {
 }
 function centerNames(center) { return centerReferences(center).join(", "); }
 function centerColor(center) {
-  const index=(current.collection?.points||[]).findIndex(point=>rational(point[0])===rational(center));
-  return index>=0?COLORS[index%COLORS.length]:"#61716b";
+  const index=current.collection?.points
+    ?current.collection.points.findIndex(point=>rational(point[0])===rational(center))
+    :current.weights.findIndex(weight=>rational(weight.center)===rational(center));
+  return index>=0?POINT_COLORS[index%POINT_COLORS.length]:"#61716b";
+}
+function selectedWeight() { return Number($("weight-select").value); }
+function treeEdgeColor(edge) {
+  const k=selectedWeight();
+  return edge.jumps[k].some(value=>Number(value)!==0)?centerColor(current.weights[k].center):"#88958f";
 }
 function status(message, error=false) { $("status").textContent=message; $("status").classList.toggle("error",error); }
 function option(select,value,text) { const n=document.createElement("option"); n.value=value; n.textContent=text; select.append(n); }
@@ -127,8 +153,11 @@ function renderBeilinson(curve) {
   $("beilinson-panel").hidden=!available;
   $("beilinson-values").replaceChildren();
   if (!available) return;
+  const digits=Number($("beilinson-digits").value);
+  $("beilinson-digits-value").value=String(digits);
+  $("beilinson-values").classList.toggle("precise",digits>30);
   const items=[
-    ["\\pi",Math.PI],
+    ["\\pi",PI],
     ["c^+(C)",values.c_plus],
     ["c^-(C)",values.c_minus],
     ["L''",values.L_second_derivative],
@@ -138,7 +167,18 @@ function renderBeilinson(curve) {
   items.forEach(([label,value])=>{
     const item=document.createElement("div"), term=document.createElement("dt"), definition=document.createElement("dd");
     math(term,label);
-    math(definition,label==="q"&&curve.comparison_verified?"="+CurveGeometry.rationalTex(value):"\\approx"+numberTex(value,10));
+    if (label==="q" && curve.comparison_verified) math(definition,"="+CurveGeometry.rationalTex(value));
+    else {
+      definition.className="conjecture-number";
+      const approximation=document.createElement("span"), number=document.createElement("span");
+      math(approximation,"\\approx");
+      const [mantissa,exponent]=decimal(value,digits).split("e");
+      number.className="significant-digits"; number.textContent=mantissa;
+      definition.append(approximation,number);
+      if (exponent!==undefined) {
+        const power=document.createElement("span"); math(power,"\\times10^{"+Number(exponent)+"}"); definition.append(power);
+      }
+    }
     item.append(term,definition); $("beilinson-values").append(item);
   });
 }
@@ -215,7 +255,7 @@ async function renderRealPlot() {
     geometry.points.forEach((point,i)=>traces.push({
       type:"scatter",mode:"markers+text",x:[point.x],y:[point.y],text:[point.name],
       textposition:point.y<0?"bottom right":"top right",textfont:{family:"Source Serif 4, Georgia, serif",size:16},
-      marker:{size:9,color:COLORS[i%COLORS.length],line:{color:"#fffefa",width:1.5}},
+      marker:{size:9,color:POINT_COLORS[i%POINT_COLORS.length],line:{color:"#fffefa",width:1.5}},
       showlegend:false,meta:{kind:"marked-point",point:point.name},
       hovertemplate:point.name+" = (%{x:.8g}, %{y:.8g})<extra></extra>"
     }));
@@ -267,7 +307,7 @@ async function highlightSelection() {
   const selected=Number($("edge").value), plot=$("curve-plot"), camera=saveCamera();
   const paths=(plot.data||[]).map((trace,i)=>trace.meta?.kind==="path"?i:null).filter(i=>i!==null);
   await Promise.all([Plotly.restyle($("base-plot"), {
-    "line.color":current.edges.map((_,i)=>i===selected?"#bc542e":"#44736a"),
+    "line.color":current.edges.map(treeEdgeColor),
     "line.width":current.edges.map((_,i)=>i===selected?4:2)
   }, current.edges.map((_,i)=>i)),
   paths.length?Plotly.restyle(plot,{
@@ -278,30 +318,35 @@ async function highlightSelection() {
 }
 async function renderTree() {
   if (!current) return;
-  const selected=Number($("edge").value);
+  const selected=Number($("edge").value), k=selectedWeight(), center=rational(current.weights[k].center);
   const traces=current.edges.map((e,i)=>({
     type:"scatter",mode:"lines+text",x:e.base.map(p=>Number(p[0])),y:e.base.map(p=>Number(p[1])),
     text:e.base.map((_,j)=>j===Math.floor(e.base.length/2)?String(e.index):""),textposition:"top center",
-    line:{color:i===selected?"#bc542e":"#44736a",width:i===selected?4:2,dash:e.infinite?"dash":"solid"},
+    line:{color:treeEdgeColor(e),width:i===selected?4:2,dash:e.infinite?"dash":"solid"},
     customdata:e.base.map(()=>i),name:"Edge "+e.index+(e.infinite?" → ∞":""),showlegend:false,
     hovertemplate:"Edge "+e.index+(e.infinite?" → ∞":"")+"<br>Re(x) = %{x:.10g}<br>Im(x) = %{y:.10g}<extra></extra>"
   }));
   traces.push({type:"scatter",mode:"markers",x:current.roots.map(p=>Number(p[0])),y:current.roots.map(p=>Number(p[1])),
     marker:{size:8,color:"#253d3c"},name:"Critical values of x",showlegend:false,hovertemplate:"Critical value of x<br>Re(x) = %{x:.10g}<br>Im(x) = %{y:.10g}<extra></extra>"});
-  current.weights.forEach(weight=>{
+  current.weights.forEach((weight,i)=>{
     const color=centerColor(weight.center), name=centerNames(weight.center)||"a = "+weight.center;
     traces.push({type:"scatter",mode:"markers+text",x:[rational(weight.center)],y:[0],
       text:[name],textposition:"bottom center",textfont:{size:11,color},
-      marker:{size:13,symbol:"diamond-open",color,line:{width:2}},name,showlegend:false,
+      marker:{size:i===k?16:13,symbol:"diamond-open",color,line:{width:i===k?3:2}},name,showlegend:false,
       hovertemplate:name+"<br>x=%{x:.10g}<extra></extra>"});
   });
   const rays=current.edges.filter(e=>e.infinite).map(e=>e.base[e.base.length-1]);
   traces.push({type:"scatter",mode:"text",x:rays.map(p=>Number(p[0])),y:rays.map(p=>Number(p[1])),
     text:rays.map(()=>"∞"),textposition:"top right",showlegend:false,hoverinfo:"skip"});
   const plot=$("base-plot");
+  // Symmetric ranges keep a at the centre while retaining the whole finite tree.
+  const points=[...current.edges.flatMap(e=>e.base),...current.roots,...current.weights.map(w=>[rational(w.center),0])];
+  const aspect=Math.max(1,plot.clientWidth-65)/Math.max(1,plot.clientHeight-60);
+  const halfX=1.15*points.reduce((extent,p)=>Math.max(extent,Math.abs(Number(p[0])-center),Math.abs(Number(p[1]))*aspect),.1);
+  const halfY=halfX/aspect;
   await Plotly.react(plot,traces,{margin:{l:45,r:20,t:15,b:45},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
-    uirevision:label||current.input.F,dragmode:"pan",hovermode:"closest",font:{family:"Source Serif 4, Georgia, serif",color:"#183e3b",size:13},
-    xaxis:{title:"Re(x)",zeroline:false},yaxis:{title:"Im(x)",scaleanchor:"x",scaleratio:1,zeroline:false},
+    uirevision:(label||current.input.F)+"/"+current.weights[k].center,dragmode:"pan",hovermode:"closest",font:{family:"Source Serif 4, Georgia, serif",color:"#183e3b",size:13},
+    xaxis:{title:"Re(x)",range:[center-halfX,center+halfX],zeroline:false},yaxis:{title:"Im(x)",range:[-halfY,halfY],scaleanchor:"x",scaleratio:1,zeroline:false},
     legend:{orientation:"h",y:-.22}},{responsive:true,displaylogo:false});
   plot.removeAllListeners("plotly_click");
   plot.on("plotly_click",event=>{const edge=event.points[0].customdata;if(Number.isInteger(edge))inspectPath(edge);});
@@ -328,7 +373,7 @@ async function renderPlot() {
   plot.on("plotly_click",event=>{ const c=event.points[0].customdata; if(c)inspectPath(c[0],c[1]); });
 }
 async function display(data,name,curve=null) {
-  current=validate(data); label=name;
+  current=validate(data); currentCurve=curve; label=name;
   $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,"a = "+[...centerReferences(w.center),w.center].join(" = "))); $("weight-select").disabled=false;
   $("edge").replaceChildren(); current.edges.forEach((e,k)=>option($("edge"),k,"Edge "+e.index+(e.infinite?" → ∞":"")));
   $("result-source").replaceChildren();
@@ -380,7 +425,13 @@ function renderCatalog() {
   }); $("curve-select").disabled=false;
 }
 $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-select").value)));
-["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();}));
+["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();if(id==="weight-select")renderTree();}));
+$("beilinson-digits").addEventListener("input",()=>renderBeilinson(currentCurve));
+["point-p-color","point-q-color"].forEach((id,i)=>$(id).addEventListener("input",()=>{
+  POINT_COLORS[i]=$(id).value;
+  document.documentElement.style.setProperty(i===0?"--point-p":"--point-q",POINT_COLORS[i]);
+  if (current) { renderTree(); renderRealPlot(); }
+}));
 ["visible-sheet","show-mesh"].forEach(id=>$(id).addEventListener("change",renderPlot));
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;$("curve-select").value="";for(const row of $("catalog-rows").children)row.classList.remove("selected");await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});

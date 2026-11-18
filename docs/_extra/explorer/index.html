@@ -7,11 +7,11 @@
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=footer-cleanup-9">
+  <link rel="stylesheet" href="explorer.css?v=precision-tree-10">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
   <script defer src="curve-geometry.js?v=matrix-conjecture-3"></script>
-  <script defer src="explorer.js?v=label-alignment-8"></script>
+  <script defer src="explorer.js?v=precision-tree-10"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -63,9 +63,21 @@
         <section class="panel">
           <div class="section-label"><h2>The tree in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
           <p class="panel-description">The vertices are the critical values of <span data-tex="x">x</span> (images of ramification points), <span data-tex="x(P)">x(P)</span>, and <span data-tex="x(Q)">x(Q)</span>. A minimum spanning tree of their complete graph gives the cut.</p>
-          <div class="plot-tools"><span class="gesture">Click a colored edge to inspect its integrals</span></div>
+          <div class="plot-tools tree-controls">
+            <span class="gesture">Click an edge to inspect its integrals</span>
+            <div class="diamond-colors" role="group" aria-label="Diamond colours">
+              <label><span data-tex="x(P)">x(P)</span><input type="color" id="point-p-color" value="#bd5034" list="diamond-palette" aria-label="Colour of the x(P) diamond"></label>
+              <label><span data-tex="x(Q)">x(Q)</span><input type="color" id="point-q-color" value="#267f91" list="diamond-palette" aria-label="Colour of the x(Q) diamond"></label>
+            </div>
+            <datalist id="diamond-palette">
+              <option value="#bd5034"></option><option value="#267f91"></option>
+              <option value="#7b61a8"></option><option value="#328267"></option>
+              <option value="#c15b87"></option><option value="#3569a8"></option>
+              <option value="#a57818"></option><option value="#684b45"></option>
+            </datalist>
+          </div>
           <div id="base-plot" class="plot" aria-label="Spanning tree connecting the critical values of x and the x-coordinates of P and Q"></div>
-          <p class="caption">Circles: critical values. Colored diamonds: <span data-tex="x(P)">x(P)</span> and <span data-tex="x(Q)">x(Q)</span>. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
+          <p class="caption">Circles: critical values. Colored diamonds: <span data-tex="x(P)">x(P)</span> and <span data-tex="x(Q)">x(Q)</span>. The selected logarithm center is centered in the view; edges in its branch cut <span data-tex="B">B</span> share its colour. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
         </section>
         <section class="panel">
           <div class="section-label"><h2>The lift to <span data-tex="C">C</span></h2></div>
@@ -112,8 +124,11 @@
         <p id="determinant" class="determinant"></p>
       </section>
       <section class="panel beilinson-panel" id="beilinson-panel" aria-labelledby="beilinson-title" hidden>
-        <div class="section-label"><h2 id="beilinson-title">Beilinson’s conjecture</h2></div>
-        <p class="matrix-caption">The following equality holds with 100 digits of precision (with only 10 displayed below):</p>
+        <div class="section-label precision-heading">
+          <h2 id="beilinson-title">Beilinson’s conjecture</h2>
+          <label class="precision-control" for="beilinson-digits"><span>Digits to display: <output id="beilinson-digits-value" for="beilinson-digits">10</output></span><input type="range" id="beilinson-digits" min="10" max="100" step="1" value="10"></label>
+        </div>
+        <p class="matrix-caption">The following equality holds with 100 digits of precision. Use the slider to display 10–100 significant digits:</p>
         <div class="conjecture-equation" id="beilinson-equation" data-tex="\pi\cdot c^+(C)\cdot c^-(C)\cdot L''(M_{\mathrm{std}}(C),1)=q\cdot D">π · c⁺(C) · c⁻(C) · L″(Mstd(C), 1) = q · D</div>
         <dl class="conjecture-values" id="beilinson-values"></dl>
       </section>

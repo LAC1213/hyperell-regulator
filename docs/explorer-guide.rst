@@ -33,8 +33,12 @@ and :math:`\omega_2\wedge\overline{\omega_2}`. The determinant is :math:`D`.
 
 Use the path-integral selectors to choose a logarithmic factor.
 The center selector states an equality, for example :math:`a=x(P)=1`.
-Changing this center updates the path integrals without changing the geometry
-or the three-class matrix. Click an edge
+Changing this center updates the path integrals and centers the tree view on
+the selected singularity. Edges in its logarithmic branch cut :math:`B` have
+the same colour as its diamond; other edges are muted. The colour pickers
+beside the tree let you choose the colours for :math:`x(P)` and :math:`x(Q)`,
+also used for the marked points on the real curve. The three-class matrix is
+unchanged. Click an edge
 in the two-dimensional tree to select it, or a colored path in the sheet
 view to select both an edge and a positive-side sheet. The selected tree
 edge and both of its lifted paths are highlighted and follow the edge selector. The selectors also let
@@ -71,8 +75,9 @@ a sheet boundary, reverse the negative bank and follow the cyclic edge
 order at each junction. Downloads include this boundary order as
 ``boundary_word`` entries ``[edge_index, orientation]``. These edge indices
 and the vertex indices in ``edges[].vertices`` are zero based; a null vertex
-is infinity. The viewer displays edge numbers starting at one. Numerical values are displayed
-to 10 significant digits; downloads retain the full exported decimal strings.
+is infinity. The viewer displays edge numbers starting at one. Path integrals,
+the matrix, and the survey display 10 significant digits; downloads retain
+the full exported decimal strings.
 
 Geometry and pairings
 ---------------------
@@ -113,8 +118,9 @@ The final box displays Beilinson's conjectural relation
    \pi\,c^+(C)\,c^-(C)\,L''(M_{\mathrm{std}}(C),1)=qD.
 
 The saved numerical equality holds at 100-digit precision.
-The individual quantities are shown to 10 significant digits, with an
-exact rational :math:`q` when verified by the saved comparison.
+The **Digits to display** slider selects 10–100 significant digits for the
+individual quantities, with an exact rational :math:`q` when verified by the
+saved comparison. Values are rounded directly from the saved decimal strings.
 This box is available for the catalog curves.
 
 The interface calls the two marked points :math:`P,Q` and the common pole
@@ -150,7 +156,10 @@ The first command exports integration models, marked points and survey
 references without constructing torsion functions. The second integrates
 one shared cut per curve, recomputes the 100-digit numerical table, and
 verifies its determinants against the saved reference. Numerical source
-hashes and L-value cache checks are included in the catalog. The third
+hashes and L-value cache checks are included in the catalog. Source hashes
+cover the parsed Python code, ignoring docstrings, comments, and formatting;
+editing documentation alone does not invalidate the saved numerical data.
+The third
 installs Triangle, the optional constrained
 triangulation dependency. Mesh generation does not recompute integrals.
 

@@ -5,6 +5,8 @@
   --muted: #61716b;
   --line: #d9dfd5;
   --accent: #bc542e;
+  --point-p: #bd5034;
+  --point-q: #267f91;
   --serif: "Source Serif 4", Georgia, serif;
   --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
@@ -51,8 +53,8 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .curve-equation .katex { white-space: nowrap; }
 .marked-points { display: flex; flex-wrap: wrap; gap: 14px 28px; font-size: 18px; line-height: 1.8; margin: 22px 0 0; max-width: 100%; }
 .point-coordinate { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
-.point-coordinate::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #bd5034; flex-shrink: 0; }
-.point-1::before { background: #267f91; }
+.point-coordinate::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--point-p); flex-shrink: 0; }
+.point-1::before { background: var(--point-q); }
 .point-order { font-family: var(--sans); font-size: 0.8em; color: var(--muted); }
 .real-curve { min-width: 0; }
 .real-plot-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--muted); }
@@ -72,6 +74,10 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .panel-description { min-height: 75px; font-size: 15px; line-height: 1.65; color: var(--muted); margin: 0; max-width: 560px; }
 .plot-tools { min-height: 36px; margin-top: 14px; display: flex; align-items: center; gap: 16px; }
 .gesture { font-family: var(--sans); font-size: 10px; color: var(--muted); }
+.tree-controls { flex-wrap: wrap; justify-content: space-between; }
+.diamond-colors { display: flex; gap: 14px; }
+.diamond-colors label { flex-direction: row; align-items: center; gap: 7px; }
+.diamond-colors input { width: 30px; height: 28px; padding: 2px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); cursor: pointer; }
 .surface-controls { flex-wrap: wrap; }
 .sheet-control { width: 133px; }
 .surface-controls select { padding: 7px 10px; font-family: inherit; font-size: 11px; }
@@ -86,12 +92,21 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .determinant { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 8px 14px; text-align: center; font-size: 28px; border-top: 1px solid var(--line); padding-top: 24px; margin: 24px 0 4px; }
 .determinant-label { font-size: 20px; color: var(--muted); }
 .beilinson-panel { margin-top: 20px; padding: 28px 26px; }
+.precision-heading { flex-wrap: wrap; }
+.precision-control { width: 210px; max-width: 100%; }
+.precision-control output { font-variant-numeric: tabular-nums; }
+.precision-control input { width: 100%; margin: 0; accent-color: var(--ink); cursor: pointer; }
 .conjecture-equation { text-align: center; font-size: 23px; white-space: nowrap; overflow-x: auto; padding: 12px 0 26px; }
 .conjecture-equation .katex { white-space: nowrap; }
 .conjecture-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 12px; text-align: center; border-top: 1px solid var(--line); margin: 0; padding: 22px 0 2px; }
 .conjecture-values > div { min-width: 0; padding: 0 4px; }
 .conjecture-values dt { color: var(--muted); font-size: 16px; }
 .conjecture-values dd { margin: 8px 0 0; font-size: 18px; }
+.conjecture-number { display: flex; align-items: baseline; justify-content: center; gap: 4px; }
+.significant-digits { min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.conjecture-values.precise { grid-template-columns: 1fr; }
+.conjecture-values.precise > div { display: grid; grid-template-columns: 70px minmax(0, 1fr); align-items: baseline; gap: 12px; text-align: left; }
+.conjecture-values.precise dd { margin: 0; justify-content: flex-start; }
 .table-scroll { overflow-x: auto; max-width: 100%; }
 table { border-collapse: collapse; width: 100%; text-align: left; font-size: 14px; }
 th { font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--muted); padding: 12px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }

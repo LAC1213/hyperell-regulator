@@ -21,16 +21,18 @@
       1116
     ]
   },
+  "numerical_source_hash_method": "python-ast-no-docstrings-v1",
   "numerical_source_sha256": {
-    "hyperell_regulator/experiments/small_conductor_explorer.py": "adf01e8ba9370c5ab16a8ce5be40dda35408781a3cb4deea5a2f37450fc3caad",
-    "hyperell_regulator/regulator/stokes.py": "7b5002d37ffdb19761ffd1ffa64105191c3c8b2700c36a49a7214ef5c917de4d",
-    "hyperell_regulator/regulator/_tree.py": "e4646121404d00049de25dcfbcff3ca4cab74cf8dc09437a24f0e490e82dd01e",
-    "hyperell_regulator/regulator/_periods.py": "62dd8c5d120788c540d4d1e519acdfec5e5b991a5461d38bea12d12c813abf5a",
-    "hyperell_regulator/regulator/quadrature.py": "a7fb601670fd3d90c671d77aa65a7e93a78bafdc3a73d5f37a14fe2c933ff9bc",
-    "hyperell_regulator/regulator/precision.py": "5523442a844dbfae231b2115c99eece05ca1c7cf7b2a865d4aa8a3363539c731",
-    "hyperell_regulator/experiments/beilinson.py": "353a4668e7ab0cc1712070a81b5afc66f0ccce84d9e5d7e12cb2ce06595f3c43",
-    "hyperell_regulator/lfunction.py": "b876bc4e80af3f7d402c6f81d0ad57868f3b7763fef5414b147323d14b16091c",
-    "hyperell_regulator/frobenius.py": "e0e08fdbcf03963c59a40938de1c71b4d9d2863f2d55eff3b62ae84a4ce99401"
+    "hyperell_regulator/_source_hash.py": "4cf0bfc59d52767475f774988c90fef08a1493289251d575cf131459fa351eb1",
+    "hyperell_regulator/experiments/small_conductor_explorer.py": "44f5003d186ee4d399b2530a21bcfa704c62bd3e88735f5696024e5098d34623",
+    "hyperell_regulator/regulator/stokes.py": "3bebc956af8d6feb7ddff3202951640a0257701101d544d74ff6d8257c1eb7ea",
+    "hyperell_regulator/regulator/_tree.py": "c470fc18bb3e9510c44e5be762c9d07ed2a1fac9a4de9489b40ab18fc76c5ec3",
+    "hyperell_regulator/regulator/_periods.py": "f213086d75d6a76f638158cbad7ee99938b78b4f961708db30ef7695551bf66a",
+    "hyperell_regulator/regulator/quadrature.py": "144eb8c76fe9ce733009160d17d217065129db2910a13aa2c5219f2697458bed",
+    "hyperell_regulator/regulator/precision.py": "3b4a06b66ba649136b1206a5dbe7df409bd57bd10b9f034efca2e8213529978c",
+    "hyperell_regulator/experiments/beilinson.py": "1e5090d8eb0dfaae57b19c0ccc8c15bf84441f96763d69a90b2f385efb851b2a",
+    "hyperell_regulator/lfunction.py": "0cbc3d10b61ff7bb1d8c304f3caa934e2d457b56fae6d1e0f0324ec1235733ad",
+    "hyperell_regulator/frobenius.py": "1045c6c1adbb513b8a12e113741725d94b11009188db1289923693fd63d0253f"
   },
   "input_sha256": "9b070a342333eeaf4faa2db42e6d89a28d85a37f0e11fb3f1ad961ae4c6f40e4",
   "curves": [

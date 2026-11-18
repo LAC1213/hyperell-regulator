@@ -9,6 +9,8 @@ import numpy as np
 import pytest
 from sage.all import PolynomialRing, QQ, RealField
 
+from hyperell_regulator._source_hash import SOURCE_HASH_METHOD
+from hyperell_regulator.experiments.small_conductor_explorer import numerical_source_hashes
 from hyperell_regulator.regulator.explorer import parse_request
 from hyperell_regulator.regulator.surfaces import _bank_radius, _ray_endpoint
 
@@ -96,8 +98,8 @@ def test_catalog_has_one_two_sheet_plot_per_curve_and_reassembles_all_weights():
     inputs=json.loads((root/'docs/explorer_inputs.json').read_text())
     assert catalog['schema_version']==2
     assert catalog['period_basis']=='mst' and catalog['table_digits']==100
-    for name, checksum in catalog['numerical_source_sha256'].items():
-        assert hashlib.sha256((root/name).read_bytes()).hexdigest()==checksum,name
+    assert catalog['numerical_source_hash_method']==SOURCE_HASH_METHOD
+    assert catalog['numerical_source_sha256']==numerical_source_hashes()
     assert [c['label'] for c in catalog['curves']]==[c['label'] for c in inputs['curves']]
     assert len(catalog['curves'])==21
     assert len({c['file'] for c in catalog['curves']})==21

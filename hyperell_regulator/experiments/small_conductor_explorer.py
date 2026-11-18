@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 from sage.all import QQ, RealField, matrix
+from hyperell_regulator._source_hash import SOURCE_HASH_METHOD, source_sha256
 from hyperell_regulator.regulator.explorer import cut_system_data, parse_expression
 from hyperell_regulator.regulator.polynomials import ring
 from hyperell_regulator.regulator import IntegrationMonitor, c_invariants
@@ -17,10 +18,10 @@ def save(path, data):
 
 def numerical_source_hashes():
     package = Path(__file__).resolve().parents[1]
-    names = ['experiments/small_conductor_explorer.py', 'regulator/stokes.py',
+    names = ['_source_hash.py', 'experiments/small_conductor_explorer.py', 'regulator/stokes.py',
              'regulator/_tree.py', 'regulator/_periods.py', 'regulator/quadrature.py',
              'regulator/precision.py', 'experiments/beilinson.py', 'lfunction.py', 'frobenius.py']
-    return {'hyperell_regulator/'+name: hashlib.sha256((package/name).read_bytes()).hexdigest()
+    return {'hyperell_regulator/'+name: source_sha256((package/name).read_bytes())
             for name in names}
 
 
@@ -105,6 +106,7 @@ def main(argv=None):
     save(args.out/'catalog.json', dict(schema_version=2, display_digits=10,
           computation_digits=args.prec, table_digits=args.table_digits,
           period_basis='mst', source=source['source'],
+          numerical_source_hash_method=SOURCE_HASH_METHOD,
           numerical_source_sha256=numerical_source_hashes(),
           input_sha256=hashlib.sha256(args.inputs.read_bytes()).hexdigest(), curves=curves))
     print('Saved %d curves, %d diagrams' % (len(curves), len(curves)))
