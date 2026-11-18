@@ -1,13 +1,7 @@
-r"""Direct Stokes integration on the two sheets of y^2=F(x).
+r"""Stokes integration on the two sheets of `y^2=F(x)`.
 
-A minimum spanning tree contains all branch values and logarithmic zeros,
-with an outward ray at its rightmost vertex.
-Finite edges use x=a+(b-a) sin(pi*t/2)^2; the ray uses a
-fixed reciprocal substitution. Root factors cancel endpoint singularities
-analytically. There are no general covers, charts or Newton continuation.
-
-The imaginary symmetric part of each boundary sum uses the closed formula
-for second moments. Several log|x-a| weights share one set of edge periods.
+A minimum spanning tree joins branch values and logarithmic zeros,
+with an outward ray at its rightmost vertex. All weights share edge periods.
 """
 import numpy as np
 from contextlib import nullcontext
@@ -20,7 +14,7 @@ from .diagnostics import _active, checkpoint
 
 
 def cut_scale(z):
-    """Largest and smallest separations between cut nodes."""
+    """The largest and smallest separations between cut nodes."""
     a = np.asarray(z)
     d = np.abs(a[:, None] - a[None, :])
     span = float(d.max()) or 1.0
@@ -29,7 +23,7 @@ def cut_scale(z):
 
 
 class Cut:
-    """A labelled tree cut on the x-sphere, independent of torsion orders."""
+    """A labelled tree cut on the `x`-sphere."""
     def __init__(self, F, centers=(), prec=15):
         self.ar = Arithmetic(prec)
         C, R = self.ar.C, self.ar.R
@@ -85,11 +79,7 @@ class Cut:
                                     pi=ar.R.pi(), sign_tol=ar.root_tol)
 
     def topology(self):
-        """Read bank signs and logarithm jumps from a small contour of the cut.
-
-        Each root factor has its argument unwrapped separately. This tracks
-        only square-root signs; no algebraic fibres or Newton solves occur.
-        """
+        """Determine bank signs and logarithmic jumps by a contour around the cut."""
         z = np.asarray([complex(v) for v in self.nodes])
         path, marks, self.boundary_word = tree_contour(
             z, self.edges, complex(self.direction), self.references,
@@ -181,7 +171,7 @@ def _ray(cut):
 
 
 def _sum(cut, u, ell, jumps):
-    """Boundary primitives plus the closed, symmetrized second moments."""
+    """Sum boundary primitives and symmetrized second moments."""
     ar, g, n = cut.ar, cut.g, len(cut.edges)
     H = [[ar.C(0) for _ in range(g)] for _ in range(g)]
     forward, backward = {}, {}
@@ -217,7 +207,7 @@ def _sum(cut, u, ell, jumps):
 
 
 def compute(F, centers=(0,), prec=15, *, details=None):
-    """Return periods and log|x-a| vectors, sharing all integrations."""
+    r"""Periods and `\log|x-a|` vectors from common edge integrals."""
     cut = Cut(F, centers, prec)
     ar, g = cut.ar, cut.g
     u = [[] for _ in range(g)]

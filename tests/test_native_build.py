@@ -1,4 +1,4 @@
-"""Private NTL builds and accelerator worker defaults."""
+"""Private NTL builds and Frobenius worker counts."""
 import io
 import os
 import runpy

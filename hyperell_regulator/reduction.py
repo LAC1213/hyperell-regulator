@@ -1,62 +1,11 @@
-r"""
-Semistable reduction of genus 2 curves over `\QQ`, and the component
-question for their rational points.
+r"""Reduction and the integrality criterion for hyperelliptic curves over `\QQ`.
 
-Input a genus 2 curve
+At odd primes we use cluster pictures as in Dokchitser--Dokchitser--
+Maistret--Morgan, Theorems 1.8 and 8.5. At 2 we use Liu's reduction data.
+Component tests refer to the stable model; linking chains are contracted
+to nodes. Component tests at 2 are undecided.
 
-.. MATH::
-
-    C : y^2 + h(x) y = f(x),   f, h \in \ZZ[x],
-
-and
-
-1. decide whether `C` has semistable reduction at every prime,
-2. if so, describe the irreducible components of the special fibre at each
-   prime of bad reduction,
-3. given two points `P, Q \in C(\QQ)`, decide at each bad prime whether `P`
-   and `Q` reduce to a *smooth* point of the *same* component.
-
-Mathematical basis
-==================
-
-For odd `p` we complete the square: `Y = 2y + h(x)` gives `Y^2 = F(x)` with
-`F = 4f + h^2`, an isomorphism over `\ZZ_p`.  Everything is then read off the
-*cluster picture* of `F` over `\QQ_p` following
-
-    T. Dokchitser, V. Dokchitser, C. Maistret, A. Morgan,
-    "Arithmetic of hyperelliptic curves over local fields",
-    Math. Ann. 385 (2023).  (referred to as [DDMM] below)
-
-via the ``sage_cluster_pictures`` package.  Specifically:
-
-* semistability is [DDMM, Thm 1.8]: the splitting field of `F` has `e \le 2`,
-  every proper cluster is inertia stable, and every principal cluster
-  `\mathfrak{s}` has `d_\mathfrak{s} \in \ZZ` and `\nu_\mathfrak{s} \in 2\ZZ`;
-
-* the components of the special fibre are `\Gamma_\mathfrak{s}` for the
-  principal clusters `\mathfrak{s}` (two components
-  `\Gamma_\mathfrak{s}^{\pm} \cong \mathbb{P}^1` when `\mathfrak{s}` is
-  übereven), joined by chains of `\mathbb{P}^1`'s [DDMM, Thm 8.5].  The
-  components of the *stable* model are exactly the `\Gamma_\mathfrak{s}`; the
-  chains are contracted to nodes.
-
-* the reduction map onto `\Gamma_\mathfrak{s}` is [DDMM, Def 6.x], i.e.
-  ``Cluster.red``.
-
-Residue characteristic 2 is *not* covered by cluster pictures.  There we fall
-back on Liu's algorithm (``genus2reduction``, i.e. PARI's ``genus2red``):
-the Namikawa--Ueno type of the special fibre of the minimal regular model
-determines semistability (semistable `\iff` every component of the special
-fibre has multiplicity one `\iff` the type is built only from `I_n` pieces),
-and Grothendieck's formula gives the rigorous necessary condition
-`f_2 \le 2` on the conductor exponent.  When PARI does not return a
-Namikawa--Ueno type at 2 (its genus 2 reduction algorithm is incomplete there)
-the answer is reported as *unknown* rather than guessed.
-
-Usage
-=====
-
-::
+EXAMPLES::
 
     sage: from hyperell_regulator.reduction import HyperellipticCurveWithReduction
     sage: R.<x> = ZZ[]
@@ -70,10 +19,6 @@ Usage
     sage: C.same_component((0, 1), (0, -1), 53)["answer"]
     True
 
-or, for everything at once,
-
-::
-
     sage: from contextlib import redirect_stdout
     sage: from io import StringIO
     sage: output = StringIO()
@@ -81,45 +26,6 @@ or, for everything at once,
     ....:     C.report(P=(0, 1), Q=(0, -1))
     sage: 'conductor' in output.getvalue()
     True
-
-Correctness
-===========
-
-``self_test()`` cross-checks the answers at every odd bad prime of a list of
-test curves against Liu's independent implementation: the semistability
-verdict, the conductor exponent, the identity
-`\sum_i g(\Gamma_i) + b_1(\Gamma) = f_p` with
-`\sum_i g(\Gamma_i) + b_1(\Gamma) = 2`, and the order of the group of
-connected components of the Néron model (which pins down the lengths of the
-linking chains, not just the topology of the special fibre).
-
-Requirements
-============
-
-This needs a ``sage_cluster_pictures`` in which ``Cluster.red`` on points and
-``Cluster.dual_graph`` are correct.  Released 1.0 is not: ``red`` multiplies by
-`\pi^{\nu/2}` instead of dividing, does not scale that exponent by the
-ramification index, and computes another as ``-s.size()//2``, which Python
-evaluates as `\lfloor -|s|/2 \rfloor` rather than `-\lfloor |s|/2 \rfloor`;
-``dual_graph`` raises ``NameError`` for a non-principal top cluster with two
-odd children, and uses `2\delta_S` in place of `2\delta_\mathfrak{s}` for the
-chain of a cotwin.  Fixes are on the ``fix-red-and-dual-graph`` branch of
-https://github.com/alexjbest/cluster-pictures; install with
-``sage -pip install -e /path/to/cluster-pictures``.  :func:`self_test` fails
-loudly against an unpatched copy.
-
-The one thing still computed here rather than delegated is the component of an
-übereven cluster: `\Gamma_\mathfrak{s}` then splits as
-`\Gamma_\mathfrak{s}^{\pm}`, a pair of `\mathbb{P}^1`'s that
-``component_special_fibre`` cannot represent (its polynomial
-`\bar\theta^2 G^2` degenerates to a constant when `\mathfrak{s}` has no twin
-of relative depth 1/2), and correspondingly ``red`` cannot reduce onto it.
-
-.. SEEALSO::
-
-    :mod:`hyperell_regulator.components` runs the component question over the
-    LMFDB list of curves, and :mod:`hyperell_regulator.lfunction` builds the
-    standard `L`-function out of the cluster pictures computed here.
 """
 
 import re
@@ -155,13 +61,9 @@ _STABLE_RE = re.compile(r"\(potential\) stable reduction:\s*\(([^)]*)\)")
 
 
 def _parse_local_data(text):
-    r"""
-    Pull the useful pieces out of one entry of ``genus2reduction(...).local_data``.
+    r"""Liu's stable type, Namikawa--Ueno type and conductor exponent.
 
-    Returns a dictionary with keys ``stable_type`` (Liu's type (I)--(VII) of the
-    potential stable reduction, a string or ``None``), ``nu_type`` (the
-    Namikawa--Ueno type of the special fibre of the minimal regular model, a
-    string or ``None``) and ``conductor_exponent`` (an integer or ``None``).
+    Missing values are ``None``.
     """
     out = {"stable_type": None, "nu_type": None, "conductor_exponent": None,
            "raw": text}
@@ -194,9 +96,7 @@ _POTENTIAL_TORIC_RANK = {"I": 0, "II": 1, "III": 2, "IV": 2,
 
 
 def potential_toric_rank(stable_type):
-    r"""
-    The toric rank of the potential semi-abelian reduction of `J(C)`, read off
-    Liu's type ``(I)``--``(VII)`` of the potential stable reduction.
+    r"""The potential toric rank from Liu's type (I)--(VII).
 
     EXAMPLES::
 
@@ -215,17 +115,7 @@ def potential_toric_rank(stable_type):
 
 
 def nu_type_is_semistable(label):
-    r"""
-    Decide whether a Namikawa--Ueno type is semistable, i.e. whether every
-    component of the corresponding special fibre has multiplicity one.
-
-    The fibres of multiplicity one are exactly those whose Namikawa--Ueno
-    symbol is assembled from `I_n` pieces only: no other Roman numeral, no
-    ``*``, and no multiplicity prefix such as ``2I_0``.
-
-    INPUT:
-
-    - ``label`` -- string, e.g. ``"[I{1-0-0}]"``, ``"[II-II-0]"``, ``"[V]"``.
+    r"""Whether the Namikawa--Ueno type has all component multiplicities equal to one.
 
     EXAMPLES::
 
@@ -261,22 +151,10 @@ def nu_type_is_semistable(label):
 # ---------------------------------------------------------------------------
 
 class SpecialFibreComponent(SageObject):
-    r"""
-    One irreducible component of the special fibre.
+    r"""An irreducible component of a semistable special fibre.
 
-    Attributes:
-
-    - ``label`` -- a printable name, e.g. ``"Gamma_s1"`` or ``"L(s1,s2)[0]"``
-    - ``kind`` -- ``"principal"`` (a component `\Gamma_\mathfrak{s}` of the
-      stable model) or ``"chain"`` (a `\mathbb{P}^1` in a linking chain,
-      contracted in the stable model)
-    - ``cluster`` -- the corresponding cluster, or ``None`` for chain pieces
-    - ``sign`` -- ``+1``/``-1`` for the two components of an übereven cluster,
-      else ``None``
-    - ``genus`` -- geometric genus
-    - ``equation`` -- a string giving the equation of the component over the
-      residue field, or ``None`` for a chain `\mathbb{P}^1`
-    - ``multiplicity`` -- always 1 (the fibre is semistable)
+    ``kind`` is ``"principal"`` or ``"chain"``. The latter is contracted in
+    the stable model. ``sign`` distinguishes the two übereven components.
     """
 
     def __init__(self, label, kind, cluster=None, sign=None, genus=None,
@@ -299,24 +177,10 @@ class SpecialFibreComponent(SageObject):
 
 
 class PointReduction(SageObject):
-    r"""
-    The reduction of a point of `C(\QQ)` in the special fibre at one prime.
+    r"""The reduction of a rational point on the stable special fibre.
 
-    Attributes:
-
-    - ``prime`` -- the prime
-    - ``is_smooth`` -- whether the reduction is a smooth point of the special
-      fibre of the *stable* model (equivalently: it lands on a component
-      `\Gamma_\mathfrak{s}` away from the nodes)
-    - ``component`` -- the ``SpecialFibreComponent`` it lands on, or ``None``
-    - ``point`` -- the pair `(X, Y)` over the residue field giving the reduced
-      point on that component, the string ``"infinity"``, or ``None``
-    - ``cluster`` -- the principal cluster of that component, or ``None``
-    - ``reason`` -- explanation when ``is_smooth`` is ``False``
-
-    The private attribute ``_y_datum`` holds, for an übereven cluster, the
-    branch value `\pm\bar\theta_\mathfrak{s}` distinguishing
-    `\Gamma_\mathfrak{s}^+` from `\Gamma_\mathfrak{s}^-`.
+    ``is_smooth`` excludes nodes. ``point`` is a residue-field pair,
+    ``"infinity"`` or ``None``; ``reason`` describes nonsmooth reduction.
     """
 
     def __init__(self, prime, is_smooth, component=None, point=None,
@@ -343,22 +207,9 @@ class PointReduction(SageObject):
 # ---------------------------------------------------------------------------
 
 def HyperellipticCurveWithReduction(f, h=0, prec=250):
-    r"""
-    The hyperelliptic curve `y^2 + h(x) y = f(x)` over `\QQ`, with `f, h \in
-    \ZZ[x]`, extended with the reduction methods of
-    :class:`HyperellipticReduction`.
+    r"""The Sage curve `y^2+h(x)y=f(x)` over `\QQ`, with reduction methods.
 
-    The result is a genuine Sage hyperelliptic curve -- Sage's own constructor
-    builds it, and the reduction methods are grafted on with
-    ``dynamic_class`` -- so ``genus``, ``jacobian``, ``igusa_clebsch_invariants``,
-    point construction and everything else continue to work.
-
-    INPUT:
-
-    - ``f`` -- integral polynomial, of degree at most `2g+2`
-    - ``h`` -- integral polynomial, of degree at most `g+1` (default 0)
-    - ``prec`` -- `p`-adic working precision for the cluster pictures
-      (default 250)
+    ``f`` and ``h`` are integral; ``prec`` is the `p`-adic working precision.
 
     EXAMPLES::
 
@@ -374,12 +225,8 @@ def HyperellipticCurveWithReduction(f, h=0, prec=250):
         sage: C.is_tame(53), C.is_semistable_at(53)
         (True, True)
 
-    Sage's own methods are untouched::
-
         sage: C.jacobian()
         Jacobian of Hyperelliptic Curve over Rational Field defined by y^2 = x^5 + x^3 + 1
-
-    Any genus is allowed::
 
         sage: HyperellipticCurveWithReduction(x^7 - x^5 + x + 1).genus()
         3
@@ -411,44 +258,24 @@ ClusterCurve = HyperellipticCurveWithReduction
 
 
 class HyperellipticReduction:
-    r"""
-    Reduction methods added to Sage's hyperelliptic curves by
-    :func:`HyperellipticCurveWithReduction`.
+    r"""Reduction methods for Sage hyperelliptic curves.
 
-    This is a mixin: instances are genuine Sage hyperelliptic curves, so every
-    Sage method (``genus``, ``jacobian``, ``igusa_clebsch_invariants``,
-    ``change_ring``, point construction, ...) remains available alongside the
-    methods defined here.
-
-    The extra attributes are ``f``, ``h`` and ``F = 4f + h^2`` as integral
-    polynomials, ``prec`` (the `p`-adic working precision) and ``_cache``.
+    ``F=4f+h^2`` defines the square model.
     """
 
     # -- basic objects ------------------------------------------------------
 
     def curve(self):
-        r"""
-        ``self``.  Kept so that code written against the old wrapper class
-        still works; these objects *are* Sage hyperelliptic curves.
-        """
+        r"""The underlying curve, ``self``."""
         return self
 
     def square_model(self):
-        r"""
-        The isomorphic model `Y^2 = F(x)`, `F = 4f + h^2`, valid over
-        `\ZZ[1/2]`.
-        """
+        r"""The model `Y^2=4f+h^2`, isomorphic over `\ZZ[1/2]`."""
         RQ = PolynomialRing(QQ, 'x')
         return HyperellipticCurve(RQ(self.F))
 
     def to_square_model(self, P):
-        r"""
-        Send a point of `C` to the model `Y^2 = F(x)`, via `Y = 2y + h(x)`.
-
-        INPUT:
-
-        - ``P`` -- a pair ``(x0, y0)`` of rationals, or a point of
-          ``self.curve()``.
+        r"""Send an affine point to the square model by `Y=2y+h(x)`.
 
         EXAMPLES::
 
@@ -462,10 +289,7 @@ class HyperellipticReduction:
         return (x0, 2 * y0 + self.f.parent()(self.h)(x0))
 
     def _coords(self, P):
-        r"""
-        Normalise a user supplied point to a pair of rationals, checking that
-        it lies on `C`.  Points at infinity are rejected.
-        """
+        r"""Validate an affine rational point and return its coordinates."""
         if isinstance(P, (tuple, list)) and len(P) == 2:
             x0, y0 = QQ(P[0]), QQ(P[1])
         else:
@@ -487,9 +311,7 @@ class HyperellipticReduction:
     # -- global reduction data ---------------------------------------------
 
     def reduction_data(self):
-        r"""
-        Liu's reduction data for `C`, via ``genus2reduction``.
-        """
+        r"""Liu's reduction data from ``genus2reduction``."""
         if self.genus() != 2:
             raise ValueError(
                 "genus2reduction (Liu's algorithm) applies only to genus 2; "
@@ -508,15 +330,11 @@ class HyperellipticReduction:
         return ZZ(self.reduction_data().conductor)
 
     def minimal_discriminant(self):
-        r"""
-        The minimal discriminant of `C` (Liu's `\Delta_{\min}`).
-        """
+        r"""The minimal discriminant of `C`."""
         return ZZ(self.reduction_data().minimal_disc)
 
     def bad_primes(self):
-        r"""
-        The primes of bad reduction of `C`, i.e. the primes dividing the
-        minimal discriminant.
+        r"""The prime divisors of the minimal discriminant.
 
         EXAMPLES::
 
@@ -553,10 +371,7 @@ class HyperellipticReduction:
         return list(self._cache["bad_primes"])
 
     def local_data(self, p):
-        r"""
-        Liu's local reduction data at ``p``, parsed into a dictionary with keys
-        ``stable_type``, ``nu_type``, ``conductor_exponent``, ``raw``.
-        """
+        r"""Liu's data at ``p``: ``stable_type``, ``nu_type``, ``conductor_exponent``, ``raw``."""
         p = ZZ(p)
         ld = self.reduction_data().local_data
         if p not in ld:
@@ -567,8 +382,7 @@ class HyperellipticReduction:
     # -- cluster pictures (odd p) -------------------------------------------
 
     def cluster_picture(self, p):
-        r"""
-        The cluster picture of `Y^2 = 4f + h^2` over `\QQ_p`, for odd ``p``.
+        r"""The cluster picture of `Y^2=4f+h^2` over `\QQ_p`, for odd ``p``.
 
         EXAMPLES::
 
@@ -593,12 +407,7 @@ class HyperellipticReduction:
     # -- tameness -----------------------------------------------------------
 
     def _require_cluster_picture(self, p):
-        r"""
-        The cluster picture at ``p``, or a clear error.  This is the
-        *operational* precondition for the reduction methods -- `p` odd and the
-        splitting field computable -- as opposed to :meth:`is_tame`, which is a
-        statement about the `\ell`-adic representation.
-        """
+        r"""The cluster picture at an odd prime; raise if unavailable."""
         p = ZZ(p)
         if p == 2:
             raise NotImplementedError(
@@ -612,42 +421,9 @@ class HyperellipticReduction:
                 "and is_tame(%s) = %s" % (p, p, self.is_tame(p)))
 
     def is_tame(self, p):
-        r"""
-        Whether the `\ell`-adic representation of `J = \mathrm{Jac}(C)` is
-        tamely ramified at ``p``: the wild inertia subgroup `P \subset I_p`
-        acts trivially on `V_\ell = T_\ell J \otimes \QQ_\ell` for
-        `\ell \ne p`.  Equivalently the Swan conductor at `p` vanishes,
-        equivalently `C` acquires semistable reduction over a *tamely* ramified
-        extension of `\QQ_p`.
+        r"""Whether wild inertia acts trivially on `H^1(C)` at ``p``.
 
-        Returns ``True``, ``False``, or ``None`` if undecided.
-
-        The criteria used, in order:
-
-        * If `C` is semistable at `p` then `\rho_\ell` is tame, at every `p`
-          including 2: inertia acts unipotently, so its image is pro-`\ell`,
-          while `P` is pro-`p`, and a pro-`p` group has trivial image in a
-          pro-`\ell` group.  Good reduction is the special case where
-          `\rho_\ell` is unramified.
-
-        * For `p > 2g+1` the representation is always tame: `\QQ_p(J[2])` is
-          the splitting field of `F`, whose Galois group embeds in `S_{2g+2}`,
-          and such a `p` does not divide `(2g+2)!`.
-
-        * If every irreducible factor `h` of `F` over `\QQ_p` has degree prime
-          to `p`, the representation is tame: `e(\QQ_p[x]/(h))` divides
-          `\deg h`, so each root generates a tamely ramified extension, and a
-          compositum of tamely ramified extensions is tamely ramified, hence so
-          is the splitting field `\QQ_p(J[2])`.
-
-        * Otherwise, for odd `p`, the Swan conductor is computed directly from
-          the cluster picture (``Cluster.n_wild``) and tested against 0.
-
-        For odd `p` these all agree with the concrete test
-        `p \nmid e(\QQ_p(R)/\QQ_p)`: taking `\ell = 2`, which is allowed since
-        `p` is odd, tameness of `\rho_\ell` forces `\QQ_p(J[2]) = \QQ_p(R)` to
-        be tame; conversely if `p \nmid e(\QQ_p(R))` then `C` is semistable
-        over an extension of ramification `e` or `2e`, both prime to `p`.
+        Return ``True``, ``False`` or ``None`` if undecided.
 
         EXAMPLES::
 
@@ -656,9 +432,6 @@ class HyperellipticReduction:
             sage: C = HyperellipticCurveWithReduction(x^6 - 27)
             sage: C.is_tame(3), C.is_semistable_at(3)
             (True, False)
-
-        Tame but not semistable, and tame at 2 because the reduction there is
-        semistable::
 
             sage: HyperellipticCurveWithReduction(x^5 - x, x).is_tame(2)
             True
@@ -717,15 +490,9 @@ class HyperellipticReduction:
             return None
 
     def semistabilising_index(self, p):
-        r"""
-        A ramification index `m` such that `C` is semistable over a tamely
-        ramified extension `L/\QQ_p` with `e(L/\QQ_p) = m`.
+        r"""A tame ramification index giving semistable reduction at ``p``.
 
-        Over `L \supseteq K(R)` conditions (1) and (2) of [DDMM, Thm 1.8] are
-        automatic, and the depths and `\nu` scale by `e(L)`, so it suffices to
-        take `m` a multiple of `e(K(R))` making `m d_\mathfrak{s} \in \ZZ` and
-        `m \nu_\mathfrak{s} \in 2\ZZ` for every principal `\mathfrak{s}`.
-        Returns 1 exactly when `C` is already semistable over `\QQ_p`.
+        Return 1 exactly when `C` is already semistable over `\QQ_p`.
 
         EXAMPLES::
 
@@ -753,19 +520,9 @@ class HyperellipticReduction:
     # -- semistability ------------------------------------------------------
 
     def semistability_at(self, p):
-        r"""
-        Decide semistability of `C` at ``p``.
+        r"""Semistability at ``p``, with the method and reason.
 
-        OUTPUT:
-
-        a dictionary with keys
-
-        - ``prime``
-        - ``semistable`` -- ``True``, ``False``, or ``None`` if undecided
-        - ``method`` -- ``"cluster picture"``, ``"Liu/Namikawa-Ueno"`` or
-          ``"good reduction"``
-        - ``reason`` -- a human readable justification
-        - plus, for odd ``p``, ``good`` (whether the reduction is good)
+        The dictionary entry ``semistable`` is ``True``, ``False`` or ``None``.
 
         EXAMPLES::
 
@@ -825,24 +582,9 @@ class HyperellipticReduction:
                 "reason": liu_reason, "liu": liu_ss, "liu_reason": liu_reason}
 
     def _liu_semistability(self, p):
-        r"""
-        Decide semistability at ``p`` from Liu's reduction data alone.  Returns
-        a pair ``(answer, reason)`` with ``answer`` in ``True``, ``False``,
-        ``None``.
+        r"""Semistability from Liu's conductor and Namikawa--Ueno type.
 
-        Two ingredients are used.
-
-        * Grothendieck's formula: for a semistable abelian variety the
-          conductor exponent equals the toric rank, and the toric rank of the
-          potential semi-abelian reduction is read off Liu's potential stable
-          reduction type.  So `f_p \ne t` *proves* that `C` is not semistable
-          at `p`.
-
-        * The Namikawa--Ueno type of the special fibre of the minimal regular
-          model at `p`: semistable means precisely that this fibre is reduced,
-          i.e. that every component has multiplicity one, which happens exactly
-          for the types built from `I_n` pieces (see
-          :func:`nu_type_is_semistable`).
+        Return ``(answer, reason)``, with ``answer=None`` if undecided.
         """
         ld = self.local_data(p)
         t = potential_toric_rank(ld["stable_type"])
@@ -875,9 +617,7 @@ class HyperellipticReduction:
                 % (nu, "all have" if by_nu else "do not all have"))
 
     def _semistability_reason(self, R, K, ss):
-        r"""
-        Spell out which clause of [DDMM, Thm 1.8] fails (or that none does).
-        """
+        r"""The failed clause of the cluster semistability criterion, if any."""
         if ss:
             return ("all proper clusters are inertia stable, the splitting "
                     "field has e <= 2, and every principal cluster has "
@@ -913,11 +653,7 @@ class HyperellipticReduction:
         return self.semistability_at(p)["semistable"]
 
     def is_semistable(self):
-        r"""
-        Whether `C` has semistable reduction at *every* prime.
-
-        Returns ``True``, ``False``, or ``None`` if the answer is undecided at
-        some prime (only possible at `p = 2`).
+        r"""Whether `C` is semistable at every prime; ``None`` if undecided.
 
         EXAMPLES::
 
@@ -942,19 +678,10 @@ class HyperellipticReduction:
     # -- components of the special fibre -----------------------------------
 
     def components(self, p, model="stable"):
-        r"""
-        The irreducible components of the special fibre at ``p``.
+        r"""The special-fibre components at an odd bad prime.
 
-        INPUT:
-
-        - ``p`` -- an odd prime of bad reduction
-        - ``model`` -- ``"stable"`` (default) for the components of the stable
-          model, i.e. the components `\Gamma_\mathfrak{s}` attached to the
-          principal clusters; or ``"regular"`` for the special fibre of the
-          minimal regular model with normal crossings, which additionally
-          contains the `\mathbb{P}^1`'s of the linking chains.
-
-        OUTPUT: a list of :class:`SpecialFibreComponent`.
+        ``model="stable"`` retains principal components; ``model="regular"``
+        also includes the linking chains. Return :class:`SpecialFibreComponent` objects.
 
         EXAMPLES::
 
@@ -983,10 +710,7 @@ class HyperellipticReduction:
         raise ValueError('model must be "stable" or "regular"')
 
     def _cluster_names(self, R):
-        r"""
-        Assign short names to the clusters of ``R``: ``R`` for the top cluster,
-        ``s1, s2, ...`` for the proper descendants in tree order.
-        """
+        r"""Label the top cluster ``R`` and its descendants ``s1``, ``s2``, etc."""
         names = {}
         i = 0
         for s in R.all_descendants():
@@ -1032,10 +756,7 @@ class HyperellipticReduction:
         return out
 
     def _regular_components(self, R):
-        r"""
-        All components of the special fibre of the minimal regular model,
-        read off :meth:`dual_graph`.
-        """
+        r"""The components of the minimal regular special fibre from the dual graph."""
         principal = {}
         for comp in self._principal_components(R):
             key = comp.cluster if comp.sign is None else (comp.cluster, comp.sign)
@@ -1052,12 +773,7 @@ class HyperellipticReduction:
 
     @staticmethod
     def _chain_label(v, names):
-        r"""
-        A printable name for a chain vertex of ``Cluster.dual_graph``.  Such a
-        vertex is a tuple whose last entry is the position along the chain and
-        whose earlier entries record which components the chain joins, each a
-        cluster, a (cluster, sign) pair, or a bare sign.
-        """
+        r"""A label for a chain vertex of the dual graph."""
         parts = []
         for u in v[:-1]:
             if isinstance(u, Cluster):
@@ -1070,11 +786,7 @@ class HyperellipticReduction:
         return "L(%s)[%s]" % (", ".join(parts), v[-1])
 
     def special_fibre(self, p):
-        r"""
-        A dictionary describing the special fibre at the bad prime ``p``:
-        the cluster picture, the components of the stable model, the
-        components of the minimal regular model, the dual graph, the number of
-        nodes, and the toric rank.
+        r"""The stable and regular components, dual graph, node count and toric rank at ``p``.
 
         EXAMPLES::
 
@@ -1116,32 +828,17 @@ class HyperellipticReduction:
 
     @staticmethod
     def _valuation(a):
-        r"""
-        The valuation of ``a``, normalised so that ``v(p) = 1``, for ``a`` in
-        any `p`-adic field.
-        """
+        r"""The valuation of ``a``, normalized by `v(p)=1`."""
         try:
             return a.normalized_valuation()
         except AttributeError:
             return QQ(a.valuation()) / a.parent().absolute_e()
 
     def _locate(self, R, x0):
-        r"""
-        Locate ``x0`` in the cluster picture ``R``.
+        r"""Locate ``x0`` in the cluster tree.
 
-        Walking down the cluster tree, return
-
-        - ``("component", s)`` if ``x0`` lies in the disc of ``s`` and its
-          image in `\Gamma_\mathfrak{s}` is distinct from the images of all
-          proper children of ``s`` (so, if ``s`` is principal, a smooth point
-          of `\Gamma_\mathfrak{s}`);
-        - ``("link", s, c, m)`` if ``x0`` lies strictly between the discs of
-          ``s`` and of its proper child ``c``, at level ``m``: the point
-          reduces onto the chain joining the two, i.e. to a node of the stable
-          model;
-        - ``("outside", R)`` if ``x0`` lies outside the disc of the top
-          cluster, so that the point reduces towards infinity on
-          `\Gamma_R`.
+        Return ``("component", s)``, ``("link", s, c, m)`` or ``("outside", R)``.
+        A link contracts to a node in the stable model.
         """
         v = self._valuation
         if v(x0 - R.center()) < R.depth():
@@ -1180,10 +877,7 @@ class HyperellipticReduction:
 
     @staticmethod
     def _pi_pow(Kr, t):
-        r"""
-        `\pi^{t}` in ``Kr``, where ``t`` is normalised so that `v(p) = 1`
-        (i.e. the exponent of the uniformiser is ``t * e``).
-        """
+        r"""`\pi^t` with `v(p)=1`; the uniformizer exponent is ``t*e``."""
         n = QQ(t) * Kr.absolute_e()
         if n not in ZZ:
             raise ValueError("exponent %s is not in the value group of %s"
@@ -1191,10 +885,7 @@ class HyperellipticReduction:
         return Kr.uniformiser() ** ZZ(n)
 
     def _red_x(self, s, xK):
-        r"""
-        `red_\mathfrak{s}` of an element of the disc of ``s``: the residue of
-        `(x - z_\mathfrak{s})/\pi^{d_\mathfrak{s}}`.
-        """
+        r"""The residue of `(x-z_{\mathfrak s})/\pi^{d_{\mathfrak s}}`."""
         Kr = xK.parent()
         a = (xK - Kr(s.center())) / self._pi_pow(Kr, s.depth())
         if a.valuation() > 0:
@@ -1202,54 +893,33 @@ class HyperellipticReduction:
         return a.residue()
 
     def _red_cluster(self, s, c):
-        r"""
-        `red_\mathfrak{s}` of a child ``c`` of ``s``.
-        """
+        r"""The reduction of a child cluster ``c`` on ``s``."""
         Kr = s.roots()[0].parent()
         return self._red_x(s, Kr(c.roots()[0]))
 
     def _component_polynomial(self, s):
-        r"""
-        The polynomial `\bar\theta_\mathfrak{s}^2 G_\mathfrak{s}(X)` cutting
-        out `\Gamma_\mathfrak{s}`.
-        """
+        r"""The polynomial `\bar\theta_{\mathfrak s}^2G_{\mathfrak s}(X)` defining the component."""
         # Empty products in the dependency can leave a residue field scalar
         # rather than a constant polynomial (notably for übereven clusters).
         k = s.roots()[0].parent().residue_field()
         return PolynomialRing(k, 'xL')(s.component_polynomial())
 
     def _theta_bar(self, s):
-        r"""
-        The square root of `\bar\theta_\mathfrak{s}^2` in the residue field, or
-        ``None`` when it is not a square there.  It is used only to label the
-        two components `\Gamma_\mathfrak{s}^{\pm}` of an übereven cluster: they
-        are `Y = \pm\bar\theta G(X)`.  If `\bar\theta^2` is not a square in the
-        residue field the two components are conjugate over it and carry no
-        rational point, so no point of `C(\QQ)` reduces onto them.
-        """
+        r"""`\bar\theta_{\mathfrak s}` in the residue field, or ``None`` if nonsquare."""
         Kr = s.roots()[0].parent()
         th2 = Kr.residue_field()(s.theta_squared().unit_part().residue())
         return th2.sqrt() if th2.is_square() else None
 
     def _branch_value(self, s, X, Y):
-        r"""
-        For an übereven cluster, `\Gamma_\mathfrak{s} : Y^2 =
-        \bar\theta^2 G(X)^2` splits as `Y = \pm\bar\theta G(X)` with
-        `G = \prod (X - red(\mathfrak{s}'))` over the twins of relative depth
-        1/2.  Return `Y/G(X) = \pm\bar\theta`: it is a residue field element
-        (no square root needed), and two points lie on the same component
-        precisely when their branch values agree.
-        """
+        r"""The branch invariant `Y/G(X)=\pm\bar\theta` for an übereven cluster."""
         G = prod(X - self._red_cluster(s, c) for c in s.children()
                  if c.is_twin() and c.relative_depth() == QQ(1) / 2)
         return Y / G
 
     def _reduce_affine(self, s, xK, yK):
-        r"""
-        Reduce `(x, y)` with `x` in the disc of the principal cluster ``s``
-        onto `\Gamma_\mathfrak{s}`; returns the pair `(X, Y)` over the residue
-        field.  Raises ``ArithmeticError`` if the point is not on the
-        component.
+        r"""The residue coordinates on the principal component ``s``.
+
+        Raise ``ArithmeticError`` if the image does not lie on the component.
         """
         if s.is_ubereven():
             X = self._red_x(s, xK)
@@ -1267,21 +937,9 @@ class HyperellipticReduction:
         return (pt[0], pt[1])
 
     def _reduce_at_infinity(self, R, xK, yK):
-        r"""
-        Reduce a point whose `x`-coordinate lies *outside* the disc of the top
-        cluster ``R``: it reduces to a point at infinity of `\Gamma_R`.
+        r"""The branch value at infinity for a point outside the top cluster.
 
-        In the chart `U = 1/X`, `V = Y/X^{\deg G/2}` at infinity one finds
-        `V^2 = \bar\theta_R^2`, with
-
-        .. MATH::
-
-            V = \mathrm{res}\bigl(y \,/\, \pi^{v(c)/2} (x - z_R)^{N/2}\bigr),
-            \qquad N = \deg F,
-
-        when `N` is even (two points at infinity, `V = \pm\bar\theta_R`), while
-        for `N` odd there is a single point at infinity.  Returns ``None`` for
-        `N` odd, and `V` for `N` even.
+        Return ``None`` in odd degree, where infinity is unique.
         """
         N = self.F.degree()
         if N % 2:
@@ -1296,17 +954,9 @@ class HyperellipticReduction:
 
     @staticmethod
     def _infinity_child(s):
-        r"""
-        If ``s`` is a non-principal top cluster, even with exactly two
-        children of which one is not proper, return the other child.
+        r"""The principal child receiving infinity for a nonprincipal top cluster.
 
-        In that configuration the proper child is principal of odd size
-        `2g+1`, so its component has odd degree and a *single* point at
-        infinity, and the whole complement of its disc -- including the lone
-        root outside it and `x = \infty` -- maps into that component rather
-        than onto a linking chain.  (This is the same configuration in which
-        :meth:`dual_graph` glues nothing over the top.)  Otherwise return
-        ``None``.
+        Return ``None`` unless the top has one singleton and one proper child.
         """
         if not (s.is_top_cluster() and not s.is_principal() and s.is_even()):
             return None
@@ -1320,25 +970,9 @@ class HyperellipticReduction:
         return c if (c.is_principal() and c.is_odd()) else None
 
     def reduce_point(self, p, P):
-        r"""
-        Reduce the point ``P`` into the special fibre of the stable model at
-        the odd bad prime ``p``.
+        r"""Reduce an affine rational point on the stable fibre at an odd bad prime.
 
-        The special fibre of the stable model is the union of the components
-        `\Gamma_\mathfrak{s}` (or `\Gamma_\mathfrak{s}^{\pm}`) attached to the
-        principal clusters, glued at nodes.  ``P`` reduces to a smooth point
-        exactly when `x(P)` lands in the disc of a principal cluster
-        `\mathfrak{s}` away from the discs of all proper children of
-        `\mathfrak{s}` (or outside the top disc, with `R` principal, giving a
-        point at infinity of `\Gamma_R`); otherwise `P` reduces to a node.
-
-        INPUT:
-
-        - ``p`` -- an odd prime of bad reduction at which `C` is semistable
-        - ``P`` -- a pair ``(x0, y0)`` of rationals on `C`, or a point of
-          ``self.curve()``
-
-        OUTPUT: a :class:`PointReduction`.
+        Return a :class:`PointReduction`.
 
         EXAMPLES::
 
@@ -1477,10 +1111,7 @@ class HyperellipticReduction:
         return r
 
     def _ubereven_component(self, s, branch, comps):
-        r"""
-        Which of `\Gamma_\mathfrak{s}^{\pm}` a point with branch value
-        ``branch`` `= \pm\bar\theta_\mathfrak{s}` lies on.
-        """
+        r"""The übereven component with branch value ``branch``."""
         th = self._theta_bar(s)
         if th is None:
             raise ArithmeticError(
@@ -1492,13 +1123,9 @@ class HyperellipticReduction:
         return [c for c in comps if c.cluster == s and c.sign == sign][0]
 
     def same_component(self, P, Q, p):
-        r"""
-        At the odd bad prime ``p``, decide whether `P` and `Q` reduce to smooth
-        points of the *same* irreducible component of the special fibre of the
-        stable model.
+        r"""Whether `P` and `Q` reduce smoothly on the same stable component at ``p``.
 
-        OUTPUT: a dictionary with keys ``prime``, ``answer`` (a boolean),
-        ``P``, ``Q`` (the two :class:`PointReduction`'s) and ``reason``.
+        Return ``prime``, ``answer``, the reductions ``P`` and ``Q``, and ``reason``.
 
         EXAMPLES::
 
@@ -1545,31 +1172,10 @@ class HyperellipticReduction:
                           % rP.component.label}
 
     def _same_branch(self, s, rP, rQ):
-        r"""
-        Do two smooth reductions onto an übereven `\Gamma_\mathfrak{s}` lie on
-        the same one of `\Gamma_\mathfrak{s}^{\pm}`?
+        r"""Whether two smooth reductions lie on the same übereven component.
 
-        When `C` is semistable over `\QQ_p` both carry an absolute branch
-        invariant `\pm\bar\theta_\mathfrak{s}` and we compare those.
-
-        Otherwise the invariant `b = Y/G(X)` involves `\pi^{\nu/2}`, which need
-        not exist over `\QQ_p`; but that factor is common to both points, so it
-        cancels from the comparison.  For two affine points
-
-        .. MATH::
-
-            b_P = b_Q \iff \mathrm{res}(y_P/y_Q)\, G(X_Q) = G(X_P),
-
-        and for two points at infinity, where `b = \mathrm{res}\bigl(y /
-        \pi^{v(c)/2}(x - z_R)^{N/2}\bigr)`,
-
-        .. MATH::
-
-            b_P = b_Q \iff
-            \mathrm{res}\bigl((y_P/y_Q)((x_Q - z_R)/(x_P - z_R))^{N/2}\bigr) = 1.
-
-        Returns ``None`` for the one case this leaves open: `C` not semistable
-        over `\QQ_p` with one point affine and the other at infinity.
+        Compare branch invariants, cancelling common ramification factors.
+        Return ``None`` for an unresolved mixed affine/infinite pair.
         """
         if rP._y_datum is not None and rQ._y_datum is not None:
             return bool(rP._y_datum == rQ._y_datum)
@@ -1594,13 +1200,7 @@ class HyperellipticReduction:
         return bool((yP / yQ).residue() * GQ == GP)
 
     def same_component_everywhere(self, P, Q):
-        r"""
-        Run :meth:`same_component` at every bad prime.
-
-        OUTPUT: a dictionary ``p -> record``, where the record for `p = 2` (and
-        for any prime where the computation is not available) has
-        ``answer = None``.
-        """
+        r"""Component tests keyed by bad prime; ``answer=None`` where unavailable."""
         out = {}
         for p in self.bad_primes():
             if p == 2:
@@ -1620,10 +1220,7 @@ class HyperellipticReduction:
     # -- reporting ---------------------------------------------------------
 
     def report(self, P=None, Q=None):
-        r"""
-        Print everything: the bad primes, semistability at each of them, the
-        components of the special fibre, and (if ``P`` and ``Q`` are given)
-        whether `P` and `Q` reduce to a smooth point of the same component.
+        r"""Print reduction data and, if given, the component test for `P` and `Q`.
 
         EXAMPLES::
 
@@ -1709,9 +1306,7 @@ class HyperellipticReduction:
 # ---------------------------------------------------------------------------
 
 def genus2_semistable_report(f, h=0, P=None, Q=None, prec=250):
-    r"""
-    One shot: build the curve `y^2 + h y = f`, check semistability everywhere,
-    describe the special fibres, and compare the reductions of ``P`` and ``Q``.
+    r"""Construct the curve, print its reduction report and return it.
 
     EXAMPLES::
 
@@ -1725,13 +1320,7 @@ def genus2_semistable_report(f, h=0, P=None, Q=None, prec=250):
 
 
 def _liu_component_group_order(raw):
-    r"""
-    The order of Liu's group of connected components of the Néron model over
-    `\bar\GF{p}`, parsed out of one entry of ``local_data``.  It is printed
-    between the page reference and ``f=`` as a product of cyclic factors
-    ``(n)``, possibly with exponents ``(n)^k``; ``Hn`` denotes a group of
-    order 4.  Returns ``None`` if absent.
-    """
+    r"""The geometric Néron component-group order from Liu's data, or ``None``."""
     m = re.search(r"page[^,]*,\s*(.*?),\s*f\s*=", raw, re.S)
     if not m:
         return None
@@ -1748,24 +1337,7 @@ def _liu_component_group_order(raw):
 
 
 def self_test(verbose=True):
-    r"""
-    Consistency checks against Liu's independent implementation
-    (``genus2reduction``, i.e. PARI's ``genus2red``).
-
-    For every odd prime of bad reduction of a list of test curves we check:
-
-    * the cluster picture criterion for semistability agrees with what Liu's
-      data force (see :meth:`HyperellipticCurveWithReduction._liu_semistability`);
-    * the conductor exponent computed from the cluster picture equals Liu's;
-    * the special fibre satisfies `\sum_i g(\Gamma_i) + b_1(\Gamma) = 2` and
-      `b_1(\Gamma) = f_p`;
-    * the number of spanning trees of the dual graph equals the order of Liu's
-      group of connected components of the Néron model over `\bar\GF{p}` --
-      this pins down the *lengths* of the linking chains, not merely the
-      topology;
-    * every point reduction lands on its component (checked inside
-      :meth:`HyperellipticCurveWithReduction._reduce_affine`), and ``same_component`` is reflexive
-      and symmetric.
+    r"""Check reduction, conductors and component groups against Liu's data.
 
     EXAMPLES::
 

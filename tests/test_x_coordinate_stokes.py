@@ -1,4 +1,4 @@
-"""Regular zeros and 100-digit conductor-249 regression."""
+"""Logarithmic integrals and the 100-digit conductor-249 example."""
 import json
 from pathlib import Path
 from sage.all import RealField

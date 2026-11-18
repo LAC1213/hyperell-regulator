@@ -1,4 +1,4 @@
-"""Guarded tanh-sinh quadrature for explicit, single-valued differentials."""
+"""Tanh-sinh quadrature with guard digits."""
 import math
 from sage.all import ComplexField, RealField
 from .diagnostics import checkpoint, phase
@@ -40,7 +40,7 @@ class Arithmetic:
 
 
 def quadrature(ar, evaluate, dimension, max_level=15):
-    """Integrate on (0,1), caching samples and checking successive levels."""
+    """Integrate on `(0,1)`, comparing successive quadrature levels."""
     cache, previous, error = {}, None, None
     for level in range(3, max_level+1):
         with phase('quadrature', level=level, precision=ar.digits):

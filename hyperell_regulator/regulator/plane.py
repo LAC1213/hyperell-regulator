@@ -1,17 +1,6 @@
-r"""
-Regulator integrals over the plane by adaptive quadrature.
+r"""Regulator integrals by adaptive quadrature over `\CC`.
 
-The reference backend: each entry of the regulator matrix is computed as a
-genuine two-dimensional integral over `\CC`, with the near-singular clusters
-of branch points cut out by a smooth partition of unity (the "box trick"
-below) so that adaptive quadrature sees no discontinuity.  Slow -- six 2D
-quadratures for one `3\times3` determinant -- but it makes no assumption on
-the position of the branch points, so it is what the faster backend
-:mod:`hyperell_regulator.regulator.stokes` is checked against.
-
-Use :func:`regulator_vector` for logarithmic weights and
-:func:`regulator_vector_2` for unweighted periods. :func:`period_matrix`,
-:func:`cplus` and :func:`cminus` compute full cycle periods and their minors.
+A smooth partition of unity separates clusters of nearby singularities.
 """
 
 import scipy.integrate as spyint
@@ -24,10 +13,7 @@ from scipy.special import psi
 
 
 def _find_clusters(points, threshold):
-    """Union-find clustering of `points` (list/array of complex
-    numbers) by pairwise distance < threshold. Returns a list of
-    index-groups of size >= 2 -- singleton points don't need any
-    special treatment."""
+    """Index groups of at least two points joined by distances below ``threshold``."""
     n = len(points)
     parent = list(range(n))
 
@@ -54,25 +40,16 @@ def _find_clusters(points, threshold):
 
 
 def _smoothstep(u):
-    """C^2 smoothstep on [0,1]: 0 at u=0, 1 at u=1, with zero first
-    AND second derivative at both ends (so the weight below is C^2
-    across both transition boundaries, not just C^0)."""
+    """The quintic step from 0 to 1 with vanishing first and second endpoint derivatives."""
     u = np.clip(u, 0.0, 1.0)
     return 6 * u**5 - 15 * u**4 + 10 * u**3
 
 
 def _make_boxes(points, cluster_threshold=0.4, max_half_side=0.6, buffer_factor=1.3):
-    """Build one axis-aligned square box per cluster of close
-    singular points among `points`. Returns a list of tuples
-    (centroid, R, R_buf, x_breaks, y_breaks):
-        R      -- half-side of the "core" box (weight == 1 inside)
-        R_buf  -- half-side of the buffer box (weight == 0 outside);
-                  R_buf = buffer_factor * R
-        x_breaks / y_breaks -- coordinates of the cluster's own
-                  points relative to the centroid, for quadrature
-                  breakpoints inside the core box.
-    Boxes (including their buffers) are kept disjoint from every
-    other singular point and from each other.
+    """Disjoint square neighborhoods of close singularities.
+
+    Return ``(center, R, R_buf, x_breaks, y_breaks)`` for each cluster.
+    ``R`` and ``R_buf`` are core and buffer half-sides.
     """
     pts_arr = np.array(points, dtype=complex)
     clusters = _find_clusters(pts_arr, cluster_threshold)
@@ -104,10 +81,7 @@ def _make_boxes(points, cluster_threshold=0.4, max_half_side=0.6, buffer_factor=
 
 
 def _weight(z, box):
-    """Smooth cutoff weight for one box: 1 inside the core square,
-    0 outside the buffer square, C^2 transition in between. Uses
-    the L-infinity (Chebyshev) distance so the core/buffer regions
-    are the axis-aligned squares used elsewhere."""
+    """A `C^2` cutoff equal to 1 on the core square and 0 outside the buffer."""
     centroid, R, R_buf, _, _ = box
     d = z - centroid
     t = max(abs(d.real), abs(d.imag)) / R
@@ -126,13 +100,10 @@ def _total_weight(z, boxes):
 
 
 def _integrate_plane(f_corrected, boxes, local_opts=None, global_opts=None):
-    """Integrate f_corrected (C -> C, already had all analytic bump
-    corrections subtracted, so it's bounded on C) over the whole
-    complex plane: smoothly-weighted local Cartesian quadrature
-    inside each box's buffer region, plus the compactified-polar
-    quadrature (centered at the origin) with the complementary
-    smooth weight over the rest of the plane.
-    Returns (real_part, imag_part, summed_error_estimate)."""
+    r"""Integrate the corrected function over `\CC` using local and polar quadrature.
+
+    Return ``(real_part, imag_part, summed_error_estimate)``.
+    """
 
     if local_opts is None:
         local_opts = {'limit': 150, 'epsabs': 1e-10, 'epsrel': 1e-10}
@@ -191,13 +162,7 @@ def _integrate_plane(f_corrected, boxes, local_opts=None, global_opts=None):
 
 
 def _coeffs(f):
-    r"""
-    ``f`` as a list of coefficients in descending degree.
-
-    This integrator is numpy's, so it wants coefficients rather than a
-    polynomial; the package's entry points take Sage polynomials, and they
-    are converted here, once, on the way in.
-    """
+    r"""The coefficients of ``f`` in descending degree."""
     if hasattr(f, "parent") and hasattr(f, "list"):
         return [float(c) for c in reversed(f.list())] or [0.0]
     return list(f)
@@ -328,7 +293,7 @@ def regulator_vector_2(f, cluster_threshold=0.4):
 
 
 def _period_digits(epsabs, epsrel):
-    """Translate legacy tolerances to a guarded decimal accuracy target."""
+    """The decimal accuracy target corresponding to the integration tolerances."""
     tolerances = np.asarray([epsabs, epsrel], dtype=float)
     if not np.isfinite(tolerances).all() or not np.any(tolerances > 0):
         raise ValueError('period tolerances must be finite with at least one positive value')
@@ -336,18 +301,11 @@ def _period_digits(epsabs, epsrel):
 
 
 def period_matrix(f, epsabs=1.49e-8, epsrel=1.49e-8):
-    r"""
-    Full cycle periods on the branch-value minimum spanning tree.
+    r"""Full cycle periods of `x^i dx/y` as a complex128 array.
 
-    Each row is twice the integral along one lifted MST edge, for the
-    differentials ``x^i dx/y``, ``0 <= i < g``. In even degree omit the
-    leaf edge at the branch value of largest modulus to remove the one
-    relation; real and imaginary parts break ties.
-
-    Uses the shared guarded quadrature engine, returning a NumPy complex128
-    array. Positive ``epsabs``/``epsrel`` select the internal decimal target,
-    with a minimum of 15 digits. A nonpositive tolerance is disabled; at
-    least one must be positive. Output accuracy remains limited by float64.
+    Rows are twice the lifted tree-edge integrals; in even degree omit the
+    leaf edge of largest modulus. At least one tolerance must be positive;
+    the internal target is at least 15 digits, with output limited to float64.
     """
     from .precision import period_matrix_mp
 
@@ -355,12 +313,12 @@ def period_matrix(f, epsabs=1.49e-8, epsrel=1.49e-8):
 
 
 def cplus(f, epsabs=1.49e-8, epsrel=1.49e-8):
-    """Signed real minor of full cycle periods, with deterministic pivot ties."""
+    """The signed real minor of full cycle periods."""
     return _c_invariants(f, epsabs, epsrel)[0]
 
 
 def cminus(f, epsabs=1.49e-8, epsrel=1.49e-8):
-    """Signed imaginary minor of full cycle periods, with deterministic pivot ties."""
+    """The signed imaginary minor of full cycle periods."""
     return _c_invariants(f, epsabs, epsrel)[1]
 
 

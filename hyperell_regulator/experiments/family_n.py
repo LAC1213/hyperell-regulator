@@ -1,17 +1,6 @@
-r"""Beilinson reports for y^2+x(x-1)y=x(x-1)(x^3+n*x^2-(n+1)*x+1).
+r"""Beilinson tests for `y^2+x(x-1)y=x(x-1)(x^3+nx^2-(n+1)x+1)`.
 
-The marked points P=(0,0), Q=(1,0), R=infinity are distinct Weierstrass
-points, hence pairwise non-conjugate, and P-R and Q-R have order two.
-The same-component condition holds throughout this family; the optional
-``verify_same_component`` helper checks individual members.
-
-Like ``beilinson``, the runner uses float64 by default, shares ordinary and
-logarithmic edge integrals, supports ``--prec`` for arbitrary precision, and
-saves precision-preserving JSON with per-edge limits and retryable failures.
-The determinant uses weights `(1,2\Re(z),|z|^2)` and reports
-`q=\pi c^+c^-L''(\mathrm{std},1)/D`, as in ``beilinson``.
-The standard conductor can be large: ``--no-lvalue`` skips L-values, and
-``--max-conductor`` caps their cost. Run ``--help`` for parameter selection.
+The marked points are `(0,0)`, `(1,0)` and infinity.
 """
 
 import json
@@ -40,9 +29,7 @@ REAL_SLIT_LO, REAL_SLIT_HI = -4, 3
 # ---------------------------------------------------------------------------
 
 def family_polynomial(n):
-    r"""
-    The pair `(f, h)` of `y^2 + h(x) y = f(x)` for the parameter ``n``.
-    """
+    r"""The polynomials `(f,h)` defining the member with parameter ``n``."""
     S = PolynomialRing(ZZ, 'x')
     x = S.gen()
     f = x * (x - 1) * (x ** 3 + n * x ** 2 - (n + 1) * x + 1)
@@ -51,9 +38,7 @@ def family_polynomial(n):
 
 
 def family_curve(n, prec=250):
-    r"""
-    The curve for the parameter ``n``, or ``None`` if it is singular.
-    """
+    r"""The curve with parameter ``n``, or ``None`` if singular."""
     f, h = family_polynomial(n)
     F = 4 * f + h ** 2
     if F.degree() != 5 or F.discriminant() == 0:
@@ -65,35 +50,17 @@ def family_curve(n, prec=250):
 
 
 def family_points():
-    r"""
-    `P = (0,0)`, `Q = (1,0)`, `R = \infty`, in the coordinates of
-    :mod:`hyperell_regulator.reduction`.  `\deg F = 5`, so there is a single point at infinity and
-    `Y = -h_{g+1}/2 = 0` since `\deg h = 2 < g + 1`.
-    """
+    r"""The points `P=(0,0)`, `Q=(1,0)` and the unique point at infinity."""
     return [(QQ(0), QQ(0)), (QQ(1), QQ(0)), ("infinity", QQ(0))]
 
 
 def is_real_slit_member(n):
-    r"""
-    Whether all five branch points of member ``n`` are real.
-
-    ``0`` and ``1`` are branch points for every ``n`` (they are roots of
-    `F = 4f + h^2 = x(x-1)(4x^3 + (4n+1)x^2 - (4n+5)x + 4)`), so the condition
-    is only that the cubic factor have three real roots.
-    """
+    r"""Whether all five branch values are real."""
     return int(n) <= REAL_SLIT_LO or int(n) >= REAL_SLIT_HI
 
 
 def verify_same_component(n, prec=250, verbose=True):
-    r"""
-    Re-check that `P`, `Q`, `R` reduce to a smooth point of the same component
-    at every bad prime.
-
-    Not called by :func:`run` -- the condition holds identically in ``n``, see
-    the module docstring -- but useful as a spot check.  ``reduce_point`` wants
-    affine coordinates, so the test runs on the shifted model `u = 1/(x-a)`,
-    over the bad primes of `C` itself.
-    """
+    r"""Check smooth reduction of `P`, `Q`, `R` on the same component at all bad primes."""
     C = family_curve(n, prec=prec)
     if C is None:
         return {"n": int(n), "status": "singular"}
@@ -139,13 +106,7 @@ _STD_CONDUCTOR = {}
 
 
 def standard_conductor(n):
-    r"""
-    The conductor of the standard motive, memoised; ``None`` if some Euler
-    factor is not available.
-
-    This governs the cost; the actual coefficient count comes from PARI
-    through ``StandardLFunction._coeffs_needed``.
-    """
+    r"""The cached standard conductor, or ``None`` if unavailable."""
     key = int(n)
     if key not in _STD_CONDUCTOR:
         try:
@@ -161,7 +122,7 @@ def standard_conductor(n):
 # ---------------------------------------------------------------------------
 
 def _regulator_precision(reg_digits, dps):
-    """Keep the old dps keyword as an alias, without ambiguous precedence."""
+    """Resolve the decimal precision and its legacy ``dps`` alias."""
     if dps is not None:
         if reg_digits is not None and reg_digits != dps:
             raise ValueError("reg_digits and dps specify different precisions")
@@ -172,7 +133,7 @@ def _regulator_precision(reg_digits, dps):
 
 
 def family_determinant(G, dps=None, *, reg_digits=None):
-    """Compute both regulator columns and periods using one shared two-sheet cut."""
+    """The regulator determinant from a common cut for both logarithmic weights."""
     precision = _regulator_precision(reg_digits, dps)
     return b.beilinson_determinant_stokes(G, (0, 0), (1, 0),
                                         digits=precision)
@@ -181,11 +142,10 @@ def family_determinant(G, dps=None, *, reg_digits=None):
 def beilinson_for_n(n, digits=15, lindep_bound=8, verbose=False, prec=250,
                     dps=None, *, reg_digits=None, with_lvalue=True,
                     max_edge_seconds=15, max_edge_steps=100000):
-    """One family member, using the same numerical/report policy as beilinson.
+    """The regulator and comparison for one family member.
 
-    ``prec`` retains its historical meaning: reduction arithmetic in bits.
-    ``reg_digits`` (or the legacy ``dps`` alias) controls regulator decimals.
-    The CLI's ``--prec`` means regulator decimals, as in ``beilinson``.
+    ``prec`` is the reduction precision in bits; ``reg_digits`` (alias ``dps``)
+    is the regulator precision in decimal digits.
     """
     reg_digits = _regulator_precision(reg_digits, dps)
     if int(digits) != digits or digits < 1:
@@ -211,7 +171,7 @@ def beilinson_for_n(n, digits=15, lindep_bound=8, verbose=False, prec=250,
 
 
 def load_stored(path=RESULTS):
-    """Read previous results, keyed by the integer parameter."""
+    """Saved results keyed by the integer parameter."""
     if path is None:
         return {}
     try:
@@ -232,12 +192,10 @@ def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
         order='cost', max_conductor=10**8, verbose=False, dps=None, *,
         reg_digits=None, with_lvalue=True, max_edge_seconds=15,
         max_edge_steps=100000):
-    """Report family members, caching successes only under matching settings.
+    """Report family members, reusing successes with matching settings.
 
-    The default parameter range is -4 through 2, including non-real-slit
-    members. ``max_conductor`` is an inclusive bound on the standard motive's
-    conductor, rather than the curve conductor. Failures are saved and retried.
-    ``limit`` counts attempted members, including failures and cached results.
+    The default range is -4 through 2. ``max_conductor`` bounds the standard
+    conductor inclusively; ``limit`` counts all attempted members.
     """
     from collections import Counter
     reg_digits = _regulator_precision(reg_digits, dps)
@@ -286,7 +244,7 @@ def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
 
 
 def print_stored(path=RESULTS):
-    """Print saved successes using the common report columns."""
+    """Print saved successful comparisons."""
     rows = [r for _, r in sorted(load_stored(path).items()) if r.get('status') == 'ok']
     for row in rows:
         b._report_row(row, stored=True)

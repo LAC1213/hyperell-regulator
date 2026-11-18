@@ -1,9 +1,8 @@
-r"""Periods and integrals weighted by log|x-a| on y^2=F(x).
+r"""Plane periods and integrals weighted by `\log|x-a|` on `y^2=F(x)`.
 
-The returned entries are integrals over the complex plane with weights
-``Re(x^a bar(x)^b)/|F(x)|``, a<=b. In genus two their order is
-``(1, Re(x), |x|^2)``. Double the middle entry for the Beilinson determinant.
-A finite pole b replaces the logarithmic weight by ``log|(x-a)/(x-b)|``.
+Entries have weights `\Re(x^i\bar x^j)/|F(x)|`, with `i\le j`.
+In genus two the order is `(1,\Re(x),|x|^2)`; double the middle entry
+for the Beilinson determinant. A finite pole `b` gives `\log|(x-a)/(x-b)|`.
 """
 import numpy as np
 from sage.all import QQ
@@ -20,11 +19,10 @@ def _output(values, prec):
 
 
 def regulators_stokes(F, centers, *, pole=None, prec=None, details=None):
-    """Periods and several logarithmic vectors from one shared set of edges.
+    """Periods and logarithmic vectors on a common cut.
 
-    ``centers`` are rational numbers a. ``pole=None`` means infinity; a
-    finite rational pole b subtracts log|x-b| from every weight.
-    ``prec`` is a decimal accuracy target; None returns float64 arrays.
+    Centers and finite poles are rational; ``pole=None`` means infinity.
+    ``prec`` is the decimal accuracy target; ``None`` returns float64 arrays.
     """
     centers = [QQ(a) for a in centers]
     poles = [] if pole is None else [QQ(pole)]
@@ -37,28 +35,28 @@ def regulators_stokes(F, centers, *, pole=None, prec=None, details=None):
 
 
 def periods_and_regulator_stokes(F, a=0, *, pole=None, prec=None):
-    """Periods and the vector weighted by log|x-a| (or a finite-pole ratio)."""
+    """Periods and the logarithmic vector for ``a`` and an optional finite pole."""
     per, reg = regulators_stokes(F, [a], pole=pole, prec=prec)
     return per, reg[0]
 
 
 def periods_stokes(F, *, prec=None):
-    """Unweighted plane period vector from the branch-point cut."""
+    """The unweighted plane period vector by Stokes integration."""
     return regulators_stokes(F, [], prec=prec)[0]
 
 
 def regulator_stokes(F, a=0, *, pole=None, prec=None):
-    """The logarithmic plane vector, computed by two-sheet Stokes integration."""
+    """The logarithmic plane vector by Stokes integration."""
     return periods_and_regulator_stokes(F, a, pole=pole, prec=prec)[1]
 
 
 def periods_plane(F, **kwds):
-    """Independent float64 quadrature of the unweighted plane vector."""
+    """The unweighted plane vector by float64 quadrature."""
     return np.asarray(plane.regulator_vector_2(F, **kwds)[0], float)
 
 
 def regulator_plane(F, a=0, *, pole=None, **kwds):
-    """Independent float64 plane quadrature for a logarithmic weight."""
+    """The logarithmic plane vector by float64 quadrature."""
     reg = np.asarray(plane.regulator_vector(F, a=float(a), **kwds)[0], float)
     if pole is not None:
         reg -= np.asarray(plane.regulator_vector(F, a=float(pole), **kwds)[0], float)
@@ -66,7 +64,7 @@ def regulator_plane(F, a=0, *, pole=None, **kwds):
 
 
 def c_invariants(F, prec=None):
-    """Signed minors of full cycle periods on an MST cycle basis."""
+    """The signed real and imaginary minors of full cycle periods."""
     if prec is None:
         return plane._c_invariants(F)
     from .precision import c_invariants_mp

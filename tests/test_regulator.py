@@ -1,4 +1,4 @@
-"""Direct two-sheet integrals against independent plane and survey references."""
+"""Regulators compared with plane integrals and survey values."""
 import json
 from pathlib import Path
 import numpy as np

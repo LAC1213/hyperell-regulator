@@ -1,13 +1,4 @@
-r"""
-Where the cached data files live.
-
-LMFDB rows, component answers, `L`-values and Beilinson determinants are
-cached in JSON files relative to
-
-* ``$HYPERELL_REGULATOR_DATA`` if that is set, else
-* the current working directory,
-
-Writers call :func:`ensure_parent` to create missing directories.
+r"""Cache paths relative to ``HYPERELL_REGULATOR_DATA`` or the working directory.
 
 EXAMPLES::
 
@@ -25,25 +16,16 @@ ENV_VAR = "HYPERELL_REGULATOR_DATA"
 
 
 def data_dir():
-    r"""
-    The directory the cached JSON files are read from and written to.
-    """
+    r"""The cache directory."""
     return Path(os.environ.get(ENV_VAR) or Path.cwd())
 
 
 def data_path(*parts):
-    r"""
-    The path of a data file inside :func:`data_dir`, as a string.
-
-    Nothing is created here; call :func:`ensure_parent` before writing.
-    """
+    r"""A cache path as a string; no directories are created."""
     return str(data_dir().joinpath(*parts))
 
 
 def ensure_parent(path):
-    r"""
-    Create the directory ``path`` lives in, if it does not exist, and return
-    ``path``.
-    """
+    r"""Create the parent directory and return ``path``."""
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     return path

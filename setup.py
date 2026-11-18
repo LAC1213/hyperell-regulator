@@ -1,19 +1,7 @@
-r"""
-Build the bundled ``rforest Frobenius`` driver as part of installing the package.
+r"""Build the rforest Frobenius executable with a private thread-safe NTL.
 
-``sage -pip install git+<url>`` should leave nothing to do by hand, so the
-C++ in ``hyperell-frobenius`` is compiled here and the resulting ``euler``
-binary is put inside the package, where
-:func:`hyperell_regulator.frobenius.euler_binary` looks for it first.
-
-A private, thread-safe NTL is built from a pinned upstream download and linked
-statically into euler. GMP comes from Sage's prefix (GMP_INC/GMP_LIB override
-its include/library directories). Sage's own NTL is never modified or linked.
-
-The build is *not* required: without a compiler, or without GMP, the install
-still succeeds and :mod:`hyperell_regulator.frobenius` falls back to Sage's
-own Frobenius matrices, which are correct and slower.  Only the speed is
-lost, so a failure here warns rather than raises.
+GMP is taken from Sage or ``GMP_INC`` and ``GMP_LIB``.
+An optional build failure leaves Frobenius computations to Sage.
 """
 
 import hashlib
@@ -37,7 +25,7 @@ CHECK = ROOT / "hyperell_regulator" / "frobenius.py"
 
 
 def _prefixes():
-    """Where to look for GMP, best guess first."""
+    """Candidate GMP installation prefixes, in search order."""
     out = []
     for var in ("SAGE_LOCAL", "CONDA_PREFIX"):
         if os.environ.get(var):
@@ -57,7 +45,7 @@ def _prefixes():
 
 
 def _gmp_paths():
-    """Find Sage's GMP, preserving explicit include/library overrides."""
+    """GMP include and library paths, respecting explicit overrides."""
     inc, lib = os.environ.get("GMP_INC"), os.environ.get("GMP_LIB")
     if inc and lib:
         return inc, lib
@@ -142,7 +130,7 @@ class build_with_euler(build_py):
 
 
 class binary_distribution(Distribution):
-    """The wheel holds a compiled program, so it is not ``py3-none-any``."""
+    """A distribution containing a native executable."""
 
     def has_ext_modules(self):
         return True

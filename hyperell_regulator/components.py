@@ -1,45 +1,7 @@
-r"""
-For genus 2 curves of small conductor whose Jacobian is simple, list the pairs
-of known rational points that reduce to a smooth point of the *same*
-irreducible component of the special fibre at *every* prime.
+r"""Torsion pairs satisfying the integrality criterion on genus two curves.
 
-Run the whole enumeration with::
-
-    sage -python -m hyperell_regulator.components
-
-or, from a session, :func:`enumerate_all`.  The LMFDB rows and the answers are
-cached under :func:`hyperell_regulator.paths.data_dir`.
-
-Reduction is decided by :mod:`hyperell_regulator.reduction` (cluster pictures
-at odd primes, Liu's algorithm at 2).  Recall the convention there: the special fibre is that of the
-*stable* model, so a point landing on one of the chains of `\mathbb{P}^1`'s of
-the minimal regular model counts as reducing to a node, not to a smooth point.
-
-At a prime of good reduction the special fibre is smooth and irreducible, so
-every pair trivially qualifies; only the bad primes need testing.  At `p = 2`
-cluster pictures do not apply, so if 2 is a bad prime the verdict is reported as
-*undecided* rather than guessed.
-
-Data
-====
-
-Curves, equations, simplicity and rational points come from LMFDB, tables
-``g2c_curves`` and ``g2c_ratpts``; the fields used are ``cond``, ``eqn``,
-``is_simple_base`` and ``rat_pts``.  LMFDB rate-limits bulk API access (it
-starts serving a CAPTCHA), so the data is read from a local JSON file rather
-than fetched on the fly.  See :func:`fetch_lmfdb` for the shape of that file
-and a best-effort fetcher, and :func:`load_curves` for the reader.
-
-Points at infinity
-==================
-
-LMFDB gives points in the weighted projective coordinates `(X : Y : Z)` of
-weights `(1, g+1, 1)`, so an affine point is `x = X/Z`, `y = Y/Z^{g+1}`, and
-`Z = 0` is a point at infinity.  ``reduce_point`` needs affine coordinates, so
-:func:`affine_model` first moves every point into the affine chart by the
-substitution `u = 1/(x-a)`, `v = y/(x-a)^{g+1}` for a suitable integer `a`.
-This is an isomorphism over `\QQ`, so it changes no answer -- and where a pair
-is affine both before and after, the two computations are compared as a check.
+The criterion requires smooth reduction on the same component of the
+stable special fibre at every prime. Component tests at 2 are undecided.
 """
 
 import json
@@ -71,34 +33,10 @@ RESULTS = data_path("results", "same_component_results.json")
 
 def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
                 geom_simple=True, email="acampo@ihes.fr"):
-    r"""
-    Fetch the LMFDB rows needed by this script into ``path``, merging with
-    whatever is already cached.
+    r"""Fetch and merge LMFDB curve and rational-point data into ``path``.
 
-    Query budget
-    ============
-
-    ``_limit`` is capped at 100 by LMFDB, so 100 rows per request is the floor.
-    Three things keep the count near it:
-
-    * ``is_simple_geom`` (or ``is_simple_base``) is applied **server-side**, so
-      a page of 100 is 100 *qualifying* curves rather than the ~54 that
-      client-side filtering left usable.
-    * points are requested only for labels not already cached.
-    * ``g2c_ratpts`` has no conductor column, so it has to be scanned in order;
-      the offset reached is remembered in ``_scan_state.json`` next to the
-      cache, so extending an existing cache resumes instead of rescanning from
-      0.  Delete that file to force a full rescan.
-
-    So a first fetch of 100 curves costs about 3 requests and extending it
-    costs about 3 more, against 101 for the naive label-by-label version and
-    ~4-6 for the previous one.
-
-    LMFDB has no working range operator on ``cond`` (``cond=lt400`` and
-    ``cond=277..400`` both 404), so ``max_cond`` is still applied client-side;
-    that is free, since the curve rows are sorted by conductor anyway.  LMFDB
-    also serves a CAPTCHA to clients that hammer it, so this identifies itself,
-    sleeps ``pause`` seconds between requests and backs off on a challenge.
+    Requests are paginated, with ``pause`` seconds between requests.
+    The rational-point scan offset is saved in ``_scan_state.json``.
     """
     import time
     import urllib.request
@@ -222,25 +160,7 @@ def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
 
 
 def lmfdb_label(C, pause=6, email="acampo@ihes.fr", verbose=True):
-    r"""
-    The LMFDB label(s) of the genus 2 curve ``C``, looked up by invariants.
-
-    Genus 2 curves are isomorphic exactly when their *absolute* Igusa
-    invariants agree, so those are the right key: Sage's
-    ``absolute_igusa_invariants_wamelen`` is computed both for ``C`` and for
-    each LMFDB candidate's ``eqn`` and the two compared.  (Sage's
-    ``igusa_clebsch_invariants`` are *not* directly comparable with LMFDB's
-    ``igusa_clebsch_inv``: they differ by a weighted scaling -- for
-    277.a.277.1 by `\lambda^2 = -4` -- and LMFDB's ``g2_inv`` uses yet another
-    normalisation.  Comparing absolute invariants computed the same way on both
-    sides side-steps all of that.)
-
-    Candidates are drawn by ``abs_disc``, the absolute value of Liu's minimal
-    discriminant, which is a reliable key -- unlike the conductor, which PARI's
-    ``genus2red`` sometimes reports only away from 2 (see 388.a.776.1, where it
-    gives 97 rather than 388).  The conductor is used as a fallback.
-
-    Returns the list of matching labels; a single match is the normal case.
+    r"""The LMFDB labels matching the absolute Igusa invariants of ``C``.
 
     EXAMPLES::
 
@@ -313,15 +233,10 @@ def lmfdb_label(C, pause=6, email="acampo@ihes.fr", verbose=True):
 
 
 def load_curves(path=CACHE, max_cond=None, simple_only=True, geom_simple=False):
-    r"""
-    Read the cached LMFDB rows, optionally restricting to conductor at most
-    ``max_cond``, sorted by conductor.
+    r"""Cached curves in conductor order, with conductor at most ``max_cond``.
 
-    ``simple_only`` keeps those whose Jacobian is simple over `\QQ`
-    (LMFDB's ``is_simple_base``); ``geom_simple`` keeps only the
-    geometrically simple ones (``is_simple_geom``), i.e. those whose Jacobian
-    stays simple over `\overline{\QQ}`.  The latter is the stronger condition
-    and implies the former.
+    ``simple_only`` requires simplicity over `\QQ`; ``geom_simple`` requires
+    geometric simplicity.
     """
     with open(path) as fh:
         rows = json.load(fh)
@@ -335,10 +250,7 @@ def load_curves(path=CACHE, max_cond=None, simple_only=True, geom_simple=False):
 
 
 def curve_from_row(row, prec=250):
-    r"""
-    The curve of an LMFDB row.  ``eqn`` is ``[f_coeffs, h_coeffs]`` in
-    increasing degree, defining `y^2 + h(x) y = f(x)`.
-    """
+    r"""The curve `y^2+h(x)y=f(x)` from coefficients in increasing degree."""
     S = PolynomialRing(ZZ, 'x')
     eqn = _as_list(row["eqn"])
     f = S([ZZ(c) for c in eqn[0]])
@@ -347,10 +259,7 @@ def curve_from_row(row, prec=250):
 
 
 def _as_list(v):
-    r"""
-    LMFDB's API returns list-valued columns sometimes as JSON lists and
-    sometimes as their string representation; accept either.
-    """
+    r"""Read a list or its string representation."""
     if isinstance(v, str):
         return json.loads(v.replace("'", '"'))
     return v
@@ -361,9 +270,10 @@ def _as_list(v):
 # ---------------------------------------------------------------------------
 
 def lmfdb_points(C, rat_pts):
-    r"""
-    Turn LMFDB's weighted triples into a list of ``(x, y)`` pairs, using
-    ``None`` for a point at infinity.  Weights are `(1, g+1, 1)`.
+    r"""Convert weighted projective triples of weights `(1,g+1,1)` to points.
+
+    Affine points are ``(x,y)``; infinite points are ``("infinity", eta)``
+    with `eta=\lim y/x^{g+1}`.
     """
     g = C.genus()
     out = []
@@ -379,16 +289,9 @@ def lmfdb_points(C, rat_pts):
 
 
 def search_rational_points(C, bound=12):
-    r"""
-    The rational points of ``C`` whose `x`-coordinate has numerator and
-    denominator at most ``bound``, in the same format as
-    :func:`lmfdb_points`: ``(x, y)`` pairs, and ``("infinity", Y)`` for a
-    point at infinity.
+    r"""Rational points with `|x|` and its denominator at most ``bound``, including infinity.
 
-    Over the square model `Y^2 = F(x)` the points above `x_0` are rational iff
-    `h(x_0)^2 + 4 f(x_0)` is a square, and the points at infinity are rational
-    iff the leading coefficient `\mathrm{lc}(F) = h_{g+1}^2 + 4 f_{2g+2}` is,
-    the two values of `Y` being the roots of `Y^2 + h_{g+1} Y = f_{2g+2}`.
+    Infinite points are labelled by `eta=\lim y/x^{g+1}`.
 
     EXAMPLES::
 
@@ -428,15 +331,7 @@ def search_rational_points(C, bound=12):
 
 
 def curve_points(C, row, bound=12, max_bound=60):
-    r"""
-    The rational points to use for ``row``: LMFDB's list if the cache holds it,
-    otherwise a local search, with the bound raised until as many points are
-    found as LMFDB's ``num_rat_pts`` says there are.
-
-    A warning is printed if the search still comes up short, which means either
-    that some point has larger height than ``max_bound`` allows or that
-    LMFDB's list is not provably complete.
-    """
+    r"""Cached rational points, or a height search up to ``max_bound``."""
     if row.get("rat_pts"):
         return lmfdb_points(C, row["rat_pts"])
     want = row.get("num_rat_pts")
@@ -453,19 +348,10 @@ def curve_points(C, row, bound=12, max_bound=60):
 
 
 def affine_model(C, points):
-    r"""
-    An isomorphic model on which every point of ``points`` is affine, via
-    `u = 1/(x-a)`, `v = y/(x-a)^{g+1}`.
+    r"""An isomorphic square model on which all marked points are affine.
 
-    On the square model `Y^2 = F(x)` this sends `F` to
-    `G(u) = u^{2g+2} F(a + 1/u)`, whose coefficients are those of `F` expanded
-    about `a`, reversed; `G` is integral of degree exactly `2g+2` as soon as
-    `F(a) \ne 0`, and `u = 0` is the image of `x = \infty`.  We return the
-    curve `v^2 = G(u)` (i.e. ``f = G``, ``h = 0``) together with the
-    transported points, and the shift ``a``.
-
-    ``a`` is chosen integral with `F(a) \ne 0` and distinct from every finite
-    `x`-coordinate in ``points``, so that no point is sent to infinity.
+    Use `u=1/(x-a)` and `v=(2y+h(x))/(x-a)^{g+1}`.
+    Return ``(curve, images, a)``.
 
     EXAMPLES::
 
@@ -524,20 +410,10 @@ def affine_model(C, points):
 # ---------------------------------------------------------------------------
 
 def odd_degree_model(C):
-    r"""
-    An isomorphic model `v^2 = G(u)` with `\deg G` odd, together with the map
-    on points, or ``None`` if `F = 4f + h^2` has even degree and no rational root.
+    r"""An odd degree square model, or ``None`` if none exists over `\QQ`.
 
-    Sage's genus 2 Jacobian arithmetic (Mumford representation) needs a single
-    rational point at infinity, i.e. an odd degree model.  A rational root `r`
-    of `F` is a rational Weierstrass point; moving it to infinity by
-    `u = 1/(x-r)`, `v = Y/(x-r)^{g+1}` with `Y = 2y + h(x)` drops the degree of
-    `F` by the multiplicity of `r`, giving `\deg G = 2g+1`.
-
-    Returns ``(D, phi, r)`` where ``D`` is the Sage hyperelliptic curve
-    `v^2 = G(u)` and ``phi`` sends an affine `(x, y)` or labelled
-    ``("infinity", eta)`` on ``C`` to a point of ``D``. If `F` already has
-    odd degree, only complete the square and return ``r=None``.
+    Return ``(curve, point_map, r)``, moving a rational root `r` to infinity.
+    For an already odd degree model, ``r=None``.
     """
     g = C.genus()
     if C.F.degree() % 2:
@@ -610,14 +486,14 @@ def _torsion_multiple(C, primes):
 
 
 def _square_point(C, point):
-    """Coordinates on Y^2=4f+h^2, including a labelled infinity."""
+    """Coordinates on `Y^2=4f+h^2`, including labelled infinity."""
     if point[0] == "infinity":
         return ("infinity", 2*QQ(point[1])+QQ(C.h[C.genus()+1]))
     return C.to_square_model(point)
 
 
 def _order_by_principality(C, P, Q, primes):
-    """Order without requiring a rational Weierstrass point."""
+    """The divisor-class order by exact principality tests."""
     from .regulator.torsion import _field, _place, _order_from_multiple
 
     key = "torsion_function_field"
@@ -635,36 +511,19 @@ def _order_by_principality(C, P, Q, primes):
 
 
 def divisor_class_order(C, P, Q, primes=30):
-    r"""
-    The order of `[P] - [Q]` in `J(\QQ)`, or ``+Infinity`` if it is not
-    torsion, or ``None`` if it could not be computed.
+    r"""The order of `[P]-[Q]` in `J(\QQ)`.
 
-    Torsion of `J(\QQ)` injects into `J(\GF{p})` at a prime `p` of good
-    reduction, so the order of a torsion class divides
-    `m = \gcd_p \# J(\GF{p})`.  We compute that gcd over the good odd primes
-    below ``primes``. On an odd degree model, test the divisors of `m` using
-    Mumford arithmetic. If no rational Weierstrass point is available, test
-    principality of `m(P-Q)` by exact Riemann--Roch, then remove prime factors
-    of `m` to find the least order. This also detects nontorsion classes on
-    even degree models, without a rank assumption or a search cutoff.
+    Return ``+Infinity`` for nontorsion and ``None`` if undetermined.
+    Points use `y^2+h(x)y=f(x)`; ``("infinity", eta)`` means
+    `eta=\lim y/x^{g+1}`. Good odd reductions bound the torsion order.
 
-    Points use the original model `y^2+h(x)y=f(x)`. In particular,
-    ``("infinity", eta)`` means `eta=\lim y/x^{g+1}` on that model, and the
-    two rational infinities are distinguished. Good-reduction bounds and
-    the function field are cached on ``C`` for repeated point pairs.
-
-    EXAMPLES:
-
-    On 277.a.277.1 the class of `(0,0) - (0,-1)` has order 15::
+    EXAMPLES::
 
         sage: from hyperell_regulator.components import HyperellipticCurveWithReduction, divisor_class_order
         sage: R.<x> = ZZ[]
         sage: C = HyperellipticCurveWithReduction(-x^2 - x, x^3 + x^2 + x + 1)
         sage: divisor_class_order(C, (0, 0), (0, -1))
         15
-
-    On 388.a.776.1 there is no rational Weierstrass point. Its two rational
-    infinities give different orders::
 
         sage: C = HyperellipticCurveWithReduction(x + 2*x^2 - x^4, 1 + x + x^3)
         sage: divisor_class_order(C, (0, 0), ("infinity", 0))
@@ -705,14 +564,9 @@ def divisor_class_order(C, P, Q, primes=30):
 # ---------------------------------------------------------------------------
 
 def same_component_all_primes(C, P, Q):
-    r"""
-    Whether ``P`` and ``Q`` reduce to a smooth point of the same component of
-    the special fibre at *every* prime.
+    r"""Test smooth reduction on the same stable component at every prime.
 
-    Only the bad primes are tested: at a good prime the special fibre is smooth
-    and irreducible.  Returns ``(verdict, per_prime)`` with ``verdict`` one of
-    ``True``, ``False``, ``None`` (undecided, which happens exactly when 2 is a
-    bad prime and no odd prime has already given ``False``).
+    Return ``(verdict, per_prime)``, with ``verdict=None`` if undecided.
     """
     per_prime = {}
     verdict = True
@@ -729,9 +583,7 @@ def same_component_all_primes(C, P, Q):
 
 
 def report_curve(row, verbose=True):
-    r"""
-    Run the enumeration for one LMFDB row and return a dictionary of results.
-    """
+    r"""Torsion orders and component tests for one LMFDB curve."""
     C = curve_from_row(row)
     pts = curve_points(C, row)
     n_inf = sum(1 for p in pts if p is None)
@@ -809,10 +661,7 @@ def _fmt(P):
 
 
 def _jsonable(v):
-    r"""
-    Make a result value JSON-safe: rationals and integers become strings and
-    ints, ``Infinity`` becomes ``"Infinity"``, points become lists.
-    """
+    r"""Convert exact numbers and points to JSON values."""
     if v is None or isinstance(v, bool) or isinstance(v, str):
         return v
     if v is Infinity:
@@ -825,9 +674,7 @@ def _jsonable(v):
 
 
 def _result_record(r):
-    r"""
-    One curve's results as a JSON-safe dictionary.
-    """
+    r"""One curve record in JSON form."""
     return {
         "label": r["label"],
         "cond": int(r["cond"]),
@@ -849,11 +696,7 @@ def _result_record(r):
 
 
 def save_results(results, results_path=RESULTS):
-    r"""
-    Merge ``results`` into the JSON file at ``results_path``, keyed by label,
-    so repeated runs accumulate rather than overwrite.  Returns the full
-    contents after the merge.
-    """
+    r"""Merge results by curve label and return the full saved dictionary."""
     try:
         with open(results_path) as fh:
             have = {r["label"]: r for r in json.load(fh)}
@@ -873,11 +716,9 @@ def save_results(results, results_path=RESULTS):
 
 def enumerate_all(max_cond=None, path=CACHE, geom_simple=True,
                   results_path=RESULTS):
-    r"""
-    Run :func:`report_curve` over every cached curve, in order of conductor.
+    r"""Compute component records in conductor order.
 
-    By default only geometrically simple Jacobians are considered; pass
-    ``geom_simple=False`` for all those simple over `\QQ`.
+    By default the Jacobians are geometrically simple.
     """
     rows = load_curves(path=path, max_cond=max_cond, simple_only=True,
                        geom_simple=geom_simple)
@@ -915,10 +756,7 @@ def enumerate_all(max_cond=None, path=CACHE, geom_simple=True,
 
 
 def main():
-    r"""
-    Run the whole enumeration, as ``sage -python -m
-    hyperell_regulator.components`` does.
-    """
+    r"""Run the component enumeration."""
     return enumerate_all()
 
 

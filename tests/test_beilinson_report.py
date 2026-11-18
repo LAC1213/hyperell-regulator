@@ -1,4 +1,4 @@
-"""The conductor report uses float64 and excludes every conjugate pair."""
+"""Survey precision and nonconjugacy of marked points."""
 import contextlib
 import inspect
 import io

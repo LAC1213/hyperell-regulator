@@ -1,4 +1,4 @@
-"""Exact divisor orders on models with and without rational Weierstrass points."""
+"""Exact divisor-class orders in odd and even degree."""
 
 from unittest.mock import patch
 

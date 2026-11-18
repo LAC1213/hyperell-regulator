@@ -1,4 +1,4 @@
-"""MST cycle bases, precision growth and integral changes of basis."""
+"""Integral cycle bases and period precision."""
 import json
 from pathlib import Path
 from unittest.mock import patch

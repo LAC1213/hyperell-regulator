@@ -1,4 +1,4 @@
-"""Numerical/export checks independent of the browser's plot rendering."""
+"""Branch-diagram exports and their numerical data."""
 
 import json
 import hashlib
@@ -53,11 +53,7 @@ def _complex(z):
 
 
 def _assemble_export(data, logarithmic, weight=0):
-    """Stokes via complete sheet boundaries reconstructed from exported banks.
-
-    This checks the serialization's sheet permutations, detour aggregation,
-    bank jump and infinite edge against the independently exported pairings.
-    """
+    """Reconstruct the Stokes sum from the exported sheet boundaries."""
     edges, g, n = data['edges'], data['genus'], data['degree']
     r = len(edges)
     u = np.array([[[_complex(lift['ordinary'][a]) for lift in e['lifts']]

@@ -1,4 +1,4 @@
-"""Precision-preserving reports, caches and cycle periods."""
+"""Precision of saved values and cycle periods."""
 import json
 from unittest.mock import patch
 from sage.all import QQ, RealField

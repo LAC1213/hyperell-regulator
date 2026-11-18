@@ -1,11 +1,11 @@
-"""Export one x-plane branch diagram per curve, with every logarithmic weight."""
+"""Export branch diagrams and logarithmic integrals."""
 import argparse
 import ast
 import json
 from pathlib import Path
 
 def parse_expression(source, field):
-    """Parse arithmetic in QQ(x), without evaluating Python supplied by a visitor."""
+    r"""Parse an arithmetic expression in `\QQ(x)`."""
     if not isinstance(source, str) or not source.strip() or len(source) > 2000:
         raise ValueError("Enter an expression of at most 2000 characters")
     try:
@@ -64,7 +64,7 @@ def parse_expression(source, field):
 
 
 def parse_request(request):
-    """Validate a polynomial, rational logarithmic centers and precision."""
+    """Validate the curve polynomial, rational centers and precision."""
     from sage.all import PolynomialRing, QQ
     if not isinstance(request, dict):
         raise ValueError('Expected an object with F, centers and prec')
@@ -88,7 +88,7 @@ def parse_request(request):
 
 
 def cut_system_data(F, centers=(0,), prec=15, *, samples=40):
-    """Export shared edges, bank gluing and all ordinary/logarithmic integrals."""
+    """Export the common cut, bank gluing, periods and logarithmic integrals."""
     import numpy as np
     from .stokes import compute, prod
     details = {}

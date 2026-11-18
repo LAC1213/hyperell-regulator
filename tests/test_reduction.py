@@ -1,5 +1,4 @@
-"""Reduction onto the two branches of an übereven principal cluster."""
-
+"""Reduction on übereven principal components."""
 import pytest
 
 from sage.all import PolynomialRing, ZZ

@@ -1,16 +1,4 @@
-r"""Tests for the batched Frobenius path and the two `L`-functions.
-
-The good-prime Euler factors come from the simultaneous rforest algorithm,
-for either model parity. They must agree with Sage prime by prime, including
-when the native program declines a job or is unavailable.
-
-Then the two `L`-functions.  `L(C,s)` is checked against PARI's own
-``lfungenus2`` -- coefficients and value both -- since that is an
-independent implementation of the same object.  Finally, that asking for
-more digits actually delivers them: returning ``RR(pari.lfun(...))`` caps
-every value at 53 bits however high PARI's working precision is set, which
-is the bug the arbitrary-precision path had to fix.
-"""
+r"""Frobenius polynomials, Euler factors and numerical `L`-values."""
 
 import os
 import subprocess
@@ -50,11 +38,7 @@ def test_batched_frobenius_matches_sage():
 
 
 def test_frobenius_is_a_weil_polynomial():
-    r"""
-    Degree `2g`, `a_0 = q^g`, and the functional equation
-    `a_{2g-i} = a_i q^{g-i}` -- which the lifting imposes, so this checks the
-    lifting rather than the matrix.
-    """
+    r"""Check the degree, constant coefficient and functional equation."""
     for p, cp in frobenius_polynomials(F, PRIMES[:8]).items():
         c = cp.list()
         assert cp.degree() == 4 and c[4] == 1 and c[0] == p ** 2
@@ -62,9 +46,7 @@ def test_frobenius_is_a_weil_polynomial():
 
 
 def test_falls_back_when_the_program_is_missing():
-    r"""
-    The answer must not depend on whether the program is installed.
-    """
+    r"""Sage fallback agrees with native Frobenius polynomials."""
     old = os.environ.get("HYPELLFROB_EULER")
     os.environ["HYPELLFROB_EULER"] = "/nonexistent/euler"
     try:
@@ -80,10 +62,7 @@ def test_falls_back_when_the_program_is_missing():
 
 
 def test_odd_model():
-    r"""
-    Monic, odd, integral; and ``None`` exactly when there is no rational
-    Weierstrass point to move to infinity.
-    """
+    r"""The odd model is monic and integral when a rational Weierstrass point exists."""
     assert odd_model(F) == F                       # already monic and odd
     for f in ((X - 1) * (X ** 5 + X + 3), (X + 2) * (X ** 5 - X + 1)):
         g = odd_model(f)
@@ -94,11 +73,7 @@ def test_odd_model():
 
 
 def test_even_degree_with_a_weierstrass_point_takes_the_fast_path():
-    r"""
-    An even degree model with a rational root is sent through its odd model,
-    which is isomorphic over `\QQ`, so Sage's answer for the *original* must
-    come back -- and quickly.
-    """
+    r"""The odd model gives the Frobenius polynomial of the original curve."""
     import time
 
     f = (X - 1) * (X ** 5 + X + 3)
@@ -112,10 +87,7 @@ def test_even_degree_with_a_weierstrass_point_takes_the_fast_path():
 
 
 def test_even_degree_without_a_weierstrass_point():
-    r"""
-    The simultaneous even-degree algorithm handles models with no rational
-    Weierstrass point and must return the same Euler factors as Sage.
-    """
+    r"""Even degree Frobenius polynomials agree with Sage."""
     f = 4 * (X ** 5 - X + 1) + (X ** 3 + X + 1) ** 2
     assert odd_model(f) is None
     ps = [p for p in prime_range(7, 90) if f.discriminant() % p]
@@ -129,10 +101,7 @@ def test_single_prime_convenience():
 
 
 def test_curve_lfunction_matches_pari():
-    r"""
-    Coefficients and value both, against ``lfungenus2``.  The conductor,
-    weight and gamma factors are the ones ``lfunparams`` reports.
-    """
+    r"""Curve Dirichlet coefficients and values agree with PARI."""
     C = HyperellipticCurveWithReduction(F)
     L = CurveLFunction(C)
     assert L.conductor() == 3233
@@ -146,17 +115,7 @@ def test_curve_lfunction_matches_pari():
 
 
 def test_curve_lvalue_matches_pari():
-    r"""
-    Against PARI *at the same precision*.
-
-    ``pari.set_real_precision`` does not reach ``lfun`` -- it answers at 64
-    bits whatever that is set to -- so the comparison has to pass the
-    precision to the call, on both sides, or it is comparing a 64-bit value
-    with whatever we asked for.  How many digits either side is worth is a
-    separate matter: ``lfungenus2``'s object for this curve satisfies its own
-    functional equation only to `2^{-7}` (``lfuncheckfeq`` says so for PARI's
-    object as much as for ours), so a few digits is all there is here.
-    """
+    r"""Compare curve values with PARI at equal precision."""
     C = HyperellipticCurveWithReduction(F)
     L = CurveLFunction(C)
     # the Dirichlet coefficients are the part that is ours, and they agree
@@ -178,18 +137,7 @@ def test_curve_lvalue_matches_pari():
 
 
 def test_arbitrary_precision_really_is():
-    r"""
-    Asking for more digits must *deliver* more digits.
-
-    Two things have to be right for that, and each was wrong once: the value
-    must come back in a field wide enough to hold them (an ``RR`` conversion
-    capped it at 53 bits), and the PARI call must be told the precision --
-    ``pari.set_real_precision`` does not reach ``lfun`` or ``lfuncheckfeq``,
-    which answered at 64 bits however much was asked for.  The second showed
-    up as a functional equation stuck at `3.6\cdot10^{-15}` at every
-    precision; the certificate now improves as it should, and it is the
-    certificate that says the digits are real.
-    """
+    r"""Values and functional equation residuals improve with precision."""
     # LMFDB 249.a.249.1, whose bad primes 3 and 83 are both odd, so the
     # cluster pictures give its standard L-function outright
     R = PolynomialRing(ZZ, "x")
@@ -214,7 +162,7 @@ def test_real_field_is_wide_enough():
 
 
 def test_large_coefficient_budget_can_exceed_one_gib_without_shrinking_stack():
-    """The 1717.a.1717.2 count needs more than Sage's default 1 GiB ceiling."""
+    """The coefficient budget may require a PARI stack larger than 1 GiB."""
     engine = Mock(wraps=pari)
     engine.allocatemem = Mock()
     engine.stacksize.return_value = 8_000_000
@@ -232,7 +180,7 @@ def test_large_coefficient_budget_can_exceed_one_gib_without_shrinking_stack():
 
 
 def test_pari_stack_exhaustion_retries_the_operation():
-    """Use a real exhausted PARI stack, including more than one enlargement."""
+    """PARI stack exhaustion triggers repeated enlargement."""
     previous = pari.stacksize(), pari.stacksizemax()
     attempts = 0
 
@@ -270,7 +218,7 @@ def test_other_pari_errors_propagate_without_retry():
 
 @pytest.mark.parametrize('cls', [CurveLFunction, StandardLFunction])
 def test_coefficient_expansion_matches_divisor_sums(cls):
-    """The Euler product for zeta(s)*zeta(s-1) has coefficients sigma_1(n)."""
+    r"""The coefficients of `\zeta(s)\zeta(s-1)` are `\sigma_1(n)`."""
     L = cls(HyperellipticCurveWithReduction(F))
     T = PolynomialRing(QQ, 'T').gen()
     with patch.object(cls, 'precompute_h1'), patch.object(
@@ -329,7 +277,7 @@ def test_unsupported_reduction_at_two_still_requires_override():
 ])
 def test_two_adic_factors_and_wild_conductors_satisfy_functional_equation(
         f, h, conductor, local_factor, standard_conductor):
-    """Independent global check of each newly supported local representation."""
+    """The factors at 2 and wild conductors satisfy the functional equation."""
     L = StandardLFunction(HyperellipticCurveWithReduction(f, h), h1_conductor=conductor)
     assert L.euler_factor(2) == L._RT(local_factor)
     assert L.conductor() == standard_conductor
@@ -361,7 +309,7 @@ def test_1116_toric_homology_uses_submodule_coordinates():
 
 @pytest.mark.parametrize('support_order', [(0, 1, 2), (2, 1, 0)])
 def test_toric_frobenius_uses_echelonized_cycle_basis(support_order):
-    """Changing the cycle basis must preserve order-three Frobenius."""
+    """Order-three toric Frobenius is independent of the cycle basis."""
     C = HyperellipticCurveWithReduction(-X+X**2+2*X**3+X**4, 1+X**3)
     L = StandardLFunction(C)
     R = C.cluster_picture(3)
@@ -389,7 +337,7 @@ def test_toric_frobenius_uses_echelonized_cycle_basis(support_order):
     [0, -1, 1, -1], [0, -1, 1, 0], [0, -1, 1, 1],
 ])
 def test_toric_factor_matches_exterior_square_monodromy_kernel(entries):
-    """Compute the invariant subspace directly, including order 3, 4 and 6."""
+    """Compare toric factors with the exterior-square monodromy kernel."""
     from itertools import combinations
     from sage.all import Matrix, block_diagonal_matrix, block_matrix, identity_matrix, zero_matrix
 
@@ -415,7 +363,7 @@ def test_toric_factor_matches_exterior_square_monodromy_kernel(entries):
 @pytest.mark.parametrize("workers", [2, 4, 8, None])
 @pytest.mark.parametrize("f", [F, 4 * (X**5 - X + 1) + (X**3 + X + 1)**2])
 def test_native_parallel_matrices_match_serial_and_sage(workers, f):
-    """Exercise the binary directly so fallback cannot mask native failures."""
+    """Native matrices agree across worker counts and with Sage."""
     binary = euler_binary()
     if binary is None:
         pytest.skip("Frobenius accelerator not built")

@@ -1,8 +1,6 @@
-"""Time native rforest runs against independent Sage or saved references.
+"""Benchmark rforest against Sage or saved reference matrices.
 
-Run with sage -python. Uses wait4 for per-process CPU time and peak RSS;
-wall time is measured with perf_counter. Unsupported jobs are declined.
-Reference generation is excluded from native timings.
+Reference generation is excluded from the timings.
 """
 import argparse
 import hashlib

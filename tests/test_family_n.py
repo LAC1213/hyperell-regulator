@@ -1,4 +1,4 @@
-"""Family reports share the Beilinson integrator, precision, and cache policy."""
+"""Regulators and saved comparisons for the one-parameter family."""
 import contextlib
 import io
 import json

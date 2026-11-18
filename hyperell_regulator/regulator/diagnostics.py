@@ -1,9 +1,6 @@
-"""Optional work budgets and progress records for regulator integration.
+"""Integration budgets and progress records.
 
-Checkpoints run inside quadrature loops, so a difficult
-edge can be interrupted without waiting for the numerical solver to return.
-These are cooperative limits; a single external linear algebra call cannot
-be interrupted.  Records contain only JSON-serializable values.
+Limits are enforced at quadrature checkpoints.
 """
 
 from contextlib import contextmanager
@@ -32,12 +29,7 @@ def _json(value):
 
 
 class IntegrationLimitError(TimeoutError):
-    """An integration exceeded its time or work budget.
-
-    This deliberately does not inherit from ``RuntimeError``: numerical
-    callers can distinguish a work limit from numerical nonconvergence.
-    ``record`` describes the interrupted edge at the last checkpoint.
-    """
+    """A time or work limit was exceeded; ``record`` gives the interrupted edge."""
 
     def __init__(self, message, record):
         super().__init__(message)
@@ -45,14 +37,10 @@ class IntegrationLimitError(TimeoutError):
 
 
 class IntegrationMonitor:
-    """Collect per-edge diagnostics, with optional cooperative limits.
+    """Record edge diagnostics and enforce optional time and work limits.
 
-    Use ``with IntegrationMonitor(...) as monitor:`` around a float64 or
-    arbitrary-precision API call.  ``callback(event)`` receives ``start``, ``progress`` and ``end``
-    events; progress is throttled to ``progress_interval`` seconds.  A step
-    is one newly evaluated quadrature node; auxiliary counters
-    (auxiliary diagnostics) do not count those operations twice.
-    Set either limit to ``None`` to disable it.
+    ``callback`` receives start, progress and end events.
+    A step is one new quadrature node; ``None`` disables a limit.
     """
 
     def __init__(self, max_edge_seconds=15.0, max_edge_steps=100000,
@@ -186,7 +174,7 @@ class IntegrationMonitor:
 
 
 def checkpoint(counter=None, amount=1, **state):
-    """Count an operation/update state and enforce the active edge budget."""
+    """Update the operation count and enforce the edge budget."""
     monitor = _active.get()
     if monitor is not None:
         monitor.checkpoint(counter, amount, **state)
@@ -194,7 +182,7 @@ def checkpoint(counter=None, amount=1, **state):
 
 @contextmanager
 def phase(name, **state):
-    """Attribute the enclosed work to a named phase of the current edge."""
+    """Assign the enclosed work to an integration phase."""
     monitor = _active.get()
     if monitor is None:
         yield

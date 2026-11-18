@@ -1,4 +1,4 @@
-"""Minimal smoke tests that don't require network access or long computation."""
+"""Package imports and basic reduction computations."""
 
 from sage.all import ZZ, PolynomialRing
 

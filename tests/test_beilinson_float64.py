@@ -1,4 +1,4 @@
-"""Bounded float64 checks against plane integrals and conjugate symmetry."""
+"""Float64 regulators, plane integrals and conjugation symmetry."""
 
 from collections import Counter
 

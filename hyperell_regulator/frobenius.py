@@ -1,31 +1,7 @@
-r"""
-Frobenius polynomials at good primes, in bulk.
+r"""Frobenius polynomials by Harvey's simultaneous algorithm.
 
-An `L`-function needs the Euler factor at every good prime below a bound,
-and for a genus 2 curve that is thousands of `p`-adic Frobenius
-computations. This module hands the whole list to a simultaneous,
-threaded implementation of Harvey's average polynomial time algorithm,
-sharing reduction products across primes through the rforest C library.
-
-The mathematics is unchanged.  The external program returns the matrix of
-Frobenius on `H^1_{\mathrm{dR}}` modulo `p^N`, and the characteristic
-polynomial is lifted to `\ZZ[x]` exactly as
-:meth:`~sage.schemes.hyperelliptic_curves.hyperelliptic_finite_field.HyperellipticCurve_finite_field.frobenius_polynomial_matrix`
-does: reduce `a_g, \dots, a_0` into the symmetric range mod `p^N`, with `N`
-Kedlaya's bound, and recover `a_{2g},\dots,a_{g+1}` from the functional
-equation `a_{2g-i} = a_i q^{g-i}`.
-
-The native implementation uses Harvey's simultaneous algorithm
-(arXiv:1210.8239) for both odd and even degree models. Unsupported jobs
-fall back to Sage; there is no native per-prime backend.
-
-The program is built from ``hyperell-frobenius`` and ships with this
-package: ``sage -pip install`` compiles it and puts it in
-``hyperell_regulator/bin/euler``, and in a checkout ``make`` in that
-directory does the same job.  It is looked for at ``$HYPELLFROB_EULER``
-first, then inside the package, then in the source tree.
-When it is missing, or declines a prime, that prime falls back to Sage, so
-results never depend on whether it is built -- only the speed does.
+The rforest implementation handles odd and even degree models.
+Unsupported primes are computed by Sage.
 """
 
 import os
@@ -36,8 +12,7 @@ __all__ = ["euler_binary", "odd_model", "frobenius_polynomials",
 
 
 def euler_binary():
-    r"""
-    The batched Frobenius program, or ``None`` if it is not built.
+    r"""The Frobenius executable, or ``None`` if unavailable.
 
     EXAMPLES::
 
@@ -60,23 +35,7 @@ def euler_binary():
 
 
 def odd_model(f):
-    r"""
-    A monic, integral, **odd** degree model of `y^2 = f(x)`, or ``None``.
-
-    Rforest handles either parity directly, but a rational Weierstrass
-    point permits a smaller odd degree model. An odd degree model exists
-    exactly when the curve has a rational Weierstrass point, and then
-
-    .. math:: u \mapsto u^{\deg f}\,f(r + 1/u)
-
-    moves that point `r` to infinity and drops the degree by one, the
-    coefficient of `u^{\deg f}` being `f(r) = 0`.  It is an isomorphism over
-    `\QQ`, so the characteristic polynomial of Frobenius is unchanged at
-    every prime where both models are good; at the finitely many primes
-    dividing the scalings, the program declines and the caller falls back.
-
-    The result is then made monic by `x \mapsto cx`, `y \mapsto c^{(d-1)/2}y`,
-    and integral by `x \mapsto x/m^2`, `y \mapsto y/m^d`.
+    r"""A monic integral odd degree model, or ``None`` if none exists over `\QQ`.
 
     EXAMPLES::
 
@@ -88,8 +47,6 @@ def odd_model(f):
         sage: f = (x - 1) * (x**5 + x + 3)           # even, with a rational root
         sage: g = odd_model(f); g.degree(), g.is_monic()
         (5, True)
-
-    A curve with no rational Weierstrass point has no odd model::
 
         sage: odd_model(x**6 + x + 1) is None
         True
@@ -117,7 +74,7 @@ def odd_model(f):
 
 
 def _bound(p, g):
-    r"""Kedlaya's `N` with `p^N \ge 2\binom{2g}{g}p^{g/2}`, as Sage uses."""
+    r"""Kedlaya's bound `p^N \ge 2\binom{2g}{g}p^{g/2}`."""
     from sage.all import RR, ZZ, binomial
 
     M = 2 * binomial(2 * g, g) * RR(p).sqrt() ** g
@@ -128,7 +85,7 @@ def _bound(p, g):
 
 
 def _lift(M, p, g, N):
-    r"""The charpoly of Frobenius in `\ZZ[x]` from the matrix mod `p^N`."""
+    r"""Lift the Frobenius characteristic polynomial from a matrix modulo `p^N`."""
     from sage.all import ZZ, matrix
 
     a = list(matrix(ZZ, M).charpoly().list()[g:2 * g + 1])
@@ -140,7 +97,7 @@ def _lift(M, p, g, N):
 
 
 def _run(fcoeffs, jobs, nthreads, backend=None):
-    """One call to the program: (ascending Q, [(p, N)]) -> {p: matrix}."""
+    """Frobenius matrices for the jobs ``(p, N)``, keyed by prime."""
     backend = backend or os.environ.get("HYPELLFROB_BACKEND", "rforest")
     if backend != "rforest":
         raise ValueError("backend must be 'rforest'; the per-prime backends have been removed")
@@ -172,32 +129,11 @@ def _run(fcoeffs, jobs, nthreads, backend=None):
 
 
 def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
-    r"""
-    `\{p : \text{charpoly of Frobenius on } y^2 = f(x) \bmod p\}`.
+    r"""Frobenius characteristic polynomials of `y^2=f(x)`, keyed by prime.
 
-    ``f`` is a polynomial over `\QQ` with integral coefficients; ``primes``
-    are the primes to do, which must be of good reduction.  Any prime the
-    batched program declines falls back to Sage.
-
-    ``backend='rforest'`` selects the vendored upstream C remainder-forest
-    library, with polynomial factor cancellation and bounded forest storage.
-    Monic even degree models are handled directly, without a branch point
-    or a field extension, by avoiding singular reduction paths and
-    restricting affine Frobenius to the kernel of the residue at infinity.
-    Nonmonic even models use a common monic quadratic twist over the
-    rationals; its local character is removed from the returned polynomial.
-    Rforest is the only native backend. The optional ``backend`` keyword
-    and ``HYPELLFROB_BACKEND`` environment variable accept only ``'rforest'``.
-
-    An even degree ``f`` is replaced by :func:`odd_model` where one exists.
-    Otherwise rforest uses simultaneous even degree reductions.
-    Unsupported jobs retain Sage fallback.
-
-    The default uses ``HYPELLFROB_THREADS`` if set, otherwise one worker per
-    logical CPU (``os.cpu_count()``), or one if the CPU count is unavailable.
-    Pass ``nthreads`` to override this.
-    The installed accelerator includes a private thread-safe NTL; custom
-    binaries must also be linked to a thread-safe NTL.
+    ``f`` has integral coefficients and ``primes`` must have good reduction.
+    The native backend is ``rforest``; unsupported jobs use Sage.
+    ``nthreads`` overrides ``HYPELLFROB_THREADS``, then the logical CPU count.
 
     EXAMPLES::
 
@@ -244,9 +180,7 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
 
 
 def frobenius_polynomial(f, p, *, backend=None):
-    r"""
-    One prime's charpoly of Frobenius; a convenience over
-    :func:`frobenius_polynomials`.
+    r"""The Frobenius characteristic polynomial at one good prime.
 
     EXAMPLES::
 
@@ -297,7 +231,7 @@ _CHECK_CASES = (
 
 
 def _check_binary(binary):
-    """Check odd/even arithmetic and worker counts, without any fallback."""
+    """Check native matrices in both degree parities and with several worker counts."""
     workers = tuple(dict.fromkeys((1, 4, os.cpu_count() or 1)))
     for batch, expected in _CHECK_CASES:
         for count in workers:

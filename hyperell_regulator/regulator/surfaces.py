@@ -1,15 +1,11 @@
-"""Two slit-sheet display meshes from explicit square-root factors.
-
-The constrained triangulation stays independent of numerical integration.
-Sheet labels are checked around mesh cycles and against both cut banks.
-"""
+"""Display meshes for the two slit sheets of a hyperelliptic curve."""
 from collections import deque
 import numpy as np
 from .explorer import parse_request
 from .stokes import Cut, cut_scale
 
 def _bank_radius(w, critical, cut, index):
-    """Stay on the chosen cut bank, including between nearby parallel slits."""
+    """A sampling radius that stays on the chosen cut bank."""
     radius = min(abs(w-z) for z in critical)*1e-5
     for other, (left, right) in enumerate(cut):
         if other == index:
@@ -21,7 +17,7 @@ def _bank_radius(w, critical, cut, index):
 
 
 def _ray_endpoint(start, direction, bounds):
-    """End the slit exactly on the window boundary, without a rounding gap."""
+    """The intersection of the slit ray with the window boundary."""
     crossings = []
     for axis, (value, component, low, high) in enumerate(
             ((start.real, direction.real, bounds[0], bounds[1]),

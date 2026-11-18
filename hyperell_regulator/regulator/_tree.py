@@ -3,7 +3,7 @@ import numpy as np
 
 
 def minimum_spanning_tree(points):
-    """Deterministic Kruskal on the complete Euclidean graph of marked points."""
+    """The Euclidean minimum spanning tree by Kruskal's algorithm."""
     z = np.asarray(points, complex)
     if len(set(z)) != len(z):
         raise ValueError('cut vertices cannot be distinguished in float64 geometry')
@@ -25,7 +25,7 @@ def minimum_spanning_tree(points):
 
 
 def orient_to_root(size, edges, root):
-    """Orient every finite edge towards the vertex carrying the infinity ray."""
+    """Orient finite edges towards the vertex carrying the infinity ray."""
     neighbors = [[] for _ in range(size)]
     for a, b in edges:
         neighbors[a].append(b)
@@ -43,10 +43,9 @@ def orient_to_root(size, edges, root):
 
 
 def boundary_word(points, edges, direction):
-    """Walk around an embedded tree using clockwise incident-edge order.
+    """The clockwise boundary of the embedded tree.
 
-    Each directed bank occurs exactly once. The final virtual vertex is
-    infinity; its two banks are joined by the exterior circle, not a cap.
+    Each directed bank occurs once; the virtual final vertex is infinity.
     """
     z = list(map(complex, points))
     root = edges[-1][0]
@@ -83,7 +82,7 @@ def boundary_word(points, edges, direction):
 
 
 def tree_contour(points, edges, direction, references, eps, span, dens=30):
-    """A narrow contour with a sample on each bank of every tree edge."""
+    """A contour sampling both banks of each tree edge."""
     z, neighbors, word, banks = boundary_word(points, edges, direction)
     infinity = len(points)
     root = edges[-1][0]

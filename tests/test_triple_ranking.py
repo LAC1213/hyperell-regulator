@@ -1,4 +1,4 @@
-"""Cut conditioning is independent of torsion orders."""
+"""Cut conditioning independent of torsion orders."""
 from unittest.mock import patch
 from hyperell_regulator.experiments import beilinson as b
 from hyperell_regulator.regulator.polynomials import ring

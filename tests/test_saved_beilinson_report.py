@@ -1,4 +1,4 @@
-"""Portable exports retain precision, scope, conventions and failed attempts."""
+"""Precision and conventions of exported survey data."""
 
 from copy import deepcopy
 from decimal import Decimal

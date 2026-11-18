@@ -1,11 +1,4 @@
-"""Export the completed 100-digit survey with conductor strictly below 1300.
-
-    sage -python -m hyperell_regulator.experiments.beilinson_report
-
-This reads saved results without repeating numerical integrations or L-values.
-Exact integration models and marked coordinates are reconstructed. Failures and
-component verdicts remain in the JSON and are described separately in the TeX.
-"""
+"""Export the saved 100-digit survey for conductor strictly below 1300."""
 
 import argparse
 from collections import Counter
@@ -25,7 +18,7 @@ NORMALISATION = "pi c+ c- L''(std,1) / D"
 
 
 def select_results(results):
-    """Keep the current 100-digit policy, including unsuccessful attempts."""
+    """Select 100-digit survey records, including failed attempts."""
     from .beilinson import REPORT_VERSION
 
     selected = []
@@ -62,7 +55,7 @@ def select_results(results):
 
 
 def algebraic_data(row, curve_row):
-    """Reconstruct exact integration coordinates, without quadrature."""
+    """Reconstruct the exact integration model and marked coordinates."""
     from sage.all import PolynomialRing, QQ, latex
     from hyperell_regulator.components import curve_from_row
     from . import beilinson as b
@@ -141,7 +134,7 @@ def integrality_tex(verdict):
 
 
 def model_pole_tex(row):
-    """Label the common pole on the integration model, rather than guessing a sign."""
+    """The common pole in the integration coordinates, in LaTeX."""
     from sage.all import PolynomialRing, QQ
 
     data = row["algebraic_data"]
@@ -161,7 +154,7 @@ def model_pole_tex(row):
 
 
 def render(rows, source_hash):
-    """Three publication tables using the saved values and integration coordinates."""
+    """Three LaTeX tables from saved values and integration coordinates."""
     rows = [row for row in rows if int(row.get("cond", 0)) not in EXCLUDED_DISPLAY_CONDUCTORS]
     ok = [row for row in rows if row.get("status") == "ok"]
     lines = [r"\documentclass[10pt]{article}",
@@ -372,7 +365,7 @@ Source SHA-256: `{checksum}`.
 
 
 def explorer_inputs(report, output):
-    """Use the report's exact models, marked points and 100-digit references."""
+    """The exact survey models, marked points and 100-digit reference values."""
     raw = Path(report).read_bytes()
     rows = json.loads(raw)
     curves = []

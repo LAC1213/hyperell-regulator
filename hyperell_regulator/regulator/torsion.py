@@ -1,4 +1,4 @@
-"""Exact divisor-class orders, without constructing torsion functions."""
+"""Exact orders of divisor classes by principality tests."""
 
 def _field(F):
     r"""`(\QQ(x), \QQ(x)[y]/(y^2 - F))` for the curve `y^2 = F(x)`."""
@@ -16,11 +16,10 @@ def _field(F):
 
 
 def _places(K, L, point):
-    r"""
-    The places of `L` at a finite point or at infinity.
+    r"""Places of ``L`` over a finite point or infinity.
 
-    ``("infinity", eta)`` selects the branch with
-    `y/x^{g+1} \to eta`. Bare ``"infinity"`` returns every infinite place.
+    ``("infinity", eta)`` selects `\lim y/x^{g+1}=eta`;
+    bare ``"infinity"`` returns all infinite places.
     """
     from sage.all import QQ
 
@@ -47,7 +46,7 @@ def _places(K, L, point):
 
 
 def _place(K, L, point):
-    r"""The place at ``point``, which must be a single one."""
+    r"""The unique place at ``point``; raise if there is more than one."""
     pls = _places(K, L, point)
     if len(pls) != 1 or pls[0].degree() != 1:
         raise ValueError("point must specify a single rational place of this model")
@@ -55,7 +54,7 @@ def _place(K, L, point):
 
 
 def _order_from_multiple(divisor, multiple):
-    """Exact order of a degree-zero divisor, if it divides ``multiple``."""
+    """The exact divisor-class order if it divides ``multiple``; otherwise ``None``."""
     from sage.all import ZZ
 
     order = ZZ(multiple)
@@ -73,17 +72,11 @@ def _order_from_multiple(divisor, multiple):
 
 
 def torsion_order(F, P, Q, bound=24, *, multiple=None):
-    r"""
-    The least `N \le` ``bound`` with `N(P-Q)` principal, or ``None``.
+    r"""The least `N\le` ``bound`` with `N(P-Q)` principal, or ``None``.
 
-    Both odd and even degree models are supported. Use
-    ``("infinity", eta)`` to distinguish the infinities in even degree,
-    where `eta = \lim y/x^{g+1}`. Bare ``"infinity"`` tries all rational
-    infinite places and returns the smallest order among the choices.
-
-    If ``multiple`` is supplied, test that multiple and remove its prime
-    factors to find the exact order, without the ``bound`` cutoff. Returns
-    ``None`` if that multiple does not annihilate the divisor class.
+    With ``multiple``, find the exact order among its divisors, ignoring ``bound``.
+    ``("infinity", eta)`` selects `\lim y/x^{g+1}=eta`; bare ``"infinity"``
+    returns the smallest order over rational infinite places.
 
     EXAMPLES::
 

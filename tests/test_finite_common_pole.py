@@ -1,4 +1,4 @@
-"""Regulator weights with arbitrary finite common poles."""
+"""Logarithmic regulator weights with finite common poles."""
 import numpy as np
 from hyperell_regulator.experiments import beilinson as b
 from hyperell_regulator.regulator import IntegrationMonitor

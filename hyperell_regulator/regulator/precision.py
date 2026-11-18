@@ -1,4 +1,4 @@
-"""Guarded full cycle periods shared by both numerical output modes."""
+"""Full cycle periods with guard digits."""
 from .quadrature import Arithmetic, quadrature
 from .polynomials import polynomial
 from ._periods import period_paths, segment_differential, pivoted_minor

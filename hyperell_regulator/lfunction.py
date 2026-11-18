@@ -1,33 +1,7 @@
-r"""
-The standard `L`-function of a genus 2 curve over `\QQ`.
+r"""Curve and standard `L`-functions of genus two curves over `\QQ`.
 
-For a genus 2 curve `C/\QQ` the *standard* motive is the degree 5 piece
-
-.. MATH::
-
-    \mathrm{std} = \ker\bigl(\wedge^2 h^1(C) \to h^2(C) = \QQ(-1)\bigr),
-
-so that `L(\wedge^2 h^1, s) = L(\mathrm{std}, s)\,\zeta(s-1)`.  This is the
-`L`-function that appears in Beilinson's conjecture for `K_2` of a genus 2
-curve, and the one :mod:`hyperell_regulator.experiments.beilinson` compares
-the regulator against.
-
-What is computed here
-=====================
-
-* :func:`wedge2_euler_factor` -- the degree 6 Euler factor of `\wedge^2 h^1`
-  from the degree 4 Euler factor of `h^1`;
-
-* :class:`CurveLFunction` -- `L(C,s)` itself, degree 4; and
-  :class:`StandardLFunction` -- the Euler factors (good ones batched through
-  :mod:`~hyperell_regulator.frobenius`, bad ones from the cluster picture of
-  :mod:`hyperell_regulator.reduction`, which supplies the monodromy
-  filtration that the `h^1` factor alone does not determine), the conductor,
-  the Dirichlet coefficients, a numerical check of the functional equation,
-  and values and derivatives at `s = 1`;
-
-* :func:`standard_lvalue` -- the convenience wrapper returning
-  `L''(\mathrm{std}, 1)` together with everything that went into it.
+The standard motive is `\ker(\wedge^2 h^1(C) \to \QQ(-1))`, so
+`L(\wedge^2 h^1(C),s)=L(M_{\mathrm{std}}(C),s)\zeta(s-1)`.
 
 EXAMPLES::
 
@@ -39,10 +13,6 @@ EXAMPLES::
     ...Warning: unknown valuation of conductor at 2.
     sage: L.euler_factor(53).degree()
     3
-
-:func:`standard_lvalue` runs the whole computation -- Euler factors,
-conductor, functional equation check, `L''(\mathrm{std}, 1)` -- in one call,
-and is what the experiments use.
 """
 
 from contextlib import contextmanager
@@ -70,24 +40,14 @@ from hyperell_regulator.reduction import potential_toric_rank
 
 
 def _bits(digits):
-    r"""
-    Bits for a PARI call asked for ``digits`` decimals, with room to spare.
-
-    ``lfun`` and ``lfuncheckfeq`` need an explicit bit precision;
-    ``pari.set_real_precision`` alone leaves them at their default precision.
-    """
+    r"""Bit precision for ``digits`` decimal digits, with guard bits."""
     return int(3.33 * int(digits)) + 64
 
 
 def _pari_lfun_call(function, *args, coefficient_count=0, digits=10, **kwargs):
-    """Give coefficient vectors and L-function workspace room to grow.
+    """Evaluate with a PARI stack budget proportional to the coefficient count.
 
-    Reserve a conservative budget per coefficient, including several
-    precision-sized temporaries. This raises the virtual stack ceiling,
-    leaving PARI to commit memory as needed. Workspace can exceed this
-    estimate: retry only PARI's stack exhaustion error with twice the
-    ceiling. Coefficients already computed in Python are reused on retry.
-    Never reduce a caller's larger stack or maximum.
+    On stack exhaustion, double the ceiling and retry.
     """
     if coefficient_count:
         word_bytes = calcsize('l')
@@ -108,12 +68,7 @@ def _pari_lfun_call(function, *args, coefficient_count=0, digits=10, **kwargs):
 
 
 def _real_field(digits):
-    r"""
-    A real field wide enough for ``digits`` decimal digits.
-
-    ``RR`` is 53 bits whatever PARI's working precision is set to, so
-    returning ``RR(pari.lfun(...))`` silently caps every value at about
-    fifteen digits -- which is not what "arbitrary precision" means.
+    r"""A real field with guard bits for ``digits`` decimal digits.
 
     EXAMPLES::
 
@@ -128,7 +83,7 @@ def _real_field(digits):
 
 @contextmanager
 def _pari_precision(digits):
-    """Temporarily set embedded PARI precision, restoring it on failure too."""
+    """Set PARI precision for the context and restore it on exit."""
     previous = pari.get_real_precision()
     pari.set_real_precision(digits)
     try:
@@ -138,7 +93,7 @@ def _pari_precision(digits):
 
 
 def _coefficient_count(conductor, gamma, weight, digits, derivative):
-    """Ask GP for lfuncost at its own decimal working precision."""
+    """PARI's coefficient count at the requested decimal precision."""
     previous = gp.eval('default(realprecision)')
     gp.eval('default(realprecision, %d)' % int(digits))
     try:
@@ -150,7 +105,7 @@ def _coefficient_count(conductor, gamma, weight, digits, derivative):
 
 
 def _dirichlet_coefficients(L, num):
-    """Expand Euler factors once per prime; index zero is a sentinel."""
+    """Dirichlet coefficients from Euler factors, with a zero sentinel at index 0."""
     a = [ZZ(0)] * (num + 1)
     a[1] = ZZ(1)
     L.precompute_h1(prime_range(num + 1))
@@ -175,7 +130,7 @@ def _dirichlet_coefficients(L, num):
 
 
 def _precompute_h1(L, primes, nthreads):
-    """Batch good odd primes into either L-function's H1 cache."""
+    """Cache `h^1` factors at good odd primes in one batch."""
     from .frobenius import frobenius_polynomials
 
     bad = set(L.C.bad_primes())
@@ -189,24 +144,10 @@ def _precompute_h1(L, primes, nthreads):
 
 
 def wedge2_euler_factor(P):
-    r"""
-    The degree 6 Euler factor of `\wedge^2 h^1` from the degree 4 Euler factor
-    ``P`` of `h^1`.
+    r"""The Euler polynomial `\prod_{i<j}(1-\alpha_i\alpha_j T)`
+    from ``P`` equal to `\prod_i(1-\alpha_i T)` of degree four.
 
-    If `P(T) = \prod_{i=1}^4 (1 - \alpha_i T) = 1 + c_1T + c_2T^2 + c_3T^3 +
-    c_4T^4`, so that `c_1 = -s_1`, `c_2 = s_2`, `c_3 = -s_3`, `c_4 = s_4` in the
-    elementary symmetric functions of the `\alpha_i`, then
-    `\prod_{i<j}(1 - \alpha_i\alpha_j T)` has coefficients
-
-    .. MATH::
-
-        d_1 = -s_2,\quad d_2 = s_1s_3 - s_4,\quad
-        d_3 = -(s_1^2s_4 - 2s_2s_4 + s_3^2),\quad
-        d_4 = s_1s_3s_4 - s_4^2,\quad d_5 = -s_2s_4^2,\quad d_6 = s_4^3.
-
-    EXAMPLES:
-
-    The identity is checked symbolically against the definition::
+    EXAMPLES::
 
         sage: from hyperell_regulator.lfunction import wedge2_euler_factor
         sage: S = PolynomialRing(QQ, ['a1','a2','a3','a4'])
@@ -232,134 +173,12 @@ def wedge2_euler_factor(P):
 
 
 class StandardLFunction(SageObject):
-    r"""
-    The *standard* `L`-function of a genus 2 curve `C/\QQ`: the degree 5 motive
+    r"""The degree five `L`-function of `M_{\mathrm{std}}(C)`.
 
-    .. MATH::
-
-        \mathrm{std} = \ker\bigl(\wedge^2 h^1(C) \to h^2(C) = \QQ(-1)\bigr),
-
-    so that `L(\wedge^2 h^1, s) = L(\mathrm{std}, s)\,\zeta(s-1)` and, locally,
-    `P_p^{\wedge^2}(T) = P_p^{\mathrm{std}}(T)\,(1 - pT)` -- the `\QQ(-1)`
-    summand being unramified everywhere with Frobenius `p`.
-
-    Euler factors
-    =============
-
-    The `h^1` factors `P_p(T) = \det(1 - \mathrm{Frob}_p T \mid V_\ell^{I_p})`
-    come from PARI's ``lfungenus2``, at good and bad primes alike.
-
-    At a **good** prime `P_p` has degree 4 and `P_p^{\wedge^2}` is its
-    alternating square, :func:`wedge2_euler_factor`.
-
-    At a **bad** prime this is not enough: `(\wedge^2 V)^{I} \ne \wedge^2(V^I)`,
-    so the `h^1` factor alone does not determine the `\wedge^2` one.  What is
-    missing is the monodromy filtration, and that is what the cluster picture
-    supplies.  For `C` semistable at `p` write `t` for the toric rank, so that
-    `V_\ell` has graded pieces `U` (weight 0, dimension `t`), `B` (weight 1,
-    dimension `2a`, `a = 2 - t`) and `U' \cong U^*(-1)` (weight 2), with the
-    monodromy `N` killing `U \oplus B` and mapping `U'` isomorphically onto
-    `U`.  Then `V^I = \ker N = U \oplus B`, and
-    `(\wedge^2 V)^I = \ker N_{\wedge^2}` works out as follows.
-
-    * `t = 0`: `A` has good reduction, `V^I = V`, and the alternating square is
-      the full degree 6 factor.
-
-    * `t = 1`: `\ker N_{\wedge^2} = (U \wedge B) \oplus \wedge^2 B \oplus
-      (U \wedge U')` has dimension `2 + 1 + 1 = 4`, giving
-
-      .. MATH::
-
-          P_p^{\wedge^2}(T) = A(\gamma T)\,(1 - b_2 T)\,(1 - \gamma^2 p T),
-
-      where `U(T) = 1 - \gamma T` is the toric factor, `A(T) = 1 + b_1T + b_2T^2`
-      the abelian one (so `b_2 = p`), and `\gamma = \pm 1`.
-
-    * `t = 2`: `\ker N_{\wedge^2} = \wedge^2 U \oplus
-      \ker(U \otimes U' \to \wedge^2 U)` has dimension `1 + 3 = 4`, giving
-
-      .. MATH::
-
-          P_p^{\wedge^2}(T) = (1-dT)S(pT),\qquad
-          S(X)=1-(s^2-d)X+d(s^2-d)X^2-d^3X^3,
-
-      where `s` and `d` are the trace and determinant of Frobenius on `U`.
-      Here `S` is the Euler polynomial of `\operatorname{Sym}^2 U`.
-      This includes order-three Frobenius, as occurs at 2 for 388.a.776.1.
-
-    The toric factor is read off the Frobenius action on
-    `H_1` of the dual graph, via ``Cluster.homology_of_special_fibre``; the
-    abelian factor is then `P_p / U(T)`.
-
-    Tame but not semistable: potentially good reduction
-    ===================================================
-
-    If `C` is tame at `p` but not semistable, `V_\ell` still becomes
-    unramified-up-to-monodromy only over the minimal semistabilising extension
-    `K`, of degree `e` prime to `p`.  Inertia acts through the finite cyclic
-    quotient `\Phi = I_p/I_K`, and being of order prime to `p` it acts
-    *semisimply*.
-
-    When the potential stable reduction has **toric rank 0** -- Liu's types
-    (I) and (V), i.e. `J` acquires good reduction over `K` -- the monodromy `N`
-    vanishes, so `V^{I_K} = V` and `V^{I_p} = V^{\Phi}`.  Writing
-    `V = V^{I} \perp V'` for the splitting into the trivial and the non-trivial
-    `\Phi`-isotypic parts (orthogonal for the Weil pairing, since `\Phi`
-    preserves it), the cross terms carry no invariants because `(V')^{I} = 0`:
-
-    .. MATH::
-
-        (\wedge^2 V)^{I} = \wedge^2\bigl(V^{I}\bigr) \oplus
-                           \bigl(\wedge^2 V'\bigr)^{I}.
-
-    Two sub-cases are then completely determined by `P_p` alone.
-
-    * `f_p = 0`: `V' = 0`, `V^I = V`, and the factor is the full degree 6
-      alternating square, as in the semistable `t = 0` case.
-
-    * `f_p = 2`: `\dim V' = 2`, so `(\wedge^2 V')^{I} = \wedge^2 V'` is a line
-      on which Frobenius acts by `\det(F \mid V)/\det(F \mid V^I) = p^2/d`,
-      where `d = \det(F \mid V^I)` is the leading coefficient of `P_p`.  The
-      polarisation is nondegenerate on each summand, so the class `\omega` of
-      `\QQ(-1)` is `\omega_1 + \omega_2` with both parts non-zero; being a
-      Frobenius eigenvector of eigenvalue `p` forces `d = p`.  Hence
-
-      .. MATH::
-
-          P_p^{\wedge^2}(T) = (1 - pT)^2, \qquad
-          P_p^{\mathrm{std}}(T) = 1 - pT.
-
-    `f_p` odd cannot occur here: `\Phi` acts trivially on
-    `\wedge^4 V = \QQ_\ell(-2)`, so `\det(\sigma \mid V') = 1`, and `V'` is
-    symplectic, hence even dimensional.  `f_p = 4` is not implemented: with
-    `V^I = 0` the answer depends on the eigenvalues of `\Phi` on `V`, which
-    `P_p = 1` does not record.
-
-    Toric rank `> 0` together with `e > 1` -- potentially multiplicative but
-    not semistable, Liu's types (II), (III), (IV), (VI), (VII) with a non-trivial
-    `\Phi` -- needs `(\ker N_{\wedge^2})^{\Phi}` and is not implemented either.
-
-    Assumptions, all checked at runtime
-    ===================================
-
-    * At odd primes, `C` is semistable or tame with potentially good reduction.
-      At 2, the `h^1` factor determines the answer whenever it has positive
-      degree. Degree three forces semistable toric rank one; a degree-two
-      toric factor forces semistable toric rank two, including nonsplit and
-      order-three Frobenius. A degree-two elliptic factor or a degree-one
-      toric factor leaves a two-dimensional ramified symplectic complement.
-      Both determinant lines contribute `1-2T`, so the standard factor is
-      `1-2T`, including wild reduction. The Swan conductor of the standard
-      representation is twice that of `h^1` in these last two cases.
-      Pass ``h1_conductor`` with the exact Jacobian conductor when PARI
-      cannot compute its 2-part; the Beilinson survey supplies LMFDB's value.
-      If the `h^1` factor at 2 is 1, additional inertia information is needed
-      and ``bad_factors`` overrides remain necessary.
-    * `(1 - pT)` divides `P_p^{\wedge^2}` exactly.
-
-    The real check on all of this is the functional equation: see
-    :meth:`check_functional_equation`.  A wrong bad factor or conductor will
-    show up there.
+    Its local factor is `P_p^{\wedge^2}(T)/(1-pT)`. Bad factors use
+    monodromy and inertia data; unsupported cases require ``bad_factors``.
+    ``h1_conductor`` supplies the exact Jacobian conductor when needed at 2.
+    The functional equation is `s \leftrightarrow 3-s`, with sign `+1`.
 
     EXAMPLES::
 
@@ -394,24 +213,7 @@ class StandardLFunction(SageObject):
     # -- Euler factors -----------------------------------------------------
 
     def h1_euler_factor(self, p):
-        r"""
-        The `h^1` Euler factor at ``p``.
-
-        For odd good primes this uses Sage's own
-        :meth:`~sage.schemes.hyperelliptic_curves.hyperelliptic_finite_field.HyperellipticCurve_finite_field.frobenius_polynomial`
-        on the complete-the-square model `Y^2=F(x)`, `F=4f+h^2` (an isomorphism
-        over `\ZZ[1/2]`, so the charpoly of Frobenius on `H^1` is unchanged).
-        That dispatches to David Harvey's ``hypellfrob``, a purpose-built
-        implementation of the same `p`-adic algorithm PARI's ``lfuneuler``
-        uses -- but PARI pays a large, growing fixed cost per prime (measured:
-        0.49s at a single `p=2999`, matching a direct call to
-        ``hyperellcharpoly``), confirmed *not* to be Sage/PARI call overhead
-        (looping entirely inside one ``gp`` call gave the same total time),
-        whereas ``hypellfrob`` takes 0.01-0.03s even at `p` in the hundred
-        thousands. Verified to reproduce PARI's answer exactly at several
-        primes. Bad primes and `p=2` fall back to PARI, where the fast model
-        may be singular or Sage's dispatch conditions do not apply.
-        """
+        r"""The `h^1` Euler factor at ``p``; bad primes and 2 use PARI."""
         p = ZZ(p)
         if p in self._h1cache:
             return self._h1cache[p]
@@ -428,19 +230,7 @@ class StandardLFunction(SageObject):
         return self._RT([QQ(c) for c in pari(poly).Vecrev()])
 
     def precompute_h1(self, primes, nthreads=None):
-        r"""
-        Fill the `h^1` cache for the good odd primes in ``primes``, in one
-        batched call.
-
-        This is where the time goes.  Obtaining the Euler factors one prime
-        at a time dominates everything else -- the loop that expands them into
-        Dirichlet coefficients runs in 0.1 s where the factors themselves took
-        59 s -- and the cost per prime grows with `p`.  Handing the whole list
-        to :func:`~hyperell_regulator.frobenius.frobenius_polynomials` pays
-        the setup once and runs the primes concurrently.
-
-        Primes the batched program declines fall back to Sage when they are
-        asked for, so this only ever makes things faster.
+        r"""Cache `h^1` factors at good odd primes in one batch.
 
         EXAMPLES::
 
@@ -457,10 +247,7 @@ class StandardLFunction(SageObject):
         _precompute_h1(self, primes, nthreads)
 
     def toric_factor(self, p):
-        r"""
-        `\det(1 - \mathrm{Frob}_p T \mid H_1(\Gamma))`, the weight 0 part, from
-        the Frobenius action on the dual graph of the special fibre.
-        """
+        r"""`\det(1-\mathrm{Frob}_p T \mid H_1(\Gamma))` for the dual graph `\Gamma`."""
         R = self.C.cluster_picture(p)
         H1, M, frob = R.homology_of_special_fibre()
         basis = list(H1.basis())
@@ -489,7 +276,7 @@ class StandardLFunction(SageObject):
         return self._RT(Mfrob.charpoly().reverse())
 
     def _wedge2_totally_toric(self, p, U):
-        """Exterior-square inertia invariants: wedge^2 U plus Sym^2 U(-1)."""
+        r"""The Euler factor of `\wedge^2 U \oplus \mathrm{Sym}^2 U(-1)`."""
         if U.degree() != 2 or U[0] != 1 or U[2] not in (-1, 1):
             raise ArithmeticError("invalid rank-two toric Euler factor at %s: %s" % (p, U))
         T = self._RT.gen()
@@ -499,19 +286,10 @@ class StandardLFunction(SageObject):
         return (1-det*T)*symmetric
 
     def _wedge2_at_two(self, P):
-        r"""Recover the exterior square when H1 inertia invariants are nonzero.
+        r"""The exterior-square factor at 2 when `h^1` has nonzero inertia invariants.
 
-        Weight-zero eigenvalues belong to the torus and weight-one ones to
-        the abelian part. In dimension four, a degree-three H1 factor forces
-        semistability of toric rank one. A degree-two factor with root-of-unity
-        eigenvalues forces semistability of toric rank two.
-
-        The remaining nonzero cases are an unramified elliptic summand, or
-        an unramified rank-one special summand, plus a two-dimensional
-        symplectic ramified complement with no inertia invariants. The cross
-        terms have no invariants, and both determinant lines have eigenvalue
-        2. Thus W=(1-2T)^2, even when the complement is wild. Its Swan
-        contribution to the standard representation is twice that of H1.
+        For a ramified symplectic complement of dimension two, both determinant
+        lines have eigenvalue 2, giving `(1-2T)^2`.
         """
         T = self._RT.gen()
         if P.degree() == 4:
@@ -533,7 +311,7 @@ class StandardLFunction(SageObject):
             "additional inertia data in this case; supply bad_factors[2]" % P)
 
     def _h1_conductor_exponent(self, p):
-        """Use a supplied exact conductor when PARI omits its 2-part."""
+        """The local Jacobian conductor exponent, using the supplied conductor if needed."""
         if self.h1_conductor is not None:
             return self.h1_conductor.valuation(p)
         exponent = self.C.local_data(p)["conductor_exponent"]
@@ -580,12 +358,9 @@ class StandardLFunction(SageObject):
         return W
 
     def _wedge2_potentially_good(self, p, P):
-        r"""
-        The `\wedge^2` factor at a prime where `C` is tame but not semistable
-        and the potential stable reduction has toric rank 0.
+        r"""The exterior-square factor for tame potentially good reduction.
 
-        See the class docstring: `(\wedge^2 V)^I = \wedge^2(V^I) \oplus
-        (\wedge^2 V')^I`, which `P_p` determines when `f_p \in \{0, 2\}`.
+        Implemented for conductor exponent 0 or 2.
         """
         T = self._RT.gen()
         if self.C.is_tame(p) is not True:
@@ -643,10 +418,9 @@ class StandardLFunction(SageObject):
         return q
 
     def conductor(self):
-        r"""
-        The conductor of the standard motive. At tame primes its exponent
-        is `5-\deg P_p^{\mathrm{std}}`. For the implemented ramified
-        two-dimensional complements at 2, add twice the H1 Swan conductor.
+        r"""The standard conductor. Tame exponents are `5-\deg P_p^{\mathrm{std}}`.
+
+        For the supported ramified complements at 2, add twice the `h^1` Swan conductor.
         """
         N = ZZ(1)
         for p in self.C.bad_primes():
@@ -662,36 +436,17 @@ class StandardLFunction(SageObject):
     # -- the L-function ----------------------------------------------------
 
     def dirichlet_coefficients(self, num):
-        r"""
-        The first ``num`` Dirichlet coefficients of `L(\mathrm{std}, s)`,
-        expanded from the Euler product.
-
-        Euler factors are batched before expanding the product, and each
-        local series is inverted once.
-        """
+        r"""The Dirichlet coefficients indexed from 1 through ``num``."""
         return _dirichlet_coefficients(self, num)[1:]
 
     def _coeffs_needed(self, digits, der=2):
-        r"""
-        How many Dirichlet coefficients PARI's own ``lfuncost`` says are
-        needed for `L^{(\mathrm{der})}(\mathrm{std}, 1)` at ``digits`` decimal
-        digits of working precision.
-
-        GP's ``default(realprecision)`` must be set separately from embedded
-        PARI's precision. A heuristic count can undershoot substantially.
-        The default ``der=2`` covers both :meth:`value` and
-        :meth:`check_functional_equation`, which share :meth:`lfun`'s result.
-        """
+        r"""PARI's coefficient count for derivative ``der`` at ``digits`` decimal digits."""
         return _coefficient_count(self.conductor(), [-1, -1, 0, 0, 1], 3, digits, der)
 
     def lfun(self, num_coeffs=None, digits=10):
-        r"""
-        The PARI `L`-function object, with gamma factors `[-1,-1,0,0,1]`,
-        weight 3 and root number `+1`, matching ``standardlfuntame.gp``.
+        r"""The PARI object with gamma parameters `[-1,-1,0,0,1]` and weight 3.
 
-        ``digits`` is the working precision in decimal digits. The number of
-        Dirichlet coefficients needed grows with it and with the conductor;
-        :meth:`_coeffs_needed` supplies PARI's estimate for the default count.
+        ``digits`` is the decimal working precision.
         """
         key = ("lfun", num_coeffs, digits)
         if key in self._cache:
@@ -709,13 +464,7 @@ class StandardLFunction(SageObject):
         return L
 
     def check_functional_equation(self, num_coeffs=None, digits=10):
-        r"""
-        ``2^lfuncheckfeq``: the size of the failure of the functional equation,
-        so *small is good*.  This is the real test of the bad Euler factors and
-        of the conductor -- get either wrong and this will not be small.  At
-        ``digits`` digits of working precision, do not expect it below about
-        ``10^-digits``.
-        """
+        r"""The functional equation residual ``2^lfuncheckfeq``."""
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
         with _pari_precision(digits):
@@ -724,18 +473,9 @@ class StandardLFunction(SageObject):
 
     def vanishing_order(self, s=1, max_order=4, num_coeffs=None, digits=10,
                         tol=None):
-        r"""
-        The order of vanishing of `L(\mathrm{std}, \cdot)` at ``s``, found by
-        testing successive derivatives against ``tol`` (by default
-        `10^{-\text{digits}/2}`).
+        r"""The numerical order of vanishing at ``s``.
 
-        Worth reporting alongside the value: since
-        `L(\wedge^2 h^1, s) = L(\mathrm{std}, s)\zeta(s-1)` and
-        `\zeta(0) = -1/2 \ne 0`, the two `L`-functions vanish to the same
-        order and their leading derivatives differ by the rational factor
-        `-1/2`.  So taking `L''(\mathrm{std}, 1)` in place of the leading
-        derivative of `\wedge^2` is harmless *provided the order really is 2*,
-        which is what this checks.
+        Derivatives below ``tol`` are treated as zero; the default is `10^{-\mathrm{digits}/2}`.
         """
         if tol is None:
             tol = _real_field(digits)(10) ** (-_real_field(digits)(digits) / 2)
@@ -745,10 +485,7 @@ class StandardLFunction(SageObject):
         return None
 
     def value(self, s=1, derivative=2, num_coeffs=None, digits=10):
-        r"""
-        `L^{(k)}(\mathrm{std}, s)`, by default the **second derivative at
-        `s = 1`** -- the quantity appearing in the Beilinson conjecture for
-        `\wedge^2 h^1`.
+        r"""`L^{(k)}(M_{\mathrm{std}}(C),s)`; by default `L^{\prime\prime}(M_{\mathrm{std}}(C),1)`.
 
         EXAMPLES::
 
@@ -766,14 +503,10 @@ class StandardLFunction(SageObject):
 
 def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
                     digits=10, verbose=True, h1_conductor=None):
-    r"""
-    `L''(\mathrm{std}, 1)` for the genus 2 curve ``C``, with the bad Euler
-    factors computed from the cluster picture wherever `C` is semistable at an
-    odd prime.
+    r"""`L^{\prime\prime}(M_{\mathrm{std}}(C),1)` and its numerical data.
 
-    Returns a dictionary with the value, the conductor, the Euler factors used
-    and the functional equation check. ``h1_conductor`` is the exact conductor
-    of the Jacobian, used for wild reduction at 2 when PARI omits its 2-part.
+    Return the value, conductor, Euler factors and functional equation residual.
+    ``h1_conductor`` supplies the exact Jacobian conductor when needed at 2.
     """
     L = StandardLFunction(C, bad_factors=bad_factors, h1_conductor=h1_conductor)
     out = {"curve": str(C), "bad_primes": C.bad_primes(),
@@ -811,16 +544,10 @@ def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
 # ---------------------------------------------------------------------------
 
 class CurveLFunction(SageObject):
-    r"""
-    `L(C,s) = L(h^1(C), s)` for the genus 2 curve: degree 4, motivic weight 1,
-    so the functional equation is `s \leftrightarrow 2-s` and the gamma factor
-    is `\Gamma_{\mathbf{C}}(s)^2`.
+    r"""The degree four `L`-function `L(C,s)=L(h^1(C),s)`.
 
-    PARI's ``lfungenus2`` already knows this `L`-function, and is used for the
-    conductor, the root number and the bad Euler factors.  What is rebuilt
-    here is the Dirichlet series, from Euler factors obtained in bulk through
-    :mod:`~hyperell_regulator.frobenius` rather than one prime at a time, and
-    the whole thing is then evaluated at whatever precision is asked for.
+    Its gamma factor is `\Gamma_{\mathbb C}(s)^2`;
+    the functional equation is `s \leftrightarrow 2-s`.
 
     EXAMPLES::
 
@@ -849,16 +576,13 @@ class CurveLFunction(SageObject):
         return "L(C, s) for %s" % (self.C,)
 
     def precompute_h1(self, primes, nthreads=None):
-        r"""Fill the cache for the good odd primes in one batched call."""
+        r"""Cache the Euler factors at good odd primes in one batch."""
         _precompute_h1(self, primes, nthreads)
 
     def euler_factor(self, p):
-        r"""
-        `P_p(T)` with `L(C,s) = \prod_p P_p(p^{-s})^{-1}`.
+        r"""`P_p(T)` with `L(C,s)=\prod_p P_p(p^{-s})^{-1}`.
 
-        Good odd primes come from the batched Frobenius computation; `p = 2`
-        and the bad primes from ``lfungenus2``, where the complete-the-square
-        model may be singular.
+        Bad primes and 2 use PARI.
 
         EXAMPLES::
 
@@ -887,22 +611,15 @@ class CurveLFunction(SageObject):
         return out
 
     def conductor(self):
-        r"""The conductor of `C`, which is the one in the functional equation."""
+        r"""The conductor of `C`."""
         return ZZ(self.C.conductor())
 
     def dirichlet_coefficients(self, num):
-        r"""Dirichlet coefficients indexed 1 through ``num``, with a zero sentinel."""
+        r"""The first ``num`` Dirichlet coefficients, with a zero sentinel at index 0."""
         return _dirichlet_coefficients(self, num)
 
     def root_number(self, num_coeffs=200, digits=10):
-        r"""
-        The sign in the functional equation, `\pm 1`, chosen as the one that
-        satisfies it.
-
-        ``lfungenus2`` determines it internally, but does not hand it over, so
-        it is recovered here by building the `L`-function both ways and
-        keeping whichever passes ``lfuncheckfeq``.
-        """
+        r"""The sign `\pm1` minimizing the functional equation residual."""
         if self._eps is not None:
             return self._eps
         an = self.dirichlet_coefficients(num_coeffs)[1:]
@@ -922,22 +639,11 @@ class CurveLFunction(SageObject):
         return best
 
     def _coeffs_needed(self, digits, der=0):
-        r"""
-        PARI's own estimate of how many Dirichlet coefficients are needed.
-
-        As for :meth:`StandardLFunction._coeffs_needed`, the precision context
-        has to be set through ``gp.eval('default(realprecision, ...)')``:
-        :func:`pari.set_real_precision` does not move ``lfuncost``'s answer.
-        A hand-rolled `\sqrt N` heuristic is not good enough -- it left the
-        functional equation failing at `8\times10^{-3}`.
-        """
+        r"""PARI's coefficient count at the requested decimal precision."""
         return _coefficient_count(self.conductor(), [0, 0, 1, 1], 2, digits, der)
 
     def lfun(self, num_coeffs=None, digits=10, der=2):
-        r"""
-        The PARI `L`-function object: gamma factors `[0,0,1,1]`, weight 2,
-        conductor `N`, and the root number from :meth:`root_number`.
-        """
+        r"""The PARI object with gamma parameters `[0,0,1,1]` and weight 2."""
         if num_coeffs is None:
             num_coeffs = self._coeffs_needed(digits, der)
         key = ("lfun", int(num_coeffs), int(digits))
@@ -954,7 +660,7 @@ class CurveLFunction(SageObject):
         return L
 
     def check_functional_equation(self, num_coeffs=None, digits=10):
-        r"""``2^lfuncheckfeq``: small is good."""
+        r"""The functional equation residual ``2^lfuncheckfeq``."""
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
         with _pari_precision(digits):
@@ -985,12 +691,9 @@ class CurveLFunction(SageObject):
 
 def curve_lvalue(C, s=1, derivative=0, num_coeffs=None, digits=10,
                  verbose=False):
-    r"""
-    `L^{(k)}(C, s)` for the genus 2 curve ``C``, to ``digits`` decimal digits.
+    r"""`L^{(k)}(C,s)` to ``digits`` decimal digits.
 
-    Returns a dictionary with the value, the conductor, the root number and
-    the functional equation check, in the shape :func:`standard_lvalue`
-    returns for the standard `L`-function.
+    Return the value, conductor, root number and functional equation residual.
 
     EXAMPLES::
 

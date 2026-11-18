@@ -1,9 +1,4 @@
-"""Add validated surface meshes to the small-conductor curve explorer.
-
-    sage -python -m hyperell_regulator.experiments.small_conductor_surfaces --jobs 4
-
-No regulator or line integral is recomputed or changed.
-"""
+"""Export surface meshes for the small-conductor curve explorer."""
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib

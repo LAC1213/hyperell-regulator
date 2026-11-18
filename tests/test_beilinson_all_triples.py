@@ -1,4 +1,4 @@
-"""Exhaustive torsion triples without component checks, up to permutations."""
+"""Torsion triples up to permutation."""
 import itertools
 import json
 from types import SimpleNamespace

@@ -1,4 +1,4 @@
-"""The direct API refuses singular curves and invalid precision."""
+"""Rejection of singular curves and invalid precision."""
 import pytest
 from hyperell_regulator.regulator import regulator_stokes
 from hyperell_regulator.regulator.polynomials import ring

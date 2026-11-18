@@ -1,4 +1,4 @@
-"""Minimum length, tree boundary order, gluing parity and numerical agreement."""
+"""Minimum spanning trees, bank gluing and numerical integrals."""
 from collections import Counter
 import json
 from pathlib import Path

@@ -1,29 +1,8 @@
-r"""
-Beilinson's conjecture for `K_2` of hyperelliptic curves, numerically.
+r"""Periods, regulators and standard `L`-functions of genus two curves.
 
-Three things, for a hyperelliptic (in practice genus 2) curve `C/\QQ`:
+The regulators arise from classes in `H^3_{\mathcal M}(C^2, \QQ(2))`.
 
-* :mod:`hyperell_regulator.reduction` -- semistable reduction and the
-  *component question*: given `P, Q \in C(\QQ)` and a prime `p`, do `P` and
-  `Q` reduce to a smooth point of the same irreducible component of the
-  special fibre at `p`?  Cluster pictures ([DDMM]_, through
-  ``sage_cluster_pictures``) at odd primes, Liu's algorithm at 2.
-  :mod:`hyperell_regulator.components` runs this over the LMFDB list.
-
-* :mod:`hyperell_regulator.lfunction` -- the standard `L`-function
-  `L(\mathrm{std}, s)`, the degree 5 piece of `\wedge^2 h^1(C)`, with its bad
-  Euler factors read off the cluster pictures, and `L''(\mathrm{std}, 1)`.
-
-* :mod:`hyperell_regulator.regulator` -- the Beilinson regulator of the
-  `K_2` element `\{f, g\}` attached to a pair of 2-torsion (Weierstrass)
-  points, using plane quadrature or Stokes integration.
-
-:mod:`hyperell_regulator.experiments` puts the three together and compares
-the regulator determinant with the `L`-value.
-
-EXAMPLES:
-
-The component question::
+EXAMPLES::
 
     sage: from hyperell_regulator import HyperellipticCurveWithReduction
     sage: R.<x> = ZZ[]
@@ -32,9 +11,6 @@ The component question::
     [2, 53, 61]
     sage: C.same_component((0, 1), (0, -1), 53)["answer"]
     True
-
-.. [DDMM] T. Dokchitser, V. Dokchitser, C. Maistret, A. Morgan, *Arithmetic
-   of hyperelliptic curves over local fields*, Math. Ann. 385 (2023).
 """
 
 from hyperell_regulator.reduction import (

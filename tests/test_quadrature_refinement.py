@@ -1,4 +1,4 @@
-"""Accuracy checks and work budgets for explicit quadrature."""
+"""Quadrature accuracy and work limits."""
 import pytest
 from hyperell_regulator.regulator.quadrature import Arithmetic, quadrature, QuadratureFailure
 from hyperell_regulator.regulator import IntegrationMonitor, IntegrationLimitError, regulator_stokes

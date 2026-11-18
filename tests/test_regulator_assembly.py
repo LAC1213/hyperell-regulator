@@ -1,4 +1,4 @@
-"""One common set of edge periods supplies the entire determinant."""
+"""Regulator determinants from common edge periods."""
 from unittest.mock import patch
 import numpy as np
 from hyperell_regulator.regulator import regulators_stokes, IntegrationMonitor

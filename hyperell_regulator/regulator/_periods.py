@@ -1,4 +1,4 @@
-"""MST cycle paths and regularised square-root differentials."""
+"""Cycle paths on the branch-value tree and regularized differentials."""
 
 from ._tree import minimum_spanning_tree
 
@@ -9,13 +9,10 @@ def _part(z, name):
 
 
 def period_paths(roots, g, root_tol=0):
-    """An integral cycle basis from doubled branch-to-branch MST edges.
+    """An integral cycle basis from doubled branch-to-branch tree edges.
 
-    With 2g+1 finite branch values, all 2g edges give a basis. With 2g+2,
-    the lifted edges have one relation. A leaf edge has coefficient +/-1
-    in that relation, so omitting it gives an integral basis. Omit the
-    leaf of largest modulus, with real/imaginary parts breaking ties.
-    Exact input roots are retained; float64 chooses only the tree topology.
+    In even degree omit the leaf edge of largest modulus, breaking ties by
+    real and imaginary parts. Exact roots determine the integrals.
     """
     if len(roots) not in (2*g+1, 2*g+2) or g < 1:
         raise ValueError('branch values do not match the genus')
@@ -40,11 +37,7 @@ def period_paths(roots, g, root_tol=0):
 
 
 def pivoted_minor(rows, tol):
-    """Signed maximal minor; working-precision pivot ties use the first row.
-
-    Conjugate cycles often give equal pivot magnitudes. Resolving these ties
-    consistently prevents rounding from changing signs across backends.
-    """
+    """A signed maximal minor; tied pivots use the first row."""
     a = [list(row) for row in rows]
     n, m = len(a), len(a[0])
     det = a[0][0] * 0 + 1
@@ -66,11 +59,9 @@ def pivoted_minor(rows, tol):
 
 def segment_differential(roots, leading, a, b, ia, ib, g, *,
                          sqrt, sin, cos, pi, sign_tol):
-    """Regularise endpoints and continue the square root along an edge.
+    r"""Continue the square root along an edge and regularize its endpoints.
 
-    Set ``x=a+(b-a)*sin(pi*t/2)^2``. Endpoint root factors cancel
-    analytically. All other factors are continued relative to the midpoint;
-    their principal square roots are continuous on a validated segment.
+    Use `x=a+(b-a)\sin^2(\pi t/2)` and cancel the endpoint root factors.
     """
     delta, mid = b - a, (a + b) / 2
     others = [r for i, r in enumerate(roots) if i not in (ia, ib)]

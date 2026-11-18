@@ -1,4 +1,4 @@
-"""Deterministic budget tests: no test waits for wall-clock time to pass."""
+"""Integration budgets at quadrature checkpoints."""
 
 import json
 from unittest.mock import patch

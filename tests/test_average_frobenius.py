@@ -1,8 +1,4 @@
-"""Simultaneous Frobenius against independent Sage matrices and Euler factors.
-
-Native calls never use fallback. Tests require matrices for supported jobs,
-including even degree, and exercise the Sage fallback for unsupported jobs.
-"""
+"""Simultaneous Frobenius matrices and Euler factors compared with Sage."""
 import random
 import os
 import subprocess
@@ -40,7 +36,7 @@ def native(binary, q, jobs, backend="rforest-only", workers=1):
 
 
 def sage_matrices(q, jobs):
-    """Independent full matrices for odd degree, in the same de Rham basis."""
+    """Sage Frobenius matrices in the same de Rham basis, for odd degree."""
     rows = []
     for p, n in jobs:
         m = matrix(ZZ, hypellfrob(p, n, q))
@@ -49,7 +45,7 @@ def sage_matrices(q, jobs):
 
 
 def check_characteristic_polynomials(q, jobs, rows):
-    """Compare every coefficient modulo p^N, without imposing reciprocity."""
+    """Compare characteristic polynomial coefficients modulo `p^N`."""
     genus = (q.degree()-1)//2
     for (p, n), row in zip(jobs, rows):
         assert row[:3] == [p, 1, 2*genus]
@@ -229,7 +225,7 @@ def test_lfunction_coefficients_use_new_backend(binary, monkeypatch, backend):
 
 
 def test_conductor_388_uses_even_degree_forest(binary, monkeypatch):
-    """The even forest handles this curve without a rational branch point."""
+    """The conductor-388 curve uses even degree Frobenius reductions."""
     from sage.all import QQ, pari
     from hyperell_regulator import HyperellipticCurveWithReduction
     from hyperell_regulator.lfunction import CurveLFunction, StandardLFunction
