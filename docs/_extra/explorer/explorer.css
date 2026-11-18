@@ -74,10 +74,6 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .panel-description { min-height: 75px; font-size: 15px; line-height: 1.65; color: var(--muted); margin: 0; max-width: 560px; }
 .plot-tools { min-height: 36px; margin-top: 14px; display: flex; align-items: center; gap: 16px; }
 .gesture { font-family: var(--sans); font-size: 10px; color: var(--muted); }
-.tree-controls { flex-wrap: wrap; justify-content: space-between; }
-.diamond-colors { display: flex; gap: 14px; }
-.diamond-colors label { flex-direction: row; align-items: center; gap: 7px; }
-.diamond-colors input { width: 30px; height: 28px; padding: 2px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); cursor: pointer; }
 .surface-controls { flex-wrap: wrap; }
 .sheet-control { width: 133px; }
 .surface-controls select { padding: 7px 10px; font-family: inherit; font-size: 11px; }

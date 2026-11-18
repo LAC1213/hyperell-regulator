@@ -34,11 +34,9 @@ and :math:`\omega_2\wedge\overline{\omega_2}`. The determinant is :math:`D`.
 Use the path-integral selectors to choose a logarithmic factor.
 The center selector states an equality, for example :math:`a=x(P)=1`.
 Changing this center updates the path integrals and centers the tree view on
-the selected singularity. Edges in its logarithmic branch cut :math:`B` have
-the same colour as its diamond; other edges are muted. The colour pickers
-beside the tree let you choose the colours for :math:`x(P)` and :math:`x(Q)`,
-also used for the marked points on the real curve. The three-class matrix is
-unchanged. Click an edge
+the selected singularity, including when the page first loads. Edges in its
+logarithmic branch cut :math:`B` have the same colour as its diamond; other
+edges are muted. The three-class matrix is unchanged. Click an edge
 in the two-dimensional tree to select it, or a colored path in the sheet
 view to select both an edge and a positive-side sheet. The selected tree
 edge and both of its lifted paths are highlighted and follow the edge selector. The selectors also let

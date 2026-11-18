@@ -318,6 +318,7 @@ async function highlightSelection() {
 }
 async function renderTree() {
   if (!current) return;
+  const data=current;
   const selected=Number($("edge").value), k=selectedWeight(), center=rational(current.weights[k].center);
   const traces=current.edges.map((e,i)=>({
     type:"scatter",mode:"lines+text",x:e.base.map(p=>Number(p[0])),y:e.base.map(p=>Number(p[1])),
@@ -346,8 +347,14 @@ async function renderTree() {
   const halfY=halfX/aspect;
   await Plotly.react(plot,traces,{margin:{l:45,r:20,t:15,b:45},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
     uirevision:(label||current.input.F)+"/"+current.weights[k].center,dragmode:"pan",hovermode:"closest",font:{family:"Source Serif 4, Georgia, serif",color:"#183e3b",size:13},
-    xaxis:{title:"Re(x)",range:[center-halfX,center+halfX],zeroline:false},yaxis:{title:"Im(x)",range:[-halfY,halfY],scaleanchor:"x",scaleratio:1,zeroline:false},
+    xaxis:{title:"Re(x)",range:[center-halfX,center+halfX],autorange:false,zeroline:false},yaxis:{title:"Im(x)",range:[-halfY,halfY],autorange:false,scaleanchor:"x",scaleratio:1,zeroline:false},
     legend:{orientation:"h",y:-.22}},{responsive:true,displaylogo:false});
+  if (data!==current || k!==selectedWeight()) { renderIntegrals(); return renderTree(); }
+  // Apply the selected centre even if Plotly retained a prior pan or autorange.
+  await Plotly.relayout(plot,{
+    "xaxis.range":[center-halfX,center+halfX],"xaxis.autorange":false,
+    "yaxis.range":[-halfY,halfY],"yaxis.autorange":false
+  });
   plot.removeAllListeners("plotly_click");
   plot.on("plotly_click",event=>{const edge=event.points[0].customdata;if(Number.isInteger(edge))inspectPath(edge);});
 }
@@ -374,7 +381,8 @@ async function renderPlot() {
 }
 async function display(data,name,curve=null) {
   current=validate(data); currentCurve=curve; label=name;
-  $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,"a = "+[...centerReferences(w.center),w.center].join(" = "))); $("weight-select").disabled=false;
+  $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,"a = "+[...centerReferences(w.center),w.center].join(" = ")));
+  $("weight-select").value="0"; $("weight-select").disabled=false;
   $("edge").replaceChildren(); current.edges.forEach((e,k)=>option($("edge"),k,"Edge "+e.index+(e.infinite?" → ∞":"")));
   $("result-source").replaceChildren();
   if (curve) {
@@ -391,10 +399,10 @@ async function display(data,name,curve=null) {
   $("results").hidden=false; $("export").disabled=false;
   renderMatrix(curve);
   renderBeilinson(curve);
-  renderIntegrals();
   if (document.fonts) await document.fonts.ready;
   fitCurveEquation();
   fitConjectureEquation();
+  renderIntegrals();
   return Promise.all([renderRealPlot(),renderTree(),renderPlot()]);
 }
 async function chooseCurve(index) {
@@ -427,11 +435,7 @@ function renderCatalog() {
 $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-select").value)));
 ["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();if(id==="weight-select")renderTree();}));
 $("beilinson-digits").addEventListener("input",()=>renderBeilinson(currentCurve));
-["point-p-color","point-q-color"].forEach((id,i)=>$(id).addEventListener("input",()=>{
-  POINT_COLORS[i]=$(id).value;
-  document.documentElement.style.setProperty(i===0?"--point-p":"--point-q",POINT_COLORS[i]);
-  if (current) { renderTree(); renderRealPlot(); }
-}));
+window.addEventListener("pageshow",()=>{if(current){renderIntegrals();renderTree();}});
 ["visible-sheet","show-mesh"].forEach(id=>$(id).addEventListener("change",renderPlot));
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;$("curve-select").value="";for(const row of $("catalog-rows").children)row.classList.remove("selected");await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});
