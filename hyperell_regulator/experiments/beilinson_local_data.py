@@ -1,10 +1,11 @@
-"""Explicit local standard factors for the CM-labelled survey below 10000.
+"""Explicit local standard factors for the Beilinson surveys.
 
 Coefficients are ascending, in the Euler polynomial variable T.  The
 ``StandardLFunction.bad_factors`` API takes wedge-square factors, so the
 helper multiplies each standard polynomial by (1-p*T).  Wild conductor
 exponents are supplied separately.  See reports/beilinson_cm_bad_factors.rst
 for the local-representation derivation, including what ``CM`` means here.
+See reports/beilinson_isogeny_transport.rst for the tame factor for 688.a.
 
 Overrides are guarded by the exact cached equation y^2+h(x)y=f(x), rather
 than applied to arbitrary models carrying the same label.
@@ -15,6 +16,13 @@ import json
 
 from sage.all import PolynomialRing, QQ
 
+
+_DATA_688 = {
+    "standard_factors": {"2": [1, 2]},
+    "conductor_exponents": {"2": 4},
+    "derivation": "Tame good reduction after adjoining a fifth root of 2. "
+                  "Frobenius exchanges the two inertia-invariant exterior-square lines.",
+}
 
 LOCAL_DATA = {
     "324.a.648.1": {
@@ -58,6 +66,18 @@ LOCAL_DATA = {
         "conductor_exponents": {"2": 12},
         "newform": "64.2.b.a",
         "derivation": "Bolza CM decomposition: weight-3 level-8 form and three quadratic Tate twists.",
+    },
+    "688.a.2752.1": {
+        **_DATA_688,
+        "model": [[0, -1, 0, 4, -5, 2], [1]],
+    },
+    "688.a.704512.1": {
+        **_DATA_688,
+        "model": [[1, 2, 1, 4, 0, 2], []],
+    },
+    "688.a.704512.2": {
+        **_DATA_688,
+        "model": [[1, 4, 2, -8, -7, 2], []],
     },
     "8649.c.700569.1": {
         "model": [[0, -1, 4, 13, 9, 1], [0, 1, 1]],

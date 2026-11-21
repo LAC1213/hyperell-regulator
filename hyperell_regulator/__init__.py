@@ -26,6 +26,15 @@ from hyperell_regulator.lfunction import (
     standard_lvalue,
     wedge2_euler_factor,
 )
+from hyperell_regulator.integrality import TorsionPacketIntegrality, torsion_packets
+from hyperell_regulator.geometric_torsion import (
+    GeometricTorsionPacket, geometric_torsion_packet, install_poonen_backend,
+)
+from hyperell_regulator.number_field_integrality import NumberFieldTorsionPacketIntegrality
+from hyperell_regulator.projected_integrality import ProjectedTorsionPacketIntegrality
+from hyperell_regulator.motivic import MotivicDivisor, MotivicPacket
+from hyperell_regulator.graph_boundary import FibreGraph, GraphBoundary
+from hyperell_regulator.stable_model import StableModel, stable_model
 
 __version__ = "0.1.0"
 
@@ -39,4 +48,17 @@ __all__ = [
     "self_test",
     "standard_lvalue",
     "wedge2_euler_factor",
+    "TorsionPacketIntegrality",
+    "torsion_packets",
+    "GeometricTorsionPacket",
+    "geometric_torsion_packet",
+    "install_poonen_backend",
+    "NumberFieldTorsionPacketIntegrality",
+    "ProjectedTorsionPacketIntegrality",
+    "MotivicDivisor",
+    "MotivicPacket",
+    "FibreGraph",
+    "GraphBoundary",
+    "StableModel",
+    "stable_model",
 ]

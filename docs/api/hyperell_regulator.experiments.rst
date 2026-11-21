@@ -8,7 +8,7 @@ Submodules
    :maxdepth: 4
 
    hyperell_regulator.experiments.beilinson
-   hyperell_regulator.experiments.family_n
+   hyperell_regulator.experiments.geometric_torsion
 
 Module contents
 ---------------

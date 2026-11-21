@@ -14,7 +14,6 @@ def test_import():
     import hyperell_regulator.regulator.plane  # noqa: F401
     import hyperell_regulator.regulator.stokes  # noqa: F401
     import hyperell_regulator.experiments.beilinson  # noqa: F401
-    import hyperell_regulator.experiments.family_n  # noqa: F401
 
 
 def test_regulator_exports():

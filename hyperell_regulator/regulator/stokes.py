@@ -5,7 +5,7 @@ with an outward ray at its rightmost vertex. All weights share edge periods.
 """
 import numpy as np
 from contextlib import nullcontext
-from sage.all import QQ
+from sage.all import QQ, QQbar
 from ._tree import minimum_spanning_tree, orient_to_root, tree_contour
 from ._periods import segment_differential
 from .polynomials import polynomial
@@ -38,7 +38,18 @@ class Cut:
         for r in self.F.roots(QQ, multiplicities=False):
             i = min(range(len(self.roots)), key=lambda i: abs(self.roots[i]-C(r)))
             self.roots[i] = C(r)
-        self.centers = list(dict.fromkeys(QQ(a) for a in centers))
+        def exact_center(a):
+            try:
+                return QQ(a)
+            except (TypeError, ValueError):
+                return QQbar(a)
+        self.centers = list(dict.fromkeys(exact_center(a) for a in centers))
+        # Algebraic logarithmic zeros may themselves be branch points. Use
+        # exact membership before identifying their numerical approximations.
+        for a in self.centers:
+            if self.F(a) == 0:
+                i = min(range(len(self.roots)), key=lambda i: abs(self.roots[i]-C(a)))
+                self.roots[i] = C(a)
         points = list(self.roots)
         labels = list(range(len(points)))
         for a in self.centers:
@@ -101,10 +112,10 @@ class Cut:
                 output.append([j, 1-j])
         logs, jumps = [], []
         for a in self.centers:
-            theta = np.unwrap(np.angle(path-float(a)))
+            theta = np.unwrap(np.angle(path-complex(a)))
             values, differences = [], []
             for i, ref in enumerate(self.references):
-                angle = np.angle(complex(ref)-float(a))
+                angle = np.angle(complex(ref)-complex(a))
                 turns = {s: round((theta[marks[i, s]]-angle)/(2*np.pi)) for s in (1, -1)}
                 values.append((ref-self.ar.C(a)).log()+self.ar.C.gen()*2*self.ar.R.pi()*turns[-1])
                 differences.append(self.ar.C.gen()*2*self.ar.R.pi()*(turns[1]-turns[-1]))

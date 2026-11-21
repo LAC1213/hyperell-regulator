@@ -262,6 +262,20 @@ def test_components_are_recorded_without_warnings_for_new_or_stored_results(caps
                 assert 'same-component criterion' not in output
 
 
+def test_report_prints_exact_torsion_divisors_from_saved_packet(capsys):
+    result = dict(label='test', cond=1, status='ok', integral=True,
+                  points=[dict(field_polynomial=None, coordinates=['0', '1']),
+                          dict(field_polynomial=None, coordinates=['infinity', '-1']),
+                          dict(field_polynomial=['-2', '0', '1'], coordinates=[['0', '1'], ['0']])],
+                  divisors=[['1', '1', '-2'], ['0', '-1', '1']])
+    b._report_header('geometric')
+    b._report_row(result, stored=True)
+    header, line = capsys.readouterr().out.splitlines()
+    assert header.endswith('torsion divisors')
+    assert line.endswith('D1 = (0, 1) + oo(Y=-1) - 2*P3 | '
+                         'D2 = -oo(Y=-1) + P3 [stored]')
+
+
 def test_comparison_uses_pi_over_determinant_and_reports_integer_guesses():
     R = RealField(180)
     for q in (R(7), R(-28), R(3)/2):

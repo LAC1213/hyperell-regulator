@@ -5,7 +5,7 @@ In genus two the order is `(1,\Re(x),|x|^2)`; double the middle entry
 for the Beilinson determinant. A finite pole `b` gives `\log|(x-a)/(x-b)|`.
 """
 import numpy as np
-from sage.all import QQ
+from sage.all import QQ, QQbar
 from . import plane
 from .stokes import compute
 
@@ -28,7 +28,9 @@ def regulators_stokes(F, centers, *, pole=None, prec=None, details=None, certifi
                       certified_cut="tree"):
     """Periods and logarithmic vectors on a common cut.
 
-    Centers and finite poles are rational; ``pole=None`` means infinity.
+    Centers and finite poles may be exact algebraic numbers;
+    ``pole=None`` means infinity. Certified integration currently requires
+    rational centers and poles.
     ``prec`` is the decimal accuracy target; ``None`` returns float64 arrays.
     With ``certified=True`` return real balls with checked absolute radii
     below ``10^-prec`` (15 digits when ``prec`` is omitted). The default
@@ -39,7 +41,11 @@ def regulators_stokes(F, centers, *, pole=None, prec=None, details=None, certifi
         from . import balls
         coerce = balls.rational
     else:
-        coerce = QQ
+        def coerce(a):
+            try:
+                return QQ(a)
+            except (TypeError, ValueError):
+                return QQbar(a)
     centers = [coerce(a) for a in centers]
     pole = None if pole is None else coerce(pole)
     poles = [] if pole is None else [pole]
@@ -52,7 +58,7 @@ def regulators_stokes(F, centers, *, pole=None, prec=None, details=None, certifi
         per, reg = compute(F, unique, 15 if prec is None else prec, details=details)
     lookup = dict(zip(unique, reg))
     zero = [v*0 for v in per]
-    base = zero if pole is None else lookup[QQ(pole)]
+    base = zero if pole is None else lookup[pole]
     columns = [([v.parent()(0) for v in per] if certified and c == pole else
                 [a-b for a, b in zip(lookup[c], base)]) for c in centers]
     if certified:

@@ -1,6 +1,6 @@
 r"""Regulator determinants and tests of Beilinson's conjecture.
 
-For torsion pairs with common pole, compare the determinant `D` with
+For two integral torsion-packet divisors, compare the determinant `D` with
 `\pi c^+c^-L^{\prime\prime}(M_{\mathrm{std}}(C),1)`.
 The determinant weights are `(1,2\Re(z),|z|^2)`.
 The survey selects rational endomorphism algebra labels ``Q`` and ``CM``.
@@ -10,6 +10,7 @@ import json
 import time
 from contextlib import contextmanager, closing, nullcontext
 from itertools import combinations
+from math import isfinite
 
 from sage.all import (
     RealField,
@@ -41,6 +42,7 @@ from hyperell_regulator.certified import (ANALYTIC_ASSUMPTIONS, BACKEND_REVISION
     encode_ball, decode_ball, encode_result, display_float)
 
 DEFAULT_CONDUCTOR_BOUND = 1000
+DEFAULT_GEOMETRIC_SECONDS = 30
 REPORT_VERSION = 12  # weights (1, 2 Re(z), |z|^2); q = pi c+ c- L'' / D
 DETERMINANT_WEIGHTS = (1, 2, 1)
 BEILINSON_END_ALGS = ("Q", "CM")
@@ -719,10 +721,12 @@ def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
             with_periods=True, with_lvalue=True, digits=15,
             lindep_bound=8, geom_simple=None, reg_digits=None, tries=1,
             ignore_component_criterion=False, certified=False, end_q_z=None,
-            end_algs=BEILINSON_END_ALGS):
+            end_algs=BEILINSON_END_ALGS, packet=None, geometric_seconds=DEFAULT_GEOMETRIC_SECONDS):
     r"""Compute a regulator determinant and comparison for one curve.
 
-    Try up to ``tries`` triples in cut-conditioning order. With
+    Select ``packet='rational'``, ``'weierstrass'`` or ``'geometric'`` to
+    solve the integral divisor kernel and compare pairs of its basis vectors.
+    The original entry point without a packet tries triples. With
     ``ignore_component_criterion``, evaluate all torsion triples up to permutation.
     ``digits`` and ``reg_digits`` are decimal precisions; ``reg_digits=None``
     uses float64. The result records failures and undecided component tests.
@@ -741,6 +745,16 @@ def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
                   if row.get('end_alg') is None else 'end_alg not in {%s}' % ','.join(end_algs))
         return dict(label=record['label'], cond=record['cond'], status=status)
     C = curve_from_row(row)
+
+    if packet is not None and not ignore_component_criterion:
+        from ._beilinson_divisors import analyse_divisors
+
+        if packet == 'geometric' and not (isfinite(geometric_seconds) and geometric_seconds > 0):
+            raise ValueError('geometric seconds must be positive and finite')
+        return analyse_divisors(record, C, row, packet, verbose=verbose,
+                                with_periods=with_periods, with_lvalue=with_lvalue,
+                                digits=digits, reg_digits=reg_digits, lindep_bound=lindep_bound,
+                                tries=tries, certified=certified, geometric_seconds=geometric_seconds)
 
     triples = find_triples(record, C, row=row, allow_undecided=allow_undecided,
                            ignore_component_criterion=ignore_component_criterion)
@@ -872,7 +886,8 @@ def _fetch_curves(max_cond, cache, end_algs):
 
 def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
                    results=RESULTS, geom_simple=None, fetch=False, verbose=False,
-                   ignore_component_criterion=False, end_q_z=None, end_algs=BEILINSON_END_ALGS):
+                   ignore_component_criterion=False, end_q_z=None,
+                   end_algs=BEILINSON_END_ALGS, packet=None):
     """Component records for cached curves with conductor strictly below ``N``.
 
     Fetch only if requested. When ignoring the criterion, enumerate torsion
@@ -887,10 +902,10 @@ def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
     if end_algs is not None and any(r.get('end_alg') is None for r in all_rows):
         raise ValueError('End_Q(J) data missing from the curve cache; rerun with --fetch')
     rows = [r for r in all_rows if end_algs is None or r.get('end_alg') in end_algs]
-    return list(_prepare_records(rows, results, verbose, ignore_component_criterion))
+    return list(_prepare_records(rows, results, verbose, ignore_component_criterion, packet))
 
 
-def _prepare_records(rows, results, verbose, ignore_component_criterion):
+def _prepare_records(rows, results, verbose, ignore_component_criterion, packet=None):
     """Prepare and yield each component record before preparing the next curve."""
     from hyperell_regulator.components import curve_points, report_curve, save_results
 
@@ -899,6 +914,9 @@ def _prepare_records(rows, results, verbose, ignore_component_criterion):
     except OSError:
         records = {}
     for row in rows:
+        if packet is not None:
+            yield records.get(row['label'], dict(label=row['label'], cond=row['cond']))
+            continue
         if ignore_component_criterion:
             C = curve_from_row(row)
             previous = records.get(row["label"], {})
@@ -939,6 +957,8 @@ def _stored_result_satisfies(old, settings):
                for rec in old.get('triple_results', [old])):
             return False
     stored = old["settings"]
+    if stored.get('packet') != settings.get('packet'):
+        return False
     if bool(stored.get('certified', False)) != bool(settings.get('certified', False)):
         return False
     if settings.get('certified'):
@@ -965,7 +985,12 @@ def _stored_result_satisfies(old, settings):
                 for r in old["triple_results"])):
         return False
     precision_keys = {"regulator_digits", "lvalue_digits"}
-    execution_keys = {"max_edge_seconds", "max_edge_steps", "tries"}
+    execution_keys = {"max_edge_seconds", "max_edge_steps", "tries", "geometric_seconds"}
+    if (settings.get('packet') == 'geometric' and old.get('packet_support_complete') is False
+            and stored.get('geometric_seconds', 0) < settings.get('geometric_seconds', 0)):
+        return False
+    if settings.get('packet') and stored.get('tries', 0) < settings['tries']:
+        return False
     if any(stored.get(k, False if k in ("ignore_component_criterion", "certified") else None) != v
            for k, v in settings.items()
            if k not in precision_keys | execution_keys):
@@ -986,9 +1011,38 @@ def _stored_result_satisfies(old, settings):
     return True
 
 
-def _report_header():
-    print(REPORT_COLUMNS % ("curve", "cond", "status", "component",
-                            "determinant", "q", "rational", "rel. error"))
+def _report_header(packet=None):
+    print((REPORT_COLUMNS+"  %s") % (
+        "curve", "cond", "status", "integral" if packet else "component",
+        "determinant", "q", "rational", "rel. error", "torsion divisors"))
+
+
+def _format_divisor(coefficients, labels):
+    terms = []
+    for coefficient, label in zip(map(QQ, coefficients), labels):
+        if not coefficient:
+            continue
+        magnitude = abs(coefficient)
+        term = ('%s*' % magnitude if magnitude != 1 else '') + label
+        sign = ' - ' if coefficient < 0 else ' + '
+        terms.append(sign + term if terms else ('-' if coefficient < 0 else '') + term)
+    return ''.join(terms) or '0'
+
+
+def _report_divisors(result):
+    if result.get('status') != 'ok':
+        return '-'
+    if result.get('divisors') and result.get('points'):
+        labels = [_fmt(P['coordinates']) if P['field_polynomial'] is None else 'P%d' % i
+                  for i, P in enumerate(result['points'], 1)]
+        rows = result['divisors']
+    elif all(key in (result.get('triple') or {}) for key in ('P', 'Q', 'R')):
+        labels = [_fmt(_parse_point(result['triple'][key])) for key in ('P', 'Q', 'R')]
+        rows = [(1, 0, -1), (0, 1, -1)]
+    else:
+        return '-'
+    return ' | '.join('D%d = %s' % (i, _format_divisor(row, labels))
+                      for i, row in enumerate(rows, 1))
 
 
 def _report_row(result, stored=False):
@@ -1003,19 +1057,23 @@ def _report_row(result, stored=False):
         return
     comparison = result.get("comparison") or {}
     component = "-"
+    if result.get('integral'):
+        component = 'integral'
     if "same_component_everywhere" in result or result.get("triple"):
         verdict = result.get("same_component_everywhere", _component_verdict(result.get("triple") or {}))
         component = "yes" if verdict is True else "no" if verdict is False else "undecided"
     def number(value):
         return "-" if value is None else "%.8g" % display_float(value)
-    print((REPORT_COLUMNS+"%s") % (
+    print((REPORT_COLUMNS+"  %s%s") % (
         result["label"], result.get("cond", "?"), result["status"],
         component,
         number(result.get("det")), number(comparison.get("ratio")),
         str(comparison.get("rational", "-")),
         number(comparison.get("relative_agreement")),
+        _report_divisors(result),
         " [stored]" if stored else ""), flush=True)
-    for key in ("error", "periods_error", "L_status", "L_precision_warning"):
+    for key in ("rational_kernel_error", "geometric_issue", "error",
+                "periods_error", "L_status", "L_precision_warning"):
         if result.get(key):
             print("  %s: %s" % (key, result[key]), flush=True)
 
@@ -1051,7 +1109,7 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         allow_undecided=True, geom_simple=None, fetch=False,
         with_lvalue=True, tries=1, verbose=False, max_edge_seconds=15,
         max_edge_steps=100000, ignore_component_criterion=False, certified=False, end_q_z=None,
-        end_algs=BEILINSON_END_ALGS):
+        end_algs=BEILINSON_END_ALGS, packet='rational', geometric_seconds=DEFAULT_GEOMETRIC_SECONDS):
     """Report cached curves with conductor strictly below ``max_cond``.
 
     Reuse successes of sufficient precision under the same policy; retry failures.
@@ -1060,20 +1118,26 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
     from collections import Counter
 
     end_algs = _endomorphism_filter(end_algs, geom_simple, end_q_z)
+    if ignore_component_criterion or not allow_undecided:
+        packet = None
     cert = {"certified": True} if certified else {}
     if certified and reg_digits is None:
         reg_digits = digits
     max_cond = int(max_cond)
     if max_cond < 1 or int(digits) < 1 or int(tries) < 1:
         raise ValueError("conductor bound, digits and tries must be positive")
+    geometric = {'geometric_seconds': geometric_seconds} if packet == 'geometric' else {}
+    if geometric and not (isfinite(geometric_seconds) and geometric_seconds > 0):
+        raise ValueError('geometric seconds must be positive and finite')
     if fetch:
         row_stream = _fetch_curves(max_cond, cache, end_algs)
         records = _prepare_records(row_stream, path,
-                                   verbose, ignore_component_criterion)
+                                   verbose, ignore_component_criterion, packet)
     else:
         records = ensure_records(max_cond, cache=cache, results=path,
                                  end_algs=end_algs, verbose=verbose,
-                                 ignore_component_criterion=ignore_component_criterion)
+                                 ignore_component_criterion=ignore_component_criterion,
+                                 **({'packet': packet} if packet else {}))
     settings = dict(report_version=REPORT_VERSION, regulator_digits=reg_digits,
                     lvalue_digits=int(digits), with_lvalue=with_lvalue,
                     allow_undecided=allow_undecided,
@@ -1083,12 +1147,19 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
                     max_edge_steps=max_edge_steps)
     if certified:
         settings["certified"] = True
+    if packet is not None:
+        settings['packet'] = packet
+        settings['divisor_normalization'] = 'integer'
+    settings.update(geometric)
     have, results = load_stored(out), []
-    print("%s curves with conductor < %d; %s; pairwise non-conjugate triples"
+    search = ('integral divisors on rational packets with geometric fallback'
+              if packet == 'geometric' else
+              'integral divisors on the %s packet' % packet if packet else 'torsion triples')
+    print("%s curves with conductor < %d, %s, %s"
           % ("Fetching and analysing" if fetch else "%d cached" % len(records),
              max_cond, "float64" if reg_digits is None
-             else "%s-digit regulator" % reg_digits))
-    _report_header()
+             else "%s-digit regulator" % reg_digits, search))
+    _report_header(packet)
     with closing(row_stream) if fetch else nullcontext():
         for record in records:
             label = record["label"]
@@ -1106,7 +1177,8 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
                                    ignore_component_criterion=ignore_component_criterion,
                                    with_periods=with_lvalue, with_lvalue=with_lvalue,
                                    digits=digits, end_algs=end_algs,
-                                   reg_digits=reg_digits, tries=tries, lindep_bound=int(digits/2), **cert))
+                                   reg_digits=reg_digits, tries=tries, lindep_bound=int(digits/2),
+                                   **({'packet': packet} if packet else {}), **geometric, **cert))
             res["settings"] = settings
             results.append(res)
             have[label] = res
@@ -1121,8 +1193,11 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
     if certified:
         print("Certified interval agreement; exact rational equality is not proved.")
         print(ANALYTIC_ASSUMPTIONS)
-    print("no_admissible_triple: no pairwise non-conjugate torsion triple satisfies the component policy.")
-    print("no_usable_model: triples exist, but their integration models or shared cuts could not be constructed.")
+    if packet is None:
+        print("no_admissible_triple: no pairwise non-conjugate torsion triple satisfies the component policy.")
+        print("no_usable_model: triples exist, but their integration models or shared cuts could not be constructed.")
+    else:
+        print('integral_rank_undecided: the certified kernel has fewer than two directions and some local constraints remain unresolved.')
     print("numerical_failure: a shared cut failed quadrature or an integration limit.")
     if out is not None:
         print("Results: %s" % out)
@@ -1170,7 +1245,11 @@ def main(argv=None):
     component_policy.add_argument("--ignore-component-criterion", action="store_true",
                                   help="skip component checks and evaluate all non-conjugate "
                                        "torsion triples up to permutations (ignores --tries)")
-    parser.add_argument("--tries", type=int, default=1, help="number of ranked triples to try per curve")
+    parser.add_argument('--packet', choices=('rational', 'weierstrass', 'geometric', 'legacy'),
+                        default='rational', help='torsion packet for the integral divisor search')
+    parser.add_argument('--geometric-seconds', type=float, default=DEFAULT_GEOMETRIC_SECONDS,
+                        help='time budget per geometric packet or kernel attempt (default: %(default)s seconds)')
+    parser.add_argument("--tries", type=int, default=1, help="number of regulator pairs to compare per packet")
     args = parser.parse_args(argv)
     if args.N < 1 or args.digits < 1 or args.tries < 1 or (args.reg_digits is not None and args.reg_digits < 5):
         parser.error("N, digits and tries must be positive; regulator precision must be at least 5")
@@ -1178,11 +1257,15 @@ def main(argv=None):
         parser.error('certified precision must be at least 5 decimal digits')
     if args.edge_seconds <= 0 or args.edge_steps < 1:
         parser.error("edge budgets must be positive")
+    if not (isfinite(args.geometric_seconds) and args.geometric_seconds > 0):
+        parser.error('geometric seconds must be positive and finite')
     return run(args.N, out=args.out if args.out is not None else _report_path(RESULTS_OUT, args.certified),
                force=args.force, fetch=args.fetch, end_algs=args.end_algs,
                with_lvalue=not args.no_lvalue, verbose=args.verbose,
                allow_undecided=args.allow_undecided, digits=args.digits,
                ignore_component_criterion=args.ignore_component_criterion,
+               packet=None if args.packet == 'legacy' else args.packet,
+               geometric_seconds=args.geometric_seconds,
                reg_digits=args.reg_digits, tries=args.tries,
                max_edge_seconds=args.edge_seconds, max_edge_steps=args.edge_steps,
                **({"certified": True} if args.certified else {}))

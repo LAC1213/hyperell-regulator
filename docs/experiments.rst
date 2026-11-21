@@ -11,8 +11,8 @@ The determinant uses weights :math:`(1,2\operatorname{Re}(z),|z|^2)`.
 ``comparison.rational_is_integer`` tests whether the guessed rational
 factor has denominator one.
 
-Survey and family
------------------
+Survey
+------
 
 The survey selects LMFDB records with ``end_alg="Q"`` or ``end_alg="CM"``.
 Geometric simplicity is not required; other algebra labels, including
@@ -37,7 +37,7 @@ Fetch curves with conductor strictly below 1000 and test them:
    sage -python -m hyperell_regulator.experiments.beilinson 1000 --fetch
 
 With ``--fetch``, downloading runs in the background. The experiment starts
-component tests and analysis as soon as each curve's metadata and rational
+the integral-kernel and regulator calculations as soon as each curve's metadata and rational
 points are cached. Curves are analysed one at a time with a bounded prefetch
 queue, and each completed result is saved immediately. Existing point data
 can be used as soon as its endomorphism metadata is refreshed. Results may
@@ -50,18 +50,10 @@ Use cached data with 30-digit regulators and :math:`L`-values:
    sage -python -m hyperell_regulator.experiments.beilinson 250 \
        --prec 30 --digits 30
 
-For the family
-:math:`y^2+x(x-1)y=x(x-1)(x^3+nx^2-(n+1)x+1)`, test :math:`n=2`:
-
-.. code-block:: bash
-
-   sage -python -m hyperell_regulator.experiments.family_n 2 --no-lvalue
-
 Regulators default to float64, :math:`L`-values to 15 decimal digits, and
 edge limits to 15 seconds. ``--prec`` sets regulator precision and
 ``--digits`` sets :math:`L`-value precision. ``--no-lvalue`` skips
-:math:`L`-values. For the family, ``--max-conductor`` bounds the standard
-conductor inclusively. Use ``--help`` for all options.
+:math:`L`-values. Use ``--help`` for all options.
 
 Add ``--certified`` to compute Arb enclosures for the regulator, periods,
 determinant and conditional L-value. In this mode ``--reg-digits`` defaults
@@ -74,13 +66,40 @@ bound. See :doc:`ball-arithmetic` for installation and supported evaluations.
 Integrality criterion
 ---------------------
 
-Marked points are distinct and pairwise nonconjugate, with torsion
-differences from a common pole. The component criterion requires each
-marked pair to reduce smoothly on the same stable component at every prime.
-Undecided verdicts are accepted and recorded by default; use
-``--exclude-undecided`` to require affirmative verdicts.
+The survey solves for degree-zero divisors with vanishing projected
+boundary at all finite places. It computes the regulators of a basis on
+one cut per packet and compares pairs of the resulting columns.
+Each result records the exact points and basis coefficients in
+``integral_kernels``, the two chosen rows in ``divisors``, and whether
+the basis spans the full integral kernel. Denominators are cleared in each
+basis row before computing the regulator. Scaling the two divisors by
+:math:`m` and :math:`n` multiplies the determinant by :math:`mn` and divides
+the reported factor :math:`q` by :math:`mn`. The terminal's ``torsion divisors``
+column prints both chosen divisors with those integer coefficients in
+the original curve coordinates. An algebraic point printed as ``P3``
+is the third entry of the result's ``points`` array.
+``--tries`` controls how many
+nonzero pairs per packet are compared, in decreasing determinant magnitude.
+An undecided kernel can still contain certified integral classes.
 
-To evaluate all torsion triples up to permutation without component tests:
+The default ``--packet rational`` partitions known rational points by torsion
+differences. ``--packet weierstrass`` uses the six geometric Weierstrass
+points. ``--packet geometric`` searches the rational packets first. It calls
+the Poonen backend only if every rational packet has fewer than two
+certified integral directions. The JSON field ``packet_used`` records the
+packet selection used for the regulator. The survey reports progress during packet
+discovery and the exact integral-kernel calculation. Each of these
+attempts has a time budget of 30 seconds, adjustable with
+``--geometric-seconds``. If arithmetic on the full packet exceeds the
+budget or fails, the survey tries the points with rational abscissae
+from that verified packet. Certified integration uses this support
+directly. The JSON field ``packet_support_complete`` records whether all
+points were included. Columns use the individual marked points.
+See :doc:`integrality` for the local model and the graph pairing.
+
+The historical triple search is available with ``--packet legacy``.
+In that mode ``--exclude-undecided`` requires affirmative component
+verdicts. To evaluate all torsion triples up to permutation:
 
 .. code-block:: bash
 
@@ -126,7 +145,7 @@ Saved results
 
 Caches are stored in ``lmfdb_cache/`` and ``results/`` relative to
 ``HYPERELL_REGULATOR_DATA`` or the working directory. Successful results
-are reused when their precision and component policy suffice; failed
+are reused when their precision and packet selection suffice. Failed
 computations are retried. ``--force`` recomputes successful regulators.
 
 The `saved 100-digit survey

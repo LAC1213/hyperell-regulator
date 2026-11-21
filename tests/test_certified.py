@@ -96,14 +96,6 @@ def test_experiment_cli_propagates_certified():
     assert run.call_args.kwargs['digits'] == run.call_args.kwargs['reg_digits'] == 100
 
 
-def test_family_cli_propagates_certified():
-    from hyperell_regulator.experiments import family_n
-    with patch.object(family_n, 'run') as run:
-        family_n.main(['2', '--certified', '--digits', '30'])
-    assert run.call_args.kwargs['certified'] is True
-    assert run.call_args.kwargs['out'].endswith('_certified.json')
-
-
 def test_report_cache_rejects_numerical_records_and_wide_balls():
     F = RealBallField(150)
     settings = dict(certified=True, regulator_digits=15, lvalue_digits=15, with_lvalue=False)

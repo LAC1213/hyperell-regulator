@@ -5,13 +5,26 @@
 include README.md
 include docs/explorer_inputs.json
 include docs/ball-arithmetic.rst
+include docs/integrality.rst
+include docs/geometric-torsion.rst
 recursive-include tests *.py
 recursive-include reports *.tex *.json *.md
 include reports/bolza_motivic_class.rst
+include reports/integrality_small_conductor.rst
+include reports/geometric_torsion.rst
 include reports/beilinson_cm_bad_factors.rst
+include reports/beilinson_isogeny_transport.rst
+include reports/verify_beilinson_isogeny_transport.py
+include reports/verify_isogeny_295_torsion_packet.py
+include reports/search_weierstrass_relations.py
+include reports/audit_relation_integrality.py
+include reports/verify_semistable_relation_boundaries.py
+include reports/verify_dyadic_relation_boundaries.py
+include reports/solve_relation_integral_kernels.py
 include reports/beilinson_arithmetic_100.csv
+include reports/rational_relations_below_1000.csv
 include reports/verify_beilinson_arithmetic_100.py
-recursive-include reports/ball_lvalue_249_100_sources *.py
+recursive-include reports/ball_lvalue_249_100_sources *.py *.c *.patch
 include reports/ball_lvalue_249_100_euler.txt.gz
 include reports/ball_lvalue_249_100_run.txt
 recursive-include hyperell-frobenius *.cpp *.h *.md *.example

@@ -1,4 +1,4 @@
-"""Explicit bad factors, wild conductors, and cache invalidation in the CM survey."""
+"""Explicit bad factors, conductor exponents, and cache invalidation."""
 
 import json
 from unittest.mock import patch
@@ -22,6 +22,7 @@ def curve(label):
 
 @pytest.mark.parametrize('label,conductor', [
     ('324.a.648.1', 26244), ('784.c.614656.1', 9604),
+    ('688.a.2752.1', 29584), ('688.a.704512.1', 29584), ('688.a.704512.2', 29584),
     ('1296.a.20736.1', 26244), ('2704.a.43264.1', 114244),
     ('3969.c.35721.1', 15752961), ('4096.b.65536.1', 4096),
     ('8649.c.700569.1', 74805201),

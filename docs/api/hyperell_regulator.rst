@@ -18,8 +18,11 @@ Submodules
 
    hyperell_regulator.components
    hyperell_regulator.frobenius
+   hyperell_regulator.geometric_torsion
+   hyperell_regulator.integrality
    hyperell_regulator.lfunction
    hyperell_regulator.paths
+   hyperell_regulator.projected_integrality
    hyperell_regulator.reduction
 
 Module contents

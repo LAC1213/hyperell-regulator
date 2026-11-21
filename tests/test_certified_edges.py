@@ -1,11 +1,9 @@
-"""Analytic identities and failure cases for the exploratory Arb backend."""
+"""Analytic identities and failure cases for certified edge integration."""
 
 import pytest
 from sage.all import ComplexBallField, QQ, QQbar, RealBallField
 
-from hyperell_regulator.experiments.ball_regulator_probe import (
-    edge_integrals, standard_second_from_value_at_two,
-)
+from hyperell_regulator.regulator.balls import edge_integrals
 from hyperell_regulator.regulator.polynomials import ring
 
 
@@ -49,14 +47,3 @@ def test_edge_rejects_interior_singularities():
         edge_integrals(x*(1-x), 0, 1, centers=[QQ(1)/2])
     with pytest.raises(ValueError, match='squarefree'):
         edge_integrals(x**2, 0, 1)
-
-
-def test_standard_conversion_propagates_a_ball():
-    R = RealBallField(400)
-    # Manufactured L(2), testing the exact conversion and sign only.
-    value = (4 * R.pi()**2 / 249).add_error(R(10)**-110)
-    result = standard_second_from_value_at_two(value, 249**2)
-    assert result.contains_exact(1)
-    assert standard_second_from_value_at_two(value, 249**2, sign=-1).contains_exact(-1)
-    with pytest.raises(TypeError, match='real ball'):
-        standard_second_from_value_at_two(1.0, 249**2)

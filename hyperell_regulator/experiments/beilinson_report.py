@@ -61,6 +61,17 @@ def algebraic_data(row, curve_row):
     from . import beilinson as b
 
     curve = curve_from_row(curve_row)
+    if row.get('divisors') is not None:
+        from ..motivic import integration_chart
+
+        F, _, shift = integration_chart(curve.F.change_ring(QQ), (), row.get('shift'))
+        ring = PolynomialRing(QQ, 'u')
+        model = ring(F.list())
+        if model != ring(re.sub(r'\bx\b', 'u', row['model'])):
+            raise ValueError('Reconstructed integration model differs: ' + row['label'])
+        return dict(model=str(model), model_latex=latex(model), original_f=str(curve.f),
+                    original_h=str(curve.h), shift=None if shift is None else str(shift),
+                    scale='1')
     triple = dict(row["triple"])
     for key in ("P", "Q", "R"):
         triple[key] = b._parse_point(triple[key])
@@ -157,6 +168,7 @@ def render(rows, source_hash):
     """Three LaTeX tables from saved values and integration coordinates."""
     rows = [row for row in rows if int(row.get("cond", 0)) not in EXCLUDED_DISPLAY_CONDUCTORS]
     ok = [row for row in rows if row.get("status") == "ok"]
+    divisor_rows = any('divisors' in row for row in ok)
     lines = [r"\documentclass[10pt]{article}",
              r"\usepackage[a4paper,margin=12mm]{geometry}",
              r"\usepackage{amsmath,amssymb,booktabs,arydshln}",
@@ -173,16 +185,24 @@ def render(rows, source_hash):
              r"\setlength{\tabcolsep}{6pt}",
              r"\begin{tabular}{@{}cccccc@{}}",
              r"\toprule",
-             r"Curve & Point $P$ & Order of $P$ & $\alpha_P$ integral? & Factor $q$ & Error \\",
+             (r"Curve & Divisor or point & Order of point & Integral? & Factor $q$ & Error \\"
+              if divisor_rows else
+              r"Curve & Point $P$ & Order of $P$ & $\alpha_P$ integral? & Factor $q$ & Error \\"),
              r"\midrule"]
     for index, row in enumerate(ok):
-        triple, data = row["triple"], row["algebraic_data"]
+        data = row["algebraic_data"]
         comparison = row.get("comparison", {})
+        if 'divisors' in row:
+            classes = stacked([r'D_{%d}' % (i+1) for i in row['basis_indices']])
+            orders = r"$\text{--}$"
+            integral = '$' + integrality_tex(row.get('integral')) + '$'
+        else:
+            triple = row["triple"]
+            classes = stacked([point_tex(point) for point in data["image_points"][:2]])
+            orders = stacked([rational_tex(triple[key]) for key in ("order_P", "order_Q")])
+            integral = stacked([integrality_tex(triple.get(key)) for key in ("verdict_P", "verdict_Q")])
         cells = [
-            curve_link(row["label"]),
-            stacked([point_tex(point) for point in data["image_points"][:2]]),
-            stacked([rational_tex(triple[key]) for key in ("order_P", "order_Q")]),
-            stacked([integrality_tex(triple.get(key)) for key in ("verdict_P", "verdict_Q")]),
+            curve_link(row["label"]), classes, orders, integral,
             "$" + rational_tex(comparison.get("rational")) + "$",
             "$" + number_tex(comparison.get("relative_agreement"), 2) + "$",
         ]
@@ -192,12 +212,12 @@ def render(rows, source_hash):
     lines += [
         r"\bottomrule",
         r"\end{tabular}",
-        r"\caption{Torsion point classes for " + str(len(ok)) +
-        r" genus 2 curves. Each stacked cell lists the two marked points in the order of the regulator columns,",
-        r"in the integration coordinates of Table~\ref{tab:curve-models}.",
+        r"\caption{Torsion divisor classes for " + str(len(ok)) +
+        r" genus 2 curves. Each stacked cell lists the two classes in the order of the regulator columns.",
+        r"Points are given in the integration coordinates of Table~\ref{tab:curve-models}.",
         r"The order of a displayed point is the order of $[P]-[R]$, with common pole $R$ given there.",
-        r"The integrality column records the component criterion: Yes, No, or Undecided;",
-        r"Undecided makes no integrality assertion.",
+        (r"Rows with $D_i$ use the graph kernel and list the exact divisor basis in the JSON."
+         if divisor_rows else r"The integrality column records the component criterion."),
         r"Factor $q$ is the saved rational guess. The error is",
         r"$|\pi c^+c^-L^{\prime\prime}(M_{\mathrm{std}},1)/(qD)-1|$,",
         r"computed from unrounded values. Numerical targets are not certified error bounds.}",
@@ -214,7 +234,9 @@ def render(rows, source_hash):
     for row in ok:
         data = row["algebraic_data"]
         model = re.sub(r"\bu\b", "x", data["model_latex"])
-        description = model + r";\quad R=" + model_pole_tex(row)
+        description = model
+        if 'divisors' not in row:
+            description += r";\quad R=" + model_pole_tex(row)
         changed = data["shift"] is not None
         if changed:
             description += r";\quad(s,d)=(" + rational_tex(data["shift"]) + "," + rational_tex(data["scale"]) + ")"
@@ -325,7 +347,7 @@ From the repository root in SageMath, recompute the survey (network access is
 needed to fetch curve data; cached L-values are reused after validation):
 
 ```sh
-sage -python -m hyperell_regulator.experiments.beilinson 1300 --fetch --force --digits 100 --reg-digits 100 --edge-seconds 600
+sage -python -m hyperell_regulator.experiments.beilinson 1300 --packet legacy --fetch --force --digits 100 --reg-digits 100 --edge-seconds 600
 sage -python -m hyperell_regulator.experiments.beilinson_report
 ```
 
@@ -371,7 +393,7 @@ def explorer_inputs(report, output):
     curves = []
     x_expression = lambda value: re.sub(r"\bu\b", "x", value)
     for row in rows:
-        if row.get("status") != "ok" or int(row["cond"]) in EXCLUDED_DISPLAY_CONDUCTORS:
+        if row.get("status") != "ok" or int(row["cond"]) in EXCLUDED_DISPLAY_CONDUCTORS or 'triple' not in row:
             continue
         a, t = row["algebraic_data"], row["triple"]
         comparison = row.get("comparison", {})

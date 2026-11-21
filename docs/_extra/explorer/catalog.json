@@ -24,8 +24,8 @@
   "numerical_source_hash_method": "python-ast-no-docstrings-v1",
   "numerical_source_sha256": {
     "hyperell_regulator/_source_hash.py": "4cf0bfc59d52767475f774988c90fef08a1493289251d575cf131459fa351eb1",
-    "hyperell_regulator/experiments/beilinson.py": "347cfe4c7f6a3b397a2f4512f783d7918026d25d23e688199db0ebad6c850fda",
-    "hyperell_regulator/experiments/beilinson_local_data.py": "2e4c2b16f15a45dcf05cc12d89eb188ee9ce3d848294fb958b5896873800a37a",
+    "hyperell_regulator/experiments/beilinson.py": "c5665001b47491f3f76a31fbb94a5dfd1136786e958f31e5805210b99fa53ba9",
+    "hyperell_regulator/experiments/beilinson_local_data.py": "ef29a04143be5c2e330a266db2e5b9df5e1a084ba5d8ffefe7890a08e1692d23",
     "hyperell_regulator/experiments/small_conductor_explorer.py": "5527adb6b8f75eb523b74d80c777850c3d25559fe5e0063455d6d2a81d4dbd5a",
     "hyperell_regulator/frobenius.py": "7398b28ea211b1574a0b8f74e08a62b1b35a2bae2920f9368f37143a5908e53b",
     "hyperell_regulator/lfunction.py": "4502e241d589cb0642cd8509e6d901dd026b8949c5312bcc7c5951af977af6b9",
@@ -33,7 +33,7 @@
     "hyperell_regulator/regulator/_tree.py": "c470fc18bb3e9510c44e5be762c9d07ed2a1fac9a4de9489b40ab18fc76c5ec3",
     "hyperell_regulator/regulator/precision.py": "823c32e171bd920805a2e57f7c692f973cb36cc662c433160f2675d34f8053ce",
     "hyperell_regulator/regulator/quadrature.py": "144eb8c76fe9ce733009160d17d217065129db2910a13aa2c5219f2697458bed",
-    "hyperell_regulator/regulator/stokes.py": "3bebc956af8d6feb7ddff3202951640a0257701101d544d74ff6d8257c1eb7ea"
+    "hyperell_regulator/regulator/stokes.py": "6cabc0056bafe217e68818823a867c122c27ce2988f1aeb6ab4e5b2df8f2e6df"
   },
   "input_sha256": "9b070a342333eeaf4faa2db42e6d89a28d85a37f0e11fb3f1ad961ae4c6f40e4",
   "curves": [
