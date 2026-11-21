@@ -132,22 +132,24 @@ def _regulator_precision(reg_digits, dps):
     return reg_digits
 
 
-def family_determinant(G, dps=None, *, reg_digits=None):
+def family_determinant(G, dps=None, *, reg_digits=None, certified=False):
     """The regulator determinant from a common cut for both logarithmic weights."""
     precision = _regulator_precision(reg_digits, dps)
     return b.beilinson_determinant_stokes(G, (0, 0), (1, 0),
-                                        digits=precision)
+                                        digits=precision, **({"certified": True} if certified else {}))
 
 
 def beilinson_for_n(n, digits=15, lindep_bound=8, verbose=False, prec=250,
                     dps=None, *, reg_digits=None, with_lvalue=True,
-                    max_edge_seconds=15, max_edge_steps=100000):
+                    max_edge_seconds=15, max_edge_steps=100000, certified=False):
     """The regulator and comparison for one family member.
 
     ``prec`` is the reduction precision in bits; ``reg_digits`` (alias ``dps``)
     is the regulator precision in decimal digits.
     """
     reg_digits = _regulator_precision(reg_digits, dps)
+    if certified and reg_digits is None:
+        reg_digits = digits
     if int(digits) != digits or digits < 1:
         raise ValueError("L-value digits must be positive")
     label = "family_n(%s)" % int(n)
@@ -164,7 +166,8 @@ def beilinson_for_n(n, digits=15, lindep_bound=8, verbose=False, prec=250,
                 dict(label=label, cond=int(C.conductor())), C, triple, 1,
                 verbose=verbose, with_periods=with_lvalue,
                 with_lvalue=with_lvalue, digits=digits,
-                reg_digits=reg_digits, lindep_bound=lindep_bound))
+                reg_digits=reg_digits, lindep_bound=lindep_bound,
+                **({"certified": True} if certified else {})))
             result.update(f=str(C.f), h=str(C.h), conductor=result['cond'],
                           bad_primes=[int(p) for p in C.bad_primes()])
     return result
@@ -191,7 +194,7 @@ def save_stored(have, path=RESULTS):
 def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
         order='cost', max_conductor=10**8, verbose=False, dps=None, *,
         reg_digits=None, with_lvalue=True, max_edge_seconds=15,
-        max_edge_steps=100000):
+        max_edge_steps=100000, certified=False):
     """Report family members, reusing successes with matching settings.
 
     The default range is -4 through 2. ``max_conductor`` bounds the standard
@@ -199,6 +202,8 @@ def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
     """
     from collections import Counter
     reg_digits = _regulator_precision(reg_digits, dps)
+    if certified and reg_digits is None:
+        reg_digits = digits
     if order not in ('cost', 'lex') or (limit is not None and limit < 1):
         raise ValueError("order must be cost or lex, and limit must be positive")
     if digits < 1 or max_edge_seconds <= 0 or max_edge_steps < 1:
@@ -217,11 +222,12 @@ def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
                     regulator_digits=reg_digits, lvalue_digits=int(digits),
                     with_lvalue=with_lvalue, max_edge_seconds=max_edge_seconds,
                     max_edge_steps=max_edge_steps)
+    if certified:
+        settings["certified"] = True
     have, results = load_stored(out), []
     print("Family n: %s; %s" % (ns, 'float64' if reg_digits is None
                                else '%s-digit regulator' % reg_digits))
-    print("%-18s %5s %-21s %14s %12s %10s %10s" %
-          ('curve', 'cond', 'status', 'determinant', 'q', 'rational', 'rel. error'))
+    b._report_header()
     for n in ns:
         old = have.get(n, {})
         cached = not force and b._stored_result_satisfies(old, settings)
@@ -230,7 +236,8 @@ def run(ns=None, out=RESULTS, limit=None, digits=15, force=False,
         else:
             result = beilinson_for_n(n, digits=digits, verbose=verbose,
                 reg_digits=reg_digits, with_lvalue=with_lvalue,
-                max_edge_seconds=max_edge_seconds, max_edge_steps=max_edge_steps)
+                max_edge_seconds=max_edge_seconds, max_edge_steps=max_edge_steps,
+                **({"certified": True} if certified else {}))
             result['settings'] = settings
             have[n] = result
             save_stored(have, out)
@@ -265,11 +272,14 @@ def main(argv=None):
             or args.edge_steps < 1 or (args.limit is not None and args.limit < 1)
             or (args.reg_digits is not None and args.reg_digits < 5)):
         parser.error('bounds and budgets must be positive; regulator precision must be at least 5')
-    return run(args.ns or None, out=args.out, limit=args.limit, digits=args.digits,
+    if args.certified and args.digits < 5:
+        parser.error('certified precision must be at least 5 decimal digits')
+    return run(args.ns or None, out=args.out if args.out is not None else b._report_path(RESULTS, args.certified),
+        limit=args.limit, digits=args.digits,
         force=args.force, order=args.order, max_conductor=args.max_conductor,
         verbose=args.verbose, reg_digits=args.reg_digits,
         with_lvalue=not args.no_lvalue, max_edge_seconds=args.edge_seconds,
-        max_edge_steps=args.edge_steps)
+        max_edge_steps=args.edge_steps, **({"certified": True} if args.certified else {}))
 
 
 if __name__ == '__main__':

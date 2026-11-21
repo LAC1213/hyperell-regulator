@@ -50,6 +50,38 @@ static inline void transition_eval(mpz_t *out, mpz_t *M, int deg, int dim,
                 mpz_add(diff[j*size+i], diff[j*size+i], diff[(j+1)*size+i]);
 }
 
+// A cached coefficient range may leave a very long gap before the first
+// requested prime. Left-folding that entire gap over Z has quadratic cost
+// and creates enormous integers. Use a balanced product, reducing modulo
+// the product of all remaining moduli. These reductions preserve both the
+// current remainder tree and its transfer to the following trees.
+// Evaluation remains consecutive, including when using forward differences.
+static void transition_product(mpz_t *out, mpz_t *M, int deg, int dim,
+                               long *k, long end, mpz_t z, mpz_t *w,
+                               mpz_t *diff, mpz_t *W0, mpz_t *W1)
+{
+    long count = end-*k;
+    assert(count > 0);
+    if (count <= 16) {
+        transition_eval(out, M, deg, dim, (*k)++, w, diff);
+        while (*k < end) {
+            mpz_matrix_set(W0, out, dim);
+            transition_eval(W1, M, deg, dim, (*k)++, w, diff);
+            mpz_matrix_mult(out, W0, W1, dim, w[0]);
+        }
+    } else {
+        long middle = *k+count/2;
+        mpz_t *left = mpz_matrix_alloc_and_init(dim);
+        mpz_t *right = mpz_matrix_alloc_and_init(dim);
+        transition_product(left, M, deg, dim, k, middle, z, w, diff, W0, W1);
+        transition_product(right, M, deg, dim, k, end, z, w, diff, W0, W1);
+        mpz_matrix_mult(out, left, right, dim, w[0]);
+        mpz_matrix_clear_and_free(left, dim);
+        mpz_matrix_clear_and_free(right, dim);
+    }
+    mpz_vec_mod(out, out, (long)dim*dim, z);
+}
+
 void rforest (mpz_t *A, mpz_t *V, int rows, mpz_t *M, int deg, int dim, mpz_t *m, long kbase, long *ks, long n, mpz_t z, int kappa)
 {
     assert ( A && V && rows > 0 && M && deg >= 0 && dim > 0 && m && ks && n >= 0 && kappa >= 0 );
@@ -98,6 +130,10 @@ void rforest (mpz_t *A, mpz_t *V, int rows, mpz_t *M, int deg, int dim, mpz_t *m
             mpz_t *Mk = Mtree[ell];
             for ( i = i0 ; i < i1 && i < n ; i++, Mk += dim*dim ) {
                 long nextk = ks[i];  assert(nextk >= k);
+                if (nextk-k > 64) {
+                    transition_product(Mk, M, deg, dim, &k, nextk, z, w, diff, W0, W1);
+                    continue;
+                }
                 if ( k == nextk ) mpz_matrix_set_one (Mk, dim); else transition_eval (Mk, M, deg, dim, k++, w, diff);
                 while ( k < nextk ) {
                     mpz_matrix_set (W0, Mk, dim);

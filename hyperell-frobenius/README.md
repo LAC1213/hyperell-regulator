@@ -50,7 +50,12 @@ Output has one row per job, in input order:
 ```
 
 `kappa=-1` chooses subtree splitting automatically. Larger values reduce
-tree storage at the cost of more prefix updates.
+tree storage at the cost of more prefix updates. Sparse requests (including
+missing high primes after a cached range) use balanced modular products for
+long gaps, rather than constructing one growing exact integer product.
+
+`make check-arithmetic` compares FFT matrix multiplication and sparse
+remainder forests with independent, step-by-step GMP arithmetic.
 
 ## Python
 

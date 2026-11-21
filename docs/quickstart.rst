@@ -64,3 +64,16 @@ a change of cycle basis can change the chosen minors by rational factors.
 
 ``plane.period_matrix`` returns a complex128 array. Its tolerance parameters
 select an internal accuracy target of at least 15 decimal digits.
+
+Validated ball arithmetic
+-------------------------
+
+Supply ``certified=True`` to ``regulators_stokes``, ``periods_stokes``,
+``regulator_stokes``, ``periods_plane``, ``regulator_plane``, ``c_invariants``
+or ``plane.period_matrix`` for rigorous Arb enclosures. ``prec`` specifies
+decimal absolute accuracy (15 when omitted); the final ball radius is checked.
+Certified plane integrals use a tree with one infinity ray; set
+``certified_cut="parallel"`` to select the independent comparison backend.
+The L-value methods accept the same flag with their existing ``digits`` argument.
+See :doc:`ball-arithmetic` for the optional native L backend and its analytic
+assumptions.

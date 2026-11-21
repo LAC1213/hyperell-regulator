@@ -32,11 +32,17 @@ RESULTS = data_path("results", "same_component_results.json")
 # ---------------------------------------------------------------------------
 
 def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
-                geom_simple=True, email="acampo@ihes.fr"):
+                geom_simple=True, email="acampo@ihes.fr", end_q_z=False, end_algs=None,
+                on_curve=None, _cancel_event=None):
     r"""Fetch and merge LMFDB curve and rational-point data into ``path``.
 
     Requests are paginated, with ``pause`` seconds between requests.
     The rational-point scan offset is saved in ``_scan_state.json``.
+    ``end_q_z=True`` selects End_Q(J)=Z using rational endomorphism metadata,
+    including Jacobians that are not geometrically simple.
+    ``end_algs`` selects a specified collection of LMFDB algebra labels.
+    ``on_curve`` receives each selected curve once its metadata and rational
+    points are cached, without waiting for the entire fetch to finish.
     """
     import time
     import urllib.request
@@ -47,19 +53,31 @@ def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
                               "_scan_state.json")
     calls = [0]
 
+    def check_cancelled():
+        if _cancel_event is not None and _cancel_event.is_set():
+            raise InterruptedError('LMFDB fetch cancelled')
+
+    def sleep(seconds):
+        if _cancel_event is None:
+            time.sleep(seconds)
+        elif _cancel_event.wait(seconds):
+            check_cancelled()
+
     def api(table, **kw):
         kw.setdefault("_format", "json")
         url = "https://www.lmfdb.org/api/%s/?%s" % (
             table, urllib.parse.urlencode(kw))
         for attempt in range(4):
+            check_cancelled()
             calls[0] += 1
             raw = urllib.request.urlopen(
                 urllib.request.Request(url, headers=headers), timeout=120).read()
+            check_cancelled()
             if raw.lstrip()[:1] != b"<":
                 return json.loads(raw)
             wait = 90 * (attempt + 1)
             print("   (LMFDB served a CAPTCHA; waiting %ss)" % wait)
-            time.sleep(wait)
+            sleep(wait)
         raise RuntimeError(
             "LMFDB kept returning HTML (a CAPTCHA challenge) instead of JSON")
 
@@ -69,30 +87,89 @@ def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
     except (IOError, OSError, ValueError):
         have = {}
 
+    cached_labels, emitted, pts = set(have), set(), {}
+
+    def merge(r):
+        previous = have.get(r['label'], {})
+        q = pts.get(r['label'], {})
+        have[r['label']] = {
+            **previous, 'label': r['label'], 'cond': int(r['cond']),
+            'is_simple_base': bool(r['is_simple_base']),
+            'is_simple_geom': bool(r['is_simple_geom']),
+            'end_alg': r.get('end_alg'), 'eqn': r['eqn'],
+            'num_rat_pts': q.get('num_rat_pts', previous.get('num_rat_pts')),
+            'rat_pts': q.get('rat_pts', previous.get('rat_pts')) or [],
+            'rat_pts_verified': q.get('rat_pts_v', previous.get('rat_pts_verified')),
+            'mw_invs': q.get('mw_invs', previous.get('mw_invs')),
+        }
+
+    def save():
+        # Readers in the analysis thread must always see complete JSON.
+        import tempfile
+        from pathlib import Path
+        check_cancelled()
+        destination = Path(ensure_parent(path))
+        out = sorted(have.values(), key=lambda r: (r['cond'], r['label']))
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', dir=destination.parent,
+                                             prefix=destination.name+'.', delete=False) as fh:
+                temporary = fh.name
+                json.dump(out, fh, indent=2)
+            os.replace(temporary, destination)
+        finally:
+            if temporary is not None and os.path.exists(temporary):
+                os.unlink(temporary)
+        return out
+
+    def publish(rows):
+        if on_curve is None or not rows:
+            return
+        for r in rows:
+            merge(r)
+        save()
+        chosen = {r['label'] for r in selected}
+        for r in rows:
+            label = r['label']
+            if label in chosen and label not in emitted:
+                check_cancelled()
+                on_curve(dict(have[label]))
+                emitted.add(label)
+
     # --- 1. the curves, filtered server-side ------------------------------
-    flag = "is_simple_geom" if geom_simple else "is_simple_base"
-    selected, offset = [], 0
+    if end_algs is None and end_q_z:
+        end_algs = ('Q',)
+    # The supported rational endomorphism fields imply Q-simplicity,
+    # but do not imply geometric simplicity.
+    # Include endomorphism metadata for old cached rows that are now excluded.
+    flag = "is_simple_geom" if geom_simple and end_algs is None else "is_simple_base"
+    selected, catalog, offset = [], [], 0
     while True:
         page = api("g2c_curves", _offset=offset, _limit=100, _sort="cond",
-                   _fields="label,cond,is_simple_base,is_simple_geom,eqn",
+                   _fields="label,cond,is_simple_base,is_simple_geom,eqn,end_alg",
                    **{flag: "true"})["data"]
         if not page:
             break
-        selected.extend(r for r in page
-                        if max_cond is None or r["cond"] <= max_cond)
+        bounded = [r for r in page if max_cond is None or r["cond"] <= max_cond]
+        catalog.extend(bounded)
+        selected.extend(r for r in bounded if end_algs is None or r.get('end_alg') in end_algs)
+        if limit is not None:
+            selected = selected[:limit]
+        # Existing point data is already usable as soon as metadata refreshes.
+        # New curves wait for their rational-point data before publication.
+        publish([r for r in bounded if r['label'] in cached_labels])
         print("   g2c_curves offset %-5s -> %s selected" % (offset,
                                                             len(selected)))
         if limit is not None and len(selected) >= limit:
-            selected = selected[:limit]
             break
         if max_cond is not None and max(r["cond"] for r in page) > max_cond:
             break
         offset += len(page)
-        time.sleep(pause)
+        sleep(pause)
 
     # --- 2. the rational points, resuming the scan ------------------------
-    want = set(r["label"] for r in selected) - set(have)
-    pts = {}
+    want = set(r["label"] for r in selected) - cached_labels
+    by_label = {r['label']: r for r in selected}
     if want:
         try:
             with open(state_path) as fh:
@@ -101,7 +178,7 @@ def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
             offset = 0
         start_offset = offset
         while want - set(pts):
-            time.sleep(pause)
+            sleep(pause)
             page = api("g2c_ratpts", _offset=offset, _limit=100,
                        _fields="label,num_rat_pts,rat_pts,rat_pts_v,mw_invs"
                        )["data"]
@@ -116,8 +193,8 @@ def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
             # the wanted rows lie behind us.  Without this the scan would walk
             # to the end of a ~66000 row table before the wrap-around below.
             if start_offset > 0 and not pts:
-                here = ZZ(page[0]["label"].split(".")[0])
-                lowest = min(ZZ(t.split(".")[0]) for t in want)
+                here = int(page[0]["label"].split(".")[0])
+                lowest = min(int(t.split(".")[0]) for t in want)
                 if here > lowest:
                     print("   g2c_ratpts resume point overshot "
                           "(offset %s is at conductor %s, need %s); "
@@ -127,35 +204,32 @@ def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
             for r in page:
                 if r["label"] in want:
                     pts[r["label"]] = r
+            publish([by_label[r['label']] for r in page if r['label'] in want])
             print("   g2c_ratpts offset %-5s -> %s/%s matched"
                   % (offset, len(pts), len(want)))
             offset += len(page)
+        check_cancelled()
         with open(ensure_parent(state_path), "w") as fh:
             # int(): Sage Integers are not JSON serialisable
             # Integers, which json cannot serialise
             json.dump({"ratpts_offset": int(offset)}, fh)
 
     # --- 3. merge into the cache -----------------------------------------
-    for r in selected:
-        if r["label"] in have and r["label"] not in pts:
-            continue                       # already cached, nothing new
-        q = pts.get(r["label"], {})
-        have[r["label"]] = {
-            "label": r["label"],
-            "cond": int(r["cond"]),
-            "is_simple_base": bool(r["is_simple_base"]),
-            "is_simple_geom": bool(r["is_simple_geom"]),
-            "eqn": r["eqn"],
-            "num_rat_pts": q.get("num_rat_pts"),
-            "rat_pts": q.get("rat_pts") or [],
-            "rat_pts_verified": q.get("rat_pts_v"),
-            "mw_invs": q.get("mw_invs"),
-        }
-    out = sorted(have.values(), key=lambda r: (r["cond"], r["label"]))
-    with open(ensure_parent(path), "w") as fh:
-        json.dump(out, fh, indent=2)
-    print("cache %s now holds %s curve(s), conductors %s-%s   [%s API call(s)]"
-          % (path, len(out), out[0]["cond"], out[-1]["cond"], calls[0]))
+    chosen = {r['label'] for r in selected}
+    for r in catalog:
+        if r['label'] not in chosen and r['label'] not in have:
+            continue
+        merge(r)
+    out = save()
+    if on_curve is not None:
+        for r in sorted(selected, key=lambda r: (r['cond'], r['label'])):
+            if r['label'] not in emitted:
+                check_cancelled()
+                on_curve(dict(have[r['label']]))
+                emitted.add(r['label'])
+    span = ', conductors %s-%s' % (out[0]['cond'], out[-1]['cond']) if out else ''
+    print("cache %s now holds %s curve(s)%s   [%s API call(s)]"
+          % (path, len(out), span, calls[0]), flush=True)
     return out
 
 
@@ -232,21 +306,37 @@ def lmfdb_label(C, pause=6, email="acampo@ihes.fr", verbose=True):
     return out
 
 
-def load_curves(path=CACHE, max_cond=None, simple_only=True, geom_simple=False):
+def load_curves(path=CACHE, max_cond=None, simple_only=True, geom_simple=False, end_q_z=False,
+                end_algs=None):
     r"""Cached curves in conductor order, with conductor at most ``max_cond``.
 
     ``simple_only`` requires simplicity over `\QQ`; ``geom_simple`` requires
-    geometric simplicity.
+    geometric simplicity. ``end_q_z`` selects End_Q(J)=Z independently of
+    those two flags, using the cached ``end_alg`` field.
+    ``end_algs`` selects a specified collection of rational algebra labels.
     """
     with open(path) as fh:
         rows = json.load(fh)
-    if geom_simple:
+    if end_algs is not None:
+        rows = [r for r in rows if r.get('end_alg') in end_algs]
+    elif end_q_z:
+        rows = [r for r in rows if end_q_is_z(r)]
+    elif geom_simple:
         rows = [r for r in rows if r.get("is_simple_geom")]
     elif simple_only:
         rows = [r for r in rows if r.get("is_simple_base")]
     if max_cond is not None:
         rows = [r for r in rows if r["cond"] <= max_cond]
     return sorted(rows, key=lambda r: (r["cond"], r["label"]))
+
+
+def end_q_is_z(row):
+    """Whether the cached rational endomorphism algebra proves End_Q(J)=Z.
+
+    LMFDB's ``end_alg='Q'`` specifies End_Q(J) tensor Q = Q. The only
+    integral order in Q containing 1 is Z. Missing metadata is not evidence.
+    """
+    return row.get('end_alg') == 'Q'
 
 
 def curve_from_row(row, prec=250):

@@ -3,6 +3,19 @@
 - [Saved data and integration models](beilinson_100_digits.json).
 - [LaTeX tables: torsion and integrality, models, numerical data](beilinson_100_digits.tex).
 
+Arithmetic checks for all 154 entries are available as
+[CSV](beilinson_arithmetic_100.csv) and [JSON](beilinson_arithmetic_100.json):
+good ordinary reduction at 2 and 3, and surjectivity on Jacobian 3-torsion.
+The JSON retains exact point counts, Frobenius witnesses and an LMFDB metadata
+snapshot. All 106 positive surjectivity answers have Frobenius certificates;
+43 negative answers follow from rational 3-torsion or rational endomorphisms.
+The other five negative answers are LMFDB classifications, whose mod-3 image
+computations use probabilistic methods. Recheck the data without network access:
+
+```sh
+sage -python reports/verify_beilinson_arithmetic_100.py
+```
+
 The survey contains 154 cached geometrically simple curves, with 22 successful
 regulators and comparisons. Failed attempts and their reasons are retained.
 The tables and explorer omit conductor 1116 since the integrality in that case fails.
@@ -12,6 +25,18 @@ minimum spanning tree basis and determinant weights `(1, 2 Re(z), |z|^2)`, with
 `q = pi*c_plus*c_minus*L_second_derivative/D`. The relative error is
 `abs(q/rational - 1)`; accuracy targets are not certified bounds.
 An undecided component test is displayed as `Undecided`.
+
+A separate [certified 100-digit regulator/period example](certified_regulator_249_100.json)
+stores exact interval endpoints and a comparison bound for 249.a.249.1 in the
+model stated in that file. Its L-value is conditional on the recorded analytic
+hypotheses; the interval comparison does not prove exact rational equality.
+See the [ball arithmetic guide](../docs/ball-arithmetic.rst) to reproduce such
+computations with `certified=True` or `--certified`.
+
+The [certified tree result](certified_tree_249_100.json) records the same
+100-digit matrix using finite tree edges and one infinity ray. It includes
+the boundary word, sheet permutations, integer logarithm turns and work
+counts. Every matrix entry overlaps the independent parallel-ray enclosure.
 
 Tables display 10 significant digits. The JSON retains full decimal strings,
 matrices, component verdicts and exact integration models. Points are given

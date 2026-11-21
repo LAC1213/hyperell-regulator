@@ -55,7 +55,14 @@ $(BUILD)/euler: euler.cpp $(OBJS) $(RFOREST_OBJS) src/average.h | $(BUILD)
 check: $(BUILD)/euler
 	$(PYTHON) ../hyperell_regulator/frobenius.py --check --binary $(BUILD)/euler
 
+$(BUILD)/test_arithmetic: test_arithmetic.c $(RFOREST_OBJS) $(RFOREST_HEADERS)
+	$(CC) -I"$(GMP_INC)" -Irforest $(CPPFLAGS) $(RFOREST_CFLAGS) $< $(RFOREST_OBJS) \
+	    -L"$(GMP_LIB)" -Wl,-rpath,"$(GMP_LIB)" -lgmp -lm -o $@
+
+check-arithmetic: $(BUILD)/test_arithmetic
+	$(BUILD)/test_arithmetic
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all check clean
+.PHONY: all check check-arithmetic clean

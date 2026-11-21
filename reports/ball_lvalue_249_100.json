@@ -1,0 +1,250 @@
+{
+  "schema": "hyperell-ball-lvalue-v1",
+  "status": "conditional_enclosure",
+  "curve": "249.a.249.1",
+  "date": "2026-11-18",
+  "original_model": {
+    "f": "x^2+x",
+    "h": "x^3+1",
+    "equation": "y^2+h(x)*y=f(x)"
+  },
+  "standard_conductor": 62001,
+  "gamma_shifts": [
+    -1,
+    -1,
+    0,
+    0,
+    1
+  ],
+  "functional_equation": "Lambda(s)=Lambda(3-s)",
+  "normalization": "L_second_derivative(1) = sqrt(62001)/(4*pi^2)*L(2)",
+  "requested_decimal_places": 100,
+  "rounded_decimal_100_places": "5.0676270403470587136420759409704921633659419584973778429481177000287672193848807749605780500214686347",
+  "midpoint_decimal": "5.067627040347058713642075940970492163365941958497377842948117700028767219384880774960578050021468634739331848197156870192065490687333931044366114059663133273109",
+  "radius_decimal_upper": "5.22775931036248740886219990848E-120",
+  "intervals": {
+    "L_at_2_real": {
+      "lower": "67621061181519489825603766344432550830133994523724680662996152179999899205885635182680255389510057949990737566978963049839306516703699435382152072987522452567886638296197349256698692819636041889152643591424538135",
+      "upper": "67621061181519489825603766344432550830133994523724680662996152179999899205885635182680255389510057949990737566978963049978822162962689281725364734063397590362250319480564788890720416680456339839404472958881461783",
+      "exponent": -704
+    },
+    "L_at_2_imag": {
+      "lower": "-130927924771279911795883895522790869879147576199838654223488160433576764067218465418864695988821680722377287937502819378224637336669350470095670579021654088658803550781184230242484593460527508075489918575592935872065301831970333633072496650009121925510877482967003239290762900357686581176913",
+      "upper": "130927924771279911795883895522790869879147576199838654223488160433576764067218501719650349873330238768416453485035648122991151667564052118045602872588475172745806378203437168327185300259182115608667433575694011259320296069992326581799230954189452697012756272671493514394048595742906134910383",
+      "exponent": -1363
+    },
+    "normalization_scale": {
+      "lower": "2226468024774417023825984044445361053281402647878510529918242957801632260031186911292945297191166848123680784399674003496068164663901006985001239412862424788861081127012263830469057186902185379609929544241854618102898815",
+      "upper": "2226468024774417023825984044445361053281402647878510529918242957801632260031186911292945297191166848123680784399674003496068164663901006985001239412862424788861081127012263830469057186902185379609929544241854618323148673",
+      "exponent": -726
+    },
+    "L_second_derivative": {
+      "lower": "53312813861173782905775912104270934559291625054890455185855887701560857613534106069356892011690241855910841282304043096288712520167811898473846797754538790453970128438752472716127235137716071823586616098396211145",
+      "upper": "53312813861173782905775912104270934559291625054890455185855887701560857613534106069356892011690241855910841282304043096398707417900177842678053754018539559648618803031302439284900848524262845685059638131155437513",
+      "exponent": -701
+    }
+  },
+  "euler_input": {
+    "path": "reports/ball_lvalue_249_100_euler.txt.gz",
+    "sha256": "f1424fb5e0da976401803524fc848385c98fc637d2fbdca0106a15f9ae43d21c",
+    "compressed_sha256": "3707639188eef026f450b4d83ce868124804ca0f88d4815d3931417b6c72f63a",
+    "coefficient_cutoff": 517454,
+    "prime_count": 42861
+  },
+  "run": {
+    "exit_code": 0,
+    "computation": "values_only",
+    "zero_count": "not_requested",
+    "internal_target_bits": 600,
+    "working_bits": 704,
+    "required_bits": 333,
+    "achieved_relative_bits": 398,
+    "flint_version": "3.3.1",
+    "upstream_revision": "42014e1204f91e93f72b46945c4f5701b3ed7b1b",
+    "command": "ball-lvalue-probe 600 62001 factors.txt 333 517454",
+    "stdout_path": "reports/ball_lvalue_249_100_run.txt",
+    "stdout_sha256": "0ca0cbfb02291f8e0e1566f03a1262865ce5af21d469e132f499d7d6a5c4b41c",
+    "source_hashes": [
+      {
+        "path": "hyperell_regulator/experiments/ball_lvalue_probe.c",
+        "sha256": "fafcae4849b8cea9ebf013e634535329391aab9bd1d15a411c5942a3171fb8f0"
+      },
+      {
+        "path": "hyperell_regulator/experiments/lfunctions_values_only.patch",
+        "sha256": "9957f8d36165b6b03af32284be9bf40218c02911abe4064016f8ecc1ca062e72"
+      },
+      {
+        "path": "hyperell_regulator/experiments/lfunctions_error_bounds.patch",
+        "sha256": "b67e11eed228d6d2032a3e52000c1a2dd8b534e11bb1ab1265a372fd22840fd3"
+      },
+      {
+        "path": "hyperell_regulator/frobenius.py",
+        "sha256": "e034f625773fa707bb5853e6554cbe72c1960441a01fcc6feadf5fbd7cc7ae3a",
+        "archived_path": "reports/ball_lvalue_249_100_sources/frobenius.py"
+      },
+      {
+        "path": "hyperell_regulator/lfunction.py",
+        "sha256": "b4b57bb1adddbb11a74f6df71f6268fb6c198f6e95fff3bf6412899804904d27",
+        "archived_path": "reports/ball_lvalue_249_100_sources/lfunction.py"
+      },
+      {
+        "path": "hyperell-frobenius/euler.cpp",
+        "sha256": "26229fc0ac43814a73a3b7dab2fff305c02a2140af49fc67b9d358c87f1a06f7"
+      },
+      {
+        "path": "hyperell-frobenius/src/average.cpp",
+        "sha256": "82a1e7990bd971ff63f1256b9ecbb8dd03c86fddfe2611422231e2179572ff2f"
+      }
+    ],
+    "library_sha256": "099cece0b0b91c923085c6667c344e4470b69354a659c814c7a51acd2b00fc18",
+    "probe_binary_sha256": "613bb2df7b306b5eb5323c114091524f68ef3f79ff14fa31df34a234547a04d1"
+  },
+  "exact_input_construction": {
+    "odd_model": "X^5+13*X^4+72*X^3+240*X^2+384*X+256",
+    "coordinate_identity": "(x+1)^6*Q(-4/(x+1))=256*(x^6+2*x^3+4*x^2+4*x+1)",
+    "native_matrices": 42849,
+    "small_prime_fallbacks": [
+      5,
+      7,
+      11,
+      13,
+      17,
+      19,
+      23,
+      29,
+      31
+    ],
+    "native_options": [
+      "16",
+      "rforest",
+      "2"
+    ],
+    "native_binary_sha256": "2e5efc3707045683a406396749db15f71fa643ba3a4c1061c5f0175d419207cb",
+    "matrix_output_sha256": "354dd4500411239c3f6c6867283f62fc0fb74000cd09918679435b32cf62e97e",
+    "h1_reconstruction": "a1=centered(-tr(M)); a2=centered(((tr(M))^2-tr(M^2))/2), modulo p^2",
+    "standard_euler_coefficients": "[1,p-a2,p*(a1^2-a2),-p^2*(a1^2-a2),-p^3*(p-a2),-p^5]",
+    "bad_factors": {
+      "3": [
+        1,
+        0,
+        -6,
+        -9
+      ],
+      "83": [
+        1,
+        -83,
+        83,
+        -6889
+      ]
+    },
+    "prime_2_point_counts": [
+      5,
+      7
+    ],
+    "prime_2_h1_factor": [
+      1,
+      2,
+      3,
+      4,
+      4
+    ],
+    "independent_checks": [
+      {
+        "p": 5,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          6,
+          30
+        ]
+      },
+      {
+        "p": 7,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          9,
+          45
+        ]
+      },
+      {
+        "p": 11,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          11,
+          125
+        ]
+      },
+      {
+        "p": 13,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          14,
+          166
+        ]
+      },
+      {
+        "p": 17,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          19,
+          345
+        ]
+      },
+      {
+        "p": 19,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          26,
+          370
+        ]
+      },
+      {
+        "p": 23,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          24,
+          478
+        ]
+      },
+      {
+        "p": 29,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          27,
+          897
+        ]
+      },
+      {
+        "p": 31,
+        "method": "direct F_p and F_p^2 point counts on odd model",
+        "counts": [
+          29,
+          1013
+        ]
+      },
+      {
+        "p": 250007,
+        "method": "independent Sage hyperellfrob on odd model"
+      },
+      {
+        "p": 300007,
+        "method": "independent Sage hyperellfrob on odd model"
+      },
+      {
+        "p": 400009,
+        "method": "independent Sage hyperellfrob on odd model"
+      },
+      {
+        "p": 517417,
+        "method": "independent Sage hyperellfrob on odd model"
+      }
+    ],
+    "cached_overlap_primes": 22044
+  },
+  "assumptions": [
+    "Correct identification of the motivic Euler factors, conductor and archimedean factors.",
+    "The completed standard L-function has the holomorphy and finite-order properties required by the smoothed functional-equation algorithm, and satisfies the displayed functional equation.",
+    "The coefficient-growth and analytic kernel estimates used by the patched upstream implementation apply."
+  ],
+  "scope": "Rigorous propagated numerical enclosure under the stated analytic inputs; does not prove those analytic inputs or an exact Beilinson relation.",
+  "supersedes": "reports/ball_lvalue_249_80.json (withdrawn due to upstream error-bound propagation defects)"
+}

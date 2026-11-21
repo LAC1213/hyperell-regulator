@@ -1,0 +1,976 @@
+{
+  "certified": false,
+  "command": "sage -python -m hyperell_regulator.experiments.beilinson 10000 --digits 20 --reg-digits 20 --cm-only --ignore-component-criterion",
+  "curve_statuses": {
+    "1296.a.20736.1": "ok",
+    "169.a.169.1": "ok",
+    "256.a.512.1": "ok",
+    "2704.a.43264.1": "ok",
+    "324.a.648.1": "ok",
+    "3721.a.3721.1": "no_admissible_triple",
+    "3969.b.35721.1": "no_admissible_triple",
+    "3969.c.35721.1": "ok",
+    "4096.b.65536.1": "ok",
+    "4096.e.524288.1": "no_admissible_triple",
+    "5184.a.46656.1": "no_admissible_triple",
+    "576.a.576.1": "no_admissible_triple",
+    "6400.f.64000.1": "no_admissible_triple",
+    "6400.g.64000.1": "no_admissible_triple",
+    "784.c.614656.1": "ok",
+    "8281.b.405769.1": "no_admissible_triple",
+    "8281.c.405769.1": "ok",
+    "8649.b.700569.1": "ok",
+    "8649.c.700569.1": "ok"
+  },
+  "curves_with_L_values": 11,
+  "environment": {
+    "BLIS_NUM_THREADS": 1,
+    "HYPELLFROB_THREADS": 8,
+    "MKL_NUM_THREADS": 1,
+    "OMP_NUM_THREADS": 1,
+    "OPENBLAS_NUM_THREADS": 1,
+    "conda_environment": "sage"
+  },
+  "finished_utc": "2026-11-21T08:24:52.123060+00:00",
+  "lvalue_cache": "results/lvalue_cache.json",
+  "manual_curves": {
+    "1296.a.20736.1": {
+      "L_digits": 20,
+      "L_local_data": {
+        "conductor_exponents": {
+          "2": 2,
+          "3": 8
+        },
+        "derivation": "Tame supercuspidal at 2; principal series (0,2) at 3.",
+        "model": [
+          [
+            0,
+            -1,
+            4,
+            -3,
+            -1,
+            1
+          ],
+          []
+        ],
+        "newform": "36.2.e.a",
+        "revision": 1,
+        "sha256": "bd029e297ac5ba8056add58925c6254319e80f37cc4359d3d768c8474ab8a469",
+        "source": "https://www.lmfdb.org/Genus2Curve/Q/1296/a/20736/1",
+        "standard_factors": {
+          "2": [
+            1,
+            4,
+            8,
+            8
+          ],
+          "3": [
+            1,
+            -3
+          ]
+        }
+      },
+      "L_num_coeffs": 17182,
+      "L_second_derivative": "1.453196370386655797715515",
+      "feq_check": 3.76158192263132e-37,
+      "rational_comparisons": [
+        {
+          "comparison": {
+            "norm_value": "-98.940563881720999711918134",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "-4.5714285714285714286019133",
+            "rational": "-32/7",
+            "rational_is_integer": false,
+            "relation": [
+              "7",
+              "32"
+            ],
+            "relative_agreement": "6.6685329967721742136876439e-21",
+            "residual": "4.6185191096173647121777422e-18"
+          },
+          "det": "21.643248349126468686837763189",
+          "triple": {
+            "P": [
+              "infinity",
+              "0"
+            ],
+            "Q": [
+              "1",
+              "0"
+            ],
+            "R": [
+              "0",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 6,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        }
+      ],
+      "standard_conductor": 26244,
+      "triple_count": 1
+    },
+    "2704.a.43264.1": {
+      "L_digits": 20,
+      "L_local_data": {
+        "conductor_exponents": {
+          "2": 2
+        },
+        "derivation": "Tame supercuspidal at 2; nebentypus value has order 6.",
+        "model": [
+          [
+            0,
+            -1,
+            -5,
+            -5,
+            0,
+            1
+          ],
+          []
+        ],
+        "newform": "52.2.h.a",
+        "revision": 1,
+        "sha256": "7c119b7409a3f43eca4cdad78a10a1a53b8446900cd3c595661ade34090484d8",
+        "source": "https://www.lmfdb.org/Genus2Curve/Q/2704/a/43264/1",
+        "standard_factors": {
+          "2": [
+            1,
+            0,
+            0,
+            8
+          ]
+        }
+      },
+      "L_num_coeffs": 36502,
+      "L_second_derivative": "3.508721216320962459660666",
+      "feq_check": 7.52316384526264e-37,
+      "rational_comparisons": [
+        {
+          "comparison": {
+            "norm_value": "-187.54224352185232110217348",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "10.666666666666666666689564",
+            "rational": "32/3",
+            "rational_is_integer": false,
+            "relation": [
+              "3",
+              "-32"
+            ],
+            "relative_agreement": "2.1465805416019897026244526e-21",
+            "residual": "1.2077242261774355036683254e-18"
+          },
+          "det": "-17.582085330173655103291022568",
+          "triple": {
+            "P": [
+              "0",
+              "0"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 2,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        }
+      ],
+      "standard_conductor": 114244,
+      "triple_count": 1
+    },
+    "324.a.648.1": {
+      "L_digits": 20,
+      "L_local_data": {
+        "conductor_exponents": {
+          "3": 8
+        },
+        "derivation": "Principal series at 3, character conductors (0,2).",
+        "model": [
+          [
+            0,
+            0,
+            1,
+            2,
+            2,
+            1
+          ],
+          [
+            1,
+            1,
+            0,
+            1
+          ]
+        ],
+        "newform": "18.2.c.a",
+        "revision": 1,
+        "sha256": "b8d4ff541f85bf7163c5c85dadcf3ab9511d04336cfb3ae31042738ef757d7ff",
+        "source": "https://www.lmfdb.org/Genus2Curve/Q/324/a/648/1",
+        "standard_factors": {
+          "3": [
+            1,
+            -3
+          ]
+        }
+      },
+      "L_num_coeffs": 17182,
+      "L_second_derivative": "2.208323679375373513947512",
+      "feq_check": 1.88079096131566e-37,
+      "rational_comparisons": [
+        {
+          "comparison": {
+            "norm_value": "173.60397304159129350856019",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "-6.9999999999999999999178711",
+            "rational": "-7",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "7"
+            ],
+            "relative_agreement": "1.1732706382438703097209487e-20",
+            "residual": "2.0368445772669000284373075e-18"
+          },
+          "det": "-24.800567577370184787228148103",
+          "triple": {
+            "P": [
+              "0",
+              "-1"
+            ],
+            "Q": [
+              "infinity",
+              "-1"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "21",
+            "order_Q": "7",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 21,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "173.60397304159129350856019",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "-6.9999999999999999999178711",
+            "rational": "-7",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "7"
+            ],
+            "relative_agreement": "1.1732706382438703097209487e-20",
+            "residual": "2.0368445772669000284373075e-18"
+          },
+          "det": "-24.800567577370184787228148103",
+          "triple": {
+            "P": [
+              "0",
+              "-1"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "21",
+            "order_Q": "21",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 21,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "173.60397304159129350856019",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "-6.9999999999999999999178711",
+            "rational": "-7",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "7"
+            ],
+            "relative_agreement": "1.1732706382438703097209487e-20",
+            "residual": "2.0368445772669000284373075e-18"
+          },
+          "det": "-24.800567577370184787228148103",
+          "triple": {
+            "P": [
+              "0",
+              "0"
+            ],
+            "Q": [
+              "infinity",
+              "-1"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "7",
+            "order_Q": "7",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 21,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "173.60397304159129350856019",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "-6.9999999999999999999178711",
+            "rational": "-7",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "7"
+            ],
+            "relative_agreement": "1.1732706382438703097209487e-20",
+            "residual": "2.0368445772669000284373075e-18"
+          },
+          "det": "-24.800567577370184787228148103",
+          "triple": {
+            "P": [
+              "0",
+              "0"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "7",
+            "order_Q": "21",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 21,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "173.60397304159129350856019",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "6.9999999999999999999928030",
+            "rational": "7",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "-7"
+            ],
+            "relative_agreement": "1.0281426883443652451124577e-21",
+            "residual": "1.7848985975730486471142744e-19"
+          },
+          "det": "24.800567577370184786962668854",
+          "triple": {
+            "P": [
+              "-1",
+              "1"
+            ],
+            "Q": [
+              "infinity",
+              "-1"
+            ],
+            "R": [
+              "0",
+              "-1"
+            ],
+            "mw_rank": 0,
+            "order_P": "7",
+            "order_Q": "21",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 21,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "173.60397304159129350856019",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "6.9999999999999999999928030",
+            "rational": "7",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "-7"
+            ],
+            "relative_agreement": "1.0281426883443652451124577e-21",
+            "residual": "1.7848985975730486471142744e-19"
+          },
+          "det": "24.800567577370184786962668854",
+          "triple": {
+            "P": [
+              "-1",
+              "1"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "0",
+              "-1"
+            ],
+            "mw_rank": 0,
+            "order_P": "7",
+            "order_Q": "7",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 21,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "173.60397304159129350856019",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "6.9999999999999999999928030",
+            "rational": "7",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "-7"
+            ],
+            "relative_agreement": "1.0281426883443652451124577e-21",
+            "residual": "1.7848985975730486471142744e-19"
+          },
+          "det": "24.800567577370184786962668854",
+          "triple": {
+            "P": [
+              "-1",
+              "1"
+            ],
+            "Q": [
+              "infinity",
+              "-1"
+            ],
+            "R": [
+              "0",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "21",
+            "order_Q": "7",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 21,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "173.60397304159129350856019",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "6.9999999999999999999928030",
+            "rational": "7",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "-7"
+            ],
+            "relative_agreement": "1.0281426883443652451124577e-21",
+            "residual": "1.7848985975730486471142744e-19"
+          },
+          "det": "24.800567577370184786962668854",
+          "triple": {
+            "P": [
+              "-1",
+              "1"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "0",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "21",
+            "order_Q": "21",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 21,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        }
+      ],
+      "standard_conductor": 26244,
+      "triple_count": 8
+    },
+    "3969.c.35721.1": {
+      "L_digits": 20,
+      "L_local_data": {
+        "conductor_exponents": {
+          "3": 8
+        },
+        "derivation": "Principal series at 3, character conductors (0,2).",
+        "model": [
+          [
+            0,
+            -1,
+            0,
+            4,
+            -5,
+            1
+          ],
+          [
+            0,
+            1,
+            1
+          ]
+        ],
+        "newform": "63.2.i.a",
+        "revision": 1,
+        "sha256": "0cdf9f2fe60ae7d53128922ebbb6a0c03397e55b921e9b21f3daa32d0209e146",
+        "source": "https://www.lmfdb.org/Genus2Curve/Q/3969/c/35721/1",
+        "standard_factors": {
+          "3": [
+            1,
+            -3
+          ]
+        }
+      },
+      "L_num_coeffs": 454923,
+      "L_second_derivative": "94.05480382991896470529344",
+      "feq_check": 2.350988701644575e-38,
+      "rational_comparisons": [
+        {
+          "comparison": {
+            "norm_value": "-5357.0863914234183088152017",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "288.00000000000000000304833",
+            "rational": "288",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "-288"
+            ],
+            "relative_agreement": "1.0584481949193500180241234e-20",
+            "residual": "5.6701986910868767358812059e-17"
+          },
+          "det": "-18.600994414664646905411457211",
+          "triple": {
+            "P": [
+              "1",
+              "-1"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "0",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 2,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        }
+      ],
+      "standard_conductor": 15752961,
+      "triple_count": 1
+    },
+    "4096.b.65536.1": {
+      "L_digits": 20,
+      "L_local_data": {
+        "conductor_exponents": {
+          "2": 12
+        },
+        "derivation": "Bolza CM decomposition: weight-3 level-8 form and three quadratic Tate twists.",
+        "model": [
+          [
+            0,
+            -1,
+            0,
+            0,
+            0,
+            1
+          ],
+          []
+        ],
+        "newform": "64.2.b.a",
+        "revision": 1,
+        "sha256": "3839a6b27f424e3820250e447ff63aa70c5e1101a904acad7e64acaa67ee7837",
+        "source": "https://www.lmfdb.org/Genus2Curve/Q/4096/b/65536/1",
+        "standard_factors": {
+          "2": [
+            1,
+            2
+          ]
+        }
+      },
+      "L_num_coeffs": 6633,
+      "L_second_derivative": "0.3697984759070315547083369",
+      "feq_check": 1.504632769052528e-36,
+      "rational_comparisons": [
+        {
+          "comparison": {
+            "norm_value": "-11.692768647574418885840306",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "1.3333333333333333332938547",
+            "rational": "4/3",
+            "rational_is_integer": false,
+            "relation": [
+              "-3",
+              "4"
+            ],
+            "relative_agreement": "2.9608948605587665387292115e-20",
+            "residual": "1.0386317585641924481141933e-18"
+          },
+          "det": "-8.7695764856808141646398874773",
+          "triple": {
+            "P": [
+              "0",
+              "0"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 2,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "-11.692768647574418885840306",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "1.3333333333333333333051640",
+            "rational": "4/3",
+            "rational_is_integer": false,
+            "relation": [
+              "-3",
+              "4"
+            ],
+            "relative_agreement": "2.1126968326428595279660970e-20",
+            "residual": "7.4109825265010689013787677e-19"
+          },
+          "det": "-8.7695764856808141645655041009",
+          "triple": {
+            "P": [
+              "0",
+              "0"
+            ],
+            "Q": [
+              "1",
+              "0"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 2,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "-11.692768647574418885840306",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "-1.3333333333333333333568637",
+            "rational": "-4/3",
+            "rational_is_integer": false,
+            "relation": [
+              "-3",
+              "-4"
+            ],
+            "relative_agreement": "1.7647785277719472959129081e-20",
+            "residual": "6.1905442241159636549622906e-19"
+          },
+          "det": "8.7695764856808141642254659321",
+          "triple": {
+            "P": [
+              "infinity",
+              "0"
+            ],
+            "Q": [
+              "1",
+              "0"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 2,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        },
+        {
+          "comparison": {
+            "norm_value": "11.692768647574418885840306",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "1.3333333333333333333310139",
+            "rational": "4/3",
+            "rational_is_integer": false,
+            "relation": [
+              "-3",
+              "4"
+            ],
+            "relative_agreement": "1.7395907165609942139498559e-21",
+            "residual": "6.1021889269861120038709011e-20"
+          },
+          "det": "8.7695764856808141643954850100",
+          "triple": {
+            "P": [
+              "infinity",
+              "0"
+            ],
+            "Q": [
+              "1",
+              "0"
+            ],
+            "R": [
+              "0",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 2,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        }
+      ],
+      "standard_conductor": 4096,
+      "triple_count": 4
+    },
+    "784.c.614656.1": {
+      "L_digits": 20,
+      "L_local_data": {
+        "conductor_exponents": {
+          "2": 2
+        },
+        "derivation": "Tame supercuspidal at 2; nebentypus value has order 3.",
+        "model": [
+          [
+            0,
+            -1,
+            -9,
+            -13,
+            -4,
+            1
+          ],
+          []
+        ],
+        "newform": "28.2.e.a",
+        "revision": 1,
+        "sha256": "c5c861a6a2d251b270aa0a83fce715616bede2c892b21763f5447d2f73b07821",
+        "source": "https://www.lmfdb.org/Genus2Curve/Q/784/c/614656/1",
+        "standard_factors": {
+          "2": [
+            1,
+            4,
+            8,
+            8
+          ]
+        }
+      },
+      "L_num_coeffs": 10265,
+      "L_second_derivative": "0.5040879718132024903958257",
+      "feq_check": 1.504632769052528e-36,
+      "rational_comparisons": [
+        {
+          "comparison": {
+            "norm_value": "-10.788457455157108092322156",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "1.5238095238095238095336488",
+            "rational": "32/21",
+            "rational_is_integer": false,
+            "relation": [
+              "21",
+              "-32"
+            ],
+            "relative_agreement": "6.4570316383128880574367831e-21",
+            "residual": "1.4628897996104964069588768e-18"
+          },
+          "det": "-7.0799252049468521855406994942",
+          "triple": {
+            "P": [
+              "0",
+              "0"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 2,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        }
+      ],
+      "standard_conductor": 9604,
+      "triple_count": 1
+    },
+    "8649.c.700569.1": {
+      "L_digits": 20,
+      "L_local_data": {
+        "conductor_exponents": {
+          "3": 4
+        },
+        "derivation": "Tame principal series at 3, character conductors (0,1).",
+        "model": [
+          [
+            0,
+            -1,
+            4,
+            13,
+            9,
+            1
+          ],
+          [
+            0,
+            1,
+            1
+          ]
+        ],
+        "newform": "93.2.g.b",
+        "revision": 1,
+        "sha256": "bb63b0eff12993b421db7153d3138f3b3da2842deaefaf5c37413a1615ccb23b",
+        "source": "https://www.lmfdb.org/Genus2Curve/Q/8649/c/700569/1",
+        "standard_factors": {
+          "3": [
+            1,
+            -3
+          ]
+        }
+      },
+      "L_num_coeffs": 1009887,
+      "L_second_derivative": "189.8955419805785192863577",
+      "feq_check": 9.4039548065783e-38,
+      "rational_comparisons": [
+        {
+          "comparison": {
+            "norm_value": "-3878.5709388543944453306741",
+            "normalisation": "pi c+ c- L''(std,1) / D",
+            "ratio": "576.00000000000000000630916",
+            "rational": "576",
+            "rational_is_integer": true,
+            "relation": [
+              "1",
+              "-576"
+            ],
+            "relative_agreement": "1.0953396424456481060072995e-20",
+            "residual": "4.2483523113413121049565524e-17"
+          },
+          "det": "-6.7336301021777681341808863303",
+          "triple": {
+            "P": [
+              "0",
+              "0"
+            ],
+            "Q": [
+              "infinity",
+              "0"
+            ],
+            "R": [
+              "-1",
+              "0"
+            ],
+            "mw_rank": 0,
+            "order_P": "2",
+            "order_Q": "2",
+            "pairwise_nonconjugate": true,
+            "torsion_certified_by": "order in J(Q)",
+            "torsion_exponent": 2,
+            "verdict_P": null,
+            "verdict_Q": null
+          }
+        }
+      ],
+      "standard_conductor": 74805201,
+      "triple_count": 1
+    }
+  },
+  "missing_factor_failures_remaining": 0,
+  "results_file": "results/beilinson_results.json",
+  "selected_curves": 19,
+  "source_sha256": "70d017ea2cd6088d5e922c540e9b84068b00f4b0e21b5fcfc744da293f1a62c4",
+  "status_counts": {
+    "no_admissible_triple": 8,
+    "ok": 11
+  },
+  "triples_with_L_values": 39
+}

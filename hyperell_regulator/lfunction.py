@@ -129,7 +129,7 @@ def _dirichlet_coefficients(L, num):
     return a
 
 
-def _precompute_h1(L, primes, nthreads):
+def _precompute_h1(L, primes, nthreads, progress=None):
     """Cache `h^1` factors at good odd primes in one batch."""
     from .frobenius import frobenius_polynomials
 
@@ -139,7 +139,8 @@ def _precompute_h1(L, primes, nthreads):
             and ZZ(p) not in L._h1cache]
     if not todo:
         return
-    for p, cp in frobenius_polynomials(L.C.F, todo, nthreads).items():
+    options = {'progress': progress} if progress is not None else {}
+    for p, cp in frobenius_polynomials(L.C.F, todo, nthreads, **options).items():
         L._h1cache[ZZ(p)] = L._RT(list(reversed(cp.list())))
 
 
@@ -178,6 +179,9 @@ class StandardLFunction(SageObject):
     Its local factor is `P_p^{\wedge^2}(T)/(1-pT)`. Bad factors use
     monodromy and inertia data; unsupported cases require ``bad_factors``.
     ``h1_conductor`` supplies the exact Jacobian conductor when needed at 2.
+    ``conductor_exponents`` supplies exact local standard conductor exponents;
+    these include the Swan contribution and cannot in general be read off
+    from a manually supplied Euler polynomial.
     The functional equation is `s \leftrightarrow 3-s`, with sign `+1`.
 
     EXAMPLES::
@@ -192,7 +196,8 @@ class StandardLFunction(SageObject):
         3
     """
 
-    def __init__(self, C, bad_factors=None, prec=None, h1_conductor=None):
+    def __init__(self, C, bad_factors=None, prec=None, h1_conductor=None,
+                 conductor_exponents=None):
         self.C = C
         if C.genus() != 2:
             raise ValueError("the standard L-function here is for genus 2; "
@@ -201,6 +206,16 @@ class StandardLFunction(SageObject):
         self.h1_conductor = None if h1_conductor is None else ZZ(h1_conductor)
         if self.h1_conductor is not None and self.h1_conductor < 1:
             raise ValueError("h1_conductor must be positive")
+        self.conductor_exponents = {}
+        for p, a in (conductor_exponents or {}).items():
+            prime, exponent = ZZ(p), ZZ(a)
+            if QQ(p) != prime or not prime.is_prime():
+                raise ValueError("conductor_exponents keys must be primes")
+            if QQ(a) != exponent or exponent < 0:
+                raise ValueError("conductor exponents must be nonnegative integers")
+            if prime not in C.bad_primes():
+                raise ValueError("conductor exponent supplied at a good prime: %s" % prime)
+            self.conductor_exponents[prime] = exponent
         RQ = PolynomialRing(QQ, 'x')
         self._pari_L = pari.lfungenus2([pari(str(RQ(C.f))), pari(str(RQ(C.h)))])
         self._RT = PolynomialRing(QQ, 'T')
@@ -229,7 +244,7 @@ class StandardLFunction(SageObject):
         poly = den if str(num).strip() in ("1", "1.0") else den / num
         return self._RT([QQ(c) for c in pari(poly).Vecrev()])
 
-    def precompute_h1(self, primes, nthreads=None):
+    def precompute_h1(self, primes, nthreads=None, *, progress=None):
         r"""Cache `h^1` factors at good odd primes in one batch.
 
         EXAMPLES::
@@ -244,7 +259,7 @@ class StandardLFunction(SageObject):
             sage: sorted(L._h1cache)
             [11, 13, 17]
         """
-        _precompute_h1(self, primes, nthreads)
+        _precompute_h1(self, primes, nthreads, progress)
 
     def toric_factor(self, p):
         r"""`\det(1-\mathrm{Frob}_p T \mid H_1(\Gamma))` for the dual graph `\Gamma`."""
@@ -421,9 +436,13 @@ class StandardLFunction(SageObject):
         r"""The standard conductor. Tame exponents are `5-\deg P_p^{\mathrm{std}}`.
 
         For the supported ramified complements at 2, add twice the `h^1` Swan conductor.
+        Explicit ``conductor_exponents`` take precedence over these rules.
         """
         N = ZZ(1)
         for p in self.C.bad_primes():
+            if p in self.conductor_exponents:
+                N *= ZZ(p)**self.conductor_exponents[p]
+                continue
             exponent = 5-self.euler_factor(p).degree()
             if p == 2 and self._cache.get("two_adic_ramified_complement"):
                 swan = self._h1_conductor_exponent(p)-(4-self.h1_euler_factor(p).degree())
@@ -484,7 +503,7 @@ class StandardLFunction(SageObject):
                 return k
         return None
 
-    def value(self, s=1, derivative=2, num_coeffs=None, digits=10):
+    def value(self, s=1, derivative=2, num_coeffs=None, digits=10, certified=False, progress=None):
         r"""`L^{(k)}(M_{\mathrm{std}}(C),s)`; by default `L^{\prime\prime}(M_{\mathrm{std}}(C),1)`.
 
         EXAMPLES::
@@ -494,6 +513,9 @@ class StandardLFunction(SageObject):
             sage: R.<x> = ZZ[]
             sage: C = HyperellipticCurveWithReduction(x^5 + x^3 + 1)
         """
+        if certified:
+            from .ball_lfunction import value
+            return value(self, s, derivative, num_coeffs, digits, progress=progress)
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
         with _pari_precision(digits):
@@ -502,13 +524,16 @@ class StandardLFunction(SageObject):
 
 
 def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
-                    digits=10, verbose=True, h1_conductor=None):
+                    digits=10, verbose=True, h1_conductor=None, certified=False,
+                    conductor_exponents=None):
     r"""`L^{\prime\prime}(M_{\mathrm{std}}(C),1)` and its numerical data.
 
     Return the value, conductor, Euler factors and functional equation residual.
     ``h1_conductor`` supplies the exact Jacobian conductor when needed at 2.
+    ``conductor_exponents`` supplies exact local standard conductor exponents.
     """
-    L = StandardLFunction(C, bad_factors=bad_factors, h1_conductor=h1_conductor)
+    L = StandardLFunction(C, bad_factors=bad_factors, h1_conductor=h1_conductor,
+                         conductor_exponents=conductor_exponents)
     out = {"curve": str(C), "bad_primes": C.bad_primes(),
            "euler_factors": {}, "conductor": None, "value": None,
            "derivative": derivative, "feq_check": None}
@@ -516,6 +541,18 @@ def standard_lvalue(C, bad_factors=None, derivative=2, num_coeffs=None,
         out["euler_factors"][p] = str(L.euler_factor(p))
     out["conductor"] = L.conductor()
     out["digits"] = digits
+    if certified:
+        out["value"] = L.value(1, derivative, num_coeffs, digits, certified=True)
+        out.update(L._certified_metadata)
+        out["L_at_1"] = out["value"].parent()(0)
+        out["Lprime_at_1"] = out["value"].parent()(0)
+        out["vanishing_order"] = (2 if derivative == 2 and
+                                   not out["value"].contains_zero() else None)
+        if verbose:
+            print("L^(%s)(std, 1) = %s (conditional certified enclosure)" %
+                  (derivative, out["value"]))
+            print(out["analytic_assumptions"])
+        return out
     # Build and cache the coefficients once for all evaluations below.
     L.lfun(num_coeffs, digits)
     out["feq_check"] = L.check_functional_equation(num_coeffs, digits)
@@ -575,9 +612,9 @@ class CurveLFunction(SageObject):
     def _repr_(self):
         return "L(C, s) for %s" % (self.C,)
 
-    def precompute_h1(self, primes, nthreads=None):
+    def precompute_h1(self, primes, nthreads=None, *, progress=None):
         r"""Cache the Euler factors at good odd primes in one batch."""
-        _precompute_h1(self, primes, nthreads)
+        _precompute_h1(self, primes, nthreads, progress)
 
     def euler_factor(self, p):
         r"""`P_p(T)` with `L(C,s)=\prod_p P_p(p^{-s})^{-1}`.
@@ -667,7 +704,7 @@ class CurveLFunction(SageObject):
             return K(2) ** K(_pari_lfun_call(
                 pari.lfuncheckfeq, L, precision=_bits(digits)))
 
-    def value(self, s=1, derivative=0, num_coeffs=None, digits=10):
+    def value(self, s=1, derivative=0, num_coeffs=None, digits=10, certified=False, progress=None):
         r"""
         `L^{(k)}(C, s)` at ``digits`` decimal digits.
 
@@ -682,6 +719,9 @@ class CurveLFunction(SageObject):
             sage: bool(L.value(2, digits=10) > 0)            # long time
             True
         """
+        if certified:
+            from .ball_lfunction import value
+            return value(self, s, derivative, num_coeffs, digits, progress=progress)
         L = self.lfun(num_coeffs, digits)
         K = _real_field(digits)
         with _pari_precision(digits):
@@ -690,7 +730,7 @@ class CurveLFunction(SageObject):
 
 
 def curve_lvalue(C, s=1, derivative=0, num_coeffs=None, digits=10,
-                 verbose=False):
+                 verbose=False, certified=False):
     r"""`L^{(k)}(C,s)` to ``digits`` decimal digits.
 
     Return the value, conductor, root number and functional equation residual.
@@ -709,6 +749,16 @@ def curve_lvalue(C, s=1, derivative=0, num_coeffs=None, digits=10,
         3233
     """
     L = CurveLFunction(C)
+    if certified:
+        result = L.value(s, derivative, num_coeffs, digits, certified=True)
+        out = dict(curve=str(C), conductor=L.conductor(), s=s,
+                   derivative=derivative, digits=digits, value=result, feq_check=None,
+                   **L._certified_metadata)
+        if verbose:
+            print("L^(%s)(C, %s) = %s (conditional certified enclosure)" %
+                  (derivative, s, result))
+            print(out["analytic_assumptions"])
+        return out
     out = {"curve": str(C), "conductor": L.conductor(),
            "root_number": L.root_number(),
            "s": s, "derivative": derivative, "digits": digits}

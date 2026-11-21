@@ -8,7 +8,11 @@ import os
 import subprocess
 
 __all__ = ["euler_binary", "odd_model", "frobenius_polynomials",
-           "frobenius_polynomial"]
+           "frobenius_polynomial", "FrobeniusBackendError"]
+
+
+class FrobeniusBackendError(ArithmeticError):
+    """A bulk native computation failed; per-prime fallback would be too slow."""
 
 
 def euler_binary():
@@ -88,7 +92,14 @@ def _lift(M, p, g, N):
     r"""Lift the Frobenius characteristic polynomial from a matrix modulo `p^N`."""
     from sage.all import ZZ, matrix
 
-    a = list(matrix(ZZ, M).charpoly().list()[g:2 * g + 1])
+    if g == 2:
+        # Newton identities avoid constructing a symbolic characteristic
+        # polynomial for every one of tens of thousands of 4x4 matrices.
+        trace = sum(ZZ(M[i][i]) for i in range(4))
+        trace2 = sum(ZZ(M[i][j])*ZZ(M[j][i]) for i in range(4) for j in range(4))
+        a = [(trace**2-trace2)//2, -trace, ZZ(1)]
+    else:
+        a = list(matrix(ZZ, M).charpoly().list()[g:2 * g + 1])
     ppow = p ** N
     a = [x % ppow for x in a]
     a = [x if 2 * x < ppow else x - ppow for x in a]
@@ -96,13 +107,17 @@ def _lift(M, p, g, N):
     return ZZ["x"](a)
 
 
-def _run(fcoeffs, jobs, nthreads, backend=None):
+def _run(fcoeffs, jobs, nthreads, backend=None, progress=None):
     """Frobenius matrices for the jobs ``(p, N)``, keyed by prime."""
+    from ._subprocess import run as _native_run
     backend = backend or os.environ.get("HYPELLFROB_BACKEND", "rforest")
     if backend != "rforest":
         raise ValueError("backend must be 'rforest'; the per-prime backends have been removed")
     binary = euler_binary()
     if binary is None or not jobs:
+        if jobs and len(jobs) > 1000:
+            raise FrobeniusBackendError('native Frobenius executable unavailable for %d primes; '
+                'refusing bulk Sage fallback; build/install the Frobenius accelerator' % len(jobs))
         return {}
     inp = " ".join(str(int(c)) for c in fcoeffs) + "\n"
     inp += "".join("%d %d\n" % (p, N) for p, N in jobs)
@@ -113,9 +128,16 @@ def _run(fcoeffs, jobs, nthreads, backend=None):
         workers = max(1, int(nthreads))
     args = [binary, str(workers), backend]
     try:
-        out = subprocess.run(args, input=inp, capture_output=True, text=True,
-                             check=True).stdout
-    except (OSError, subprocess.CalledProcessError):
+        out = _native_run(args, input=inp, check=True,
+                          timeout=float(os.environ.get('HYPELLFROB_TIMEOUT', '900')),
+                          progress=progress, label='Euler factors').stdout
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        if len(jobs) > 1000:
+            details = str(exc)
+            if isinstance(exc, subprocess.CalledProcessError):
+                details += '; '+(exc.stderr or '').strip()[-1000:]
+            raise FrobeniusBackendError('native Frobenius computation failed for %d primes: %s; '
+                'refusing bulk Sage fallback' % (len(jobs), details)) from exc
         return {}
     got = {}
     for line in out.splitlines():
@@ -128,7 +150,7 @@ def _run(fcoeffs, jobs, nthreads, backend=None):
     return got
 
 
-def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
+def frobenius_polynomials(f, primes, nthreads=None, *, backend=None, progress=None):
     r"""Frobenius characteristic polynomials of `y^2=f(x)`, keyed by prime.
 
     ``f`` has integral coefficients and ``primes`` must have good reduction.
@@ -166,7 +188,13 @@ def frobenius_polynomials(f, primes, nthreads=None, *, backend=None):
         d = fz.degree()
         twist = fz.leading_coefficient()
         model = R([fz[i]*twist**(d-1-i) for i in range(d)]+[1])
-    got = _run((model if model is not None else fz).list(), jobs, nthreads, selected_backend)
+    options = {'progress': progress} if progress is not None else {}
+    got = _run((model if model is not None else fz).list(), jobs, nthreads, selected_backend, **options)
+
+    missing = [p for p in primes if p not in got or not twist%p]
+    if len(primes) > 1000 and len(missing) > 64:
+        raise FrobeniusBackendError('native Frobenius computation declined %d of %d primes; '
+            'refusing bulk Sage fallback' % (len(missing), len(primes)))
 
     out = {}
     for p, N in jobs:

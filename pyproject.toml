@@ -42,7 +42,7 @@ include = ["hyperell_regulator*"]
 
 # the rforest Frobenius driver, compiled by setup.py and installed inside the package
 [tool.setuptools.package-data]
-hyperell_regulator = ["bin/euler", "NTL-COPYING.txt", "RFOREST-COPYING.txt"]
+hyperell_regulator = ["bin/euler", "bin/certified-lvalue", "NTL-COPYING.txt", "RFOREST-COPYING.txt", "_native/*.c", "_vendor/lfunctions/src/*.c", "_vendor/lfunctions/include/*.h", "_vendor/lfunctions/LICENSE", "_vendor/lfunctions/UPSTREAM.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

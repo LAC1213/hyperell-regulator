@@ -11,10 +11,14 @@ Both notices are included in `hyperell_regulator/RFOREST-COPYING.txt`.
 Local changes:
 
 - `hwmpz.c`, `hwmpz.h`: thread-local FFT state and reference-counted plans;
-  require 64-bit `unsigned long` and GMP limbs.
+  require 64-bit `unsigned long` and GMP limbs. Matrix multiplication sizes
+  transforms from the sum of operand bit lengths and streams left-hand
+  matrix rows while reusing right-hand transforms to limit peak memory.
 - `hwmem.h`, `zzmem.h`: disable diagnostic allocation counters.
 - `rforest.c`: free the temporary GMP vector in `mproduct()` and evaluate
-  polynomial matrices by exact forward differences.
+  polynomial matrices by exact forward differences. Long gaps between
+  requested endpoints use balanced products reduced modulo the remaining
+  moduli, including the initial gap in a precision retry with cached factors.
 - `rforest.c`, `rforest.h`: configure thread-local controls through a C function.
 
 The parent Makefile builds with C11, GMP and `-O3`. The C++ caller cancels

@@ -361,3 +361,15 @@ def test_rforest_evaluators_and_fft_controls(binary, monkeypatch, evaluator, fft
     result = subprocess.run([binary, "4", "rforest-only", str(kappa)], input=batch,
                             capture_output=True, text=True, check=True, timeout=90)
     assert [list(map(int, line.split())) for line in result.stdout.splitlines()] == expected
+
+
+@pytest.mark.parametrize('evaluator', ['differences', 'powers'])
+def test_sparse_precision_retry_after_cached_prime_range(binary, monkeypatch, evaluator):
+    # Conductor 691's 100-digit L-value needs a second coefficient range.
+    # Only missing high primes are submitted on that retry. An exact
+    # left-folded initial product used to dominate such batches.
+    q = x**5-16*x**3-48*x**2+128*x+256
+    jobs = [(10007, 2), (10009, 2), (20011, 2), (10007, 2)]
+    monkeypatch.setenv('HYPELLFROB_RFOREST_EVAL', evaluator)
+    expected = sage_matrices(q, jobs)
+    assert native(binary, q, jobs, workers=2) == expected

@@ -3,11 +3,12 @@ r"""Regulator determinants and tests of Beilinson's conjecture.
 For torsion pairs with common pole, compare the determinant `D` with
 `\pi c^+c^-L^{\prime\prime}(M_{\mathrm{std}}(C),1)`.
 The determinant weights are `(1,2\Re(z),|z|^2)`.
+The survey selects rational endomorphism algebra labels ``Q`` and ``CM``.
 """
 
 import json
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, closing, nullcontext
 from itertools import combinations
 
 from sage.all import (
@@ -31,12 +32,19 @@ from hyperell_regulator.components import (
     odd_degree_model,
 )
 from hyperell_regulator.lfunction import StandardLFunction
+from hyperell_regulator.experiments.beilinson_local_data import (
+    lfunction_options, local_data_metadata,
+)
 from hyperell_regulator.paths import data_path, ensure_parent
 from hyperell_regulator.regulator import c_invariants
+from hyperell_regulator.certified import (ANALYTIC_ASSUMPTIONS, BACKEND_REVISION,
+    encode_ball, decode_ball, encode_result, display_float)
 
 DEFAULT_CONDUCTOR_BOUND = 1000
 REPORT_VERSION = 12  # weights (1, 2 Re(z), |z|^2); q = pi c+ c- L'' / D
 DETERMINANT_WEIGHTS = (1, 2, 1)
+BEILINSON_END_ALGS = ("Q", "CM")
+REPORT_COLUMNS = "%-18s %5s %-21s %9s %14s %12s %10s %10s"
 
 LVALUES = data_path("results", "lvalue_cache.json")
 RESULTS_OUT = data_path("results", "beilinson_results.json")
@@ -298,18 +306,20 @@ def rank_triples(C, triples, *, verbose=False, usable_only=False):
 # the regulator determinant
 # ---------------------------------------------------------------------------
 
-def regulator_column_stokes(f, point, *, digits=None, pole="infinity"):
+def regulator_column_stokes(f, point, *, digits=None, pole="infinity", certified=False):
     r"""The logarithmic column with weights `(1,2\Re(x),|x|^2)`.
 
     A finite pole gives the weight `\log|(x-x(P))/(x-x(R))|`.
     """
-    return _regulator_column_and_periods(f, point, digits=digits, pole=pole)[0]
+    return _regulator_column_and_periods(f, point, digits=digits, pole=pole,
+                                       **({'certified': True} if certified else {}))[0]
 
 
-def _regulator_column_and_periods(f, point, *, digits=None, pole="infinity"):
+def _regulator_column_and_periods(f, point, *, digits=None, pole="infinity", certified=False):
     from hyperell_regulator.regulator import periods_and_regulator_stokes
     per, reg = periods_and_regulator_stokes(f, point[0],
-                    pole=None if pole == "infinity" else pole[0], prec=digits)
+                    pole=None if pole == "infinity" else pole[0], prec=digits,
+                    **({'certified': True} if certified else {}))
     return ([w*r for w, r in zip(DETERMINANT_WEIGHTS, reg)],
             [w*p for w, p in zip(DETERMINANT_WEIGHTS, per)])
 
@@ -322,10 +332,22 @@ def _sage_real(v, digits):
     return R(v)
 
 
-def beilinson_determinant_stokes(G, imP, imQ, *, digits=None, pole="infinity"):
+def beilinson_determinant_stokes(G, imP, imQ, *, digits=None, pole="infinity", certified=False):
     """Two logarithmic columns and one period column, integrated on a common cut."""
     from sage.all import Matrix
     from hyperell_regulator.regulator import regulators_stokes
+    if certified:
+        from hyperell_regulator.regulator.balls import digits_value, narrow, CertificationError
+        digits = digits_value(digits)
+        per, cols = regulators_stokes(G, [imP[0], imQ[0]],
+                    pole=None if pole == "infinity" else pole[0], prec=digits+12,
+                    certified=True)
+        M = [[w*cols[0][i], w*cols[1][i], w*per[i]]
+             for i, w in enumerate(DETERMINANT_WEIGHTS)]
+        det = Matrix(per[0].parent(), M).determinant()
+        if not narrow(det, digits):
+            raise CertificationError('determinant did not achieve the requested absolute radius')
+        return det, M, None
     per, cols = regulators_stokes(G, [imP[0], imQ[0]],
                     pole=None if pole == "infinity" else pole[0], prec=digits)
     f = (lambda v: float(v)) if digits is None else (lambda v: _sage_real(v, digits))
@@ -357,22 +379,27 @@ def save_lvalue(label, data, path=LVALUES):
 
 
 def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
-                           h1_conductor=None):
+                           h1_conductor=None, certified=False, progress=None):
     r"""Compute or reuse `L^{\prime\prime}(M_{\mathrm{std}}(C),1)`.
 
     Reuse requires sufficient precision and coefficient count. Return the value,
     conductor, functional equation residual, precision and coefficient count;
     ``L_status`` records failure.
     """
+    if certified:
+        return _certified_lvalue_cached(label, C, digits, path, force, h1_conductor, progress)
     have = load_lvalues(path)
+    local_data = local_data_metadata(label)
     try:
-        LF = StandardLFunction(C, h1_conductor=h1_conductor)
+        LF = StandardLFunction(C, h1_conductor=h1_conductor,
+                              **lfunction_options(label, C))
         if not force and label in have:
             rec = have[label]
             # Records before the PARI precision fix contain at most sixteen
             # correct digits. Also reject a stale conductor or coefficient
             # count before reusing an otherwise sufficiently precise value.
             if rec.get("L_second_derivative") is not None and \
+                    rec.get("L_local_data") == local_data and \
                     rec.get("L_pari_precision") and \
                     (digits <= 15 or isinstance(rec.get("L_second_derivative"), str)) and \
                     ZZ(rec.get("L_digits", 0)) >= digits and \
@@ -406,17 +433,59 @@ def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
         rec = {"L_second_derivative": None,
                "L_status": "%s: %s" % (type(exc).__name__, exc),
                "L_digits": int(digits)}
+    if local_data is not None:
+        rec['L_local_data'] = local_data
     save_lvalue(label, rec, path)
     rec = dict(rec)
     rec["L_cached"] = False
     return rec
 
 
+def _certified_lvalue_cached(label, C, digits, path, force, h1_conductor, progress=None):
+    """Numerical cache records can never satisfy a certified request."""
+    from hyperell_regulator.regulator.balls import narrow
+    key = label + ':certified'
+    local_data = local_data_metadata(label)
+    try:
+        LF = StandardLFunction(C, h1_conductor=h1_conductor,
+                              **lfunction_options(label, C))
+        saved = load_lvalues(path).get(key, {})
+        if not force and saved.get('L_certified') and saved.get('L_backend') == BACKEND_REVISION \
+                and saved.get('L_local_data') == local_data \
+                and saved.get('L_analytic_assumptions') == ANALYTIC_ASSUMPTIONS \
+                and saved.get('L_curve') == str(C) \
+                and saved.get('standard_conductor') == LF.conductor() \
+                and saved.get('L_digits', 0) >= digits:
+            try:
+                if narrow(decode_ball(saved['L_second_derivative']), digits):
+                    return dict(saved, L_cached=True)
+            except (ValueError, KeyError, TypeError):
+                pass
+        result = LF.value(1, 2, digits=digits, certified=True,
+                          **({'progress':progress} if progress is not None else {}))
+        metadata = LF._certified_metadata
+        rec = dict(standard_conductor=int(LF.conductor()), feq_check=None,
+                   L_second_derivative=encode_ball(result), L_digits=int(digits),
+                   L_num_coeffs=metadata['coefficient_cutoff'], L_certified=True,
+                   L_backend=BACKEND_REVISION, L_analytic_assumptions=ANALYTIC_ASSUMPTIONS)
+        rec['L_metadata'] = dict(metadata)
+        rec['L_curve'] = str(C)
+    except Exception as exc:
+        rec = dict(L_second_derivative=None, L_status='%s: %s' % (type(exc).__name__, exc),
+                   L_digits=int(digits), L_certified=False)
+        if 'LF' in locals() and getattr(LF, '_certified_metadata', {}).get('attempts'):
+            rec['L_metadata'] = LF._certified_metadata
+    if local_data is not None:
+        rec['L_local_data'] = local_data
+    save_lvalue(key, rec, path)
+    return dict(rec, L_cached=False)
+
+
 # ---------------------------------------------------------------------------
 # comparison with the L-value
 # ---------------------------------------------------------------------------
 
-def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
+def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None, certified=False):
     r"""A rational approximation to `q=\pi c^+c^-L^{\prime\prime}/D`.
 
     Return ``{}`` for missing data or `D=0`. A relation ``[m,n]`` means
@@ -424,6 +493,37 @@ def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None):
     """
     if lval is None or c_plus is None or c_minus is None:
         return {}
+    if certified:
+        from hyperell_regulator.regulator.balls import CertificationError
+        values = [decode_ball(v) if isinstance(v, dict) else v
+                  for v in (det, c_plus, c_minus, lval)]
+        if any(not hasattr(v, 'rad') for v in values):
+            raise CertificationError('certified comparison requires balls for every input')
+        det, c_plus, c_minus, lval = values
+        if det.contains_zero():
+            return dict(comparison_error='determinant enclosure contains zero')
+        F = det.parent()
+        norm = F.pi()*F(c_plus)*F(c_minus)*F(lval)
+        ratio = norm/det
+        out = dict(normalisation="pi c+ c- L''(std,1) / D", norm_value=norm,
+                   ratio=ratio, certified=True, exact_relation_proved=False,
+                   analytic_assumptions=ANALYTIC_ASSUMPTIONS)
+        # Relation discovery uses the midpoint. Only the ball residual and
+        # agreement bounds are certified; containment of zero is not equality.
+        try:
+            P = RealField(F.precision())
+            rel = [Integer(t) for t in gp.lindep([P(ratio.mid()), P(1)], bound)]
+            if rel and rel[0]:
+                q = -QQ(rel[1])/QQ(rel[0])
+                out.update(relation=rel, rational=q, rational_is_integer=q.denominator() == 1,
+                           residual=abs(rel[0]*norm+rel[1]*det))
+                if q:
+                    agreement = abs(ratio/q-1)
+                    out.update(relative_agreement=agreement,
+                               relative_agreement_upper=str(agreement.upper().exact_rational()))
+        except Exception as exc:
+            out['relation_error'] = str(exc)
+        return out
     # in RR the residual could not be smaller than about 1e-14 whatever the
     # ingredients are worth, so the field follows ``digits``
     F = RR if digits is None else RealField(int(3.33 * int(digits)) + 24)
@@ -462,8 +562,11 @@ def _component_verdict(triple):
 
 def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
                     with_periods=True, with_lvalue=True, digits=15,
-                    lindep_bound=8, reg_digits=None):
+                    lindep_bound=8, reg_digits=None, certified=False):
     r"""Compute the regulator and comparison for one triple `(P,Q,R)`."""
+    if certified and reg_digits is None:
+        reg_digits = digits
+    cert = {"certified": True} if certified else {}
     G, images, xR, pole = _model_for_triple(C, t)
     _resolve_triple_orders(G, images, pole, t)
     imP, imQ = images[0], images[1]
@@ -506,14 +609,14 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
         if verbose:
             print("   skipped: %s" % res["status"])
         return res
-    if verbose:
-        print("  regulator: integrating (%s) ..."
-              % ("float64" if reg_digits is None else "%s digits" % reg_digits),
+    if verbose or certified:
+        print("  %s: regulator: integrating (%s) ..."
+              % (record['label'], "float64" if reg_digits is None else "%s digits" % reg_digits),
               flush=True)
     clock = time.time()
     try:
         det, M, Err = beilinson_determinant_stokes(
-            G, imP, imQ, digits=reg_digits, pole=pole)
+            G, imP, imQ, digits=reg_digits, pole=pole, **cert)
         res["regulator_digits"] = reg_digits
     except Exception as exc:
         res.update(status="numerical_failure",
@@ -522,10 +625,13 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
             print("   failed: %s" % res["error"])
         return res
     res["regulator_method"] = "stokes"
-    res["regulator_cut"] = "mst"
+    res["regulator_cut"] = "tree" if certified else "mst"
+    if certified:
+        res["certified"] = True
+        res['regulator_certified'] = True
     res["period_basis"] = "mst"
     res["regulator_seconds"] = round(time.time() - clock, 1)
-    number = float if reg_digits is None else lambda v: _sage_real(v, reg_digits).str(truncate=False)
+    number = encode_ball if certified else (float if reg_digits is None else lambda v: _sage_real(v, reg_digits).str(truncate=False))
     res["det"] = number(det)
     res["matrix"] = [[number(x) for x in row_] for row_ in M]
     res["errors"] = (None if Err is None
@@ -533,11 +639,13 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
 
     cp = cm = None
     if with_periods:
+        if certified:
+            print('  %s: computing certified periods' % record['label'], flush=True)
         try:
             # at the regulator's precision: taken at the float64 quadrature's
             # default tolerance instead, these are worth about ten digits and
             # nothing else in the comparison can then be worth more
-            cp, cm = c_invariants(G, prec=res["regulator_digits"])
+            cp, cm = c_invariants(G, prec=res["regulator_digits"], **cert)
             res["c_plus"], res["c_minus"] = number(cp), number(cm)
         except Exception as exc:
             cp = cm = None
@@ -548,27 +656,33 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
     # --- cached by label and reused rather than recomputed
     if with_lvalue:
         clock = time.time()
+        lvalue_options = dict(cert)
+        if certified:
+            lvalue_options['progress'] = lambda message: print('  L-value: '+message,flush=True)
         res.update(standard_lvalue_cached(record["label"], C, digits=digits,
-                                         h1_conductor=record["cond"]))
+                                         h1_conductor=record["cond"], **lvalue_options))
         res["lvalue_seconds"] = round(time.time() - clock, 1)
 
     res["comparison"] = beilinson_comparison(
         det, cp, cm, res.get("L_second_derivative"), bound=lindep_bound,
-        digits=res["regulator_digits"])
+        digits=res["regulator_digits"], **cert)
+    if certified:
+        res['certified'] = (not (with_periods and cp is None)
+                            and not (with_lvalue and not res.get('L_certified')))
 
     if verbose:
         print("  regulator  %-9s %6.1fs   det = % .14e"
               % ("float64" if res.get("regulator_digits") is None
                  else "%s digits" % res["regulator_digits"],
-                 res.get("regulator_seconds", 0.0), float(res["det"])))
+                 res.get("regulator_seconds", 0.0), display_float(res["det"])))
         if res.get("c_plus") is not None:
             print("  periods                      c+ = % .10e  c- = % .10e"
-                  % (float(res["c_plus"]), float(res["c_minus"])))
+                  % (display_float(res["c_plus"]), display_float(res["c_minus"])))
         if res.get("L_second_derivative") is not None:
-            print("  L''(std,1) %-2s digits %6.1fs%s  % .14e   (N = %s, feq %.1e)"
+            print("  L''(std,1) %-2s digits %6.1fs%s  % .14e   (N = %s, feq %s)"
                   % (res.get("L_digits"), res.get("lvalue_seconds", 0.0),
                      " [cached]" if res.get("L_cached") else "         ",
-                     float(res["L_second_derivative"]), res["standard_conductor"],
+                     display_float(res["L_second_derivative"]), res["standard_conductor"],
                      res["feq_check"]))
         if res.get("L_status"):
             print("  L''(std,1)  not computed -- %s" % res["L_status"])
@@ -576,37 +690,56 @@ def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
             print("  WARNING: %s" % res["L_precision_warning"])
         e = res.get("comparison") or {}
         if "rational" in e:
-            print("  => pi c+ c- L''(std,1) = (%s) * D    residual %.2e"
+            print("  proposed pi c+ c- L''(std,1) = (%s) * D    residual %.2e"
                   "    [ratio % .14e]"
                   % (e["rational"], float(e["residual"]), float(e["ratio"])))
         elif "ratio" in e:
             print("  => pi c+ c- L / D = % .12e   (no relation found)"
                   % float(e["ratio"]))
         print("")
-    return res
+    return encode_result(res) if certified else res
+
+
+def _endomorphism_filter(end_algs, geom_simple, end_q_z):
+    """Normalize the selection; preserve the former explicit filter toggles."""
+    if geom_simple is not None:
+        end_algs = BEILINSON_END_ALGS if geom_simple else None
+    if end_q_z is not None:
+        end_algs = ('Q',) if end_q_z else None
+    if isinstance(end_algs, str):
+        end_algs = (end_algs,)
+    return None if end_algs is None else tuple(sorted(set(end_algs)))
+
+
+def _endomorphism_condition(end_algs):
+    return None if end_algs is None else 'end_alg in {%s}' % ','.join(end_algs)
 
 
 def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
             with_periods=True, with_lvalue=True, digits=15,
-            lindep_bound=8, geom_simple=True, reg_digits=None, tries=1,
-            ignore_component_criterion=False):
+            lindep_bound=8, geom_simple=None, reg_digits=None, tries=1,
+            ignore_component_criterion=False, certified=False, end_q_z=None,
+            end_algs=BEILINSON_END_ALGS):
     r"""Compute a regulator determinant and comparison for one curve.
 
     Try up to ``tries`` triples in cut-conditioning order. With
     ``ignore_component_criterion``, evaluate all torsion triples up to permutation.
     ``digits`` and ``reg_digits`` are decimal precisions; ``reg_digits=None``
     uses float64. The result records failures and undecided component tests.
+    ``end_algs`` selects rational endomorphism labels (Q or CM by default).
+    The legacy ``end_q_z=True`` explicitly requests Q only; ``geom_simple``
+    toggles the default filter without imposing geometric simplicity.
     """
+    end_algs = _endomorphism_filter(end_algs, geom_simple, end_q_z)
+    cert = {"certified": True} if certified else {}
     rows = {r["label"]: r for r in load_results(cache)}
     row = rows.get(record["label"])
     if row is None:
         return {"label": record["label"], "status": "not in the curve cache"}
-    if geom_simple and not row.get("is_simple_geom"):
-        # a Jacobian that splits over Qbar is a product of elliptic curves up
-        # to isogeny, and its standard L-function factors accordingly; the
-        # comparison this script makes is not the one to make there
-        return {"label": record["label"], "cond": record["cond"],
-                "status": "Jacobian is not geometrically simple"}
+    if end_algs is not None and row.get('end_alg') not in end_algs:
+        status = ('End_Q(J) data missing; refresh the curve cache with --fetch'
+                  if row.get('end_alg') is None else 'end_alg not in {%s}' % ','.join(end_algs))
+        return dict(label=record['label'], cond=record['cond'], status=status)
     C = curve_from_row(row)
 
     triples = find_triples(record, C, row=row, allow_undecided=allow_undecided,
@@ -634,7 +767,7 @@ def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
                 res = _analyse_triple(record, C, t, n_triples, cache=cache,
                                       verbose=verbose, with_periods=with_periods,
                                       with_lvalue=with_lvalue, digits=digits,
-                                      lindep_bound=lindep_bound, reg_digits=reg_digits)
+                                      lindep_bound=lindep_bound, reg_digits=reg_digits, **cert)
             except Exception as exc:
                 res = dict(label=record["label"], cond=record["cond"],
                            status="preparation_error",
@@ -655,7 +788,7 @@ def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
                               verbose=verbose, with_periods=with_periods,
                               with_lvalue=with_lvalue, digits=digits,
                               lindep_bound=lindep_bound,
-                              reg_digits=reg_digits)
+                              reg_digits=reg_digits, **cert)
         if res.get("status") == "ok":
             if k:
                 res["triples_skipped"] = k
@@ -678,26 +811,93 @@ def load_stored(out=RESULTS_OUT):
         return {}
 
 
+def _fetch_curves(max_cond, cache, end_algs):
+    """Yield ready curves from one I/O thread; keep all Sage work in the caller."""
+    from queue import Queue, Empty, Full
+    from threading import Event, Thread
+    from hyperell_regulator.components import fetch_lmfdb, load_curves
+
+    events, cancelled = Queue(maxsize=64), Event()
+
+    def send(kind, value=None):
+        while not cancelled.is_set():
+            try:
+                events.put((kind, value), timeout=.1)
+                return
+            except Full:
+                continue
+        raise InterruptedError('LMFDB fetch cancelled')
+
+    def fetch():
+        try:
+            fetch_lmfdb(max_cond=max_cond-1, path=cache, geom_simple=False,
+                        end_algs=end_algs, on_curve=lambda row: send('curve', row),
+                        _cancel_event=cancelled)
+            send('done')
+        except BaseException as exc:
+            if not cancelled.is_set():
+                try:
+                    send('error', exc)
+                except InterruptedError:
+                    pass
+
+    worker = Thread(target=fetch, name='beilinson-fetch', daemon=True)
+    worker.start()
+    seen = set()
+    try:
+        while True:
+            try:
+                kind, value = events.get(timeout=.5)
+            except Empty:
+                continue
+            if kind == 'error':
+                raise value
+            if kind == 'done':
+                break
+            if value['label'] not in seen:
+                seen.add(value['label'])
+                yield value
+        # Include previously cached rows outside the refreshed catalogue,
+        # preserving the usual cache selection without evaluating duplicates.
+        rows = load_curves(path=cache, max_cond=max_cond-1, simple_only=False)
+        if end_algs is not None and any(r.get('end_alg') is None for r in rows):
+            raise ValueError('End_Q(J) data missing from the curve cache; rerun with --fetch')
+        for row in rows:
+            if row['label'] not in seen and (end_algs is None or row.get('end_alg') in end_algs):
+                yield row
+    finally:
+        cancelled.set()
+        worker.join(timeout=1)
+
+
 def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
-                   results=RESULTS, geom_simple=True, fetch=False, verbose=False,
-                   ignore_component_criterion=False):
+                   results=RESULTS, geom_simple=None, fetch=False, verbose=False,
+                   ignore_component_criterion=False, end_q_z=None, end_algs=BEILINSON_END_ALGS):
     """Component records for cached curves with conductor strictly below ``N``.
 
     Fetch only if requested. When ignoring the criterion, enumerate torsion
     pairs without component tests.
     """
-    from hyperell_regulator.components import (
-        curve_points, fetch_lmfdb, load_curves, report_curve, save_results)
+    from hyperell_regulator.components import fetch_lmfdb, load_curves
 
+    end_algs = _endomorphism_filter(end_algs, geom_simple, end_q_z)
     if fetch:
-        fetch_lmfdb(max_cond=max_cond-1, path=cache, geom_simple=geom_simple)
-    rows = load_curves(path=cache, max_cond=max_cond-1,
-                       simple_only=True, geom_simple=geom_simple)
+        fetch_lmfdb(max_cond=max_cond-1, path=cache, geom_simple=False, end_algs=end_algs)
+    all_rows = load_curves(path=cache, max_cond=max_cond-1, simple_only=False)
+    if end_algs is not None and any(r.get('end_alg') is None for r in all_rows):
+        raise ValueError('End_Q(J) data missing from the curve cache; rerun with --fetch')
+    rows = [r for r in all_rows if end_algs is None or r.get('end_alg') in end_algs]
+    return list(_prepare_records(rows, results, verbose, ignore_component_criterion))
+
+
+def _prepare_records(rows, results, verbose, ignore_component_criterion):
+    """Prepare and yield each component record before preparing the next curve."""
+    from hyperell_regulator.components import curve_points, report_curve, save_results
+
     try:
         records = {r["label"]: r for r in load_results(results)}
     except OSError:
         records = {}
-    goodrecords = []
     for row in rows:
         if ignore_component_criterion:
             C = curve_from_row(row)
@@ -713,7 +913,7 @@ def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
                 pairs.append(dict(P=P, Q=Q,
                                   same_component_everywhere=old.get("same_component_everywhere"),
                                   order_of_P_minus_Q=old.get("order_of_P_minus_Q")))
-            goodrecords.append(dict(label=row["label"], cond=row["cond"], pairs=pairs))
+            yield dict(label=row["label"], cond=row["cond"], pairs=pairs)
             continue
         if row["label"] not in records:
             try:
@@ -723,8 +923,7 @@ def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
                 if verbose:
                     print("   %s: %s" % (row["label"], exc))
                 continue
-        goodrecords.append(records[row["label"]])
-    return goodrecords
+        yield records[row["label"]]
 
 
 def _stored_result_satisfies(old, settings):
@@ -734,7 +933,30 @@ def _stored_result_satisfies(old, settings):
     """
     if old.get("status") != "ok" or not isinstance(old.get("settings"), dict):
         return False
+    if settings.get('with_lvalue'):
+        local_data = local_data_metadata(old.get('label'))
+        if any(rec.get('L_local_data') != local_data
+               for rec in old.get('triple_results', [old])):
+            return False
     stored = old["settings"]
+    if bool(stored.get('certified', False)) != bool(settings.get('certified', False)):
+        return False
+    if settings.get('certified'):
+        from hyperell_regulator.regulator.balls import narrow
+        try:
+            for rec in old.get('triple_results', [old]):
+                if not rec.get('certified') or rec.get('regulator_cut') != 'tree' or not narrow(decode_ball(rec['det']), settings['regulator_digits']):
+                    return False
+                if settings.get('with_lvalue') and (not rec.get('L_certified') or
+                    rec.get('L_backend') != BACKEND_REVISION or
+                    not narrow(decode_ball(rec['L_second_derivative']), settings['lvalue_digits'])):
+                    return False
+                if settings.get('with_lvalue') and any(
+                    not narrow(decode_ball(rec[key]), settings['regulator_digits'])
+                    for key in ('c_plus', 'c_minus')):
+                    return False
+        except (KeyError, ValueError, TypeError):
+            return False
     if settings.get("ignore_component_criterion") and (
             not old.get("triple_results") or
             any(r.get("status") != "ok" or
@@ -744,7 +966,7 @@ def _stored_result_satisfies(old, settings):
         return False
     precision_keys = {"regulator_digits", "lvalue_digits"}
     execution_keys = {"max_edge_seconds", "max_edge_steps", "tries"}
-    if any(stored.get(k, False if k == "ignore_component_criterion" else None) != v
+    if any(stored.get(k, False if k in ("ignore_component_criterion", "certified") else None) != v
            for k, v in settings.items()
            if k not in precision_keys | execution_keys):
         return False
@@ -764,6 +986,11 @@ def _stored_result_satisfies(old, settings):
     return True
 
 
+def _report_header():
+    print(REPORT_COLUMNS % ("curve", "cond", "status", "component",
+                            "determinant", "q", "rational", "rel. error"))
+
+
 def _report_row(result, stored=False):
     if result.get("triple_results"):
         print("%s: %d unordered triples%s" % (
@@ -775,18 +1002,19 @@ def _report_row(result, stored=False):
                   % tuple(_fmt(_parse_point(t[key])) for key in ("P", "Q", "R")))
         return
     comparison = result.get("comparison") or {}
+    component = "-"
+    if "same_component_everywhere" in result or result.get("triple"):
+        verdict = result.get("same_component_everywhere", _component_verdict(result.get("triple") or {}))
+        component = "yes" if verdict is True else "no" if verdict is False else "undecided"
     def number(value):
-        return "-" if value is None else "%.8g" % float(value)
-    print("%-18s %5s %-21s %14s %12s %10s %10s%s" % (
+        return "-" if value is None else "%.8g" % display_float(value)
+    print((REPORT_COLUMNS+"%s") % (
         result["label"], result.get("cond", "?"), result["status"],
+        component,
         number(result.get("det")), number(comparison.get("ratio")),
         str(comparison.get("rational", "-")),
         number(comparison.get("relative_agreement")),
         " [stored]" if stored else ""), flush=True)
-    if result.get("triple"):
-        verdict = result.get("same_component_everywhere", _component_verdict(result["triple"]))
-        label = "yes" if verdict is True else "no" if verdict is False else "undecided"
-        print("  component criterion: %s" % label, flush=True)
     for key in ("error", "periods_error", "L_status", "L_precision_warning"):
         if result.get(key):
             print("  %s: %s" % (key, result[key]), flush=True)
@@ -820,9 +1048,10 @@ def _monitored_result(result, verbose, max_edge_seconds, max_edge_steps):
 
 def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
         out=RESULTS_OUT, force=False, digits=15, reg_digits=None,
-        allow_undecided=True, geom_simple=True, fetch=False,
+        allow_undecided=True, geom_simple=None, fetch=False,
         with_lvalue=True, tries=1, verbose=False, max_edge_seconds=15,
-        max_edge_steps=100000, ignore_component_criterion=False):
+        max_edge_steps=100000, ignore_component_criterion=False, certified=False, end_q_z=None,
+        end_algs=BEILINSON_END_ALGS):
     """Report cached curves with conductor strictly below ``max_cond``.
 
     Reuse successes of sufficient precision under the same policy; retry failures.
@@ -830,52 +1059,68 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
     """
     from collections import Counter
 
+    end_algs = _endomorphism_filter(end_algs, geom_simple, end_q_z)
+    cert = {"certified": True} if certified else {}
+    if certified and reg_digits is None:
+        reg_digits = digits
     max_cond = int(max_cond)
     if max_cond < 1 or int(digits) < 1 or int(tries) < 1:
         raise ValueError("conductor bound, digits and tries must be positive")
-    records = ensure_records(max_cond, cache=cache, results=path,
-                             geom_simple=geom_simple, fetch=fetch, verbose=verbose,
-                             ignore_component_criterion=ignore_component_criterion)
+    if fetch:
+        row_stream = _fetch_curves(max_cond, cache, end_algs)
+        records = _prepare_records(row_stream, path,
+                                   verbose, ignore_component_criterion)
+    else:
+        records = ensure_records(max_cond, cache=cache, results=path,
+                                 end_algs=end_algs, verbose=verbose,
+                                 ignore_component_criterion=ignore_component_criterion)
     settings = dict(report_version=REPORT_VERSION, regulator_digits=reg_digits,
                     lvalue_digits=int(digits), with_lvalue=with_lvalue,
-                    allow_undecided=allow_undecided, geom_simple=geom_simple,
+                    allow_undecided=allow_undecided,
+                    endomorphism_condition=_endomorphism_condition(end_algs),
                     ignore_component_criterion=ignore_component_criterion,
                     tries=int(tries), max_edge_seconds=max_edge_seconds,
                     max_edge_steps=max_edge_steps)
+    if certified:
+        settings["certified"] = True
     have, results = load_stored(out), []
-    print("%d cached curves with conductor < %d; %s; pairwise non-conjugate triples"
-          % (len(records), max_cond, "float64" if reg_digits is None
+    print("%s curves with conductor < %d; %s; pairwise non-conjugate triples"
+          % ("Fetching and analysing" if fetch else "%d cached" % len(records),
+             max_cond, "float64" if reg_digits is None
              else "%s-digit regulator" % reg_digits))
-    print("%-18s %5s %-21s %14s %12s %10s %10s" %
-          ("curve", "cond", "status", "determinant", "q", "rational", "rel. error"))
-    for record in records:
-        label = record["label"]
-        old = have.get(label, {})
-        if not force and _stored_result_satisfies(old, settings):
-            results.append(old)
-            _report_row(old, stored=True)
-            continue
-        if verbose:
-            print("Computing %s ..." % label, flush=True)
-        res = dict(label=label, cond=record["cond"])
-        with _monitored_result(res, verbose, max_edge_seconds, max_edge_steps):
-            res.update(analyse(record, cache=cache,
-                               allow_undecided=allow_undecided, verbose=verbose,
-                               ignore_component_criterion=ignore_component_criterion,
-                               with_periods=with_lvalue, with_lvalue=with_lvalue,
-                               digits=digits, geom_simple=geom_simple,
-                               reg_digits=reg_digits, tries=tries, lindep_bound=int(digits/2)))
-        res["settings"] = settings
-        results.append(res)
-        have[label] = res
-        if out is not None:
-            with open(ensure_parent(out), "w") as fh:
-                json.dump(sorted(have.values(), key=lambda r: (int(r["cond"]), r["label"])),
-                          fh, indent=2, default=str)
-        _report_row(res)
+    _report_header()
+    with closing(row_stream) if fetch else nullcontext():
+        for record in records:
+            label = record["label"]
+            old = have.get(label, {})
+            if not force and _stored_result_satisfies(old, settings):
+                results.append(old)
+                _report_row(old, stored=True)
+                continue
+            if verbose:
+                print("Computing %s ..." % label, flush=True)
+            res = dict(label=label, cond=record["cond"])
+            with _monitored_result(res, verbose, max_edge_seconds, max_edge_steps):
+                res.update(analyse(record, cache=cache,
+                                   allow_undecided=allow_undecided, verbose=verbose,
+                                   ignore_component_criterion=ignore_component_criterion,
+                                   with_periods=with_lvalue, with_lvalue=with_lvalue,
+                                   digits=digits, end_algs=end_algs,
+                                   reg_digits=reg_digits, tries=tries, lindep_bound=int(digits/2), **cert))
+            res["settings"] = settings
+            results.append(res)
+            have[label] = res
+            if out is not None:
+                with open(ensure_parent(out), "w") as fh:
+                    json.dump(sorted(have.values(), key=lambda r: (int(r["cond"]), r["label"])),
+                              fh, indent=2, default=str)
+            _report_row(res)
     counts = Counter(r["status"] for r in results)
     print("\n" + "; ".join("%s: %d" % item for item in sorted(counts.items())))
     print("q = pi*c+*c-*L''(std,1) / D; rel. error = abs(q/rational - 1).")
+    if certified:
+        print("Certified interval agreement; exact rational equality is not proved.")
+        print(ANALYTIC_ASSUMPTIONS)
     print("no_admissible_triple: no pairwise non-conjugate torsion triple satisfies the component policy.")
     print("no_usable_model: triples exist, but their integration models or shared cuts could not be constructed.")
     print("numerical_failure: a shared cut failed quadrature or an integration limit.")
@@ -886,6 +1131,8 @@ def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
 
 def _add_report_arguments(parser, out):
     """Add numerical and output options to an experiment command."""
+    parser.add_argument("--certified", action="store_true",
+                        help="validated Arb balls for regulators, periods and conditional L-values")
     parser.add_argument("--force", action="store_true", help="recompute saved successful regulators")
     parser.add_argument("--no-lvalue", action="store_true", help="only compute regulator determinants")
     parser.add_argument("--verbose", action="store_true", help="show triples and per-edge progress")
@@ -894,7 +1141,13 @@ def _add_report_arguments(parser, out):
                         help="explicit arbitrary-precision regulator (default: float64)")
     parser.add_argument("--edge-seconds", type=float, default=15, help="time limit per edge (default: 15 seconds)")
     parser.add_argument("--edge-steps", type=int, default=100000, help="continuation step limit per edge")
-    parser.add_argument("--out", default=out, help="JSON report path")
+    parser.add_argument("--out", default=None, help="JSON report path (certified mode uses a separate default file)")
+
+
+def _report_path(default, certified):
+    from pathlib import Path
+    path = Path(default)
+    return str(path.with_name(path.stem+'_certified'+path.suffix)) if certified else default
 
 
 def main(argv=None):
@@ -906,6 +1159,9 @@ def main(argv=None):
                         help="exclusive conductor bound (default: 1000)")
     _add_report_arguments(parser, RESULTS_OUT)
     parser.add_argument("--fetch", action="store_true", help="extend the curve cache from LMFDB")
+    parser.add_argument("--cm-only", action="store_const", dest="end_algs",
+                        const=("CM",), default=BEILINSON_END_ALGS,
+                        help="only consider curves with LMFDB end_alg='CM' (default: Q or CM)")
     component_policy = parser.add_mutually_exclusive_group()
     component_policy.add_argument("--allow-undecided", action="store_true", default=True,
                                   help="include undecided component verdicts (default)")
@@ -918,14 +1174,18 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.N < 1 or args.digits < 1 or args.tries < 1 or (args.reg_digits is not None and args.reg_digits < 5):
         parser.error("N, digits and tries must be positive; regulator precision must be at least 5")
+    if args.certified and args.digits < 5:
+        parser.error('certified precision must be at least 5 decimal digits')
     if args.edge_seconds <= 0 or args.edge_steps < 1:
         parser.error("edge budgets must be positive")
-    return run(args.N, out=args.out, force=args.force, fetch=args.fetch,
+    return run(args.N, out=args.out if args.out is not None else _report_path(RESULTS_OUT, args.certified),
+               force=args.force, fetch=args.fetch, end_algs=args.end_algs,
                with_lvalue=not args.no_lvalue, verbose=args.verbose,
                allow_undecided=args.allow_undecided, digits=args.digits,
                ignore_component_criterion=args.ignore_component_criterion,
                reg_digits=args.reg_digits, tries=args.tries,
-               max_edge_seconds=args.edge_seconds, max_edge_steps=args.edge_steps)
+               max_edge_seconds=args.edge_seconds, max_edge_steps=args.edge_steps,
+               **({"certified": True} if args.certified else {}))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,120 @@
+diff --git a/include/glfunc_internals.h b/include/glfunc_internals.h
+index 6d25d5d..96e4797 100644
+--- a/include/glfunc_internals.h
++++ b/include/glfunc_internals.h
+@@ -153,6 +153,8 @@ extern "C"{
+   void complete_ftwiddle_error(Lfunc *L, int64_t prec);
+   Lerror_t do_pre_iFFT_errors(Lfunc *L);
+   bool M_error(arb_t res, arb_t x, Lfunc *L, int64_t prec);
++  bool M_error_at_cutoff(arb_t res, arb_t x, Lfunc *L, uint64_t cutoff, int64_t prec);
++  int64_t calc_m(uint64_t i, double grid_step, double dc);
+ 
+ #ifdef BUTHE
+   // from buthe.c
+diff --git a/src/error.c b/src/error.c
+index f2b6dbd..2b2f71a 100644
+--- a/src/error.c
++++ b/src/error.c
+@@ -8,6 +8,10 @@
+ extern "C"{
+ #endif
+ 
++// Lets the experimental bridge require this error-bound correction at link
++// time, rather than accidentally accepting an unpatched shared library.
++int Lfunc_error_bounds_revision(void) { return 1; }
++
+ 
+ // return Q(s) is analytic conductor defined pg 387 col 2
+ void Q(acb_t res, acb_t s, Lfunc *L, uint64_t conductor, uint64_t prec)
+@@ -217,7 +221,7 @@ uint64_t inv_m(uint64_t hi_i, uint64_t n, double one_over_B, double dc)
+ }
+ 
+ // see M_error1.tex Lemma 2
+-bool M_error(arb_t res, arb_t x, Lfunc *L, int64_t prec)
++bool M_error_at_cutoff(arb_t res, arb_t x, Lfunc *L, uint64_t cutoff, int64_t prec)
+ {
+   arb_t k1,tmp,tmp1,tmp2,tmp3,k0,rootNM2r,k2,k1k0,two_r;
+   acb_t ctmp1,ctmp2,ctmp3;
+@@ -267,7 +271,7 @@ bool M_error(arb_t res, arb_t x, Lfunc *L, int64_t prec)
+   arb_exp(k1k0,tmp1,prec); // k1^(-k0)
+ 
+   arb_sqrt_ui(tmp,L->conductor,prec);
+-  arb_div_ui(tmp1,tmp,L->M,prec);
++  arb_div_ui(tmp1,tmp,cutoff,prec);
+   arb_pow(rootNM2r,tmp1,two_r,prec); // (sqrt(N)/M)^(2/r)
+ 
+   arb_set_d(tmp,-0.5);
+@@ -320,6 +324,11 @@ bool M_error(arb_t res, arb_t x, Lfunc *L, int64_t prec)
+   return true;
+ }
+ 
++bool M_error(arb_t res, arb_t x, Lfunc *L, int64_t prec)
++{
++  return M_error_at_cutoff(res, x, L, L->M, prec);
++}
++
+ #define BIG_ZETA (10)
+ #define BIG_ZETAD (1.001) // zeta([10,infinty]) in [1,1.001]
+ void djp_zeta(arb_t res, const arb_t x, slong prec)
+@@ -507,17 +516,39 @@ Lerror_t do_pre_iFFT_errors(Lfunc *L)
+   acb_init(ctmp1);
+   acb_init(ctmp2);
+   uint64_t i,n,j;
++  uint64_t cutoff = L->M;
++  const double grid_step = 2.0*M_PI*L->one_over_B;
++  int64_t last_index = INT64_MIN;
++  for(uint64_t m=1; m<=L->M; m++)
++  {
++    int64_t index = calc_m(m, grid_step, L->dc);
++    if(index < last_index)
++      return ERR_M_ERROR;
++    last_index = index;
++    // The bucket is proposed in double precision. Certify that its exact
++    // displacement lies inside the Taylor remainder's half-grid radius.
++    arb_mul_ui(tmp, L->one_over_root_N, m, prec);
++    arb_log(th, tmp, prec);
++    arb_mul_si(tmp, L->two_pi_by_B, index, prec);
++    arb_sub(th1, th, tmp, prec);
++    arb_abs(th1, th1);
++    arb_mul_2exp_si(th2, L->two_pi_by_B, -1);
++    if(!arb_le(th1, th2))
++      return ERR_M_ERROR;
++  }
+   arb_zero(x);
+   for(i=0;i<=L->fft_N/2;i++)
+   {
+-    uint64_t M=inv_m(L->hi_i,i,L->one_over_B,L->dc);
+-    //printf("i=%" PRIu64 " => M=%" PRIu64 " ",i,M);
+-    if(M==0)
++    // Match the actual rounded index used by the convolution, rather than
++    // an approximate inverse of that index. The included coefficients form
++    // a prefix; this loop makes at most L->M decrements over the whole grid.
++    while(cutoff && calc_m(cutoff, grid_step, L->dc)
++                          + (int64_t)i > L->hi_i)
++      cutoff--;
++    if(cutoff==0)
+       break;
+-    if(M>L->M)
+-      M=L->M;
+-    if(!M_error(err,x,L,50))
+-      return ERR_M_ERROR;
++    if(!M_error_at_cutoff(err,x,L,cutoff,prec))
++      break; // bound this and subsequent whole Fourier terms below instead
+     if(verbose&&((i%(L->fft_N/32))==0))
+     {
+       printf("M Error for n=%" PRIu64 " is ",i);
+@@ -546,10 +577,10 @@ Lerror_t do_pre_iFFT_errors(Lfunc *L)
+   if(verbose){printf("Adding eq 5-9 error = ");arb_printd(err,10);printf("\n");}
+   for(j=0;j<i;j++)
+   {
+-    arb_add_error(acb_realref(L->res[i]),fhattwiddle);
+-    arb_add_error(acb_imagref(L->res[i]),fhattwiddle);
+-    arb_add_error(acb_realref(L->res[i]),err);
+-    arb_add_error(acb_imagref(L->res[i]),err);
++    arb_add_error(acb_realref(L->res[j]),fhattwiddle);
++    arb_add_error(acb_imagref(L->res[j]),fhattwiddle);
++    arb_add_error(acb_realref(L->res[j]),err);
++    arb_add_error(acb_imagref(L->res[j]),err);
+   }
+ 
+   // figure out epsilon

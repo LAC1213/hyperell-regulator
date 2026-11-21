@@ -63,6 +63,16 @@ def _build_jobs():
 class build_with_euler(build_py):
     def run(self):
         super().run()
+        certified = Path(self.build_lib) / 'hyperell_regulator' / 'bin' / 'certified-lvalue'
+        certified.unlink(missing_ok=True)
+        try:
+            import runpy
+            builder = runpy.run_path(str(ROOT/'hyperell_regulator'/'build_certified.py'))
+            builder['build'](certified)
+        except Exception as exc:
+            if os.environ.get('HYPERELL_REGULATOR_REQUIRE_CERTIFIED') == '1':
+                raise
+            print('hyperell-regulator: optional certified L-value backend unavailable (%s)' % exc)
         target = Path(self.build_lib) / "hyperell_regulator" / "bin" / "euler"
         # A failed rebuild must not package an accelerator from an older build.
         target.unlink(missing_ok=True)

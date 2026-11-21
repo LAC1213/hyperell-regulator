@@ -54,7 +54,7 @@ def test_exhaustive_mode_still_rejects_nontorsion_and_uncertified_pairs():
 
 
 def test_records_skip_component_checks_and_keep_cached_metadata(tmp_path):
-    row = dict(label='test', cond=1, is_simple_base=True, is_simple_geom=True)
+    row = dict(label='test', cond=1, is_simple_base=True, is_simple_geom=True, end_alg="Q")
     P, Q, R = (0, 1), (1, 1), ('infinity', 1)
     known = dict(label='test', cond=1, pairs=[dict(
         P=P, Q=Q, same_component_everywhere=False, order_of_P_minus_Q=5)])
@@ -83,7 +83,7 @@ def test_records_skip_component_checks_and_keep_cached_metadata(tmp_path):
 
 
 def test_all_unordered_triples_are_evaluated_and_failures_do_not_stop_the_run(tmp_path, capsys):
-    row = dict(label='test', cond=1, is_simple_geom=True, mw_invs=[5])
+    row = dict(label='test', cond=1, is_simple_geom=True, end_alg="Q", mw_invs=[5])
     cache = tmp_path/'curves.json'
     cache.write_text(json.dumps([row]))
     points = [(0, 1), (1, 1), (2, 1), (3, 1)]

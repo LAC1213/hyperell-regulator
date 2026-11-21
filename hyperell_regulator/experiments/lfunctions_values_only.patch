@@ -1,0 +1,61 @@
+diff --git a/include/glfunc.h b/include/glfunc.h
+index 4a699e0..419f0d1 100644
+--- a/include/glfunc.h
++++ b/include/glfunc.h
+@@ -140,6 +140,14 @@ extern "C"{
+   // Once all polys have been provided, do the computation
+   Lerror_t Lfunc_compute(Lfunc_t L);
+ 
++  // Prepare certified samples and the root number for special-value evaluation,
++  // without computing the analytic rank, Taylor coefficient, or zeros. This
++  // retains the coefficient-tail, convolution, FFT and sampling error bounds.
++  // Call exactly one of Lfunc_compute_values and Lfunc_compute on an object:
++  // both destructively normalize its coefficient storage. Lfunc_Taylor and
++  // Lfunc_zeros are not available after this values-only entry point.
++  Lerror_t Lfunc_compute_values(Lfunc_t L);
++
+   // what working precision did the computation use
+   int64_t Lfunc_wprec(Lfunc_t L);
+ 
+diff --git a/src/compute.c b/src/compute.c
+index 3af38b6..039450b 100644
+--- a/src/compute.c
++++ b/src/compute.c
+@@ -283,7 +283,7 @@ void final_ifft(Lfunc *L)
+ // sign and sqrt_sign
+ // Lambda^(rank)(1/2)
+ // L^(rank)(1/2)/rank!
+-Lerror_t Lfunc_compute(Lfunc_t Lf)
++static Lerror_t compute(Lfunc_t Lf, bool values_only)
+ {
+   static bool init=false;
+   static arb_t tmp1,sks;
+@@ -377,6 +377,11 @@ Lerror_t Lfunc_compute(Lfunc_t Lf)
+ 
+   copy(L);
+ 
++  // Special-value interpolation uses the sampled function and sqrt_sign,
++  // not the rank, Taylor coefficient, zero list, or Turing verdict below.
++  if(values_only)
++    return ecode;
++
+ #ifdef COMPUTE_RANK
+   ecode|=do_rank(L);
+   if(fatal_error(ecode))
+@@ -414,6 +419,16 @@ Lerror_t Lfunc_compute(Lfunc_t Lf)
+ 
+ }
+ 
++Lerror_t Lfunc_compute(Lfunc_t Lf)
++{
++  return compute(Lf, false);
++}
++
++Lerror_t Lfunc_compute_values(Lfunc_t Lf)
++{
++  return compute(Lf, true);
++}
++
+ #ifdef __cplusplus
+ }
+ #endif

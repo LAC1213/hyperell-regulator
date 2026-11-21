@@ -73,17 +73,29 @@ result = standard_lvalue(C, digits=30, verbose=False)
 print(result["value"])
 ```
 
+Supply `certified=True` to the L-value and regulator/period methods to return
+Sage Arb balls with a checked absolute radius below `10^-digits` (`prec` for
+regulators). Certified L-values are conditional on the analytic
+continuation and functional-equation of the L-function. Build their optional native
+backend with `sage -python -m hyperell_regulator.build_certified`.
+See the [ball arithmetic guide](docs/ball-arithmetic.rst) for requirements and
+supported evaluations.
+
 ## Beilinson experiments
 
 ```sh
 # Reuse cached data and request 100-digit regulators and L-values.
 sage -python -m hyperell_regulator.experiments.beilinson 1300 --digits 100 --reg-digits 100
 
+# Certified intervals, with a larger integration budget.
+sage -python -m hyperell_regulator.experiments.beilinson 250 --certified --digits 100 --edge-seconds 600 --out results/beilinson_certified.json
+
 # Test the parameter n=2 in the one-parameter family.
 sage -python -m hyperell_regulator.experiments.family_n 2
 ```
 
 Both commands use float64 regulators and a 15-second edge limit by default.
+The survey selects `end_alg = "Q"` or `"CM"`.
 Use `--help` or the [experiment guide](docs/experiments.rst) for precision, conductor, and cache options.
 
 Data and results are cached under

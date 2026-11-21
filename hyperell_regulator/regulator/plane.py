@@ -300,7 +300,7 @@ def _period_digits(epsabs, epsrel):
     return max(15, int(np.ceil(-np.log10(min(tolerances[tolerances > 0])))))
 
 
-def period_matrix(f, epsabs=1.49e-8, epsrel=1.49e-8):
+def period_matrix(f, epsabs=1.49e-8, epsrel=1.49e-8, *, certified=False, prec=None):
     r"""Full cycle periods of `x^i dx/y` as a complex128 array.
 
     Rows are twice the lifted tree-edge integrals; in even degree omit the
@@ -309,21 +309,27 @@ def period_matrix(f, epsabs=1.49e-8, epsrel=1.49e-8):
     """
     from .precision import period_matrix_mp
 
+    if certified:
+        return period_matrix_mp(f, _period_digits(epsabs, epsrel) if prec is None else prec,
+                                certified=True)
     return np.asarray(period_matrix_mp(f, _period_digits(epsabs, epsrel)), complex)
 
 
-def cplus(f, epsabs=1.49e-8, epsrel=1.49e-8):
+def cplus(f, epsabs=1.49e-8, epsrel=1.49e-8, *, certified=False, prec=None):
     """The signed real minor of full cycle periods."""
-    return _c_invariants(f, epsabs, epsrel)[0]
+    return _c_invariants(f, epsabs, epsrel, certified=certified, prec=prec)[0]
 
 
-def cminus(f, epsabs=1.49e-8, epsrel=1.49e-8):
+def cminus(f, epsabs=1.49e-8, epsrel=1.49e-8, *, certified=False, prec=None):
     """The signed imaginary minor of full cycle periods."""
-    return _c_invariants(f, epsabs, epsrel)[1]
+    return _c_invariants(f, epsabs, epsrel, certified=certified, prec=prec)[1]
 
 
-def _c_invariants(f, epsabs=1.49e-8, epsrel=1.49e-8):
+def _c_invariants(f, epsabs=1.49e-8, epsrel=1.49e-8, *, certified=False, prec=None):
     """Both signed minors from one period-matrix integration."""
     from .precision import c_invariants_mp
 
+    if certified:
+        return c_invariants_mp(f, _period_digits(epsabs, epsrel) if prec is None else prec,
+                               certified=True)
     return tuple(float(v) for v in c_invariants_mp(f, _period_digits(epsabs, epsrel)))

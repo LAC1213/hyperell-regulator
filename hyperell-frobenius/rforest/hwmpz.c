@@ -67,13 +67,21 @@ mpz_t *mpz_vec_mod_init_fft (mpz_t *A, mpz_t *B, long n, mpz_t m, mpz_t w)
 
 static inline size_t mpz_rmatrix_product_max_bits (mpz_t *A, int r, mpz_t *B, int d)
 {
-    register int i;
-    register size_t m, n;
-    
-    m = 0;
-    for ( i = 0 ; i < r*d ; i++ ) { n = mpz_size(A[i]); if ( n > m ) m = n; }
-    for ( i = 0 ; i < d*d ; i++ ) { n = mpz_size(B[i]); if ( n > m ) m = n; }
-    return GMP_NUMB_BITS*(2*m+1);   // note that the +1 limb more than covers the extra log(d) bits due to additions
+    size_t left = 0, right = 0;
+    for (int i = 0; i < r*d; ++i) {
+        size_t n = mpz_size(A[i]); if (n > left) left = n;
+    }
+    for (int i = 0; i < d*d; ++i) {
+        size_t n = mpz_size(B[i]); if (n > right) right = n;
+    }
+    // Each dot product has d terms. Bound its absolute value by
+    // d * 2^(bits(A)+bits(B)), including signs and the addition carry.
+    // Padding both inputs to the larger size wastes large transforms in
+    // the unbalanced prefix updates of a remainder forest.
+    size_t carry = 0;
+    for (unsigned n = d-1; n; n >>= 1) ++carry;
+    size_t bits = GMP_NUMB_BITS*(left+right)+carry;
+    return bits ? bits : 1; // the FFT parameter builder requires bits >= 1
 }
 
 mpz_t *mpz_rmatrix_mult_fft (mpz_t *C, mpz_t *A, int r, mpz_t *B, int d, mpz_t w)
@@ -84,21 +92,24 @@ mpz_t *mpz_rmatrix_mult_fft (mpz_t *C, mpz_t *A, int r, mpz_t *B, int d, mpz_t w
     
     mpzfft_params_init (&params, mpz_rmatrix_product_max_bits (A, r, B, d), d, HW_ZZ_PRIMES, &zz_moduli);
 
-    // transform input matrices
-    AT = hw_malloc (r*d*sizeof(mpzfft_t));
-    for ( int i = 0 ; i < r*d; i++) { mpzfft_init(AT[i], &params);  mpzfft_fft (AT[i], A[i], mpzfft_threads); }
-    BT = hw_malloc (d*d*sizeof(mpzfft_t));
-    for ( int i = 0 ; i < d*d; i++) { mpzfft_init(BT[i], &params);  mpzfft_fft (BT[i], B[i], mpzfft_threads); }
-
-    // multiply matrices of Fourier coefficients
-    mpzfft_matrix_mul(AT, AT, BT, r, d, d, mpzfft_threads);
-
-    // inverse transform results and cleanup
-    for ( int i = 0 ; i < d*d ; i++) { mpzfft_clear (BT[i]); }
-    for ( int i = 0 ; i < r*d ; i++) { mpzfft_ifft (C[i], AT[i], mpzfft_threads); mpzfft_clear (AT[i]); }
-
-    hw_free (AT, r*d*sizeof(mpzfft_t));
-    hw_free (BT, d*d*sizeof(mpzfft_t));
+    // Reuse B's transforms and stream A a row at a time. In particular,
+    // a 5x5 product retains 30 transforms instead of 50. The public
+    // multiplication contract forbids C aliasing either input.
+    BT = hw_malloc(d*d*sizeof(mpzfft_t));
+    for (int i = 0; i < d*d; ++i) {
+        mpzfft_init(BT[i], &params); mpzfft_fft(BT[i], B[i], mpzfft_threads);
+    }
+    AT = hw_malloc(d*sizeof(mpzfft_t));
+    for (int i = 0; i < d; ++i) mpzfft_init(AT[i], &params);
+    for (int row = 0; row < r; ++row) {
+        for (int i = 0; i < d; ++i) mpzfft_fft(AT[i], A[row*d+i], mpzfft_threads);
+        mpzfft_matrix_mul(AT, AT, BT, 1, d, d, mpzfft_threads);
+        for (int i = 0; i < d; ++i) mpzfft_ifft(C[row*d+i], AT[i], mpzfft_threads);
+    }
+    for (int i = 0; i < d; ++i) mpzfft_clear(AT[i]);
+    for (int i = 0; i < d*d; ++i) mpzfft_clear(BT[i]);
+    hw_free(AT, d*sizeof(mpzfft_t));
+    hw_free(BT, d*d*sizeof(mpzfft_t));
 
     mpzfft_params_clear (&params);
     return C;

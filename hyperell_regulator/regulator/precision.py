@@ -4,8 +4,11 @@ from .polynomials import polynomial
 from ._periods import period_paths, segment_differential, pivoted_minor
 
 
-def period_matrix_mp(F, prec):
+def period_matrix_mp(F, prec, *, certified=False):
     """Full periods, twice the lifted branch-to-branch integrals."""
+    if certified:
+        from .balls import period_matrix
+        return period_matrix(F, prec)
     ar = Arithmetic(prec)
     exact = polynomial(F)
     if exact is None or exact.gcd(exact.derivative()).degree() > 0:
@@ -22,7 +25,10 @@ def period_matrix_mp(F, prec):
     return output
 
 
-def c_invariants_mp(F, prec):
+def c_invariants_mp(F, prec, *, certified=False):
+    if certified:
+        from .balls import c_invariants
+        return c_invariants(F, prec)
     ar = Arithmetic(prec)
     periods = period_matrix_mp(F, prec)
     return tuple(ar.output(pivoted_minor([[part(v) for v in row] for row in periods], ar.tol))

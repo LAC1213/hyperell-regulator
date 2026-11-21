@@ -34,7 +34,7 @@ def test_float64_and_conductor_cli_defaults():
 def test_388_undecided_triple_reaches_analysis_by_default(tmp_path):
     for fn in (b.find_triples, b.analyse, b.run):
         assert inspect.signature(fn).parameters['allow_undecided'].default is True
-    row = dict(label='388.a.776.1', cond=388, is_simple_geom=True, mw_invs=[21],
+    row = dict(label='388.a.776.1', cond=388, is_simple_geom=True, end_alg="Q", mw_invs=[21],
                eqn=[[0, 1, 2, 0, -1], [1, 1, 0, 1]])
     P, R, Q = (0, 0), (-1, 1), ('infinity', 0)
     pairs = [dict(P=p, Q=q, same_component_everywhere=verdict, order_of_P_minus_Q=7)
@@ -96,7 +96,7 @@ def test_triples_exclude_conjugate_pairs_including_infinity():
 def test_conductor_bound_is_exclusive_and_filters_before_preparation():
     with TemporaryDirectory() as d:
         cache=Path(d)/'curves.json';records=Path(d)/'pairs.json'
-        rows=[dict(label=str(n),cond=n,is_simple_geom=True) for n in (999,1000,1001)]
+        rows=[dict(label=str(n),cond=n,is_simple_geom=True, end_alg="Q") for n in (999,1000,1001)]
         cache.write_text(json.dumps(rows));records.write_text(json.dumps(rows))
         with patch('hyperell_regulator.components.fetch_lmfdb') as fetch:
             with patch('hyperell_regulator.components.report_curve') as prepare:
@@ -156,6 +156,32 @@ def test_verbose_lvalue_failure_preserves_completed_regulator():
     assert result['L_status'] == 'ArithmeticError: bad Euler factor'
     assert result['comparison'] == {}
     save.assert_called_once()
+
+
+def test_certified_stages_are_visible_without_verbose(capsys):
+    from sage.all import RealBallField
+    from hyperell_regulator.certified import encode_ball
+    F = RealBallField(150)
+    x = ring().gen()
+    triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5)
+
+    def lvalue(*args, **kwargs):
+        kwargs['progress']('Euler factors: 30s elapsed')
+        return dict(L_certified=True, L_second_derivative=encode_ball(F(5)))
+
+    with patch.object(b, '_model_for_triple', return_value=(x**5+x+1, [(0, 1), (1, 1)], None, 'infinity')), \
+            patch.object(b, '_resolve_triple_orders'), \
+            patch.object(b, 'beilinson_determinant_stokes', return_value=(F(2), [[F(2)]], None)), \
+            patch.object(b, 'c_invariants', return_value=(F(3), F(4))), \
+            patch.object(b, 'standard_lvalue_cached', side_effect=lvalue), \
+            patch.object(b, 'beilinson_comparison', return_value={}):
+        result = b._analyse_triple(dict(label='691.a.691.1', cond=691), None, triple, 1,
+                                   verbose=False, certified=True, reg_digits=20)
+    output = capsys.readouterr().out
+    assert '691.a.691.1: regulator: integrating (20 digits)' in output
+    assert 'computing certified periods' in output
+    assert 'L-value: Euler factors: 30s elapsed' in output
+    assert result['certified']
 
 
 def test_higher_precision_report_is_reused_without_rounding():
@@ -222,14 +248,16 @@ def test_components_are_recorded_without_warnings_for_new_or_stored_results(caps
                 label = 'yes' if verdict is True else 'no' if verdict is False else 'undecided'
                 b._report_row(result)
                 output = capsys.readouterr().out
-                assert 'component criterion: ' + label in output
+                assert len(output.splitlines()) == 1
+                assert output.split()[3] == label
                 assert 'WARNING' not in output
                 # Legacy reports may still contain the old warning metadata.
                 del result['same_component_everywhere']
                 result['component_warning'] = 'triple is not known to satisfy the same-component criterion'
                 b._report_row(result, stored=True)
                 output = capsys.readouterr().out
-                assert 'component criterion: ' + label in output
+                assert len(output.splitlines()) == 1
+                assert output.split()[3] == label
                 assert 'WARNING' not in output
                 assert 'same-component criterion' not in output
 

@@ -22,6 +22,7 @@ integrals for the successful 100-digit survey curves.
    installation
    quickstart
    experiments
+   ball-arithmetic
    explorer-guide
 
 .. toctree::

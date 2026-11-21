@@ -20,7 +20,8 @@ def numerical_source_hashes():
     package = Path(__file__).resolve().parents[1]
     names = ['_source_hash.py', 'experiments/small_conductor_explorer.py', 'regulator/stokes.py',
              'regulator/_tree.py', 'regulator/_periods.py', 'regulator/quadrature.py',
-             'regulator/precision.py', 'experiments/beilinson.py', 'lfunction.py', 'frobenius.py']
+             'regulator/precision.py', 'experiments/beilinson.py',
+             'experiments/beilinson_local_data.py', 'lfunction.py', 'frobenius.py']
     return {'hyperell_regulator/'+name: source_sha256((package/name).read_bytes())
             for name in names}
 

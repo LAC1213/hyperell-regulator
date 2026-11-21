@@ -14,11 +14,34 @@ factor has denominator one.
 Survey and family
 -----------------
 
+The survey selects LMFDB records with ``end_alg="Q"`` or ``end_alg="CM"``.
+Geometric simplicity is not required; other algebra labels, including
+``RM``, are excluded. ``--fetch`` refreshes this metadata in older
+caches and includes newly eligible curves. Saved reports record the
+endomorphism condition so that former geometric-simplicity or Q-only policies
+cannot satisfy a new cache request.
+
+Add ``--cm-only`` to restrict the survey to ``end_alg="CM"`` records, for
+example with certified 100-digit computations:
+
+.. code-block:: bash
+
+   sage -python -m hyperell_regulator.experiments.beilinson 1300 \
+       --cm-only --certified --digits 100 --reg-digits 100 \
+       --edge-seconds 300 --edge-steps 1000000
+
 Fetch curves with conductor strictly below 1000 and test them:
 
 .. code-block:: bash
 
    sage -python -m hyperell_regulator.experiments.beilinson 1000 --fetch
+
+With ``--fetch``, downloading runs in the background. The experiment starts
+component tests and analysis as soon as each curve's metadata and rational
+points are cached. Curves are analysed one at a time with a bounded prefetch
+queue, and each completed result is saved immediately. Existing point data
+can be used as soon as its endomorphism metadata is refreshed. Results may
+appear in availability order; the saved JSON remains sorted by conductor.
 
 Use cached data with 30-digit regulators and :math:`L`-values:
 
@@ -39,6 +62,14 @@ edge limits to 15 seconds. ``--prec`` sets regulator precision and
 ``--digits`` sets :math:`L`-value precision. ``--no-lvalue`` skips
 :math:`L`-values. For the family, ``--max-conductor`` bounds the standard
 conductor inclusively. Use ``--help`` for all options.
+
+Add ``--certified`` to compute Arb enclosures for the regulator, periods,
+determinant and conditional L-value. In this mode ``--reg-digits`` defaults
+to ``--digits``. Allow a larger edge budget, for example
+``--certified --digits 100 --edge-seconds 600``. Exact interval endpoints and
+analytic assumptions are saved in JSON; numerical cache entries are kept
+separate. The rational relation remains a conjecture, with a certified error
+bound. See :doc:`ball-arithmetic` for installation and supported evaluations.
 
 Integrality criterion
 ---------------------
@@ -81,6 +112,14 @@ For computations at 2, ``h1_conductor`` supplies the exact Jacobian
 conductor when PARI omits its local exponent. A trivial local
 :math:`h^1` factor requires additional inertia data. High precision and
 large coefficient counts can require several GiB of PARI stack memory.
+
+The CM-labelled survey through conductor 10000 automatically supplies
+manual bad factors for seven otherwise unsupported curves. Their wild
+standard conductor exponents are included separately, through the
+``StandardLFunction(..., conductor_exponents={p: exponent})`` argument.
+The equations, polynomials and local-representation derivation are recorded
+in ``reports/beilinson_cm_bad_factors.rst``; the experiment saves this local
+data with each L-value and invalidates caches when it changes.
 
 Saved results
 -------------
