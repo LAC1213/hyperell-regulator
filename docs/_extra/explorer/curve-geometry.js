@@ -62,16 +62,13 @@ const CurveGeometry = (() => {
   }
 
   function realLocus(data, divisorId = null) {
-    const model = data.collection?.lmfdb_model;
-    const {coefficients} = parsePolynomial(model?.discriminant || data.input.F);
-    const h = parsePolynomial(model?.h || "0").coefficients;
-    const roots = (model?.branch_values || data.roots)
+    const {coefficients} = parsePolynomial(data.input.F);
+    const roots = data.roots
       .filter(([re, im]) => Math.abs(Number(im)) <= 1e-10 * (1 + Math.abs(Number(re))))
       .map(([re]) => Number(re)).sort((a, b) => a - b)
       .filter((x, i, list) => !i || x - list[i - 1] > 1e-10 * (1 + Math.abs(x)));
     const selected = divisorId || data.collection?.divisors?.[0]?.id;
-    const support = (data.collection?.support || []).filter(P => rational(P.coefficients[selected] || "0") !== 0)
-      .map(P => ({...P, ...(model ? P.lmfdb : {})}));
+    const support = (data.collection?.support || []).filter(P => rational(P.coefficients[selected] || "0") !== 0);
     const points = data.collection?.support ? support.filter(P => P.real && !P.infinity).map(P => ({
       name: P.id, x: Number(P.x[0]), y: Number(P.y[0]), coefficient: P.coefficients[selected], tex: P.tex
     })) : (data.collection?.points || []).flatMap((point, i) => {
@@ -100,10 +97,9 @@ const CurveGeometry = (() => {
         const tolerance = 64 * Number.EPSILON * coefficients.reduceRight((v, c) => v * Math.abs(value) + Math.abs(c), 0);
         if (square < 0 && square >= -tolerance) square = 0;
         x.push(value);
-        const offset = model ? -evaluate(h, value)/2 : 0;
-        const ordinate = square < 0 ? null : Math.sqrt(square)*(model ? .5 : 1);
-        positive.push(ordinate === null ? null : offset+ordinate);
-        negative.push(ordinate === null ? null : offset-ordinate);
+        const ordinate = square < 0 ? null : Math.sqrt(square);
+        positive.push(ordinate);
+        negative.push(ordinate === null ? null : -ordinate);
       }
       if (interval > 0 && interval < bounds.length - 2) boundedHeight = Math.max(boundedHeight,
         ...positive.concat(negative).filter(y => y !== null).map(Math.abs));

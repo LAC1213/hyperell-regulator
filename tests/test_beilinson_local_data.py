@@ -26,6 +26,7 @@ def curve(label):
     ('1296.a.20736.1', 26244), ('2704.a.43264.1', 114244),
     ('3969.c.35721.1', 15752961), ('4096.b.65536.1', 4096),
     ('8649.c.700569.1', 74805201),
+    ('3125.a.3125.1', 15625),
 ])
 def test_manual_factors_and_full_standard_conductors(label, conductor):
     C = curve(label)

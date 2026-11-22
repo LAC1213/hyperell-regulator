@@ -9,7 +9,7 @@ from sage.all import QQ, RealField, ZZ, lcm, matrix
 from ..certified import display_float, encode_ball, encode_result
 from ..components import curve_points
 from ..integrality import _integer_matrix, torsion_packets
-from .._galois import galois_trace_basis
+from .._galois import galois_trace_basis, galois_traces
 from .._algebraic import encode_algebraic
 from ..motivic import MotivicPacket, _divisor_evaluator
 from ..regulator import c_invariants
@@ -72,7 +72,7 @@ def _integral_kernel(packet, *, cache=True):
                       packet_torsion_order_exact=True, orders_to_base=list(map(str, solver.orders)))
         return record
 
-    return cached_kernel(packet.f, packet.h, support, compute) if cache else compute()
+    return cached_kernel(packet.f, packet.h, support, compute, incomplete_revision=3) if cache else compute()
 
 
 def _kernel_record(points, integral, complete, orbit_sum, lift, check, places, traces):
@@ -80,6 +80,9 @@ def _kernel_record(points, integral, complete, orbit_sum, lift, check, places, t
     verdicts = [True]*len(rows)
     space = matrix(QQ, len(rows), len(points), rows)*orbit_sum.transpose()
     span = space.row_space()
+    if any(row not in traces.row_space() for row in space):
+        raise ValueError('integral directions must lie in the rational Galois-trace space')
+    rational_rank = space.rank()
     for abscissa_row in traces:
         if span.dimension() == traces.nrows():
             break
@@ -92,7 +95,23 @@ def _kernel_record(points, integral, complete, orbit_sum, lift, check, places, t
     full_basis = [[str(a) for a in row] for row in normalized]
     return dict(points=points, basis=full_basis[:len(integral)], complete=complete,
                 divisor_basis=full_basis, divisor_integrality=verdicts, places=places,
-                divisor_descent='galois_trace', base_field='Q')
+                divisor_descent='galois_trace', base_field='Q',
+                rank_over_Q=rational_rank, trace_space_rank_over_Q=traces.rank())
+
+
+def _kernel_trace_rank(kernel, basis_key='basis'):
+    """Rank over QQ after the Galois trace and symmetric-ordinate projection."""
+    from .geometric_torsion import decode_point
+
+    points = [decode_point(P) for P in kernel['points']]
+    xs = tuple(dict.fromkeys(x for x, _ in points))
+    groups = [[i for i, (x, _) in enumerate(points) if x == a] for a in xs]
+    rows = matrix(QQ, len(kernel[basis_key]), len(xs),
+                  [[sum(QQ(D[i]) for i in group) for group in groups] for D in kernel[basis_key]])
+    traced = galois_traces(xs, rows)
+    if rows != traced:
+        raise ValueError('cached divisor directions are not rational Galois traces')
+    return traced.rank()
 
 
 def _real_logarithm_rank(abscissae, rows):
@@ -165,19 +184,23 @@ def _analyse_packet(record, C, row, selection, *, verbose, with_periods,
     full_support = result.get('packet_support_complete', True)
     complete_support = full_support and (result['packet_used'] == 'geometric'
                                          or not result['unresolved_torsion_pairs'])
-    result.update(integral_rank=max((len(k['basis']) for k in kernels), default=0),
+    for kernel in kernels:
+        kernel['rank_over_Q'] = _kernel_trace_rank(kernel)
+    result.update(integral_rank=max((k['rank_over_Q'] for k in kernels), default=0),
+                  integral_rank_field='Q', integral_rank_space='galois_traces',
                   integral_rank_complete=complete_support and all(k['complete'] for k in kernels))
     if complete_support and all(k['complete'] or 'rank_upper_bound' in k for k in kernels):
         result['integral_rank_upper_bound'] = max(
-            (k.get('rank_upper_bound', len(k['basis'])) for k in kernels), default=0)
+            (k.get('rank_upper_bound', k['rank_over_Q']) for k in kernels), default=0)
     options = {'certified': True} if certified else {}
     attempts, errors, symmetry_bounds = [], [], []
     for kernel in kernels:
         basis = kernel[basis_key]
-        if len(basis) < 2:
+        rank = _kernel_trace_rank(kernel, basis_key)
+        if rank < 2:
             continue
         if verbose:
-            print('  %s divisor directions, integrating on a common cut' % len(basis), flush=True)
+            print('  %s rational Galois-trace directions, integrating on a common cut' % rank, flush=True)
         clock = time.monotonic()
         try:
             # The kernel calculation verified torsion and integrality.

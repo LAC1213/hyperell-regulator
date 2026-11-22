@@ -26,6 +26,17 @@ _DATA_688 = {
 }
 
 LOCAL_DATA = {
+    "3125.a.3125.1": {
+        "model": [[0, 0, 0, 0, 0, 1], [1]],
+        "standard_factors": {"5": [1]},
+        "conductor_exponents": {"5": 6},
+        "derivation": "CM by Q(zeta_5): the standard representation is the ramified "
+                      "quadratic Tate character plus a four-dimensional induced character. "
+                      "The latter retains conductor (1-zeta_5)^2 over Q(zeta_5), "
+                      "so its rational conductor exponent is 3+2=5; the quadratic "
+                      "summand adds 1. Both summands have no inertia invariants at 5.",
+        "references": ["https://mathe2.uni-bayreuth.de/stoll/papers/StollYang-2002-09-18.pdf"],
+    },
     "324.a.648.1": {
         "model": [[0, 0, 1, 2, 2, 1], [1, 1, 0, 1]],
         "standard_factors": {"3": [1, -3]},

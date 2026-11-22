@@ -7878,6 +7878,10 @@
           1.0
         ]
       ]
-    }
+    },
+    "integral_rank": 2,
+    "integral_rank_field": "Q",
+    "integral_rank_space": "galois_traces",
+    "trace_rank_certificate": null
   }
 }

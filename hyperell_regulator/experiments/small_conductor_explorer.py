@@ -78,7 +78,8 @@ def compute_curve(entry, out, prec=15, edge_seconds=120, *, table_digits=100, cu
     else:
         raise ArithmeticError('Fresh divisor matrix disagrees with saved experiment: '+entry['label'])
     collection = {key: entry[key] for key in ('label', 'divisors', 'support', 'logarithmic_centers',
-                  'matrix_divisor_ids', 'packet_torsion_order', 'end_alg', 'coordinate_system', 'lmfdb_model')}
+                  'matrix_divisor_ids', 'packet_torsion_order', 'end_alg', 'coordinate_system', 'lmfdb_model', 'integral_rank', 'integral_rank_field',
+                  'integral_rank_space', 'trace_rank_certificate')}
     collection['divisor_center_coefficients'] = [list(map(str, D)) for D in coefficients]
     data['collection'] = collection
     filename = entry['label']+'.json'

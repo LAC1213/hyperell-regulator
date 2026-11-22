@@ -17,6 +17,7 @@ from .stable_model import StableModel
 # Reciprocal coordinate, depth of the elliptic chart centre relative to
 # the singular abscissa, and disc radius, in the normalization v(2)=1.
 _ELLIPTIC_CHARTS = {
+    ((0,-1,0,0,0,1), ()): (False, QQ(1)/2, QQ(1)),
     ((0,-1,1,1,-3,2), (1,)): (True, QQ(1)/2, QQ(3)/2),
     ((0,0,-2,-4,3,8), (1,1)): (True, QQ(3)/2, QQ(5)/3),
     ((0,1,16,72,33,4), (0,1)): (True, QQ(1), QQ(5)/3),
@@ -31,6 +32,7 @@ _ELLIPTIC_CHARTS = {
 _INTERMEDIATE_CHART = ((0,1,-1,-4,0,3), (1,0,1))
 _SPLIT_ANNULUS = ((0,0,-1,2,0,-2,1), (1,1))
 _TWO_BRANCH_LOOP = ((0,1,0,-1,-1), (0,1,0,1))
+_BOLZA = ((0,-1,0,0,0,1), ())
 
 
 def _valuation(a, prime):
@@ -98,6 +100,84 @@ def _depth(x, centre, prime, reciprocal):
     if all(_valuation(shifted[i], prime) >= (d-i)*v for i in range(1, d)):
         return v
     return None
+
+
+def _mean_clipped_depth(polynomial, centre, prime, radius, floor=QQ(0)):
+    """Average the clipped root distances using the exact lower Newton polygon."""
+    R = PolynomialRing(centre.parent(), 'z')
+    shifted = R(polynomial.list())(R.gen()+centre)
+    vertices = []
+    for i, coefficient in enumerate(shifted):
+        if not coefficient:
+            continue
+        point = (i, _valuation(coefficient, prime))
+        while len(vertices) > 1:
+            a, b = vertices[-2:]
+            if (b[1]-a[1])*(point[0]-b[0]) < (point[1]-b[1])*(b[0]-a[0]):
+                break
+            vertices.pop()
+        vertices.append(point)
+    total = vertices[0][0]*radius  # Roots equal to the centre have infinite depth.
+    for (i, a), (j, b) in zip(vertices, vertices[1:]):
+        depth = (a-b)/(j-i)
+        total += (j-i)*max(floor, min(radius, depth))
+    return total/polynomial.degree()
+
+
+def _bolza_constraints(local, points, groups, chart, radius):
+    """Use the two disjoint elliptic discs exchanged by x -> i*x.
+
+    The original characteristic-two normalization is rational, so the
+    outside of the discs retracts to the bridge midpoint, not an endpoint.
+    A full rational orbit is evaluated by its Newton-polygon averages.
+    """
+    centre, prime, abc, remainder = chart
+    K = centre.parent()
+    R = PolynomialRing(K, 'i')
+    relative = K.extension(R.gen()**2+1, 'i')
+    field = relative.absolute_field('b')
+    _, embed = field.structure()
+    lift = lambda x: embed(relative(x))
+    c, other = lift(centre), lift(centre)*lift(relative.gen())
+    # F(i*x)=i*F(x) transports the verified elliptic square completion
+    # to the second disc, with the same radius and residual genus.
+    q = field.ideal([lift(g) for g in prime.gens()]).prime_factors()[0]
+    join = _valuation(c-other, q)
+    if join != QQ(1)/2 or not join < radius:
+        raise ArithmeticError('the two Bolza elliptic discs did not separate')
+    half_span = radius-join
+    span = 2*half_span
+    transformed = (c, q, tuple(lift(a) for a in abc), tuple(lift(a) for a in remainder))
+    weights = []
+    for x, _ in points:
+        a, b = _depth(x, c, q, False), _depth(x, other, q, False)
+        weights.append(None if a is None or b is None else
+                       half_span+max(join, min(radius, a))-max(join, min(radius, b)))
+    model = _compact_type_model(local, groups, weights, span, transformed, False)
+    data = graph_constraints(model, 'bolza_two_elliptic_discs')
+    data.evidence.update(centre=c, other_centre=other, radius=radius,
+                         join_depth=join, weights=weights)
+    orbits, averages = {}, [half_span]*len(groups)
+    for i, group in enumerate(groups):
+        x = points[group[0]][0]
+        key = None if x == 'infinity' else tuple(x.minpoly())
+        orbits.setdefault(key, []).append(i)
+    for key, indices in orbits.items():
+        if key is None:
+            continue
+        polynomial = PolynomialRing(QQ, 'z')(key)
+        if len(indices) != polynomial.degree():
+            return data  # A partial orbit cannot be replaced by its average.
+        mean = (half_span+_mean_clipped_depth(polynomial, c, q, radius, join)
+                -_mean_clipped_depth(polynomial, other, q, radius, join))
+        for i in indices:
+            averages[i] = mean
+    endpoint = data.evidence['model'].graph.vertex_boundaries[-1]
+    columns = [a/span*endpoint for a in averages]
+    data.evidence.update(galois_trace_matrix=matrix(QQ, columns).transpose(),
+                         galois_trace_orbits=tuple(tuple(g) for g in orbits.values()),
+                         galois_trace_depths=averages)
+    return data
 
 
 def _weight_constraints(method, weights, groups, evidence):
@@ -233,6 +313,8 @@ def dyadic_constraints(local, points, groups, stable_type):
         raise NotImplementedError('no verified wild model for this equation')
     reciprocal, depth, radius = _ELLIPTIC_CHARTS[key]
     chart = elliptic_chart(key, reciprocal, depth, radius)
+    if key == _BOLZA:
+        return _bolza_constraints(local, points, groups, chart, radius)
     centre, prime, _, _ = chart
     depths = [_depth(x, centre, prime, reciprocal) for x, _ in points]
     if key == _INTERMEDIATE_CHART:

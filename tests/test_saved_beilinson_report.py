@@ -4,6 +4,7 @@ from copy import deepcopy
 from decimal import Decimal
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 
@@ -158,3 +159,18 @@ def test_unshifted_model_keeps_its_original_variable_and_infinity_pole():
     assert data["pole"] == "infinity"
     assert data["model"].startswith("u^6 + 2*u^5")
     assert data["image_points"] == [["-1", "0"], ["0", "-1"], "infinity"]
+
+
+def test_explicit_extra_curves_include_full_generators_beyond_survey_bound(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    snapshot = report.explorer_inputs(root/'reports/beilinson_100_digits.json', tmp_path/'inputs.json',
+                                     extra_results=[root/'docs/explorer_extra_results.json'])
+    assert len(snapshot['curves']) == 43
+    assert snapshot['source']['conductor_bound'] == 1000
+    assert snapshot['source']['additional_results'][0]['labels'] == ['3125.a.3125.1', '4096.b.65536.1']
+    extra = {c['label']: c for c in snapshot['curves'][-2:]}
+    assert len(extra['3125.a.3125.1']['divisors']) == 4
+    assert extra['3125.a.3125.1']['matrix_divisor_ids'] == ['D2', 'D4']
+    assert len(extra['4096.b.65536.1']['divisors']) == 6
+    assert extra['4096.b.65536.1']['matrix_divisor_ids'] == ['D1', 'D2']
+    assert all(c['integral_rank_field'] == 'Q' for c in extra.values())

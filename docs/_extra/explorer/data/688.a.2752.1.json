@@ -7222,6 +7222,10 @@
           0.5244908054223534
         ]
       ]
-    }
+    },
+    "integral_rank": 3,
+    "integral_rank_field": "Q",
+    "integral_rank_space": "galois_traces",
+    "trace_rank_certificate": null
   }
 }

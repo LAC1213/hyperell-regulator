@@ -28,9 +28,9 @@ def _kernel_in_worker(row, packet, rational_only, seconds, progress):
             raise ArithmeticError(reason)
         return json.loads(completed.stdout)
 
-    # Revisit older incomplete results once under the reduced-support solver.
+    # Revisit incomplete results after adding verified dyadic charts.
     return cached_kernel(packet.f, packet.h, ['geometric', data, packet.complete, rational_only],
-                         compute, incomplete_revision=None if rational_only else 1)
+                         compute, incomplete_revision=None if rational_only else 3)
 
 
 def geometric_kernel(C, row, *, seconds, progress):

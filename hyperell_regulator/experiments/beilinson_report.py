@@ -390,17 +390,27 @@ Source SHA-256: `{checksum}`.
     print('Exported %d records to %s' % (len(rows), output))
 
 
-def explorer_inputs(report, output, *, bound=BOUND, digits=DIGITS):
+def explorer_inputs(report, output, *, bound=BOUND, digits=DIGITS, extra_results=()):
     """Export exact divisor support and every center used on the shared cut."""
     raw = Path(report).read_bytes()
     curves = []
-    for row in json.loads(raw):
-        if (row.get('status') != 'ok' or not 0 < int(row['cond']) < bound
+    records = [(row, False) for row in json.loads(raw)]
+    additional = []
+    for path in extra_results:
+        contents = Path(path).read_bytes()
+        saved = json.loads(contents)
+        extra = saved['curves'] if isinstance(saved, dict) else saved
+        records.extend((row, True) for row in extra)
+        additional.append(dict(snapshot=str(path), sha256=hashlib.sha256(contents).hexdigest(),
+                               labels=[row['label'] for row in extra]))
+    for row, explicit in records:
+        if (row.get('status') != 'ok' or not (0 < int(row['cond']) and (explicit or int(row['cond']) < bound))
                 or int(row['cond']) in EXCLUDED_DISPLAY_CONDUCTORS):
             continue
         if any(row.get(k) is None for k in ('matrix', 'det', 'c_plus', 'c_minus', 'L_second_derivative')):
             continue
-        data = row.get('divisor_data') or divisor_metadata(row)
+        data = dict(row.get('integral_basis_display') or row.get('divisor_data') or divisor_metadata(row))
+        data['matrix_divisor_ids'] = (row.get('divisor_data') or divisor_metadata(row))['matrix_divisor_ids']
         comparison = row.get('comparison', {})
         error = comparison_error(row)
         verified = bool(comparison.get('rational')) and error is not None and Decimal(error) < Decimal(10)**(-digits+5)
@@ -415,12 +425,20 @@ def explorer_inputs(report, output, *, bound=BOUND, digits=DIGITS):
             L_certified=row.get('L_certified', False), L_analytic_assumptions=row.get('L_analytic_assumptions'),
             relative_agreement=error, regulator_digits=row['regulator_digits'], L_digits=row.get('L_digits'),
             comparison_verified=verified, certified=row.get('certified', False),
+            integral_rank=row.get('integral_rank'), integral_rank_field=row.get('integral_rank_field', 'Q'),
+            integral_rank_space=row.get('integral_rank_space', 'galois_traces'),
+            trace_rank_certificate=row.get('trace_rank_certificate'),
             integrality_verified=row.get('integral', all(row.get('triple', {}).get(k) is True for k in ('verdict_P', 'verdict_Q'))),
             linear_comparison=row.get('linear_comparison'), original_curve=row.get('input_curve')))
+    labels = [curve['label'] for curve in curves]
+    if len(labels) != len(set(labels)):
+        raise ValueError('Duplicate curve labels in explorer sources')
     snapshot = dict(schema_version=3, source=dict(title=f'Beilinson survey: conductor < {bound}, {digits}-digit targets',
         input_snapshot=str(output), report_snapshot=str(report), report_sha256=hashlib.sha256(raw).hexdigest(),
         conductor_bound=bound, regulator_digits=digits, lvalue_digits=digits,
         excluded_conductors=sorted(EXCLUDED_DISPLAY_CONDUCTORS)), curves=curves)
+    if additional:
+        snapshot['source']['additional_results'] = additional
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(snapshot, indent=2, allow_nan=False)+'\n')
@@ -435,12 +453,17 @@ def main(argv=None):
     parser.add_argument("--out", type=Path, default=Path("reports"))
     parser.add_argument("--explorer-inputs", type=Path,
                         help="also write an explorer input catalog from the new report")
+    parser.add_argument('--extra-results', type=Path, action='append', default=[],
+                        help='include a saved single-curve result collection in the explorer')
     parser.add_argument('--bound', type=int, default=BOUND)
     parser.add_argument('--digits', type=int, default=DIGITS)
     args = parser.parse_args(argv)
+    if args.extra_results and not args.explorer_inputs:
+        parser.error('--extra-results requires --explorer-inputs')
     export(args.input, args.out, args.cache, bound=args.bound, digits=args.digits)
     if args.explorer_inputs:
-        explorer_inputs(args.out/"beilinson_100_digits.json", args.explorer_inputs, bound=args.bound, digits=args.digits)
+        explorer_inputs(args.out/"beilinson_100_digits.json", args.explorer_inputs, bound=args.bound, digits=args.digits,
+                        extra_results=args.extra_results)
 
 
 if __name__ == "__main__":

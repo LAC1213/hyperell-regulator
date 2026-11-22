@@ -102,8 +102,8 @@ def test_catalog_has_one_two_sheet_plot_per_curve_and_reassembles_all_weights():
     assert catalog['numerical_source_hash_method']==SOURCE_HASH_METHOD
     assert catalog['numerical_source_sha256']==numerical_source_hashes()
     assert [c['label'] for c in catalog['curves']]==[c['label'] for c in inputs['curves']]
-    assert len(catalog['curves'])==41
-    assert len({c['file'] for c in catalog['curves']})==41
+    assert len(catalog['curves'])==43
+    assert len({c['file'] for c in catalog['curves']})==43
     assert catalog['source']['report_sha256']==hashlib.sha256((root/'reports/beilinson_100_digits.json').read_bytes()).hexdigest()
     for curve in catalog['curves']:
         assert 'functions' not in curve and 'exact_functions' not in curve
@@ -118,6 +118,8 @@ def test_catalog_has_one_two_sheet_plot_per_curve_and_reassembles_all_weights():
         assert curve['centers_source'] == 'computation'
         assert data['collection']['experiment']['reference_intervals'] == curve['reference_intervals']
         assert data['collection']['support'] == curve['support']
+        assert data['collection']['integral_rank_field'] == 'Q'
+        assert data['collection']['integral_rank'] == curve['integral_rank']
         assert data['collection']['coordinate_system'] == 'lmfdb'
         assert data['collection']['lmfdb_model'] == curve['lmfdb_model']
         from hyperell_regulator.experiments.geometric_torsion import decode_point
@@ -160,6 +162,7 @@ def test_table_uses_current_mst_periods_and_recomputed_quotients():
     root=Path(__file__).resolve().parents[1]
     catalog=json.loads((root/'docs/_extra/explorer/catalog.json').read_text())
     periods={r['label']:r for r in json.loads((root/'reports/beilinson_100_digits.json').read_text()) if r['status']=='ok'}
+    periods.update({r['label']:r for r in json.loads((root/'docs/explorer_extra_results.json').read_text())['curves']})
     R=RealField(400)
     for curve in catalog['curves']:
         reference=periods[curve['label']]
@@ -176,4 +179,4 @@ def test_table_uses_current_mst_periods_and_recomputed_quotients():
         assert abs(q/R(curve['quotient'])-1)<R('1e-99')
         assert curve['q']==reference['comparison']['rational'] and curve['comparison_verified']
         assert abs(q/R(QQ(curve['q']))-1)<R('1e-95')
-    assert sum(c['end_alg']=='CM' for c in catalog['curves'])==5
+    assert sum(c['end_alg']=='CM' for c in catalog['curves'])==6

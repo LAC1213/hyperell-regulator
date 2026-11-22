@@ -10,6 +10,16 @@
     "lvalue_digits": 100,
     "excluded_conductors": [
       1116
+    ],
+    "additional_results": [
+      {
+        "snapshot": "docs/explorer_extra_results.json",
+        "sha256": "8fd18fb1c3fcf0b7f267e84956567d1aa8a5f87a086e0eb74745a5db5abfb368",
+        "labels": [
+          "3125.a.3125.1",
+          "4096.b.65536.1"
+        ]
+      }
     ]
   },
   "curves": [
@@ -534,6 +544,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -1052,6 +1066,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -1627,6 +1645,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -2206,6 +2228,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -2725,6 +2751,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -3238,6 +3268,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -3802,6 +3836,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -4320,6 +4358,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -4884,6 +4926,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -5351,6 +5397,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -5807,6 +5857,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -6376,6 +6430,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -6904,6 +6962,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -7632,6 +7694,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -8145,6 +8211,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -8607,6 +8677,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -9176,6 +9250,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -10055,6 +10133,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 4,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -10511,6 +10593,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -10967,6 +11053,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -11588,6 +11678,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -12123,6 +12217,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 3,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -12707,6 +12805,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -13158,6 +13260,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -13614,6 +13720,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -14132,6 +14242,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -14594,6 +14708,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -15051,6 +15169,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -15685,6 +15807,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -16491,6 +16617,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -16897,6 +17027,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -17473,6 +17607,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -18004,6 +18142,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -18528,6 +18670,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -19052,6 +19198,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -19515,6 +19665,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -20033,6 +20187,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -20495,6 +20653,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -21116,6 +21278,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -21536,6 +21702,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -21988,6 +22158,10 @@
       "L_digits": 100,
       "comparison_verified": true,
       "certified": true,
+      "integral_rank": 2,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": null,
       "integrality_verified": true,
       "linear_comparison": null,
       "original_curve": {
@@ -22024,6 +22198,5127 @@
           8
         ],
         "end_alg": "Q"
+      }
+    },
+    {
+      "label": "3125.a.3125.1",
+      "cond": 3125,
+      "F": "-4095*x^6 + 5120*x^5 - 2560*x^4 + 640*x^3 - 80*x^2 + 4*x",
+      "divisors": [
+        {
+          "id": "D1",
+          "tex": "D_{1}=-P_{1}-P_{2}-P_{3}-P_{4}-P_{5}+5\\,\\infty_{Y=0}",
+          "coefficients": [
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "5",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "D2",
+          "tex": "D_{2}=-2\\,P_{1}-2\\,P_{2}-2\\,P_{3}-2\\,P_{4}-2\\,P_{5}+5\\,P_{7}+5\\,P_{8}",
+          "coefficients": [
+            "-2",
+            "-2",
+            "-2",
+            "-2",
+            "-2",
+            "0",
+            "5",
+            "5",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "D3",
+          "tex": "D_{3}=-2\\,P_{1}-2\\,P_{2}-2\\,P_{3}-2\\,P_{4}-2\\,P_{5}+5\\,\\left(0,0\\right)+5\\,\\left(0,-1\\right)",
+          "coefficients": [
+            "-2",
+            "-2",
+            "-2",
+            "-2",
+            "-2",
+            "0",
+            "0",
+            "0",
+            "5",
+            "5",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "D4",
+          "tex": "D_{4}=-8\\,P_{1}-8\\,P_{2}-8\\,P_{3}-8\\,P_{4}-8\\,P_{5}+5\\,P_{11}+5\\,P_{12}+5\\,P_{13}+5\\,P_{14}+5\\,P_{15}+5\\,P_{16}+5\\,P_{17}+5\\,P_{18}",
+          "coefficients": [
+            "-8",
+            "-8",
+            "-8",
+            "-8",
+            "-8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "5",
+            "5",
+            "5",
+            "5",
+            "5",
+            "5",
+            "5",
+            "5"
+          ]
+        }
+      ],
+      "support": [
+        {
+          "id": "P1",
+          "index": 0,
+          "point": {
+            "field_polynomial": [
+              "-2",
+              "0",
+              "0",
+              "0",
+              "0",
+              "1"
+            ],
+            "root_index": 4,
+            "coordinates": [
+              [
+                "1024/4095",
+                "32/4095",
+                "1/4095",
+                "128/4095",
+                "4/4095"
+              ],
+              [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0"
+              ]
+            ]
+          },
+          "tex": "P_{1}",
+          "definition_tex": "P_{1}=\\left(-\\frac{1}{2} \\theta_{1}^{3},-\\frac{1}{2}\\right),\\quad \\theta_{1}^{5} - 2=0\\;\\text{(root index 4)}",
+          "x": [
+            0.3084380904250007,
+            0.0
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "-2",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1"
+              ],
+              "root_index": 4,
+              "coordinates": [
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-1/2",
+                  "0"
+                ],
+                [
+                  "-1/2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              -0.757858283255199,
+              0.0
+            ],
+            "y": [
+              -0.5,
+              0.0
+            ],
+            "infinity": false,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-2",
+            "D3": "-2",
+            "D4": "-8"
+          },
+          "center_index": 0
+        },
+        {
+          "id": "P2",
+          "index": 1,
+          "point": {
+            "field_polynomial": [
+              "-2",
+              "0",
+              "0",
+              "0",
+              "0",
+              "1"
+            ],
+            "root_index": 1,
+            "coordinates": [
+              [
+                "1024/4095",
+                "32/4095",
+                "1/4095",
+                "128/4095",
+                "4/4095"
+              ],
+              [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0"
+              ]
+            ]
+          },
+          "tex": "P_{2}",
+          "definition_tex": "P_{2}=\\left(-\\frac{1}{2} \\theta_{2}^{3},-\\frac{1}{2}\\right),\\quad \\theta_{2}^{5} - 2=0\\;\\text{(root index 1)}",
+          "x": [
+            0.25616317944188727,
+            0.049028968168973674
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "-2",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1"
+              ],
+              "root_index": 1,
+              "coordinates": [
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-1/2",
+                  "0"
+                ],
+                [
+                  "-1/2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              -0.23419108885367917,
+              -0.7207660587181153
+            ],
+            "y": [
+              -0.5,
+              0.0
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-2",
+            "D3": "-2",
+            "D4": "-8"
+          },
+          "center_index": 1
+        },
+        {
+          "id": "P3",
+          "index": 2,
+          "point": {
+            "field_polynomial": [
+              "-2",
+              "0",
+              "0",
+              "0",
+              "0",
+              "1"
+            ],
+            "root_index": 0,
+            "coordinates": [
+              [
+                "1024/4095",
+                "32/4095",
+                "1/4095",
+                "128/4095",
+                "4/4095"
+              ],
+              [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0"
+              ]
+            ]
+          },
+          "tex": "P_{3}",
+          "definition_tex": "P_{3}=\\left(-\\frac{1}{2} \\theta_{3}^{3},-\\frac{1}{2}\\right),\\quad \\theta_{3}^{5} - 2=0\\;\\text{(root index 0)}",
+          "x": [
+            0.25616317944188727,
+            -0.049028968168973674
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "-2",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1"
+              ],
+              "root_index": 0,
+              "coordinates": [
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-1/2",
+                  "0"
+                ],
+                [
+                  "-1/2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              -0.23419108885367917,
+              0.7207660587181153
+            ],
+            "y": [
+              -0.5,
+              0.0
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-2",
+            "D3": "-2",
+            "D4": "-8"
+          },
+          "center_index": 2
+        },
+        {
+          "id": "P4",
+          "index": 3,
+          "point": {
+            "field_polynomial": [
+              "-2",
+              "0",
+              "0",
+              "0",
+              "0",
+              "1"
+            ],
+            "root_index": 2,
+            "coordinates": [
+              [
+                "1024/4095",
+                "32/4095",
+                "1/4095",
+                "128/4095",
+                "4/4095"
+              ],
+              [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0"
+              ]
+            ]
+          },
+          "tex": "P_{4}",
+          "definition_tex": "P_{4}=\\left(-\\frac{1}{2} \\theta_{4}^{3},-\\frac{1}{2}\\right),\\quad \\theta_{4}^{5} - 2=0\\;\\text{(root index 2)}",
+          "x": [
+            0.2147704004982376,
+            0.020738929744177903
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "-2",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1"
+              ],
+              "root_index": 2,
+              "coordinates": [
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-1/2",
+                  "0"
+                ],
+                [
+                  "-1/2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              0.6131202304812786,
+              -0.4454579222250977
+            ],
+            "y": [
+              -0.5,
+              0.0
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-2",
+            "D3": "-2",
+            "D4": "-8"
+          },
+          "center_index": 3
+        },
+        {
+          "id": "P5",
+          "index": 4,
+          "point": {
+            "field_polynomial": [
+              "-2",
+              "0",
+              "0",
+              "0",
+              "0",
+              "1"
+            ],
+            "root_index": 3,
+            "coordinates": [
+              [
+                "1024/4095",
+                "32/4095",
+                "1/4095",
+                "128/4095",
+                "4/4095"
+              ],
+              [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0"
+              ]
+            ]
+          },
+          "tex": "P_{5}",
+          "definition_tex": "P_{5}=\\left(-\\frac{1}{2} \\theta_{5}^{3},-\\frac{1}{2}\\right),\\quad \\theta_{5}^{5} - 2=0\\;\\text{(root index 3)}",
+          "x": [
+            0.2147704004982376,
+            -0.020738929744177903
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "-2",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1"
+              ],
+              "root_index": 3,
+              "coordinates": [
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-1/2",
+                  "0"
+                ],
+                [
+                  "-1/2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              0.6131202304812786,
+              0.4454579222250977
+            ],
+            "y": [
+              -0.5,
+              0.0
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-2",
+            "D3": "-2",
+            "D4": "-8"
+          },
+          "center_index": 4
+        },
+        {
+          "id": "P6",
+          "index": 5,
+          "point": {
+            "field_polynomial": null,
+            "root_index": null,
+            "coordinates": [
+              "0",
+              "0"
+            ]
+          },
+          "tex": "\\infty_{Y=0}",
+          "definition_tex": "P_{6}=\\infty_{Y=0}",
+          "x": [
+            0.0,
+            0.0
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": null,
+              "root_index": null,
+              "coordinates": [
+                "infinity",
+                "0"
+              ]
+            },
+            "x": null,
+            "y": [
+              0.0,
+              0.0
+            ],
+            "infinity": true,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "5",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0"
+          },
+          "center_index": 5
+        },
+        {
+          "id": "P7",
+          "index": 6,
+          "point": {
+            "field_polynomial": [
+              "-1",
+              "-1",
+              "1"
+            ],
+            "root_index": 0,
+            "coordinates": [
+              [
+                "1/5",
+                "0"
+              ],
+              [
+                "1/125",
+                "-2/125"
+              ]
+            ]
+          },
+          "tex": "P_{7}",
+          "definition_tex": "P_{7}=\\left(1,-\\theta_{7}\\right),\\quad \\theta_{7}^{2} - \\theta_{7} - 1=0\\;\\text{(root index 0)}",
+          "x": [
+            0.2,
+            0.0
+          ],
+          "y": [
+            0.01788854381999832,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "-1",
+                "-1",
+                "1"
+              ],
+              "root_index": 0,
+              "coordinates": [
+                [
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "-1"
+                ]
+              ]
+            },
+            "x": [
+              1.0,
+              0.0
+            ],
+            "y": [
+              0.6180339887498949,
+              0.0
+            ],
+            "infinity": false,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "5",
+            "D3": "0",
+            "D4": "0"
+          },
+          "center_index": 6
+        },
+        {
+          "id": "P8",
+          "index": 7,
+          "point": {
+            "field_polynomial": [
+              "-1",
+              "-1",
+              "1"
+            ],
+            "root_index": 0,
+            "coordinates": [
+              [
+                "1/5",
+                "0"
+              ],
+              [
+                "-1/125",
+                "2/125"
+              ]
+            ]
+          },
+          "tex": "P_{8}",
+          "definition_tex": "P_{8}=\\left(1,\\theta_{8} - 1\\right),\\quad \\theta_{8}^{2} - \\theta_{8} - 1=0\\;\\text{(root index 0)}",
+          "x": [
+            0.2,
+            0.0
+          ],
+          "y": [
+            -0.01788854381999832,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "-1",
+                "-1",
+                "1"
+              ],
+              "root_index": 0,
+              "coordinates": [
+                [
+                  "1",
+                  "0"
+                ],
+                [
+                  "-1",
+                  "1"
+                ]
+              ]
+            },
+            "x": [
+              1.0,
+              0.0
+            ],
+            "y": [
+              -1.618033988749895,
+              0.0
+            ],
+            "infinity": false,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "5",
+            "D3": "0",
+            "D4": "0"
+          },
+          "center_index": 6
+        },
+        {
+          "id": "P9",
+          "index": 8,
+          "point": {
+            "field_polynomial": null,
+            "root_index": null,
+            "coordinates": [
+              "1/4",
+              "1/64"
+            ]
+          },
+          "tex": "\\left(0,0\\right)",
+          "definition_tex": "P_{9}=\\left(0,0\\right)",
+          "x": [
+            0.25,
+            0.0
+          ],
+          "y": [
+            0.015625,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": null,
+              "root_index": null,
+              "coordinates": [
+                "0",
+                "0"
+              ]
+            },
+            "x": [
+              0.0,
+              0.0
+            ],
+            "y": [
+              0.0,
+              0.0
+            ],
+            "infinity": false,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "5",
+            "D4": "0"
+          },
+          "center_index": 7
+        },
+        {
+          "id": "P10",
+          "index": 9,
+          "point": {
+            "field_polynomial": null,
+            "root_index": null,
+            "coordinates": [
+              "1/4",
+              "-1/64"
+            ]
+          },
+          "tex": "\\left(0,-1\\right)",
+          "definition_tex": "P_{10}=\\left(0,-1\\right)",
+          "x": [
+            0.25,
+            0.0
+          ],
+          "y": [
+            -0.015625,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": null,
+              "root_index": null,
+              "coordinates": [
+                "0",
+                "-1"
+              ]
+            },
+            "x": [
+              0.0,
+              0.0
+            ],
+            "y": [
+              -1.0,
+              0.0
+            ],
+            "infinity": false,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "5",
+            "D4": "0"
+          },
+          "center_index": 7
+        },
+        {
+          "id": "P11",
+          "index": 10,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "-1",
+              "1",
+              "-1",
+              "1"
+            ],
+            "root_index": 3,
+            "coordinates": [
+              [
+                "51/205",
+                "13/205",
+                "3/205",
+                "1/205"
+              ],
+              [
+                "11288/344605",
+                "1374/344605",
+                "16859/344605",
+                "-5382/344605"
+              ]
+            ]
+          },
+          "tex": "P_{11}",
+          "definition_tex": "P_{11}=\\left(-\\theta_{11},-\\theta_{11}^{3} + \\theta_{11}^{2}\\right),\\quad \\theta_{11}^{4} - \\theta_{11}^{3} + \\theta_{11}^{2} - \\theta_{11} + 1=0\\;\\text{(root index 3)}",
+          "x": [
+            0.30309880446645954,
+            0.05583138704869642
+          ],
+          "y": [
+            0.055926165674219416,
+            0.034018347308278574
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "-1",
+                "1",
+                "-1",
+                "1"
+              ],
+              "root_index": 3,
+              "coordinates": [
+                [
+                  "0",
+                  "-1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "1",
+                  "-1"
+                ]
+              ]
+            },
+            "x": [
+              -0.8090169943749475,
+              -0.5877852522924731
+            ],
+            "y": [
+              0.6180339887498949,
+              5.421010862427522e-20
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "5"
+          },
+          "center_index": 8
+        },
+        {
+          "id": "P12",
+          "index": 11,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "-1",
+              "1",
+              "-1",
+              "1"
+            ],
+            "root_index": 3,
+            "coordinates": [
+              [
+                "51/205",
+                "13/205",
+                "3/205",
+                "1/205"
+              ],
+              [
+                "-11288/344605",
+                "-1374/344605",
+                "-16859/344605",
+                "5382/344605"
+              ]
+            ]
+          },
+          "tex": "P_{12}",
+          "definition_tex": "P_{12}=\\left(-\\theta_{12},\\theta_{12}^{3} - \\theta_{12}^{2} - 1\\right),\\quad \\theta_{12}^{4} - \\theta_{12}^{3} + \\theta_{12}^{2} - \\theta_{12} + 1=0\\;\\text{(root index 3)}",
+          "x": [
+            0.30309880446645954,
+            0.05583138704869642
+          ],
+          "y": [
+            -0.055926165674219416,
+            -0.034018347308278574
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "-1",
+                "1",
+                "-1",
+                "1"
+              ],
+              "root_index": 3,
+              "coordinates": [
+                [
+                  "0",
+                  "-1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "-1",
+                  "0",
+                  "-1",
+                  "1"
+                ]
+              ]
+            },
+            "x": [
+              -0.8090169943749475,
+              -0.5877852522924731
+            ],
+            "y": [
+              -1.618033988749895,
+              -5.421010862427522e-20
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "5"
+          },
+          "center_index": 8
+        },
+        {
+          "id": "P13",
+          "index": 12,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "-1",
+              "1",
+              "-1",
+              "1"
+            ],
+            "root_index": 2,
+            "coordinates": [
+              [
+                "51/205",
+                "13/205",
+                "3/205",
+                "1/205"
+              ],
+              [
+                "11288/344605",
+                "1374/344605",
+                "16859/344605",
+                "-5382/344605"
+              ]
+            ]
+          },
+          "tex": "P_{13}",
+          "definition_tex": "P_{13}=\\left(-\\theta_{13},-\\theta_{13}^{3} + \\theta_{13}^{2}\\right),\\quad \\theta_{13}^{4} - \\theta_{13}^{3} + \\theta_{13}^{2} - \\theta_{13} + 1=0\\;\\text{(root index 2)}",
+          "x": [
+            0.30309880446645954,
+            -0.05583138704869642
+          ],
+          "y": [
+            0.055926165674219416,
+            -0.034018347308278574
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "-1",
+                "1",
+                "-1",
+                "1"
+              ],
+              "root_index": 2,
+              "coordinates": [
+                [
+                  "0",
+                  "-1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "1",
+                  "-1"
+                ]
+              ]
+            },
+            "x": [
+              -0.8090169943749475,
+              0.5877852522924731
+            ],
+            "y": [
+              0.6180339887498949,
+              -5.421010862427522e-20
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "5"
+          },
+          "center_index": 9
+        },
+        {
+          "id": "P14",
+          "index": 13,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "-1",
+              "1",
+              "-1",
+              "1"
+            ],
+            "root_index": 2,
+            "coordinates": [
+              [
+                "51/205",
+                "13/205",
+                "3/205",
+                "1/205"
+              ],
+              [
+                "-11288/344605",
+                "-1374/344605",
+                "-16859/344605",
+                "5382/344605"
+              ]
+            ]
+          },
+          "tex": "P_{14}",
+          "definition_tex": "P_{14}=\\left(-\\theta_{14},\\theta_{14}^{3} - \\theta_{14}^{2} - 1\\right),\\quad \\theta_{14}^{4} - \\theta_{14}^{3} + \\theta_{14}^{2} - \\theta_{14} + 1=0\\;\\text{(root index 2)}",
+          "x": [
+            0.30309880446645954,
+            -0.05583138704869642
+          ],
+          "y": [
+            -0.055926165674219416,
+            0.034018347308278574
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "-1",
+                "1",
+                "-1",
+                "1"
+              ],
+              "root_index": 2,
+              "coordinates": [
+                [
+                  "0",
+                  "-1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "-1",
+                  "0",
+                  "-1",
+                  "1"
+                ]
+              ]
+            },
+            "x": [
+              -0.8090169943749475,
+              0.5877852522924731
+            ],
+            "y": [
+              -1.618033988749895,
+              5.421010862427522e-20
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "5"
+          },
+          "center_index": 9
+        },
+        {
+          "id": "P15",
+          "index": 14,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "-1",
+              "1",
+              "-1",
+              "1"
+            ],
+            "root_index": 1,
+            "coordinates": [
+              [
+                "51/205",
+                "13/205",
+                "3/205",
+                "1/205"
+              ],
+              [
+                "-11288/344605",
+                "-1374/344605",
+                "-16859/344605",
+                "5382/344605"
+              ]
+            ]
+          },
+          "tex": "P_{15}",
+          "definition_tex": "P_{15}=\\left(-\\theta_{15},\\theta_{15}^{3} - \\theta_{15}^{2} - 1\\right),\\quad \\theta_{15}^{4} - \\theta_{15}^{3} + \\theta_{15}^{2} - \\theta_{15} + 1=0\\;\\text{(root index 1)}",
+          "x": [
+            0.22129143943597945,
+            0.048841920500815136
+          ],
+          "y": [
+            0.020690170839553643,
+            0.015784041691708398
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "-1",
+                "1",
+                "-1",
+                "1"
+              ],
+              "root_index": 1,
+              "coordinates": [
+                [
+                  "0",
+                  "-1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "-1",
+                  "0",
+                  "-1",
+                  "1"
+                ]
+              ]
+            },
+            "x": [
+              0.30901699437494745,
+              -0.9510565162951536
+            ],
+            "y": [
+              0.6180339887498949,
+              -9.486769009248164e-20
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "5"
+          },
+          "center_index": 10
+        },
+        {
+          "id": "P16",
+          "index": 15,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "-1",
+              "1",
+              "-1",
+              "1"
+            ],
+            "root_index": 1,
+            "coordinates": [
+              [
+                "51/205",
+                "13/205",
+                "3/205",
+                "1/205"
+              ],
+              [
+                "11288/344605",
+                "1374/344605",
+                "16859/344605",
+                "-5382/344605"
+              ]
+            ]
+          },
+          "tex": "P_{16}",
+          "definition_tex": "P_{16}=\\left(-\\theta_{16},-\\theta_{16}^{3} + \\theta_{16}^{2}\\right),\\quad \\theta_{16}^{4} - \\theta_{16}^{3} + \\theta_{16}^{2} - \\theta_{16} + 1=0\\;\\text{(root index 1)}",
+          "x": [
+            0.22129143943597945,
+            0.048841920500815136
+          ],
+          "y": [
+            -0.020690170839553643,
+            -0.015784041691708398
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "-1",
+                "1",
+                "-1",
+                "1"
+              ],
+              "root_index": 1,
+              "coordinates": [
+                [
+                  "0",
+                  "-1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "1",
+                  "-1"
+                ]
+              ]
+            },
+            "x": [
+              0.30901699437494745,
+              -0.9510565162951536
+            ],
+            "y": [
+              -1.618033988749895,
+              9.486769009248164e-20
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "5"
+          },
+          "center_index": 10
+        },
+        {
+          "id": "P17",
+          "index": 16,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "-1",
+              "1",
+              "-1",
+              "1"
+            ],
+            "root_index": 0,
+            "coordinates": [
+              [
+                "51/205",
+                "13/205",
+                "3/205",
+                "1/205"
+              ],
+              [
+                "-11288/344605",
+                "-1374/344605",
+                "-16859/344605",
+                "5382/344605"
+              ]
+            ]
+          },
+          "tex": "P_{17}",
+          "definition_tex": "P_{17}=\\left(-\\theta_{17},\\theta_{17}^{3} - \\theta_{17}^{2} - 1\\right),\\quad \\theta_{17}^{4} - \\theta_{17}^{3} + \\theta_{17}^{2} - \\theta_{17} + 1=0\\;\\text{(root index 0)}",
+          "x": [
+            0.22129143943597945,
+            -0.048841920500815136
+          ],
+          "y": [
+            0.020690170839553643,
+            -0.015784041691708398
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "-1",
+                "1",
+                "-1",
+                "1"
+              ],
+              "root_index": 0,
+              "coordinates": [
+                [
+                  "0",
+                  "-1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "-1",
+                  "0",
+                  "-1",
+                  "1"
+                ]
+              ]
+            },
+            "x": [
+              0.30901699437494745,
+              0.9510565162951536
+            ],
+            "y": [
+              0.6180339887498949,
+              9.486769009248164e-20
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "5"
+          },
+          "center_index": 11
+        },
+        {
+          "id": "P18",
+          "index": 17,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "-1",
+              "1",
+              "-1",
+              "1"
+            ],
+            "root_index": 0,
+            "coordinates": [
+              [
+                "51/205",
+                "13/205",
+                "3/205",
+                "1/205"
+              ],
+              [
+                "11288/344605",
+                "1374/344605",
+                "16859/344605",
+                "-5382/344605"
+              ]
+            ]
+          },
+          "tex": "P_{18}",
+          "definition_tex": "P_{18}=\\left(-\\theta_{18},-\\theta_{18}^{3} + \\theta_{18}^{2}\\right),\\quad \\theta_{18}^{4} - \\theta_{18}^{3} + \\theta_{18}^{2} - \\theta_{18} + 1=0\\;\\text{(root index 0)}",
+          "x": [
+            0.22129143943597945,
+            -0.048841920500815136
+          ],
+          "y": [
+            -0.020690170839553643,
+            0.015784041691708398
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "-1",
+                "1",
+                "-1",
+                "1"
+              ],
+              "root_index": 0,
+              "coordinates": [
+                [
+                  "0",
+                  "-1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "1",
+                  "-1"
+                ]
+              ]
+            },
+            "x": [
+              0.30901699437494745,
+              0.9510565162951536
+            ],
+            "y": [
+              -1.618033988749895,
+              -9.486769009248164e-20
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "5"
+          },
+          "center_index": 11
+        }
+      ],
+      "logarithmic_centers": [
+        {
+          "exact": {
+            "polynomial": [
+              "-4/4095",
+              "16/819",
+              "-128/819",
+              "512/819",
+              "-1024/819",
+              "1"
+            ],
+            "root_index": 4
+          },
+          "position": [
+            0.3084380904250007,
+            0.0
+          ],
+          "tex": "a_{1}",
+          "label": "a1"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "-4/4095",
+              "16/819",
+              "-128/819",
+              "512/819",
+              "-1024/819",
+              "1"
+            ],
+            "root_index": 3
+          },
+          "position": [
+            0.25616317944188727,
+            0.049028968168973674
+          ],
+          "tex": "a_{2}",
+          "label": "a2"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "-4/4095",
+              "16/819",
+              "-128/819",
+              "512/819",
+              "-1024/819",
+              "1"
+            ],
+            "root_index": 2
+          },
+          "position": [
+            0.25616317944188727,
+            -0.049028968168973674
+          ],
+          "tex": "a_{3}",
+          "label": "a3"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "-4/4095",
+              "16/819",
+              "-128/819",
+              "512/819",
+              "-1024/819",
+              "1"
+            ],
+            "root_index": 1
+          },
+          "position": [
+            0.2147704004982376,
+            0.020738929744177903
+          ],
+          "tex": "a_{4}",
+          "label": "a4"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "-4/4095",
+              "16/819",
+              "-128/819",
+              "512/819",
+              "-1024/819",
+              "1"
+            ],
+            "root_index": 0
+          },
+          "position": [
+            0.2147704004982376,
+            -0.020738929744177903
+          ],
+          "tex": "a_{5}",
+          "label": "a5"
+        },
+        {
+          "exact": {
+            "rational": "0"
+          },
+          "position": [
+            0.0,
+            0.0
+          ],
+          "tex": "0",
+          "label": "0"
+        },
+        {
+          "exact": {
+            "rational": "1/5"
+          },
+          "position": [
+            0.2,
+            0.0
+          ],
+          "tex": "\\frac{1}{5}",
+          "label": "1/5"
+        },
+        {
+          "exact": {
+            "rational": "1/4"
+          },
+          "position": [
+            0.25,
+            0.0
+          ],
+          "tex": "\\frac{1}{4}",
+          "label": "1/4"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/205",
+              "-3/41",
+              "17/41",
+              "-43/41",
+              "1"
+            ],
+            "root_index": 3
+          },
+          "position": [
+            0.30309880446645954,
+            0.05583138704869642
+          ],
+          "tex": "a_{9}",
+          "label": "a9"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/205",
+              "-3/41",
+              "17/41",
+              "-43/41",
+              "1"
+            ],
+            "root_index": 2
+          },
+          "position": [
+            0.30309880446645954,
+            -0.05583138704869642
+          ],
+          "tex": "a_{10}",
+          "label": "a10"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/205",
+              "-3/41",
+              "17/41",
+              "-43/41",
+              "1"
+            ],
+            "root_index": 1
+          },
+          "position": [
+            0.22129143943597945,
+            0.048841920500815136
+          ],
+          "tex": "a_{11}",
+          "label": "a11"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/205",
+              "-3/41",
+              "17/41",
+              "-43/41",
+              "1"
+            ],
+            "root_index": 0
+          },
+          "position": [
+            0.22129143943597945,
+            -0.048841920500815136
+          ],
+          "tex": "a_{12}",
+          "label": "a12"
+        }
+      ],
+      "coordinate_system": "lmfdb",
+      "lmfdb_model": {
+        "f": "x^5",
+        "h": "1",
+        "discriminant": "4*x^5 + 1",
+        "lhs_tex": "y^2+\\left(1\\right)y",
+        "rhs_tex": "x^{5}",
+        "equation_tex": "C:\\quad y^2+\\left(1\\right)y=x^{5}",
+        "branch_values": [
+          [
+            -0.757858283255199,
+            0.0
+          ],
+          [
+            -0.23419108885367917,
+            -0.7207660587181153
+          ],
+          [
+            -0.23419108885367917,
+            0.7207660587181153
+          ],
+          [
+            0.6131202304812786,
+            -0.4454579222250977
+          ],
+          [
+            0.6131202304812786,
+            0.4454579222250977
+          ]
+        ]
+      },
+      "centers_source": "computation",
+      "matrix_divisor_ids": [
+        "D2",
+        "D4"
+      ],
+      "packet_torsion_order": "10",
+      "end_alg": "Q",
+      "packet_size": 18,
+      "q": "-1/15",
+      "quotient": "-0.0666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666661413969303346309051682323",
+      "rational_guess": "-1/15",
+      "numerical": {
+        "det": "-953.414223042108489313354818376338885168499587894842895480301910190328021932139894742907359774410853346172773764210487289192144537323729215259080043774",
+        "c_plus": "-4.48946017762852981572877173781651513704787152573688822444466646805432366813464878020849631655654127926185767242913339800508385221490975714962170274071",
+        "c_minus": "-4.01549525578226930470354208380296034759643454206855625060443716787350132440200884445161664025533174907393434916069643212535159832278725516731860777130",
+        "L_second_derivative": "1.12229558364980693642637553563915311257609276846090887341482798860409561532778675386880978445180453043286936156429163884630456316012430847349891963932"
+      },
+      "reference_matrix": [
+        [
+          "-48.0125028847703350675221440065613228613612558003865907121061373618938524931173349124170577880613205691626785308510150716600082589424246542337528942193",
+          "751.195324060302548552589283282829000547515758070836019407548634052312627618308453714806548693373800140186311426179536105589373995465746772365888158477",
+          "55.2214016356267592297043539710185913097817636049051352804784627469644218094235162349076415300819072788502122276903493785503776018668781684418822992733"
+        ],
+        [
+          "-6.37269592439159325464745051931012818695637358943248955761518864577072472346417019133219946359668922562581930077085433153036395174546630544993385739512",
+          "348.895489246606969996751699808153330778193993186642742494111387328485324171986126069978883737217489623550841358613738451324382720167747818678781014345",
+          "26.2364761754701725498304228137700762033550145414624087428992983104111385567782151005594948988279677373805724097341688026135842745315949636797941616097"
+        ],
+        [
+          "1.25134651244336674981146477560145842447510854691508244764478123881388355940524506701379288870828832343672503111481393204084851664624932291760273118843",
+          "41.5640026528335553429515663855039418994295939027361991694172435965254413716599994178170426454943117263039027261155465829334038301272105715084604318468",
+          "3.27955952193377156872880285172125952541937681768280109286241228880139231959727688756993686235349596717257155121677110032669803431644930087773804234376"
+        ]
+      ],
+      "reference_intervals": {
+        "matrix": [
+          [
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "-5273537879366168722020631992667713932092612078215646816129366039143476465854291208672657775329660602914073883158723756146118666583576887357637450594192099404851/109836762562089755439710412785302291476310964802292886550311415346968690934362496833960954250583272879636740982263693728593951807995466301001184452657840914432",
+              "upper": "-5273537879366168722020631992667713932092612078215646816129366039143476465854291208672657775329660602914073883158723756146117530702580126487747247318953015667763/109836762562089755439710412785302291476310964802292886550311415346968690934362496833960954250583272879636740982263693728593951807995466301001184452657840914432"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "82508862446563520661873664358431738275460927143822309753897123678392468747013503526706642734657501497163804909178891379063124974859990498907092782129054490885409/109836762562089755439710412785302291476310964802292886550311415346968690934362496833960954250583272879636740982263693728593951807995466301001184452657840914432",
+              "upper": "82508862446563520661873664358431738275460927143822309753897123678392468747013503526706642734657501497163804909178891379063129090036060254509326912584413140286753/109836762562089755439710412785302291476310964802292886550311415346968690934362496833960954250583272879636740982263693728593951807995466301001184452657840914432"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "1552727034828321590976463393825649249121379683419015527840211394196186838146481953947211209899146260020213452494060468120969787506859639167964065656655483765822835/28118211215894977392565865673037386617935606989386978956879722328823984879196799189494004288149317857187005691459505594520051662846839373056303219880407274094592",
+              "upper": "1552727034828321590976463393825649249121379683419015527840211394196186838146481953947211209899146260020213452494060468120969787506947280292405135163646345808483699/28118211215894977392565865673037386617935606989386978956879722328823984879196799189494004288149317857187005691459505594520051662846839373056303219880407274094592"
+            }
+          ],
+          [
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "-2799825156511186066977709394520488237111154890797374052268751864953347666589096628342258185716553137083264414846182370577740881509098311268752555873695508993615/439347050248359021758841651141209165905243859209171546201245661387874763737449987335843817002333091518546963929054774914375807231981865204004737810631363657728",
+              "upper": "-2799825156511186066977709394520488237111154890797374052268751864953347666589096628342258185716553137083264414846182370577738062398853835478238873735976392070735/439347050248359021758841651141209165905243859209171546201245661387874763737449987335843817002333091518546963929054774914375807231981865204004737810631363657728"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "306572408090909674365742265337965154909140914532800677540472327344760660803118750617629017046120320057891735058628297188510687808469331521239050340229211047784995/878694100496718043517683302282418331810487718418343092402491322775749527474899974671687634004666183037093927858109549828751614463963730408009475621262727315456",
+              "upper": "306572408090909674365742265337965154909140914532800677540472327344760660803118750617629017046120320057891735058628297188510707500162906319324970721008857684832803/878694100496718043517683302282418331810487718418343092402491322775749527474899974671687634004666183037093927858109549828751614463963730408009475621262727315456"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "184430694665666691681566422940485155844197927964611036457986221647444320098580159879799329323533724556852182213686634589579637715185154907035235823488820484375855/7029552803973744348141466418259346654483901747346744739219930582205996219799199797373501072037329464296751422864876398630012915711709843264075804970101818523648",
+              "upper": "184430694665666691681566422940485155844197927964611036457986221647444320098580159879799329323533724556852182213686634589579637715195681787129928303995825045243183/7029552803973744348141466418259346654483901747346744739219930582205996219799199797373501072037329464296751422864876398630012915711709843264075804970101818523648"
+            }
+          ],
+          [
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "17592812770578069417904890973403460046116773846378735010532935679370655776038293559481429042341618515711931555498093419988073349477051841109858492740396979088409/14059105607947488696282932836518693308967803494693489478439861164411992439598399594747002144074658928593502845729752797260025831423419686528151609940203637047296",
+              "upper": "17592812770578069417904890973403460046116773846378735010532935679370655776038293559481429042341618515711931555498093419988086629896593375964473325226267189210137/14059105607947488696282932836518693308967803494693489478439861164411992439598399594747002144074658928593502845729752797260025831423419686528151609940203637047296"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "584352702785196535045668802124444896823720435656033123861336711550337275163842821162407572307032809051738480902373771474722334776020237163025100583383714595331531/14059105607947488696282932836518693308967803494693489478439861164411992439598399594747002144074658928593502845729752797260025831423419686528151609940203637047296",
+              "upper": "584352702785196535045668802124444896823720435656033123861336711550337275163842821162407572307032809051738480902373771474722380106502868294844459166698010457660875/14059105607947488696282932836518693308967803494693489478439861164411992439598399594747002144074658928593502845729752797260025831423419686528151609940203637047296"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "1475445557325333533452531383523881246753583423716888291663889773179554560788641279038394634588269796454817457709493076716637101721482814038610327567083010493446239/449891379454319638281053850768598185886969711830191663310075557261183758067148787031904068610389085714992091063352089512320826605549429968900851518086516385513472",
+              "upper": "1475445557325333533452531383523881246753583423716888291663889773179554560788641279038394634588269796454817457709493076716637101721563816905814501318549223901952095/449891379454319638281053850768598185886969711830191663310075557261183758067148787031904068610389085714992091063352089512320826605549429968900851518086516385513472"
+            }
+          ]
+        ],
+        "det": {
+          "type": "real_ball",
+          "bits": 539,
+          "lower": "-1675518906233525657301932377893482878665134715939613783225069710999005892995466463647317885134057158989206102974242919121342960688135024796663349215420613128470025/1757388200993436087035366604564836663620975436836686184804982645551499054949799949343375268009332366074187855716219099657503228927927460816018951242525454630912",
+          "upper": "-1675518906233525657301932377893482878665134715939613783225069710999005892995466463647317885134057158989206102974242919121317759204511710779592928849855354358840841/1757388200993436087035366604564836663620975436836686184804982645551499054949799949343375268009332366074187855716219099657503228927927460816018951242525454630912"
+        },
+        "c_plus": {
+          "type": "real_ball",
+          "bits": 519,
+          "lower": "-240775279083077210488107495576307040307249265969997735710718980417135208696104143778045605327961440675454588443942035932256248756231176028102100681410109705/53631231719770388398296099992823384509917463282369573510894245774887056120294187907207497192667613710760127432745944203415015531247786279785734596024336384",
+          "upper": "-240775279083077210488107495576307040307249265969997735710718980417135208696104143778045605327961440675454588443942035932256230935261655384271219833710207241/53631231719770388398296099992823384509917463282369573510894245774887056120294187907207497192667613710760127432745944203415015531247786279785734596024336384"
+        },
+        "c_minus": {
+          "type": "real_ball",
+          "bits": 519,
+          "lower": "-430711913064995101301368745798758566558204914094382004896841663096121834553629978545715389421869049420296033345751331526536603448549668584556463839761134687/107262463439540776796592199985646769019834926564739147021788491549774112240588375814414994385335227421520254865491888406830031062495572559571469192048672768",
+          "upper": "-430711913064995101301368745798758566558204914094382004896841663096121834553629978545715389421869049420296033345751331526536578843314422944364932803767301215/107262463439540776796592199985646769019834926564739147021788491549774112240588375814414994385335227421520254865491888406830031062495572559571469192048672768"
+        },
+        "L_second_derivative": {
+          "type": "real_ball",
+          "bits": 834,
+          "lower": "32141315388275599473689097622314878393061902930689716975909281563723242959904596385716050227762675537915532726561724803510967857883526343338730350370011717431453655622949363887080557500591693467040448513193851357932713997398459563640637068613151785313/28638903918474961204418783933674838490721739172170652529441449702311064005352904159345284265824628375429359509218999720074396860757073376700445026041564579620512874307979212102266801261478978776245040008231745247475930553606737583615358787106474295296",
+          "upper": "32141315388275599473689097622314878393061902930689716975909281563723242959904596385716050227762675537915532726561724803510987923464882085934824572091506734922716531696081892751398633269749351819828416331932700058158592420368770752152376388058086801761/28638903918474961204418783933674838490721739172170652529441449702311064005352904159345284265824628375429359509218999720074396860757073376700445026041564579620512874307979212102266801261478978776245040008231745247475930553606737583615358787106474295296"
+        }
+      },
+      "L_num_coeffs": 276204,
+      "feq_check": null,
+      "L_certified": true,
+      "L_analytic_assumptions": "The supplied Euler factors, conductor and gamma factors are correct; the completed L-function is holomorphic, has the growth required by the generic L-function algorithm, and satisfies its functional equation. Ball arithmetic certifies numerical errors conditional on these hypotheses.",
+      "relative_agreement": "7.90633847956459714772357247577343379567944396421055367801868770635171984830497686109315139680622989842655059953259896642851579171833885401348186642026E-123",
+      "regulator_digits": 100,
+      "L_digits": 100,
+      "comparison_verified": true,
+      "certified": true,
+      "integral_rank": 4,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": {
+        "rank_over_Q": 4,
+        "abscissa_groups": [
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            3
+          ],
+          [
+            4
+          ],
+          [
+            5
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            12,
+            13
+          ],
+          [
+            14,
+            15
+          ],
+          [
+            16,
+            17
+          ]
+        ],
+        "normalized_trace_matrix": [
+          [
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "5",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "-2",
+            "-2",
+            "-2",
+            "-2",
+            "-2",
+            "0",
+            "10",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "-2",
+            "-2",
+            "-2",
+            "-2",
+            "-2",
+            "0",
+            "0",
+            "10",
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "-8",
+            "-8",
+            "-8",
+            "-8",
+            "-8",
+            "0",
+            "0",
+            "0",
+            "10",
+            "10",
+            "10",
+            "10"
+          ]
+        ],
+        "input_basis_is_galois_invariant": true,
+        "integer_point_divisor_lattice_saturation_index": "125",
+        "saturated_integer_point_divisor_basis": [
+          [
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "0",
+            "0",
+            "1",
+            "1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "2",
+            "0",
+            "0",
+            "3",
+            "3",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "1",
+            "1",
+            "3",
+            "3",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "4",
+            "4",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ]
+        ],
+        "interpretation": "QQ-span of Galois traces modulo the symmetric-ordinate identifications. Integer representative normalization is recorded separately."
+      },
+      "integrality_verified": true,
+      "linear_comparison": null,
+      "original_curve": {
+        "label": "3125.a.3125.1",
+        "cond": 3125,
+        "is_simple_base": true,
+        "is_simple_geom": true,
+        "eqn": [
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "1"
+          ],
+          [
+            "1"
+          ]
+        ],
+        "num_rat_pts": 3,
+        "rat_pts": [
+          [
+            0,
+            -1,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        "rat_pts_verified": true,
+        "mw_invs": [
+          5
+        ],
+        "end_alg": "Q"
+      }
+    },
+    {
+      "label": "4096.b.65536.1",
+      "cond": 4096,
+      "F": "-4080*x^6 + 5116*x^5 - 2560*x^4 + 640*x^3 - 80*x^2 + 4*x",
+      "divisors": [
+        {
+          "id": "D1",
+          "tex": "D_{1}=8\\,\\left(1,0\\right)-P_{15}-P_{16}-P_{17}-P_{18}-P_{19}-P_{20}-P_{21}-P_{22}",
+          "coefficients": [
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ]
+        },
+        {
+          "id": "D2",
+          "tex": "D_{2}=8\\,\\left(0,0\\right)-P_{15}-P_{16}-P_{17}-P_{18}-P_{19}-P_{20}-P_{21}-P_{22}",
+          "coefficients": [
+            "0",
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ]
+        },
+        {
+          "id": "D3",
+          "tex": "D_{3}=8\\,\\left(-1,0\\right)-P_{15}-P_{16}-P_{17}-P_{18}-P_{19}-P_{20}-P_{21}-P_{22}",
+          "coefficients": [
+            "0",
+            "0",
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ]
+        },
+        {
+          "id": "D4",
+          "tex": "D_{4}=4\\,P_{4}+4\\,P_{5}-P_{15}-P_{16}-P_{17}-P_{18}-P_{19}-P_{20}-P_{21}-P_{22}",
+          "coefficients": [
+            "0",
+            "0",
+            "0",
+            "4",
+            "4",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ]
+        },
+        {
+          "id": "D5",
+          "tex": "D_{5}=8\\,\\infty_{Y=0}-P_{15}-P_{16}-P_{17}-P_{18}-P_{19}-P_{20}-P_{21}-P_{22}",
+          "coefficients": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ]
+        },
+        {
+          "id": "D6",
+          "tex": "D_{6}=P_{7}+P_{8}+P_{9}+P_{10}+P_{11}+P_{12}+P_{13}+P_{14}-P_{15}-P_{16}-P_{17}-P_{18}-P_{19}-P_{20}-P_{21}-P_{22}",
+          "coefficients": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ]
+        }
+      ],
+      "support": [
+        {
+          "id": "P1",
+          "index": 0,
+          "point": {
+            "field_polynomial": null,
+            "root_index": null,
+            "coordinates": [
+              "1/5",
+              "0"
+            ]
+          },
+          "tex": "\\left(1,0\\right)",
+          "definition_tex": "P_{1}=\\left(1,0\\right)",
+          "x": [
+            0.2,
+            0.0
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": null,
+              "root_index": null,
+              "coordinates": [
+                "1",
+                "0"
+              ]
+            },
+            "x": [
+              1.0,
+              0.0
+            ],
+            "y": [
+              0.0,
+              0.0
+            ],
+            "infinity": false,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "8",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "0"
+          },
+          "center_index": 0
+        },
+        {
+          "id": "P2",
+          "index": 1,
+          "point": {
+            "field_polynomial": null,
+            "root_index": null,
+            "coordinates": [
+              "1/4",
+              "0"
+            ]
+          },
+          "tex": "\\left(0,0\\right)",
+          "definition_tex": "P_{2}=\\left(0,0\\right)",
+          "x": [
+            0.25,
+            0.0
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": null,
+              "root_index": null,
+              "coordinates": [
+                "0",
+                "0"
+              ]
+            },
+            "x": [
+              0.0,
+              0.0
+            ],
+            "y": [
+              0.0,
+              0.0
+            ],
+            "infinity": false,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "8",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "0"
+          },
+          "center_index": 1
+        },
+        {
+          "id": "P3",
+          "index": 2,
+          "point": {
+            "field_polynomial": null,
+            "root_index": null,
+            "coordinates": [
+              "1/3",
+              "0"
+            ]
+          },
+          "tex": "\\left(-1,0\\right)",
+          "definition_tex": "P_{3}=\\left(-1,0\\right)",
+          "x": [
+            0.33333333333333337,
+            0.0
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": null,
+              "root_index": null,
+              "coordinates": [
+                "-1",
+                "0"
+              ]
+            },
+            "x": [
+              -1.0,
+              0.0
+            ],
+            "y": [
+              0.0,
+              0.0
+            ],
+            "infinity": false,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "8",
+            "D4": "0",
+            "D5": "0",
+            "D6": "0"
+          },
+          "center_index": 2
+        },
+        {
+          "id": "P4",
+          "index": 3,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "1"
+            ],
+            "root_index": 0,
+            "coordinates": [
+              [
+                "4/17",
+                "-1/17"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ]
+          },
+          "tex": "P_{4}",
+          "definition_tex": "P_{4}=\\left(\\theta_{4},0\\right),\\quad \\theta_{4}^{2} + 1=0\\;\\text{(root index 0)}",
+          "x": [
+            0.23529411764705882,
+            0.058823529411764705
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "1"
+              ],
+              "root_index": 0,
+              "coordinates": [
+                [
+                  "0",
+                  "1"
+                ],
+                [
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              0.0,
+              -1.0
+            ],
+            "y": [
+              0.0,
+              0.0
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "4",
+            "D5": "0",
+            "D6": "0"
+          },
+          "center_index": 3
+        },
+        {
+          "id": "P5",
+          "index": 4,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "1"
+            ],
+            "root_index": 1,
+            "coordinates": [
+              [
+                "4/17",
+                "-1/17"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ]
+          },
+          "tex": "P_{5}",
+          "definition_tex": "P_{5}=\\left(\\theta_{5},0\\right),\\quad \\theta_{5}^{2} + 1=0\\;\\text{(root index 1)}",
+          "x": [
+            0.23529411764705882,
+            -0.058823529411764705
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "1"
+              ],
+              "root_index": 1,
+              "coordinates": [
+                [
+                  "0",
+                  "1"
+                ],
+                [
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              0.0,
+              0.0
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "4",
+            "D5": "0",
+            "D6": "0"
+          },
+          "center_index": 4
+        },
+        {
+          "id": "P6",
+          "index": 5,
+          "point": {
+            "field_polynomial": null,
+            "root_index": null,
+            "coordinates": [
+              "0",
+              "0"
+            ]
+          },
+          "tex": "\\infty_{Y=0}",
+          "definition_tex": "P_{6}=\\infty_{Y=0}",
+          "x": [
+            0.0,
+            0.0
+          ],
+          "y": [
+            0.0,
+            0.0
+          ],
+          "infinity": false,
+          "real": true,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": null,
+              "root_index": null,
+              "coordinates": [
+                "infinity",
+                "0"
+              ]
+            },
+            "x": null,
+            "y": [
+              0.0,
+              0.0
+            ],
+            "infinity": true,
+            "real": true
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "8",
+            "D6": "0"
+          },
+          "center_index": 5
+        },
+        {
+          "id": "P7",
+          "index": 6,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 5,
+            "coordinates": [
+              [
+                "69/409",
+                "0",
+                "93/409",
+                "0",
+                "-29/409",
+                "0",
+                "27/409",
+                "0"
+              ],
+              [
+                "0",
+                "-3759628/68417929",
+                "0",
+                "14004452/68417929",
+                "0",
+                "-4682024/68417929",
+                "0",
+                "3087164/68417929"
+              ]
+            ]
+          },
+          "tex": "P_{7}",
+          "definition_tex": "P_{7}=\\left(-\\theta_{7}^{6} + \\theta_{7}^{4} - 3 \\theta_{7}^{2} + 1,2 \\theta_{7}^{3}\\right),\\quad \\theta_{7}^{8} - 2 \\theta_{7}^{6} + 5 \\theta_{7}^{4} - 4 \\theta_{7}^{2} + 1=0\\;\\text{(root index 5)}",
+          "x": [
+            0.27241707649643543,
+            0.02743870871475662
+          ],
+          "y": [
+            0.023506310613298935,
+            0.019553352887263398
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 5,
+              "coordinates": [
+                [
+                  "1",
+                  "0",
+                  "-3",
+                  "0",
+                  "1",
+                  "0",
+                  "-1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              -0.3660254037844386,
+              -0.3660254037844386
+            ],
+            "y": [
+              0.6881524825143706,
+              0.2850420912381664
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "1"
+          },
+          "center_index": 6
+        },
+        {
+          "id": "P8",
+          "index": 7,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 5,
+            "coordinates": [
+              [
+                "69/409",
+                "0",
+                "93/409",
+                "0",
+                "-29/409",
+                "0",
+                "27/409",
+                "0"
+              ],
+              [
+                "0",
+                "3759628/68417929",
+                "0",
+                "-14004452/68417929",
+                "0",
+                "4682024/68417929",
+                "0",
+                "-3087164/68417929"
+              ]
+            ]
+          },
+          "tex": "P_{8}",
+          "definition_tex": "P_{8}=\\left(-\\theta_{8}^{6} + \\theta_{8}^{4} - 3 \\theta_{8}^{2} + 1,-2 \\theta_{8}^{3}\\right),\\quad \\theta_{8}^{8} - 2 \\theta_{8}^{6} + 5 \\theta_{8}^{4} - 4 \\theta_{8}^{2} + 1=0\\;\\text{(root index 5)}",
+          "x": [
+            0.27241707649643543,
+            0.02743870871475662
+          ],
+          "y": [
+            -0.023506310613298935,
+            -0.019553352887263398
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 5,
+              "coordinates": [
+                [
+                  "1",
+                  "0",
+                  "-3",
+                  "0",
+                  "1",
+                  "0",
+                  "-1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              -0.3660254037844386,
+              -0.3660254037844386
+            ],
+            "y": [
+              -0.6881524825143706,
+              -0.2850420912381664
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "1"
+          },
+          "center_index": 6
+        },
+        {
+          "id": "P9",
+          "index": 8,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 4,
+            "coordinates": [
+              [
+                "69/409",
+                "0",
+                "93/409",
+                "0",
+                "-29/409",
+                "0",
+                "27/409",
+                "0"
+              ],
+              [
+                "0",
+                "-3759628/68417929",
+                "0",
+                "14004452/68417929",
+                "0",
+                "-4682024/68417929",
+                "0",
+                "3087164/68417929"
+              ]
+            ]
+          },
+          "tex": "P_{9}",
+          "definition_tex": "P_{9}=\\left(-\\theta_{9}^{6} + \\theta_{9}^{4} - 3 \\theta_{9}^{2} + 1,2 \\theta_{9}^{3}\\right),\\quad \\theta_{9}^{8} - 2 \\theta_{9}^{6} + 5 \\theta_{9}^{4} - 4 \\theta_{9}^{2} + 1=0\\;\\text{(root index 4)}",
+          "x": [
+            0.27241707649643543,
+            -0.02743870871475662
+          ],
+          "y": [
+            0.023506310613298935,
+            -0.019553352887263398
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 4,
+              "coordinates": [
+                [
+                  "1",
+                  "0",
+                  "-3",
+                  "0",
+                  "1",
+                  "0",
+                  "-1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              -0.3660254037844386,
+              0.3660254037844386
+            ],
+            "y": [
+              0.6881524825143706,
+              -0.2850420912381664
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "1"
+          },
+          "center_index": 7
+        },
+        {
+          "id": "P10",
+          "index": 9,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 4,
+            "coordinates": [
+              [
+                "69/409",
+                "0",
+                "93/409",
+                "0",
+                "-29/409",
+                "0",
+                "27/409",
+                "0"
+              ],
+              [
+                "0",
+                "3759628/68417929",
+                "0",
+                "-14004452/68417929",
+                "0",
+                "4682024/68417929",
+                "0",
+                "-3087164/68417929"
+              ]
+            ]
+          },
+          "tex": "P_{10}",
+          "definition_tex": "P_{10}=\\left(-\\theta_{10}^{6} + \\theta_{10}^{4} - 3 \\theta_{10}^{2} + 1,-2 \\theta_{10}^{3}\\right),\\quad \\theta_{10}^{8} - 2 \\theta_{10}^{6} + 5 \\theta_{10}^{4} - 4 \\theta_{10}^{2} + 1=0\\;\\text{(root index 4)}",
+          "x": [
+            0.27241707649643543,
+            -0.02743870871475662
+          ],
+          "y": [
+            -0.023506310613298935,
+            0.019553352887263398
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 4,
+              "coordinates": [
+                [
+                  "1",
+                  "0",
+                  "-3",
+                  "0",
+                  "1",
+                  "0",
+                  "-1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              -0.3660254037844386,
+              0.3660254037844386
+            ],
+            "y": [
+              -0.6881524825143706,
+              0.2850420912381664
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "1"
+          },
+          "center_index": 7
+        },
+        {
+          "id": "P11",
+          "index": 10,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 1,
+            "coordinates": [
+              [
+                "69/409",
+                "0",
+                "93/409",
+                "0",
+                "-29/409",
+                "0",
+                "27/409",
+                "0"
+              ],
+              [
+                "0",
+                "-3759628/68417929",
+                "0",
+                "14004452/68417929",
+                "0",
+                "-4682024/68417929",
+                "0",
+                "3087164/68417929"
+              ]
+            ]
+          },
+          "tex": "P_{11}",
+          "definition_tex": "P_{11}=\\left(-\\theta_{11}^{6} + \\theta_{11}^{4} - 3 \\theta_{11}^{2} + 1,2 \\theta_{11}^{3}\\right),\\quad \\theta_{11}^{8} - 2 \\theta_{11}^{6} + 5 \\theta_{11}^{4} - 4 \\theta_{11}^{2} + 1=0\\;\\text{(root index 1)}",
+          "x": [
+            0.1750156863397504,
+            0.04455362314018449
+          ],
+          "y": [
+            -0.021997365020370006,
+            0.05931657989197241
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 1,
+              "coordinates": [
+                [
+                  "1",
+                  "0",
+                  "-3",
+                  "0",
+                  "1",
+                  "0",
+                  "-1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              1.3660254037844388,
+              -1.3660254037844388
+            ],
+            "y": [
+              2.0550874963145436,
+              4.961420105465939
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "1"
+          },
+          "center_index": 8
+        },
+        {
+          "id": "P12",
+          "index": 11,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 1,
+            "coordinates": [
+              [
+                "69/409",
+                "0",
+                "93/409",
+                "0",
+                "-29/409",
+                "0",
+                "27/409",
+                "0"
+              ],
+              [
+                "0",
+                "3759628/68417929",
+                "0",
+                "-14004452/68417929",
+                "0",
+                "4682024/68417929",
+                "0",
+                "-3087164/68417929"
+              ]
+            ]
+          },
+          "tex": "P_{12}",
+          "definition_tex": "P_{12}=\\left(-\\theta_{12}^{6} + \\theta_{12}^{4} - 3 \\theta_{12}^{2} + 1,-2 \\theta_{12}^{3}\\right),\\quad \\theta_{12}^{8} - 2 \\theta_{12}^{6} + 5 \\theta_{12}^{4} - 4 \\theta_{12}^{2} + 1=0\\;\\text{(root index 1)}",
+          "x": [
+            0.1750156863397504,
+            0.04455362314018449
+          ],
+          "y": [
+            0.021997365020370006,
+            -0.05931657989197241
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 1,
+              "coordinates": [
+                [
+                  "1",
+                  "0",
+                  "-3",
+                  "0",
+                  "1",
+                  "0",
+                  "-1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              1.3660254037844388,
+              -1.3660254037844388
+            ],
+            "y": [
+              -2.0550874963145436,
+              -4.961420105465939
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "1"
+          },
+          "center_index": 8
+        },
+        {
+          "id": "P13",
+          "index": 12,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 0,
+            "coordinates": [
+              [
+                "69/409",
+                "0",
+                "93/409",
+                "0",
+                "-29/409",
+                "0",
+                "27/409",
+                "0"
+              ],
+              [
+                "0",
+                "-3759628/68417929",
+                "0",
+                "14004452/68417929",
+                "0",
+                "-4682024/68417929",
+                "0",
+                "3087164/68417929"
+              ]
+            ]
+          },
+          "tex": "P_{13}",
+          "definition_tex": "P_{13}=\\left(-\\theta_{13}^{6} + \\theta_{13}^{4} - 3 \\theta_{13}^{2} + 1,2 \\theta_{13}^{3}\\right),\\quad \\theta_{13}^{8} - 2 \\theta_{13}^{6} + 5 \\theta_{13}^{4} - 4 \\theta_{13}^{2} + 1=0\\;\\text{(root index 0)}",
+          "x": [
+            0.1750156863397504,
+            -0.04455362314018449
+          ],
+          "y": [
+            -0.021997365020370006,
+            -0.05931657989197241
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 0,
+              "coordinates": [
+                [
+                  "1",
+                  "0",
+                  "-3",
+                  "0",
+                  "1",
+                  "0",
+                  "-1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              1.3660254037844388,
+              1.3660254037844388
+            ],
+            "y": [
+              2.0550874963145436,
+              -4.961420105465939
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "1"
+          },
+          "center_index": 9
+        },
+        {
+          "id": "P14",
+          "index": 13,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 0,
+            "coordinates": [
+              [
+                "69/409",
+                "0",
+                "93/409",
+                "0",
+                "-29/409",
+                "0",
+                "27/409",
+                "0"
+              ],
+              [
+                "0",
+                "3759628/68417929",
+                "0",
+                "-14004452/68417929",
+                "0",
+                "4682024/68417929",
+                "0",
+                "-3087164/68417929"
+              ]
+            ]
+          },
+          "tex": "P_{14}",
+          "definition_tex": "P_{14}=\\left(-\\theta_{14}^{6} + \\theta_{14}^{4} - 3 \\theta_{14}^{2} + 1,-2 \\theta_{14}^{3}\\right),\\quad \\theta_{14}^{8} - 2 \\theta_{14}^{6} + 5 \\theta_{14}^{4} - 4 \\theta_{14}^{2} + 1=0\\;\\text{(root index 0)}",
+          "x": [
+            0.1750156863397504,
+            -0.04455362314018449
+          ],
+          "y": [
+            0.021997365020370006,
+            0.05931657989197241
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 0,
+              "coordinates": [
+                [
+                  "1",
+                  "0",
+                  "-3",
+                  "0",
+                  "1",
+                  "0",
+                  "-1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0",
+                  "0",
+                  "-2",
+                  "0",
+                  "0",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            "x": [
+              1.3660254037844388,
+              1.3660254037844388
+            ],
+            "y": [
+              -2.0550874963145436,
+              4.961420105465939
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "0",
+            "D2": "0",
+            "D3": "0",
+            "D4": "0",
+            "D5": "0",
+            "D6": "1"
+          },
+          "center_index": 9
+        },
+        {
+          "id": "P15",
+          "index": 14,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 7,
+            "coordinates": [
+              [
+                "51/169",
+                "0",
+                "-29/169",
+                "0",
+                "1/13",
+                "0",
+                "-11/169",
+                "0"
+              ],
+              [
+                "0",
+                "463700/4826809",
+                "0",
+                "-1080824/4826809",
+                "0",
+                "40804/371293",
+                "0",
+                "-459712/4826809"
+              ]
+            ]
+          },
+          "tex": "P_{15}",
+          "definition_tex": "P_{15}=\\left(\\theta_{15}^{6} - \\theta_{15}^{4} + 3 \\theta_{15}^{2} - 1,-2 \\theta_{15}^{7} + 2 \\theta_{15}^{5} - 8 \\theta_{15}^{3} + 4 \\theta_{15}\\right),\\quad \\theta_{15}^{8} - 2 \\theta_{15}^{6} + 5 \\theta_{15}^{4} - 4 \\theta_{15}^{2} + 1=0\\;\\text{(root index 7)}",
+          "x": [
+            0.29918448418042054,
+            0.15516231872387842
+          ],
+          "y": [
+            -0.10458618790022983,
+            0.3976368578320201
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 7,
+              "coordinates": [
+                [
+                  "-1",
+                  "0",
+                  "3",
+                  "0",
+                  "-1",
+                  "0",
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "4",
+                  "0",
+                  "-8",
+                  "0",
+                  "2",
+                  "0",
+                  "-2"
+                ]
+              ]
+            },
+            "x": [
+              -1.3660254037844388,
+              -1.3660254037844388
+            ],
+            "y": [
+              4.961420105465939,
+              2.0550874963145436
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-1",
+            "D3": "-1",
+            "D4": "-1",
+            "D5": "-1",
+            "D6": "-1"
+          },
+          "center_index": 10
+        },
+        {
+          "id": "P16",
+          "index": 15,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 7,
+            "coordinates": [
+              [
+                "51/169",
+                "0",
+                "-29/169",
+                "0",
+                "1/13",
+                "0",
+                "-11/169",
+                "0"
+              ],
+              [
+                "0",
+                "-463700/4826809",
+                "0",
+                "1080824/4826809",
+                "0",
+                "-40804/371293",
+                "0",
+                "459712/4826809"
+              ]
+            ]
+          },
+          "tex": "P_{16}",
+          "definition_tex": "P_{16}=\\left(\\theta_{16}^{6} - \\theta_{16}^{4} + 3 \\theta_{16}^{2} - 1,2 \\theta_{16}^{7} - 2 \\theta_{16}^{5} + 8 \\theta_{16}^{3} - 4 \\theta_{16}\\right),\\quad \\theta_{16}^{8} - 2 \\theta_{16}^{6} + 5 \\theta_{16}^{4} - 4 \\theta_{16}^{2} + 1=0\\;\\text{(root index 7)}",
+          "x": [
+            0.29918448418042054,
+            0.15516231872387842
+          ],
+          "y": [
+            0.10458618790022983,
+            -0.3976368578320201
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 7,
+              "coordinates": [
+                [
+                  "-1",
+                  "0",
+                  "3",
+                  "0",
+                  "-1",
+                  "0",
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "-4",
+                  "0",
+                  "8",
+                  "0",
+                  "-2",
+                  "0",
+                  "2"
+                ]
+              ]
+            },
+            "x": [
+              -1.3660254037844388,
+              -1.3660254037844388
+            ],
+            "y": [
+              -4.961420105465939,
+              -2.0550874963145436
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-1",
+            "D3": "-1",
+            "D4": "-1",
+            "D5": "-1",
+            "D6": "-1"
+          },
+          "center_index": 10
+        },
+        {
+          "id": "P17",
+          "index": 16,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 6,
+            "coordinates": [
+              [
+                "51/169",
+                "0",
+                "-29/169",
+                "0",
+                "1/13",
+                "0",
+                "-11/169",
+                "0"
+              ],
+              [
+                "0",
+                "463700/4826809",
+                "0",
+                "-1080824/4826809",
+                "0",
+                "40804/371293",
+                "0",
+                "-459712/4826809"
+              ]
+            ]
+          },
+          "tex": "P_{17}",
+          "definition_tex": "P_{17}=\\left(\\theta_{17}^{6} - \\theta_{17}^{4} + 3 \\theta_{17}^{2} - 1,-2 \\theta_{17}^{7} + 2 \\theta_{17}^{5} - 8 \\theta_{17}^{3} + 4 \\theta_{17}\\right),\\quad \\theta_{17}^{8} - 2 \\theta_{17}^{6} + 5 \\theta_{17}^{4} - 4 \\theta_{17}^{2} + 1=0\\;\\text{(root index 6)}",
+          "x": [
+            0.29918448418042054,
+            -0.15516231872387842
+          ],
+          "y": [
+            -0.10458618790022983,
+            -0.3976368578320201
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 6,
+              "coordinates": [
+                [
+                  "-1",
+                  "0",
+                  "3",
+                  "0",
+                  "-1",
+                  "0",
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "4",
+                  "0",
+                  "-8",
+                  "0",
+                  "2",
+                  "0",
+                  "-2"
+                ]
+              ]
+            },
+            "x": [
+              -1.3660254037844388,
+              1.3660254037844388
+            ],
+            "y": [
+              4.961420105465939,
+              -2.0550874963145436
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-1",
+            "D3": "-1",
+            "D4": "-1",
+            "D5": "-1",
+            "D6": "-1"
+          },
+          "center_index": 11
+        },
+        {
+          "id": "P18",
+          "index": 17,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 6,
+            "coordinates": [
+              [
+                "51/169",
+                "0",
+                "-29/169",
+                "0",
+                "1/13",
+                "0",
+                "-11/169",
+                "0"
+              ],
+              [
+                "0",
+                "-463700/4826809",
+                "0",
+                "1080824/4826809",
+                "0",
+                "-40804/371293",
+                "0",
+                "459712/4826809"
+              ]
+            ]
+          },
+          "tex": "P_{18}",
+          "definition_tex": "P_{18}=\\left(\\theta_{18}^{6} - \\theta_{18}^{4} + 3 \\theta_{18}^{2} - 1,2 \\theta_{18}^{7} - 2 \\theta_{18}^{5} + 8 \\theta_{18}^{3} - 4 \\theta_{18}\\right),\\quad \\theta_{18}^{8} - 2 \\theta_{18}^{6} + 5 \\theta_{18}^{4} - 4 \\theta_{18}^{2} + 1=0\\;\\text{(root index 6)}",
+          "x": [
+            0.29918448418042054,
+            -0.15516231872387842
+          ],
+          "y": [
+            0.10458618790022983,
+            0.3976368578320201
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 6,
+              "coordinates": [
+                [
+                  "-1",
+                  "0",
+                  "3",
+                  "0",
+                  "-1",
+                  "0",
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "-4",
+                  "0",
+                  "8",
+                  "0",
+                  "-2",
+                  "0",
+                  "2"
+                ]
+              ]
+            },
+            "x": [
+              -1.3660254037844388,
+              1.3660254037844388
+            ],
+            "y": [
+              -4.961420105465939,
+              2.0550874963145436
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-1",
+            "D3": "-1",
+            "D4": "-1",
+            "D5": "-1",
+            "D6": "-1"
+          },
+          "center_index": 11
+        },
+        {
+          "id": "P19",
+          "index": 18,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 4,
+            "coordinates": [
+              [
+                "51/169",
+                "0",
+                "-29/169",
+                "0",
+                "1/13",
+                "0",
+                "-11/169",
+                "0"
+              ],
+              [
+                "0",
+                "463700/4826809",
+                "0",
+                "-1080824/4826809",
+                "0",
+                "40804/371293",
+                "0",
+                "-459712/4826809"
+              ]
+            ]
+          },
+          "tex": "P_{19}",
+          "definition_tex": "P_{19}=\\left(\\theta_{19}^{6} - \\theta_{19}^{4} + 3 \\theta_{19}^{2} - 1,-2 \\theta_{19}^{7} + 2 \\theta_{19}^{5} - 8 \\theta_{19}^{3} + 4 \\theta_{19}\\right),\\quad \\theta_{19}^{8} - 2 \\theta_{19}^{6} + 5 \\theta_{19}^{4} - 4 \\theta_{19}^{2} + 1=0\\;\\text{(root index 4)}",
+          "x": [
+            0.22744273475449073,
+            0.019067644167665425
+          ],
+          "y": [
+            0.0025028813209991606,
+            0.0175346974881578
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 4,
+              "coordinates": [
+                [
+                  "-1",
+                  "0",
+                  "3",
+                  "0",
+                  "-1",
+                  "0",
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "4",
+                  "0",
+                  "-8",
+                  "0",
+                  "2",
+                  "0",
+                  "-2"
+                ]
+              ]
+            },
+            "x": [
+              0.3660254037844386,
+              -0.3660254037844386
+            ],
+            "y": [
+              0.2850420912381664,
+              0.6881524825143706
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-1",
+            "D3": "-1",
+            "D4": "-1",
+            "D5": "-1",
+            "D6": "-1"
+          },
+          "center_index": 12
+        },
+        {
+          "id": "P20",
+          "index": 19,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 4,
+            "coordinates": [
+              [
+                "51/169",
+                "0",
+                "-29/169",
+                "0",
+                "1/13",
+                "0",
+                "-11/169",
+                "0"
+              ],
+              [
+                "0",
+                "-463700/4826809",
+                "0",
+                "1080824/4826809",
+                "0",
+                "-40804/371293",
+                "0",
+                "459712/4826809"
+              ]
+            ]
+          },
+          "tex": "P_{20}",
+          "definition_tex": "P_{20}=\\left(\\theta_{20}^{6} - \\theta_{20}^{4} + 3 \\theta_{20}^{2} - 1,2 \\theta_{20}^{7} - 2 \\theta_{20}^{5} + 8 \\theta_{20}^{3} - 4 \\theta_{20}\\right),\\quad \\theta_{20}^{8} - 2 \\theta_{20}^{6} + 5 \\theta_{20}^{4} - 4 \\theta_{20}^{2} + 1=0\\;\\text{(root index 4)}",
+          "x": [
+            0.22744273475449073,
+            0.019067644167665425
+          ],
+          "y": [
+            -0.0025028813209991606,
+            -0.0175346974881578
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 4,
+              "coordinates": [
+                [
+                  "-1",
+                  "0",
+                  "3",
+                  "0",
+                  "-1",
+                  "0",
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "-4",
+                  "0",
+                  "8",
+                  "0",
+                  "-2",
+                  "0",
+                  "2"
+                ]
+              ]
+            },
+            "x": [
+              0.3660254037844386,
+              -0.3660254037844386
+            ],
+            "y": [
+              -0.2850420912381664,
+              -0.6881524825143706
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-1",
+            "D3": "-1",
+            "D4": "-1",
+            "D5": "-1",
+            "D6": "-1"
+          },
+          "center_index": 12
+        },
+        {
+          "id": "P21",
+          "index": 20,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 5,
+            "coordinates": [
+              [
+                "51/169",
+                "0",
+                "-29/169",
+                "0",
+                "1/13",
+                "0",
+                "-11/169",
+                "0"
+              ],
+              [
+                "0",
+                "463700/4826809",
+                "0",
+                "-1080824/4826809",
+                "0",
+                "40804/371293",
+                "0",
+                "-459712/4826809"
+              ]
+            ]
+          },
+          "tex": "P_{21}",
+          "definition_tex": "P_{21}=\\left(\\theta_{21}^{6} - \\theta_{21}^{4} + 3 \\theta_{21}^{2} - 1,-2 \\theta_{21}^{7} + 2 \\theta_{21}^{5} - 8 \\theta_{21}^{3} + 4 \\theta_{21}\\right),\\quad \\theta_{21}^{8} - 2 \\theta_{21}^{6} + 5 \\theta_{21}^{4} - 4 \\theta_{21}^{2} + 1=0\\;\\text{(root index 5)}",
+          "x": [
+            0.22744273475449073,
+            -0.019067644167665425
+          ],
+          "y": [
+            0.0025028813209991606,
+            -0.0175346974881578
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 5,
+              "coordinates": [
+                [
+                  "-1",
+                  "0",
+                  "3",
+                  "0",
+                  "-1",
+                  "0",
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "4",
+                  "0",
+                  "-8",
+                  "0",
+                  "2",
+                  "0",
+                  "-2"
+                ]
+              ]
+            },
+            "x": [
+              0.3660254037844386,
+              0.3660254037844386
+            ],
+            "y": [
+              0.2850420912381664,
+              -0.6881524825143706
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-1",
+            "D3": "-1",
+            "D4": "-1",
+            "D5": "-1",
+            "D6": "-1"
+          },
+          "center_index": 13
+        },
+        {
+          "id": "P22",
+          "index": 21,
+          "point": {
+            "field_polynomial": [
+              "1",
+              "0",
+              "-4",
+              "0",
+              "5",
+              "0",
+              "-2",
+              "0",
+              "1"
+            ],
+            "root_index": 5,
+            "coordinates": [
+              [
+                "51/169",
+                "0",
+                "-29/169",
+                "0",
+                "1/13",
+                "0",
+                "-11/169",
+                "0"
+              ],
+              [
+                "0",
+                "-463700/4826809",
+                "0",
+                "1080824/4826809",
+                "0",
+                "-40804/371293",
+                "0",
+                "459712/4826809"
+              ]
+            ]
+          },
+          "tex": "P_{22}",
+          "definition_tex": "P_{22}=\\left(\\theta_{22}^{6} - \\theta_{22}^{4} + 3 \\theta_{22}^{2} - 1,2 \\theta_{22}^{7} - 2 \\theta_{22}^{5} + 8 \\theta_{22}^{3} - 4 \\theta_{22}\\right),\\quad \\theta_{22}^{8} - 2 \\theta_{22}^{6} + 5 \\theta_{22}^{4} - 4 \\theta_{22}^{2} + 1=0\\;\\text{(root index 5)}",
+          "x": [
+            0.22744273475449073,
+            -0.019067644167665425
+          ],
+          "y": [
+            -0.0025028813209991606,
+            0.0175346974881578
+          ],
+          "infinity": false,
+          "real": false,
+          "lmfdb": {
+            "point": {
+              "field_polynomial": [
+                "1",
+                "0",
+                "-4",
+                "0",
+                "5",
+                "0",
+                "-2",
+                "0",
+                "1"
+              ],
+              "root_index": 5,
+              "coordinates": [
+                [
+                  "-1",
+                  "0",
+                  "3",
+                  "0",
+                  "-1",
+                  "0",
+                  "1",
+                  "0"
+                ],
+                [
+                  "0",
+                  "-4",
+                  "0",
+                  "8",
+                  "0",
+                  "-2",
+                  "0",
+                  "2"
+                ]
+              ]
+            },
+            "x": [
+              0.3660254037844386,
+              0.3660254037844386
+            ],
+            "y": [
+              -0.2850420912381664,
+              0.6881524825143706
+            ],
+            "infinity": false,
+            "real": false
+          },
+          "coefficients": {
+            "D1": "-1",
+            "D2": "-1",
+            "D3": "-1",
+            "D4": "-1",
+            "D5": "-1",
+            "D6": "-1"
+          },
+          "center_index": 13
+        }
+      ],
+      "logarithmic_centers": [
+        {
+          "exact": {
+            "rational": "1/5"
+          },
+          "position": [
+            0.2,
+            0.0
+          ],
+          "tex": "\\frac{1}{5}",
+          "label": "1/5"
+        },
+        {
+          "exact": {
+            "rational": "1/4"
+          },
+          "position": [
+            0.25,
+            0.0
+          ],
+          "tex": "\\frac{1}{4}",
+          "label": "1/4"
+        },
+        {
+          "exact": {
+            "rational": "1/3"
+          },
+          "position": [
+            0.33333333333333337,
+            0.0
+          ],
+          "tex": "\\frac{1}{3}",
+          "label": "1/3"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/17",
+              "-8/17",
+              "1"
+            ],
+            "root_index": 1
+          },
+          "position": [
+            0.23529411764705882,
+            0.058823529411764705
+          ],
+          "tex": "a_{4}",
+          "label": "a4"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/17",
+              "-8/17",
+              "1"
+            ],
+            "root_index": 0
+          },
+          "position": [
+            0.23529411764705882,
+            -0.058823529411764705
+          ],
+          "tex": "a_{5}",
+          "label": "a5"
+        },
+        {
+          "exact": {
+            "rational": "0"
+          },
+          "position": [
+            0.0,
+            0.0
+          ],
+          "tex": "0",
+          "label": "0"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/409",
+              "-18/409",
+              "122/409",
+              "-366/409",
+              "1"
+            ],
+            "root_index": 3
+          },
+          "position": [
+            0.27241707649643543,
+            0.02743870871475662
+          ],
+          "tex": "a_{7}",
+          "label": "a7"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/409",
+              "-18/409",
+              "122/409",
+              "-366/409",
+              "1"
+            ],
+            "root_index": 2
+          },
+          "position": [
+            0.27241707649643543,
+            -0.02743870871475662
+          ],
+          "tex": "a_{8}",
+          "label": "a8"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/409",
+              "-18/409",
+              "122/409",
+              "-366/409",
+              "1"
+            ],
+            "root_index": 1
+          },
+          "position": [
+            0.1750156863397504,
+            0.04455362314018449
+          ],
+          "tex": "a_{9}",
+          "label": "a9"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/409",
+              "-18/409",
+              "122/409",
+              "-366/409",
+              "1"
+            ],
+            "root_index": 0
+          },
+          "position": [
+            0.1750156863397504,
+            -0.04455362314018449
+          ],
+          "tex": "a_{10}",
+          "label": "a10"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/169",
+              "-14/169",
+              "74/169",
+              "-178/169",
+              "1"
+            ],
+            "root_index": 3
+          },
+          "position": [
+            0.29918448418042054,
+            0.15516231872387842
+          ],
+          "tex": "a_{11}",
+          "label": "a11"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/169",
+              "-14/169",
+              "74/169",
+              "-178/169",
+              "1"
+            ],
+            "root_index": 2
+          },
+          "position": [
+            0.29918448418042054,
+            -0.15516231872387842
+          ],
+          "tex": "a_{12}",
+          "label": "a12"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/169",
+              "-14/169",
+              "74/169",
+              "-178/169",
+              "1"
+            ],
+            "root_index": 1
+          },
+          "position": [
+            0.22744273475449073,
+            0.019067644167665425
+          ],
+          "tex": "a_{13}",
+          "label": "a13"
+        },
+        {
+          "exact": {
+            "polynomial": [
+              "1/169",
+              "-14/169",
+              "74/169",
+              "-178/169",
+              "1"
+            ],
+            "root_index": 0
+          },
+          "position": [
+            0.22744273475449073,
+            -0.019067644167665425
+          ],
+          "tex": "a_{14}",
+          "label": "a14"
+        }
+      ],
+      "coordinate_system": "lmfdb",
+      "lmfdb_model": {
+        "f": "x^5 - x",
+        "h": "0",
+        "discriminant": "4*x^5 - 4*x",
+        "lhs_tex": "y^2",
+        "rhs_tex": "x^{5} - x",
+        "equation_tex": "C:\\quad y^2=x^{5} - x",
+        "branch_values": [
+          [
+            -1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      "centers_source": "computation",
+      "matrix_divisor_ids": [
+        "D1",
+        "D2"
+      ],
+      "packet_torsion_order": "6",
+      "end_alg": "CM",
+      "packet_size": 22,
+      "q": "-1/24",
+      "quotient": "-0.0416666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666663432578844853463409355035",
+      "rational_guess": "-1/24",
+      "numerical": {
+        "det": "280.626447541786053261532225069574636439396996505884489488168189691864645704315345477525062789281554840043428086371164568709052144792127366285474892178",
+        "c_plus": "3.17249673357460100265574838315919522804692357839831522034629976832677690095232151464305883447695727623432966859030775182018025898824283176244220486871",
+        "c_minus": "-3.17249673357460100265574838315919522804692357839831522034629976832677690095232151464305883447695727623432966859030775182018025887214158083033700376878",
+        "L_second_derivative": "0.369798475907031554708336314352215744823194139312597412150884276482191988861336598027266095810415054742020932433740128622369582267963849131409192580309"
+      },
+      "reference_matrix": [
+        [
+          "-197.358746853215534455086981014250955905926332301800415425965514589874052082089874337534568433460134128451168533652865681803253020811994249062458522117",
+          "-274.161935389773213505111615476675111593154205407873482376957530300481970185276551890094919851002787696882440289935870363094287214591518322695225427118",
+          "38.1359972112471265528115553044552859698855012420326728549262679432599842867221308453500319569747242918460988668771867329031425986345638503132230255329"
+        ],
+        [
+          "-83.0059226631187352676205349393235771675172612162977074284879335015016868655053419487939919428520081541361161956660606049719583410583861391978806119036",
+          "-134.280731620370320899382619177902227742648793689582573577342500445511946438345928154422038657387882348565709091511778842864848333224663345393129708279",
+          "17.9463516288221772013230848491554286917108241138977284023182437380046984878692380448706032738704584902805171138245584625426553405339109839463816931653"
+        ],
+        [
+          "-8.97766291995062710769301058286955685094284750422602761919908129440884635866209956384275995586319323253955308326742511587230535612731154550457988420923",
+          "-16.7850914525462901124228273972377784678310992111978216971678125556889933047932410193027548321734852935707136364389723553581060417114740973464525600526",
+          "2.24329395360277215016538560614442858646385301423721605028978046725058731098365475560882540923380731128506463922806980781783191756673870411359748169237"
+        ]
+      ],
+      "reference_intervals": {
+        "matrix": [
+          [
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "-346835933082691413524125203082113325453944371712831751594562240199697358013302918492834710940136227170667891147731645506096261587449917218684786065229428550839167/1757388200993436087035366604564836663620975436836686184804982645551499054949799949343375268009332366074187855716219099657503228927927460816018951242525454630912",
+              "upper": "-346835933082691413524125203082113325453944371712831751594562240199697358013302918492834710940136227170667891147731645506096248741227445766847305459302227265235839/1757388200993436087035366604564836663620975436836686184804982645551499054949799949343375268009332366074187855716219099657503228927927460816018951242525454630912"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "-963617900831024412795246181038480523788321664623195736008795363155485888941805907347139745779954289222375253759518385457567084626163200578616142804828397644358249/3514776401986872174070733209129673327241950873673372369609965291102998109899599898686750536018664732148375711432438199315006457855854921632037902485050909261824",
+              "upper": "-963617900831024412795246181038480523788321664623195736008795363155485888941805907347139745779954289222375253759518385457567025585354242057234963307497561102033513/3514776401986872174070733209129673327241950873673372369609965291102998109899599898686750536018664732148375711432438199315006457855854921632037902485050909261824"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "536158012257314266660405621130975425925882480921479901660237052093562157243499210796103906811366900604305799743933421057095241931476016490546467966593953517483813/14059105607947488696282932836518693308967803494693489478439861164411992439598399594747002144074658928593502845729752797260025831423419686528151609940203637047296",
+              "upper": "536158012257314266660405621130975425925882480921479901660237052093562157243499210796103906811366900604305799743933421057095241931529699663938244367948277356640037/14059105607947488696282932836518693308967803494693489478439861164411992439598399594747002144074658928593502845729752797260025831423419686528151609940203637047296"
+            }
+          ],
+          [
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "-583494516402954078277796413616298986639840493018211570393214609824592881323425383150931366077803634829628316164072982632925323318411211268185323627658752352209327/7029552803973744348141466418259346654483901747346744739219930582205996219799199797373501072037329464296751422864876398630012915711709843264075804970101818523648",
+              "upper": "-583494516402954078277796413616298986639840493018211570393214609824592881323425383150931366077803634829628316164072982632925288891608144330459338053485668810246575/7029552803973744348141466418259346654483901747346744739219930582205996219799199797373501072037329464296751422864876398630012915711709843264075804970101818523648"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "-943933493481620024655901267397802646440739810265000515595457387107037275048835736427264938044245526400908196226626620083525100422673403525218629801638850397480547/7029552803973744348141466418259346654483901747346744739219930582205996219799199797373501072037329464296751422864876398630012915711709843264075804970101818523648",
+              "upper": "-943933493481620024655901267397802646440739810265000515595457387107037275048835736427264938044245526400908196226626620083525040119228670550110924319925766359623267/7029552803973744348141466418259346654483901747346744739219930582205996219799199797373501072037329464296751422864876398630012915711709843264075804970101818523648"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "1009238611307885678419587051540659625272249375852197461948681509823175825399527926204430883409631812902222681870933498460414573047483618236395533768802332141760841/56236422431789954785131731346074773235871213978773957913759444657647969758393598378988008576298635714374011382919011189040103325693678746112606439760814548189184",
+              "upper": "1009238611307885678419587051540659625272249375852197461948681509823175825399527926204430883409631812902222681870933498460414573047585805829065425109564394618040649/56236422431789954785131731346074773235871213978773957913759444657647969758393598378988008576298635714374011382919011189040103325693678746112606439760814548189184"
+            }
+          ],
+          [
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "-504871644416560351474498582472929410529911725451476946770458388533110449728261257937272864293690469672448906701528185870568663110411210854342899820483083441063403/56236422431789954785131731346074773235871213978773957913759444657647969758393598378988008576298635714374011382919011189040103325693678746112606439760814548189184",
+              "upper": "-504871644416560351474498582472929410529911725451476946770458388533110449728261257937272864293690469672448906701528185870568620891782031963566783636773798620218859/56236422431789954785131731346074773235871213978773957913759444657647969758393598378988008576298635714374011382919011189040103325693678746112606439760814548189184"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "-943933493481620024655901267397802646440739810265000515595457387107037275048835736427264938044245526400908196226626620083525100937286366101409674783529131089793201/56236422431789954785131731346074773235871213978773957913759444657647969758393598378988008576298635714374011382919011189040103325693678746112606439760814548189184",
+              "upper": "-943933493481620024655901267397802646440739810265000515595457387107037275048835736427264938044245526400908196226626620083525039611183130010368751763685218943176881/56236422431789954785131731346074773235871213978773957913759444657647969758393598378988008576298635714374011382919011189040103325693678746112606439760814548189184"
+            },
+            {
+              "type": "real_ball",
+              "bits": 539,
+              "lower": "504619305653942839209793525770329812636124687926098730974340754911587912699763963102215441704815906451111340935466749230207286523742984822126796974950303249903307/224945689727159819140526925384299092943484855915095831655037778630591879033574393515952034305194542857496045531676044756160413302774714984450425759043258192756736",
+              "upper": "504619305653942839209793525770329812636124687926098730974340754911587912699763963102215441704815906451111340935466749230207286523791651233082384178564421756301003/224945689727159819140526925384299092943484855915095831655037778630591879033574393515952034305194542857496045531676044756160413302774714984450425759043258192756736"
+            }
+          ]
+        ],
+        "det": {
+          "type": "real_ball",
+          "bits": 539,
+          "lower": "246584803898319128445467878300485016773570231612665719260230374516695251273581084940207634118603083773545068450356299068730653906652664430970786415047247043188793/878694100496718043517683302282418331810487718418343092402491322775749527474899974671687634004666183037093927858109549828751614463963730408009475621262727315456",
+          "upper": "246584803898319128445467878300485016773570231612665719260230374516695251273581084940207634118603083773545068450356299068748366098786314908222847082609685910214713/878694100496718043517683302282418331810487718418343092402491322775749527474899974671687634004666183037093927858109549828751614463963730408009475621262727315456"
+        },
+        "c_plus": {
+          "type": "real_ball",
+          "bits": 519,
+          "lower": "1361159259588432705788626574916313619518522750654489488720788699310099280150344911738652616879019819798314366518552914039823607389607760572249409697194157389/429049853758163107186368799942587076079339706258956588087153966199096448962353503257659977541340909686081019461967553627320124249982290238285876768194691072",
+          "upper": "1361159259588432705788626574916313619518522750654489488720788699310099280150344911738652616879019819798314366518552914039823710828179339176424029622588122445/429049853758163107186368799942587076079339706258956588087153966199096448962353503257659977541340909686081019461967553627320124249982290238285876768194691072"
+        },
+        "c_minus": {
+          "type": "real_ball",
+          "bits": 519,
+          "lower": "-680579629794216352894313287458156809759261375327244744360394349655049640075172455869326308439509909899157183259276457019911862173011736644536277740666736129/214524926879081553593184399971293538039669853129478294043576983099548224481176751628829988770670454843040509730983776813660062124991145119142938384097345536",
+          "upper": "-680579629794216352894313287458156809759261375327244744360394349655049640075172455869326308439509909899157183259276457019911796886068588496240907251856166401/214524926879081553593184399971293538039669853129478294043576983099548224481176751628829988770670454843040509730983776813660062124991145119142938384097345536"
+        },
+        "L_second_derivative": {
+          "bits": 834,
+          "lower": "84724984165599636203161908640487368586304608592857169467037336229148994843111683953668453443757250214457817126372833945728989719769416262626133302107541244407648993530832851047249498136681509266968421825010760847996859754958911558761193740739733422233/229111231347799689635350271469398707925773913377365220235531597618488512042823233274762274126597027003434876073751997760595174886056587013603560208332516636964102994463833696818134410091831830209960320065853961979807444428853900668922870296851794362368",
+          "type": "real_ball",
+          "upper": "84724984165599636203161908640487368586304608592857169467037336229148994843111683953668453443757250214457817126372833945729024619578930921689706746188274253635012336382839315305587156605212480151082080241430998587876065118593260094312254186762102440089/229111231347799689635350271469398707925773913377365220235531597618488512042823233274762274126597027003434876073751997760595174886056587013603560208332516636964102994463833696818134410091831830209960320065853961979807444428853900668922870296851794362368"
+        }
+      },
+      "L_num_coeffs": 141416,
+      "feq_check": null,
+      "L_certified": true,
+      "L_analytic_assumptions": "The supplied Euler factors, conductor and gamma factors are correct; the completed L-function is holomorphic, has the growth required by the generic L-function algorithm, and satisfies its functional equation. Ball arithmetic certifies numerical errors conditional on these hypotheses.",
+      "relative_agreement": "3.62157987436871351183244584297554529481718091824793374917562484696549216725163958689571726630280969648235133888769000067903581519647558185768935857728E-122",
+      "regulator_digits": 100,
+      "L_digits": 100,
+      "comparison_verified": true,
+      "certified": true,
+      "integral_rank": 6,
+      "integral_rank_field": "Q",
+      "integral_rank_space": "galois_traces",
+      "trace_rank_certificate": {
+        "rank_over_Q": 6,
+        "abscissa_groups": [
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            3
+          ],
+          [
+            4
+          ],
+          [
+            5
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            10,
+            11
+          ],
+          [
+            12,
+            13
+          ],
+          [
+            14,
+            15
+          ],
+          [
+            16,
+            17
+          ],
+          [
+            18,
+            19
+          ],
+          [
+            20,
+            21
+          ]
+        ],
+        "normalized_trace_matrix": [
+          [
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-2",
+            "-2",
+            "-2",
+            "-2"
+          ],
+          [
+            "0",
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-2",
+            "-2",
+            "-2",
+            "-2"
+          ],
+          [
+            "0",
+            "0",
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-2",
+            "-2",
+            "-2",
+            "-2"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "4",
+            "4",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-2",
+            "-2",
+            "-2",
+            "-2"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-2",
+            "-2",
+            "-2",
+            "-2"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "2",
+            "2",
+            "2",
+            "2",
+            "-2",
+            "-2",
+            "-2",
+            "-2"
+          ]
+        ],
+        "input_basis_is_galois_invariant": true,
+        "integer_point_divisor_lattice_saturation_index": "2048",
+        "saturated_integer_point_divisor_basis": [
+          [
+            "1",
+            "0",
+            "0",
+            "0",
+            "0",
+            "7",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0",
+            "0",
+            "7",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ],
+          [
+            "0",
+            "0",
+            "1",
+            "0",
+            "0",
+            "7",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "1",
+            "1",
+            "6",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "8",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1",
+            "-1"
+          ]
+        ],
+        "interpretation": "QQ-span of Galois traces modulo the symmetric-ordinate identifications. Integer representative normalization is recorded separately."
+      },
+      "integrality_verified": true,
+      "linear_comparison": null,
+      "original_curve": {
+        "label": "4096.b.65536.1",
+        "cond": 4096,
+        "is_simple_base": true,
+        "is_simple_geom": false,
+        "end_alg": "CM",
+        "eqn": [
+          [
+            "0",
+            "-1",
+            "0",
+            "0",
+            "0",
+            "1"
+          ],
+          []
+        ],
+        "num_rat_pts": 4,
+        "rat_pts": [
+          [
+            -1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1
+          ]
+        ],
+        "rat_pts_verified": true,
+        "mw_invs": [
+          2,
+          2,
+          2
+        ]
       }
     }
   ]

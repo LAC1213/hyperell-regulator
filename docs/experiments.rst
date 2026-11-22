@@ -148,6 +148,11 @@ from that verified packet. Both numerical and certified runs attempt the
 full geometric kernel. The JSON fields ``integral_rank`` and
 ``integral_rank_complete`` distinguish an exact rank from a lower bound
 in this Galois-trace space. Cached kernels record
+``rank_over_Q`` from exact rational matrix rank after the Galois trace
+and symmetric-ordinate projections; dependent rows contribute only once.
+Saved experiments label this with ``integral_rank_field="Q"`` and
+``integral_rank_space="galois_traces"``. Integer scaling of representatives
+does not change this rank. Cached kernels also record
 ``divisor_descent="galois_trace"`` and ``base_field="Q"``; older
 number-field bases and the survey results using them are recomputed.
 ``packet_support_complete`` records whether all points were included.
@@ -219,13 +224,26 @@ conductor when PARI omits its local exponent. A trivial local
 :math:`h^1` factor requires additional inertia data. High precision and
 large coefficient counts can require several GiB of PARI stack memory.
 
-The CM-labelled survey through conductor 10000 automatically supplies
-manual bad factors for seven otherwise unsupported curves. Their wild
+The experiments automatically supply manual bad factors for known
+otherwise unsupported curves, including curves with geometric CM. Their wild
 standard conductor exponents are included separately, through the
 ``StandardLFunction(..., conductor_exponents={p: exponent})`` argument.
 The equations, polynomials and derivation summaries are recorded
 in ``hyperell_regulator.experiments.beilinson_local_data``; the experiment saves this local
 data with each L-value and invalidates caches when it changes.
+
+For ``3125.a.3125.1`` the standard factor at 5 is 1 and the standard
+conductor is :math:`5^6`. For ``4096.b.65536.1`` the standard factor at 2
+is :math:`1+2T` and the conductor is :math:`2^{12}`. The constructor accepts
+exterior-square factors, so these correspond respectively to
+``bad_factors={5: 1-5*T}`` and ``bad_factors={2: 1-4*T**2}``, together with
+the separately supplied conductor exponents 6 and 12.
+
+The latter curve has two elliptic components after extension at 2.
+Its integral-basis computation uses both verified elliptic discs.
+Full rational Galois orbits are evaluated using exact Newton-polygon
+averages; individual nonrational points can remain unresolved without
+preventing a complete basis over :math:`\mathbb Q`.
 
 Saved results
 -------------
@@ -252,7 +270,8 @@ regulators or L-values:
 
    sage -python -m hyperell_regulator.experiments.beilinson_report \
        --input results/beilinson_results_certified.json \
-       --bound 1000 --digits 100 --explorer-inputs docs/explorer_inputs.json
+       --bound 1000 --digits 100 --explorer-inputs docs/explorer_inputs.json \
+       --extra-results docs/explorer_extra_results.json
 
 The three multipage tables list the selected divisors with their exact
 coefficients in the original LMFDB coordinates, the LMFDB models,

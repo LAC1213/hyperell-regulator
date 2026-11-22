@@ -3,9 +3,12 @@ Curve explorer
 
 `Open the explorer <explorer/index.html>`_ to inspect the Stokes computation
 for the selected degree-zero divisors on a genus two curve
-:math:`C:y^2+h(x)y=f(x)` in its original LMFDB coordinates. The catalog contains the 41 successful comparisons
-from the recent 100-digit survey below conductor 1000, including five
-curves labelled ``CM`` in the rational endomorphism algebra field.
+:math:`C:y^2+h(x)y=f(x)` in its original LMFDB coordinates. The catalog contains 41 successful comparisons from the 100-digit survey
+below conductor 1000 and the individual curves ``3125.a.3125.1`` and
+``4096.b.65536.1``. Six curves carry the rational endomorphism algebra
+label ``CM``. The two additional curves display all four and six
+integral Galois-trace generators, respectively. Their selected regulator
+columns keep their original generator indices.
 
 The viewer
 ----------
@@ -14,8 +17,8 @@ Choose a curve to see its equation, selected divisors, packet torsion order
 and rational endomorphism algebra label. Packet order is the exponent
 :math:`N=\operatorname{lcm}_P\operatorname{ord}(P-P_0)` in the Jacobian, rather than
 the number of points or the order of the ambient Jacobian torsion group.
-Divisor formulas, exact support definitions and the real plot all use the
-original LMFDB coordinates, including the labelled points at infinity
+Divisor formulas and exact support definitions use the original LMFDB
+coordinates, including the labelled points at infinity
 :math:`\infty_{Y=\eta}` with :math:`Y=\lim y/x^3`.
 The LMFDB link opens the database entry.
 
@@ -26,9 +29,12 @@ Nonreal points retain their exact coordinates in **Exact support and
 coefficients**. Algebraic points are labelled :math:`P_i`, with their
 number field polynomial and embedding index given below the plot.
 
-The cut panels use a separate square model :math:`v^2=F(u)`, displayed
-above the tree. Point images under this recorded coordinate change determine
-the logarithmic centers.
+The real picture and cut panels use the transformed square model
+:math:`v^2=F(u)`, displayed beside the real picture and above the tree.
+The real picture marks the transformed images of the selected support,
+using the same point labels as the LMFDB divisor formulas. The original
+equation is available under **LMFDB model, exact support and coefficients**.
+The transformed point images also determine the logarithmic centers.
 
 **The tree in** :math:`\mathbb P^1` shows the complete integration cut,
 including logarithmic centers used by other basis divisors in the same
@@ -91,7 +97,8 @@ From the repository root:
 
    sage -python -m hyperell_regulator.experiments.beilinson_report \
        --input results/beilinson_results_certified.json \
-       --bound 1000 --digits 100 --explorer-inputs docs/explorer_inputs.json
+       --bound 1000 --digits 100 --explorer-inputs docs/explorer_inputs.json \
+       --extra-results docs/explorer_extra_results.json
    sage -python -m hyperell_regulator.experiments.small_conductor_explorer --jobs 4
    sage -pip install '.[visualization]'
    sage -python -m hyperell_regulator.experiments.small_conductor_surfaces --jobs 4

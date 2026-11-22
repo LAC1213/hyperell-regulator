@@ -181,14 +181,24 @@ class ProjectedTorsionPacketIntegrality(NumberFieldTorsionPacketIntegrality):
                 values[i] = QQ(a)/len(group)
         return self.divisor(values)
 
+    @staticmethod
+    def _applicable_constraints(data, coefficients):
+        evidence = data.evidence or {}
+        if 'galois_trace_matrix' in evidence and all(
+                all(coefficients.row(i) == coefficients.row(group[0]) for i in group)
+                for group in evidence['galois_trace_orbits']):
+            return evidence['galois_trace_matrix'], ()
+        return data.matrix, data.unresolved
+
     def check(self, coefficients):
         """Evaluate the projected local conditions on a degree-zero divisor."""
         D = self.divisor(coefficients)
         a = self._orbit_sum*D
         local = {}
         for prime, data in self.projected_local_data.items():
-            values = data.matrix*a
-            unsupported = [i for i in data.unresolved if a[i]]
+            constraints, unresolved = self._applicable_constraints(data, matrix(QQ, [a]).transpose())
+            values = constraints*a
+            unsupported = [i for i in unresolved if a[i]]
             verdict = None if unsupported else (True if not values else
                                                 False if data.exact else None)
             local[prime] = dict(q_integral=verdict, values=values, method=data.method,
@@ -217,8 +227,9 @@ class ProjectedTorsionPacketIntegrality(NumberFieldTorsionPacketIntegrality):
         sufficient, necessary = [degree], [degree]
         T = self._orbit_sum*G
         for data in self.projected_local_data.values():
-            rows = (data.matrix*T).rows()
-            unknown = [T.row(i) for i in data.unresolved if T.row(i)]
+            constraints, unresolved = self._applicable_constraints(data, T)
+            rows = (constraints*T).rows()
+            unknown = [T.row(i) for i in unresolved if T.row(i)]
             sufficient.extend(rows+unknown)
             if data.exact and not unknown:
                 necessary.extend(rows)

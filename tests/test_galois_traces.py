@@ -2,9 +2,9 @@
 
 import json
 
-from sage.all import PolynomialRing, QQ, QQbar, vector
+from sage.all import PolynomialRing, QQ, QQbar, matrix, vector
 
-from hyperell_regulator._galois import galois_trace_basis
+from hyperell_regulator._galois import galois_trace_basis, galois_traces
 from hyperell_regulator.components import curve_from_row
 from hyperell_regulator.experiments import _geometric_kernel as worker, beilinson
 from hyperell_regulator.experiments._kernel_cache import KERNEL_CACHE_VERSION
@@ -34,6 +34,25 @@ def test_incomplete_orbits_contribute_no_trace_direction():
     assert traces.rows() == [vector(QQ, [0, -1, 1])]
     assert galois_trace_basis([root, 'infinity']).dimensions() == (0, 2)
     assert galois_trace_basis([]).dimensions() == (0, 0)
+
+
+def test_rational_rank_is_computed_after_trace_not_by_counting_rows():
+    root = QQbar(2).sqrt()
+    xs = [root, -root, 'infinity']
+    rows = [[1, -1, 0], [1, 1, -2], [2, 2, -4]]
+    traces = galois_traces(xs, rows)
+    assert traces == matrix(QQ, [[0, 0, 0], [1, 1, -2], [2, 2, -4]])
+    assert traces.rank() == 1
+    assert galois_traces(xs, traces) == traces
+
+
+def test_cached_rank_uses_the_span_of_trace_rows():
+    from hyperell_regulator.experiments._beilinson_divisors import _kernel_trace_rank
+    from hyperell_regulator.experiments.geometric_torsion import encode_point
+
+    points = [encode_point(P) for P in [(QQbar(0), QQbar(1)), ('infinity', QQbar(0))]]
+    kernel = dict(points=points, basis=[[1, -1], [2, -2]])
+    assert _kernel_trace_rank(kernel) == 1
 
 
 def test_rational_support_keeps_the_full_degree_zero_space():

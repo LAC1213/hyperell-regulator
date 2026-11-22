@@ -7,11 +7,11 @@
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=lmfdb-divisors-4">
+  <link rel="stylesheet" href="explorer.css?v=transformed-picture-6">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
-  <script defer src="curve-geometry.js?v=lmfdb-divisors-4"></script>
-  <script defer src="explorer.js?v=lmfdb-divisors-4"></script>
+  <script defer src="curve-geometry.js?v=transformed-picture-6"></script>
+  <script defer src="explorer.js?v=transformed-picture-6"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -23,7 +23,7 @@
     <section class="intro" aria-labelledby="page-title">
       <h1 id="page-title">Regulator matrix for genus 2 curve</h1>
       <p>Explore the integral Galois-trace divisors selected in the Beilinson survey,
-        their support in LMFDB coordinates on a genus 2 curve <span data-tex="C">C</span>, and the
+        their formulas in LMFDB coordinates, their support on a transformed genus 2 curve <span data-tex="C">C</span>, and the
         <span data-tex="3\times3">3×3</span> regulator matrix of their motivic classes and the Tate class.</p>
     </section>
     <section class="workspace" aria-label="Choose a curve">
@@ -41,15 +41,17 @@
         <div class="curve-definition">
           <p class="curve-label" id="result-source"></p>
           <h2 class="sr-only">The curve and its selected divisors</h2>
+          <p class="hint">Transformed model for the picture</p>
           <div class="equation-scroll"><div id="result-model" class="curve-equation"></div></div>
+          <p class="hint">Divisors in LMFDB coordinates</p>
           <div id="point-info" class="marked-points"></div>
           <p id="packet-info" class="packet-info"></p>
         </div>
         <div class="real-curve">
           <div class="real-plot-heading"><h2>The real curve</h2><label class="divisor-control">Divisor support<select id="divisor-select" disabled></select></label></div>
-          <div id="real-plot" class="real-plot" aria-label="Real curve with the signed support of the selected divisor"></div>
+          <div id="real-plot" class="real-plot" aria-label="Real curve in transformed coordinates with the signed support of the selected divisor"></div>
           <p id="real-support-caption" class="caption"></p>
-          <details class="support-details"><summary>Exact support and coefficients</summary><div id="support-info"></div></details>
+          <details class="support-details"><summary>LMFDB model, exact support and coefficients</summary><div id="support-info"></div></details>
         </div>
       </section>
       <section class="method-note" aria-label="How the regulator is computed">
@@ -128,7 +130,7 @@
     <details class="survey">
       <summary>Full survey</summary>
       <div class="panel curve-table">
-        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col">Endomorphisms over ℚ</th><th scope="col">Packet torsion order</th><th scope="col">Selected divisors</th><th scope="col"><span data-tex="D">D</span></th><th scope="col"><span data-tex="c^+">c⁺</span></th><th scope="col"><span data-tex="c^-">c⁻</span></th><th scope="col"><span data-tex="L''(\mathrm{std},1)">L″(std,1)</span></th><th scope="col"><span data-tex="q">q</span></th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
+        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col">Endomorphisms over ℚ</th><th scope="col">Packet torsion order</th><th scope="col">Rank over ℚ</th><th scope="col">Divisor generators</th><th scope="col"><span data-tex="D">D</span></th><th scope="col"><span data-tex="c^+">c⁺</span></th><th scope="col"><span data-tex="c^-">c⁻</span></th><th scope="col"><span data-tex="L''(\mathrm{std},1)">L″(std,1)</span></th><th scope="col"><span data-tex="q">q</span></th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
       </div>
     </details>
   </main>
