@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const COLORS = ["#bd5034", "#267f91"];
 const POINT_COLORS = ["#bd5034", "#267f91", "#7651a0", "#488551", "#b07b25", "#b04d84"];
 const PI = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647";
-const DATA_VERSION = "transformed-picture-6";
+const DATA_VERSION = "lmfdb-support-7";
 const HOME_CAMERA = {eye:{x:1.5,y:-1.6,z:1.2},center:{x:0,y:0,z:0},up:{x:0,y:0,z:1},projection:{type:"perspective"}};
 let catalog, current, currentCurve = null, mesh = null, version = 0, label = "";
 // Round the saved decimal strings directly: Number would discard digits after ~16.
@@ -62,6 +62,7 @@ function renderPoints(curve) {
   const collection=current.collection;
   if (!collection?.divisors) {
     $("point-info").textContent="Logarithmic centers: "+current.weights.map(w=>w.center).join(", ");
+    $("support-caption").textContent="No divisor support was supplied with this import.";
     return;
   }
   const active=$("divisor-select").value;
@@ -72,15 +73,14 @@ function renderPoints(curve) {
   $("packet-info").textContent="Packet torsion order: "+(curve?.packet_torsion_order||collection.packet_torsion_order||"not recorded")+
     " · Integral trace rank over ℚ: "+(curve?.integral_rank??collection.integral_rank??"not recorded")+
     " · Rational endomorphism algebra: "+(curve?.end_alg||collection.end_alg||"not recorded");
-  $("support-info").replaceChildren();
-  if (collection.lmfdb_model) {
-    const model=document.createElement("div"); model.className="support-coordinate";
-    math(model,collection.lmfdb_model.equation_tex); $("support-info").append(model);
-  }
-  (collection.support||[]).filter(P=>rational(P.coefficients[active]||0)!==0).forEach(P=>{
-    const node=document.createElement("span"); node.className="support-coordinate";
-    math(node,P.definition_tex+"\\quad ("+CurveGeometry.rationalTex(P.coefficients[active])+")");
-    $("support-info").append(node);
+  const support=(collection.support||[]).filter(P=>rational(P.coefficients[active]||0)!==0);
+  $("support-caption").textContent="Complete support of "+active+" in LMFDB coordinates ("+support.length+" points).";
+  support.forEach(P=>{
+    const row=document.createElement("tr"); row.dataset.point=P.id;
+    const point=cell(row,""); point.className="support-coordinate";
+    math(point,P.definition_tex);
+    mathCell(row,CurveGeometry.rationalTex(P.coefficients[active]));
+    $("support-info").append(row);
   });
 }
 
@@ -213,6 +213,7 @@ function renderBeilinson(curve) {
   });
 }
 function displayEquationTex(multiline=false) {
+  if (current.collection?.lmfdb_model) return current.collection.lmfdb_model.equation_tex;
   return CurveGeometry.equationTex(current.input.F,multiline).replace(/x/g,"u").replace(/y/g,"v");
 }
 function fitCurveEquation() {
@@ -228,7 +229,7 @@ function fitCurveEquation() {
     const fitted=size*(available-4)/width;
     if (fitted>=17) node.style.fontSize=fitted+"px";
     else math(node,displayEquationTex(true));
-  } catch (error) { node.textContent="C : v² = "+polynomial(current.input.F).replace(/x/g,"u"); }
+  } catch (error) { node.textContent=displayEquationTex(); }
 }
 let conjectureFormula=$("beilinson-equation").dataset.tex;
 function fitConjectureEquation() {
@@ -276,44 +277,6 @@ function inspectPath(edge,sheet) {
   if (sheet!==undefined) $("sheet").value=sheet;
   renderIntegrals(); highlightSelection();
 }
-async function renderRealPlot() {
-  const plot=$("real-plot"), active=$("divisor-select").value;
-  try {
-    const geometry=CurveGeometry.realLocus(current,active);
-    const traces=geometry.branches.map(branch=>({
-      type:"scatter",mode:"lines",x:branch.x,y:branch.y,connectgaps:false,
-      line:{color:"#315d58",width:2.3},showlegend:false,meta:{kind:"real-branch"},
-      hovertemplate:"u = %{x:.6g}<br>v = %{y:.6g}<extra>C(ℝ)</extra>"
-    }));
-    geometry.points.forEach(point=>{
-      const coefficient=rational(point.coefficient||1), sign=coefficient<0?"−":"+";
-      traces.push({type:"scatter",mode:"markers+text",x:[point.x],y:[point.y],
-        text:[sign+Math.abs(coefficient)+" "+point.name],textposition:point.y<0?"bottom right":"top right",
-        textfont:{family:"Source Serif 4, Georgia, serif",size:14},
-        marker:{size:10+Math.min(6,Math.log2(1+Math.abs(coefficient))),symbol:coefficient<0?"circle-open":"circle",
-          color:coefficient<0?COLORS[1]:COLORS[0],line:{width:2}},
-        showlegend:false,meta:{kind:"divisor-support",point:point.name,coefficient:point.coefficient,divisor:active},
-        hovertemplate:point.name+" · coefficient "+point.coefficient+"<br>(%{x:.8g}, %{y:.8g})<extra></extra>"});
-    });
-    const annotations=geometry.infinity.map((P,i)=>({xref:"paper",yref:"paper",x:1,y:1-.1*i,xanchor:"right",
-      text:P.coefficients[active]+" · ∞ (v/u³ = "+decimal(P.y[0],6)+"; "+P.id+")",showarrow:false,font:{size:14,color:COLORS[1]}}));
-    const axis={showgrid:false,zeroline:true,zerolinecolor:"#ccd4cc",zerolinewidth:1,
-      tickfont:{family:"Inter, sans-serif",size:11,color:"#61716b"},ticks:"outside",tickcolor:"#ccd4cc",automargin:true};
-    await Plotly.react(plot,traces,{annotations,
-      margin:{l:38,r:20,t:20,b:35},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
-      font:{family:"Source Serif 4, Georgia, serif",color:"#183e3b",size:14},uirevision:current.input.F+"/"+active,
-      xaxis:{...axis,title:{text:"u"},range:geometry.xRange},yaxis:{...axis,title:{text:"v"},range:geometry.yRange},
-      dragmode:"pan",hovermode:"closest"
-    },{responsive:true,displaylogo:false,scrollZoom:false,modeBarButtonsToRemove:["select2d","lasso2d","toImage"]});
-    $("real-support-caption").textContent="The picture uses transformed coordinates (u, v); divisor formulas use LMFDB coordinates. Filled markers have positive coefficients; open markers have negative coefficients."+
-      (geometry.infinity.length?" Points at infinity are listed in the plot annotation.":"")+
-      (geometry.nonreal.length?" "+geometry.nonreal.length+" nonreal support points are listed below; their images under the cut coordinate u appear in the tree.":"");
-  } catch (error) {
-    if (plot.data) Plotly.purge(plot);
-    plot.textContent="A real-curve plot is unavailable: "+error.message;
-  }
-}
-
 function saveCamera() {
   const plot=$("curve-plot"), scene=plot._fullLayout?.scene?._scene;
   if (!scene) return structuredClone(HOME_CAMERA);
@@ -453,8 +416,9 @@ async function display(data,name,curve=null) {
     $("result-source").append(curveName,link);
   }
   else $("result-source").textContent=name||"Imported curve";
+  $("result-model-label").textContent=current.collection?.lmfdb_model?"Curve in LMFDB coordinates":"Cut model";
   try { math($("result-model"),displayEquationTex()); }
-  catch (error) { $("result-model").textContent="C : v² = "+polynomial(current.input.F).replace(/x/g,"u"); }
+  catch (error) { $("result-model").textContent=displayEquationTex(); }
   math($("cut-model"),"v^2="+CurveGeometry.equationTex(current.input.F).split("y^2=")[1].replace(/x/g,"u"));
   renderPoints(curve);
   $("show-mesh").disabled=!mesh;
@@ -466,7 +430,7 @@ async function display(data,name,curve=null) {
   fitCurveEquation();
   fitConjectureEquation();
   renderIntegrals();
-  return Promise.all([renderRealPlot(),renderTree(),renderPlot()]);
+  return Promise.all([renderTree(),renderPlot()]);
 }
 async function chooseCurve(index) {
   const token=++version, c=catalog.curves[index]; status("Loading "+c.label+"…");
@@ -500,7 +464,7 @@ function renderCatalog() {
   }); $("curve-select").disabled=false;
 }
 $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-select").value)));
-$("divisor-select").addEventListener("change",()=>{renderPoints(currentCurve);renderRealPlot();});
+$("divisor-select").addEventListener("change",()=>renderPoints(currentCurve));
 ["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();if(id==="weight-select")updateTreeSelection();}));
 $("beilinson-digits").addEventListener("input",()=>renderBeilinson(currentCurve));
 window.addEventListener("pageshow",()=>{if(current){renderIntegrals();updateTreeSelection();}});

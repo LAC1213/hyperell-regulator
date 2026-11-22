@@ -22,19 +22,16 @@ coordinates, including the labelled points at infinity
 :math:`\infty_{Y=\eta}` with :math:`Y=\lim y/x^3`.
 The LMFDB link opens the database entry.
 
-Choose a divisor in **Divisor support** to show its signed support on the
-real locus. Filled markers have positive coefficients; open markers have
-negative coefficients. Points at infinity are listed in the plot annotation.
-Nonreal points retain their exact coordinates in **Exact support and
-coefficients**. Algebraic points are labelled :math:`P_i`, with their
-number field polynomial and embedding index given below the plot.
+Choose a divisor in **Complete divisor support** to list every point with
+a nonzero coefficient in the first panel. The table includes real and
+nonreal points, points at infinity, and their signed coefficients, all in
+LMFDB coordinates. Algebraic points are labelled :math:`P_i`, with their
+number field polynomial and embedding index displayed in the same row.
+Root indices start at zero and are ordered by real part, then imaginary part.
 
-The real picture and cut panels use the transformed square model
-:math:`v^2=F(u)`, displayed beside the real picture and above the tree.
-The real picture marks the transformed images of the selected support,
-using the same point labels as the LMFDB divisor formulas. The original
-equation is available under **LMFDB model, exact support and coefficients**.
-The transformed point images also determine the logarithmic centers.
+The first panel displays the original LMFDB equation. The cut panels use
+the transformed square model :math:`v^2=F(u)`, displayed above the tree.
+The transformed point images determine the logarithmic centers.
 
 **The tree in** :math:`\mathbb P^1` shows the complete integration cut,
 including logarithmic centers used by other basis divisors in the same

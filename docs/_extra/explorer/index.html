@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore genus 2 torsion-packet divisors, their real support, and every logarithmic center on the regulator cut.">
+  <meta name="description" content="Explore genus 2 torsion-packet divisors, their complete support in LMFDB coordinates, and every logarithmic center on the regulator cut.">
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=transformed-picture-6">
+  <link rel="stylesheet" href="explorer.css?v=lmfdb-support-7">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
-  <script defer src="curve-geometry.js?v=transformed-picture-6"></script>
-  <script defer src="explorer.js?v=transformed-picture-6"></script>
+  <script defer src="curve-geometry.js?v=lmfdb-support-7"></script>
+  <script defer src="explorer.js?v=lmfdb-support-7"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -23,7 +23,7 @@
     <section class="intro" aria-labelledby="page-title">
       <h1 id="page-title">Regulator matrix for genus 2 curve</h1>
       <p>Explore the integral Galois-trace divisors selected in the Beilinson survey,
-        their formulas in LMFDB coordinates, their support on a transformed genus 2 curve <span data-tex="C">C</span>, and the
+        their complete support in LMFDB coordinates on a genus 2 curve <span data-tex="C">C</span>, and the
         <span data-tex="3\times3">3×3</span> regulator matrix of their motivic classes and the Tate class.</p>
     </section>
     <section class="workspace" aria-label="Choose a curve">
@@ -37,21 +37,21 @@
     </section>
     <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
     <section id="results" hidden aria-label="Curve geometry and regulator">
-      <section class="panel curve-overview" aria-label="The equation, selected divisors, and real curve">
+      <section class="panel curve-overview" aria-label="The equation, divisors, and complete support in LMFDB coordinates">
         <div class="curve-definition">
           <p class="curve-label" id="result-source"></p>
           <h2 class="sr-only">The curve and its selected divisors</h2>
-          <p class="hint">Transformed model for the picture</p>
+          <p class="hint" id="result-model-label">Curve in LMFDB coordinates</p>
           <div class="equation-scroll"><div id="result-model" class="curve-equation"></div></div>
           <p class="hint">Divisors in LMFDB coordinates</p>
           <div id="point-info" class="marked-points"></div>
           <p id="packet-info" class="packet-info"></p>
         </div>
-        <div class="real-curve">
-          <div class="real-plot-heading"><h2>The real curve</h2><label class="divisor-control">Divisor support<select id="divisor-select" disabled></select></label></div>
-          <div id="real-plot" class="real-plot" aria-label="Real curve in transformed coordinates with the signed support of the selected divisor"></div>
-          <p id="real-support-caption" class="caption"></p>
-          <details class="support-details"><summary>LMFDB model, exact support and coefficients</summary><div id="support-info"></div></details>
+        <div class="divisor-support">
+          <div class="support-heading"><h2>Complete divisor support</h2><label class="divisor-control">Divisor<select id="divisor-select" disabled></select></label></div>
+          <p id="support-caption" class="caption"></p>
+          <div class="support-table"><table aria-label="Complete support of the selected divisor in LMFDB coordinates"><thead><tr><th scope="col">Point in LMFDB coordinates</th><th scope="col">Coefficient</th></tr></thead><tbody id="support-info"></tbody></table></div>
+          <p class="caption">Algebraic root indices start at 0 and are ordered by real part, then imaginary part.</p>
         </div>
       </section>
       <section class="method-note" aria-label="How the regulator is computed">

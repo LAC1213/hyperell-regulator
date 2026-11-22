@@ -43,7 +43,7 @@ input[type=file] { width: 1px; height: 1px; position: absolute; opacity: 0; }
 button:disabled { opacity: .5; cursor: wait; }
 button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 :focus-visible, .file-button:focus-within { outline: 2px solid #668b72; outline-offset: 3px; }
-.curve-overview { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 22px; padding: 26px 28px; }
+.curve-overview { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 22px; padding: 26px 28px; }
 .curve-definition { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-width: 0; padding: 8px 0; }
 .curve-label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; font-family: var(--sans); font-size: 20px; line-height: 1.4; margin: 0 0 20px; }
 .curve-label strong { font-weight: 600; }
@@ -56,11 +56,6 @@ button:hover:not(:disabled), .file-button:hover { background: #eef1e8; }
 .point-coordinate::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--point-p); flex-shrink: 0; }
 .point-1::before { background: var(--point-q); }
 .point-order { font-family: var(--sans); font-size: 0.8em; color: var(--muted); }
-.real-curve { min-width: 0; }
-.real-plot-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--muted); }
-.real-plot-heading h2 { font-size: 16px; font-weight: 500; }
-.real-plot-heading > [data-tex] { font-size: 16px; }
-.real-plot { height: 290px; }
 .method-note { margin: 22px 2px; font-size: 17px; line-height: 1.7; color: var(--muted); }
 .method-note p { margin: 0; }
 #status { font-size: 12px; line-height: 1.6; margin: 14px 0; color: var(--muted); }
@@ -147,10 +142,8 @@ pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow
   .plot { height: 390px; }
   .catalog-controls { grid-template-columns: 1fr auto; }
   .curve-overview { grid-template-columns: 1fr; gap: 24px; }
-  .curve-definition { padding-bottom: 20px; border-bottom: 1px solid var(--line); }
   .curve-equation { font-size: 22px; }
   .marked-points { font-size: 18px; }
-  .real-plot { height: 300px; }
   .data-actions { flex-direction: row; }
   .selectors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .conjecture-values { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
@@ -172,7 +165,6 @@ pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow
   .curve-equation { font-size: 18px; }
   .marked-points { font-size: 16px; gap: 12px 20px; }
   .method-note { font-size: 16px; }
-  .real-plot { height: 270px; }
   .plot { height: 330px; }
   h2 { font-size: 18px; }
   .plot-tools { gap: 12px; }
@@ -191,9 +183,15 @@ pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow
 .packet-info { font-family: var(--sans); font-size: 14px; line-height: 1.7; color: var(--muted); }
 .divisor-control { width: 145px; font-size: 14px; }
 .divisor-control select { font-size: 14px; }
-.support-details { margin-top: 14px; }
-.support-coordinate { display: block; overflow-x: auto; font-size: 14px; padding: 6px 0; }
+.support-coordinate { font-size: 14px; }
 .divisor-cell { min-width: 280px; max-width: 650px; white-space: normal; }
 .divisor-cell > div { padding: 5px 0; overflow-x: auto; }
 .tree-controls select { font-size: 14px; }
 .center-control { width: 260px; }
+
+.divisor-support { min-width: 0; padding-top: 20px; border-top: 1px solid var(--line); }
+.support-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.support-heading h2 { font-size: 18px; }
+.support-table { overflow-x: auto; max-width: 100%; }
+.support-table td { vertical-align: top; }
+.support-table th:last-child, .support-table td:last-child { text-align: right; }

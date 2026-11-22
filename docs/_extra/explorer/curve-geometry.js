@@ -1,4 +1,4 @@
-/* Display geometry for y^2 = F(x). Numerical regulator data are never changed. */
+/* Polynomial formatting for y^2 = F(x). Numerical regulator data are never changed. */
 "use strict";
 const CurveGeometry = (() => {
   function rational(value) {
@@ -57,60 +57,6 @@ const CurveGeometry = (() => {
     return "\\begin{aligned}" + rows.join("\\\\") + "\\end{aligned}";
   }
 
-  function evaluate(coefficients, x) {
-    return coefficients.reduceRight((value, coefficient) => value * x + coefficient, 0);
-  }
-
-  function realLocus(data, divisorId = null) {
-    const {coefficients} = parsePolynomial(data.input.F);
-    const roots = data.roots
-      .filter(([re, im]) => Math.abs(Number(im)) <= 1e-10 * (1 + Math.abs(Number(re))))
-      .map(([re]) => Number(re)).sort((a, b) => a - b)
-      .filter((x, i, list) => !i || x - list[i - 1] > 1e-10 * (1 + Math.abs(x)));
-    const selected = divisorId || data.collection?.divisors?.[0]?.id;
-    const support = (data.collection?.support || []).filter(P => rational(P.coefficients[selected] || "0") !== 0);
-    const points = data.collection?.support ? support.filter(P => P.real && !P.infinity).map(P => ({
-      name: P.id, x: Number(P.x[0]), y: Number(P.y[0]), coefficient: P.coefficients[selected], tex: P.tex
-    })) : (data.collection?.points || []).flatMap((point, i) => {
-      if (!Array.isArray(point)) return [];
-      const [x, y] = point.map(rational);
-      return [{name: i === 0 ? "P" : "Q", x, y}];
-    });
-    const anchors = [...roots, ...points.map(p => p.x)];
-    const low = anchors.length ? Math.min(...anchors) : -1;
-    const high = anchors.length ? Math.max(...anchors) : 1;
-    const span = Math.max(high - low, 1);
-    const xRange = [low - .2 * span, high + .2 * span];
-    const bounds = [xRange[0], ...roots, xRange[1]];
-    const branches = [];
-    let boundedHeight = 0;
-    for (let interval = 0; interval < bounds.length - 1; interval++) {
-      const a = bounds[interval], b = bounds[interval + 1];
-      if (evaluate(coefficients, (a + b) / 2) <= 0) continue;
-      const count = Math.max(80, Math.ceil(600 * (b - a) / (xRange[1] - xRange[0])));
-      const x = [], positive = [], negative = [];
-      for (let i = 0; i <= count; i++) {
-        // Cosine spacing resolves vertical tangents and very short components.
-        const value = a + (b - a) * (1 - Math.cos(Math.PI * i / count)) / 2;
-        const endpoint = i === 0 && interval > 0 || i === count && interval < bounds.length - 2;
-        let square = endpoint ? 0 : evaluate(coefficients, value);
-        const tolerance = 64 * Number.EPSILON * coefficients.reduceRight((v, c) => v * Math.abs(value) + Math.abs(c), 0);
-        if (square < 0 && square >= -tolerance) square = 0;
-        x.push(value);
-        const ordinate = square < 0 ? null : Math.sqrt(square);
-        positive.push(ordinate);
-        negative.push(ordinate === null ? null : -ordinate);
-      }
-      if (interval > 0 && interval < bounds.length - 2) boundedHeight = Math.max(boundedHeight,
-        ...positive.concat(negative).filter(y => y !== null).map(Math.abs));
-      branches.push({x, y: positive}, {x, y: negative});
-    }
-    const markedHeight = Math.max(0, ...points.map(p => Math.abs(p.y)));
-    const height = Math.max(1.8, markedHeight * 1.6, boundedHeight * 1.18, span * .4);
-    return {coefficients, roots, branches, points, xRange, yRange: [-height, height],
-      infinity: support.filter(P => P.infinity && P.real), nonreal: support.filter(P => !P.real)};
-  }
-
-  return {rational, rationalTex, parsePolynomial, equationTex, evaluate, realLocus};
+  return {rational, rationalTex, parsePolynomial, equationTex};
 })();
 if (typeof module !== "undefined") module.exports = CurveGeometry;
