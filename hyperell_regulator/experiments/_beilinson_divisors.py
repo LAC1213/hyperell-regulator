@@ -159,10 +159,11 @@ def _analyse_packet(record, C, row, selection, *, verbose, with_periods,
         result['integral_kernels'].append(kernel)
 
     full_support = result.get('packet_support_complete', True)
+    complete_support = full_support and (result['packet_used'] == 'geometric'
+                                         or not result['unresolved_torsion_pairs'])
     result.update(integral_rank=max((len(k['basis']) for k in kernels), default=0),
-                  integral_rank_complete=full_support and all(k['complete'] for k in kernels)
-                  and (result['packet_used'] == 'geometric' or not result['unresolved_torsion_pairs']))
-    if full_support and all(k['complete'] or 'rank_upper_bound' in k for k in kernels):
+                  integral_rank_complete=complete_support and all(k['complete'] for k in kernels))
+    if complete_support and all(k['complete'] or 'rank_upper_bound' in k for k in kernels):
         result['integral_rank_upper_bound'] = max(
             (k.get('rank_upper_bound', len(k['basis'])) for k in kernels), default=0)
     options = {'certified': True} if certified else {}

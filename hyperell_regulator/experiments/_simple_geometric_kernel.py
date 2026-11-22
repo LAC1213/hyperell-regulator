@@ -104,7 +104,10 @@ def simple_nodal_kernel(packet):
     for p in packet.curve.bad_primes():
         resolved = _node_collision(packet, p, disc)
         if resolved is None:
-            stable = packet.curve.local_data(p).get('stable_type')
+            try:
+                stable = packet.curve.local_data(p).get('stable_type')
+            except (ArithmeticError, NotImplementedError, ValueError):
+                stable = None
             if stable and stable.split(',')[0] == 'I':
                 places[str(p)] = dict(method='potential_good_reduction', exact=True, unresolved=[])
             else:
@@ -158,10 +161,13 @@ def simple_nodal_kernel(packet):
         support = [i for i in range(len(points)) if any(row[i] for row in integral)]
         if len(support) == len(points):
             return None
-        subpacket = MotivicPacket(packet.curve, [points[i] for i in support],
-                                 torsion_multiples=2*lcm(order for _, order in packet.factors))
-        solver = subpacket.integrality
-        restricted = solver.kernel([[row[i] for i in support] for row in integral])
+        try:
+            subpacket = MotivicPacket(packet.curve, [points[i] for i in support],
+                                     torsion_multiples=2*lcm(order for _, order in packet.factors))
+            solver = subpacket.integrality
+            restricted = solver.kernel([[row[i] for i in support] for row in integral])
+        except (ArithmeticError, NotImplementedError, ValueError):
+            return None
         upper -= restricted['necessary_constraints'].rank()
         integral = list(restricted['basis']*matrix(QQ, integral))
         complete = restricted['complete']
