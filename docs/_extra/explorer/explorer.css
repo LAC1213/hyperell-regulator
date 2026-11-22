@@ -183,3 +183,17 @@ pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow
   .regulator-matrix tbody th { font-size: 12px; }
   .conjecture-values { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Divisor metadata uses the same coefficient rows as the saved regulator. */
+.marked-points { flex-direction: column; gap: 10px; font-size: 16px; width: 100%; }
+.divisor-coordinate { max-width: 100%; overflow-x: auto; padding: 5px 0 5px 10px; border-left: 3px solid transparent; }
+.divisor-coordinate.active { border-left-color: var(--accent); }
+.packet-info { font-family: var(--sans); font-size: 14px; line-height: 1.7; color: var(--muted); }
+.divisor-control { width: 145px; font-size: 14px; }
+.divisor-control select { font-size: 14px; }
+.support-details { margin-top: 14px; }
+.support-coordinate { display: block; overflow-x: auto; font-size: 14px; padding: 6px 0; }
+.divisor-cell { min-width: 280px; max-width: 650px; white-space: normal; }
+.divisor-cell > div { padding: 5px 0; overflow-x: auto; }
+.tree-controls select { font-size: 14px; }
+.center-control { width: 260px; }

@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore a real genus 2 curve, its marked points, and the graph used to compute its regulator by Stokes’ theorem.">
+  <meta name="description" content="Explore genus 2 torsion-packet divisors, their real support, and every logarithmic center on the regulator cut.">
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=tree-selector-12">
+  <link rel="stylesheet" href="explorer.css?v=lmfdb-divisors-4">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
-  <script defer src="curve-geometry.js?v=matrix-conjecture-3"></script>
-  <script defer src="explorer.js?v=tree-selector-12"></script>
+  <script defer src="curve-geometry.js?v=lmfdb-divisors-4"></script>
+  <script defer src="explorer.js?v=lmfdb-divisors-4"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -22,53 +22,54 @@
   <main id="main">
     <section class="intro" aria-labelledby="page-title">
       <h1 id="page-title">Regulator matrix for genus 2 curve</h1>
-      <p>For a genus 2 curve <span data-tex="C">C</span> and two points <span data-tex="P">P</span> and <span data-tex="Q">Q</span>
-        which become torsion in the Jacobian of <span data-tex="C">C</span>,
-        we evaluate the <span data-tex="3\times3">3×3</span> regulator matrix associated with two motivic cohomology classes
-        <span data-tex="\alpha_P">αP</span>, <span data-tex="\alpha_Q">αQ</span>, and the Tate class.</p>
+      <p>Explore the integral Galois-trace divisors selected in the Beilinson survey,
+        their support in LMFDB coordinates on a genus 2 curve <span data-tex="C">C</span>, and the
+        <span data-tex="3\times3">3×3</span> regulator matrix of their motivic classes and the Tate class.</p>
     </section>
     <section class="workspace" aria-label="Choose a curve">
       <div class="catalog-controls">
         <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
         <div class="data-actions">
-          <button type="button" class="secondary" id="export" disabled>Export data ↓</button>
+          <button type="button" class="secondary" id="export" disabled>Export data</button>
           <label class="file-button" for="import">Import result<input type="file" id="import" accept="application/json,.json"></label>
         </div>
       </div>
     </section>
     <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
     <section id="results" hidden aria-label="Curve geometry and regulator">
-      <section class="panel curve-overview" aria-label="The equation, marked points, and real curve">
+      <section class="panel curve-overview" aria-label="The equation, selected divisors, and real curve">
         <div class="curve-definition">
           <p class="curve-label" id="result-source"></p>
-          <h2 class="sr-only">The curve and its marked points</h2>
+          <h2 class="sr-only">The curve and its selected divisors</h2>
           <div class="equation-scroll"><div id="result-model" class="curve-equation"></div></div>
           <div id="point-info" class="marked-points"></div>
+          <p id="packet-info" class="packet-info"></p>
         </div>
         <div class="real-curve">
-          <div class="real-plot-heading"><h2>The real curve</h2><span data-tex="C(\mathbb R)">C(ℝ)</span></div>
-          <div id="real-plot" class="real-plot" aria-label="Graph of the real points y squared equals F of x, with P and Q marked"></div>
+          <div class="real-plot-heading"><h2>The real curve</h2><label class="divisor-control">Divisor support<select id="divisor-select" disabled></select></label></div>
+          <div id="real-plot" class="real-plot" aria-label="Real curve with the signed support of the selected divisor"></div>
+          <p id="real-support-caption" class="caption"></p>
+          <details class="support-details"><summary>Exact support and coefficients</summary><div id="support-info"></div></details>
         </div>
       </section>
       <section class="method-note" aria-label="How the regulator is computed">
-        <p>We view <span data-tex="C">C</span> as a double cover of <span data-tex="\mathbb P^1">ℙ¹</span> via
-          <span data-tex="x\colon C\to\mathbb P^1">x : C → ℙ¹</span>.
+        <p>We view <span data-tex="C">C</span> as a double cover of <span data-tex="\mathbb P^1">ℙ¹</span> in the cut coordinates <span data-tex="(u,v)">(u,v)</span>.
           Using this, we cut up the hyperelliptic curve into two simply connected sheets in order to convert the
           two-dimensional regulator integral to an integral over the cut. By choosing the cut to be the preimage
-          of a convenient tree in the <span data-tex="x">x</span>-plane, we can moreover choose a path <span data-tex="B">B</span>
+          of a convenient tree in the <span data-tex="u">u</span>-plane, we can moreover choose a path <span data-tex="B">B</span>
           on the tree as the branch cut for the logarithmic factor of the integrand. With this choice, the integral
           over the cut simplifies to a bilinear expression of line integrals.</p>
       </section>
       <div class="plots">
         <section class="panel">
           <div class="section-label"><h2>The tree in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
-          <p class="panel-description">The vertices are the critical values of <span data-tex="x">x</span> (images of ramification points), <span data-tex="x(P)">x(P)</span>, and <span data-tex="x(Q)">x(Q)</span>. A minimum spanning tree of their complete graph gives the cut.</p>
+          <p class="panel-description">The cut model is <span id="cut-model"></span>. The tree joins its critical values of <span data-tex="u">u</span> and every finite logarithmic center used on the shared integration cut, including centers used by other divisor columns. Algebraic centers keep their complex positions.</p>
           <div class="plot-tools tree-controls">
             <label class="center-control"><span class="sr-only">Logarithm center</span><select id="weight-select" autocomplete="off" disabled></select></label>
             <span class="gesture">Click an edge to inspect its integrals</span>
           </div>
-          <div id="base-plot" class="plot" aria-label="Spanning tree connecting the critical values of x and the x-coordinates of P and Q"></div>
-          <p class="caption">Circles: critical values. Colored diamonds: <span data-tex="x(P)">x(P)</span> and <span data-tex="x(Q)">x(Q)</span>. Edges in the selected logarithm's branch cut <span data-tex="B">B</span> share its diamond's colour. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
+          <div id="base-plot" class="plot" aria-label="Shared cut tree with every logarithmic center used in the computation"></div>
+          <p class="caption">Circles: critical values. Diamonds: all logarithmic centers. Edges in the selected logarithm's branch cut <span data-tex="B">B</span> share its diamond's colour. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
         </section>
         <section class="panel">
           <div class="section-label"><h2>The lift to <span data-tex="C">C</span></h2></div>
@@ -91,18 +92,18 @@
               <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Away from ∞</option></select></label>
             </div>
             <p id="gluing" class="hint"></p>
-            <div class="table-scroll"><table class="integral-table"><thead><tr><th scope="col">Form</th><th scope="col"><span data-tex="\int_\gamma\omega_i">∫γ ωᵢ</span></th><th scope="col"><span data-tex="\int_\gamma\log(x-a)\,\omega_i">∫γ log(x−a) ωᵢ</span></th></tr></thead><tbody id="integrals"></tbody></table></div>
+            <div class="table-scroll"><table class="integral-table"><thead><tr><th scope="col">Form</th><th scope="col"><span data-tex="\int_\gamma\omega_i">∫γ ωᵢ</span></th><th scope="col"><span data-tex="\int_\gamma\log(u-a)\,\omega_i">∫γ log(u−a) ωᵢ</span></th></tr></thead><tbody id="integrals"></tbody></table></div>
             <p id="jump" class="caption"></p>
       </section>
       <section class="panel matrix-panel" aria-labelledby="matrix-title">
         <div class="section-label"><h2 id="matrix-title"><span id="matrix-name">The regulator matrix</span></h2></div>
-        <p class="matrix-caption" id="matrix-caption">The pairing of the regulators of <span data-tex="\alpha_P">αP</span>, <span data-tex="\alpha_Q">αQ</span>,
+        <p class="matrix-caption" id="matrix-caption">The pairing of the regulators of the displayed divisor classes
           and the Tate class <span data-tex="\Delta C">ΔC</span> with the differential forms <span data-tex="\delta_{ij}">δij</span>.
           The actual values were computed to 100 digits, but we only display 10 digits.</p>
         <div class="table-scroll" id="matrix-values">
           <table class="regulator-matrix">
-            <caption class="sr-only">Regulator matrix for alpha P, alpha Q, and the Tate class</caption>
-            <thead><tr><th scope="col"><span data-tex="\delta_{ij}">δij</span></th><th scope="col"><span data-tex="\alpha_P">αP</span></th><th scope="col"><span data-tex="\alpha_Q">αQ</span></th><th scope="col"><span data-tex="\Delta C">ΔC</span></th></tr></thead>
+            <caption class="sr-only">Regulator matrix for the two selected divisor classes and the Tate class</caption>
+            <thead><tr><th scope="col"><span data-tex="\delta_{ij}">δij</span></th><th scope="col"><span id="matrix-left" data-tex="q_*B(D_1)">B(D1)</span></th><th scope="col"><span id="matrix-right" data-tex="q_*B(D_2)">B(D2)</span></th><th scope="col"><span data-tex="\Delta C">ΔC</span></th></tr></thead>
             <tbody id="regulator-matrix"></tbody>
           </table>
         </div>
@@ -118,16 +119,16 @@
           <h2 id="beilinson-title">Beilinson’s conjecture</h2>
           <label class="precision-control" for="beilinson-digits"><span>Digits to display: <output id="beilinson-digits-value" for="beilinson-digits">10</output></span><input type="range" id="beilinson-digits" min="10" max="100" step="1" value="10"></label>
         </div>
-        <p class="matrix-caption">The following equality holds with 100 digits of precision:</p>
-        <div class="conjecture-equation" id="beilinson-equation" data-tex="\pi\cdot c^+(C)\cdot c^-(C)\cdot L''(M_{\mathrm{std}}(C),1)=q\cdot D">π · c⁺(C) · c⁻(C) · L″(Mstd(C), 1) = q · D</div>
-        <p class="matrix-caption">Use the slider to display 10–100 significant digits.</p>
+        <p class="matrix-caption">Numerical comparison from the saved experiment. Certified enclosures remain conditional on the recorded analytic assumptions; agreement does not prove exact equality.</p>
+        <div class="conjecture-equation" id="beilinson-equation" data-tex="\pi\cdot c^+(C)\cdot c^-(C)\cdot L''(M_{\mathrm{std}}(C),1)\approx q\cdot D">π · c⁺(C) · c⁻(C) · L″(Mstd(C), 1) ≈ q · D</div>
+        <p class="matrix-caption">The slider displays saved decimal midpoints; exact interval endpoints are included in the exported data.</p>
         <dl class="conjecture-values" id="beilinson-values"></dl>
       </section>
     </section>
     <details class="survey">
       <summary>Full survey</summary>
       <div class="panel curve-table">
-        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col"><span data-tex="P">P</span></th><th scope="col"><span data-tex="Q">Q</span></th><th scope="col"><span data-tex="n_P">nP</span></th><th scope="col"><span data-tex="n_Q">nQ</span></th><th scope="col"><span data-tex="D">D</span></th><th scope="col"><span data-tex="c^+">c⁺</span></th><th scope="col"><span data-tex="c^-">c⁻</span></th><th scope="col"><span data-tex="L''(\mathrm{std},1)">L″(std,1)</span></th><th scope="col"><span data-tex="q">q</span></th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
+        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col">Endomorphisms over ℚ</th><th scope="col">Packet torsion order</th><th scope="col">Selected divisors</th><th scope="col"><span data-tex="D">D</span></th><th scope="col"><span data-tex="c^+">c⁺</span></th><th scope="col"><span data-tex="c^-">c⁻</span></th><th scope="col"><span data-tex="L''(\mathrm{std},1)">L″(std,1)</span></th><th scope="col"><span data-tex="q">q</span></th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
       </div>
     </details>
   </main>

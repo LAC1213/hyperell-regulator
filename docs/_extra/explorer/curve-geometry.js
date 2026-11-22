@@ -61,13 +61,20 @@ const CurveGeometry = (() => {
     return coefficients.reduceRight((value, coefficient) => value * x + coefficient, 0);
   }
 
-  function realLocus(data) {
-    const {coefficients} = parsePolynomial(data.input.F);
-    const roots = data.roots
+  function realLocus(data, divisorId = null) {
+    const model = data.collection?.lmfdb_model;
+    const {coefficients} = parsePolynomial(model?.discriminant || data.input.F);
+    const h = parsePolynomial(model?.h || "0").coefficients;
+    const roots = (model?.branch_values || data.roots)
       .filter(([re, im]) => Math.abs(Number(im)) <= 1e-10 * (1 + Math.abs(Number(re))))
       .map(([re]) => Number(re)).sort((a, b) => a - b)
       .filter((x, i, list) => !i || x - list[i - 1] > 1e-10 * (1 + Math.abs(x)));
-    const points = (data.collection?.points || []).flatMap((point, i) => {
+    const selected = divisorId || data.collection?.divisors?.[0]?.id;
+    const support = (data.collection?.support || []).filter(P => rational(P.coefficients[selected] || "0") !== 0)
+      .map(P => ({...P, ...(model ? P.lmfdb : {})}));
+    const points = data.collection?.support ? support.filter(P => P.real && !P.infinity).map(P => ({
+      name: P.id, x: Number(P.x[0]), y: Number(P.y[0]), coefficient: P.coefficients[selected], tex: P.tex
+    })) : (data.collection?.points || []).flatMap((point, i) => {
       if (!Array.isArray(point)) return [];
       const [x, y] = point.map(rational);
       return [{name: i === 0 ? "P" : "Q", x, y}];
@@ -84,7 +91,7 @@ const CurveGeometry = (() => {
       const a = bounds[interval], b = bounds[interval + 1];
       if (evaluate(coefficients, (a + b) / 2) <= 0) continue;
       const count = Math.max(80, Math.ceil(600 * (b - a) / (xRange[1] - xRange[0])));
-      const x = [], positive = [];
+      const x = [], positive = [], negative = [];
       for (let i = 0; i <= count; i++) {
         // Cosine spacing resolves vertical tangents and very short components.
         const value = a + (b - a) * (1 - Math.cos(Math.PI * i / count)) / 2;
@@ -93,14 +100,19 @@ const CurveGeometry = (() => {
         const tolerance = 64 * Number.EPSILON * coefficients.reduceRight((v, c) => v * Math.abs(value) + Math.abs(c), 0);
         if (square < 0 && square >= -tolerance) square = 0;
         x.push(value);
-        positive.push(square < 0 ? null : Math.sqrt(square));
+        const offset = model ? -evaluate(h, value)/2 : 0;
+        const ordinate = square < 0 ? null : Math.sqrt(square)*(model ? .5 : 1);
+        positive.push(ordinate === null ? null : offset+ordinate);
+        negative.push(ordinate === null ? null : offset-ordinate);
       }
-      if (interval > 0 && interval < bounds.length - 2) boundedHeight = Math.max(boundedHeight, ...positive.filter(y => y !== null));
-      branches.push({x, y: positive}, {x, y: positive.map(y => y === null ? null : -y)});
+      if (interval > 0 && interval < bounds.length - 2) boundedHeight = Math.max(boundedHeight,
+        ...positive.concat(negative).filter(y => y !== null).map(Math.abs));
+      branches.push({x, y: positive}, {x, y: negative});
     }
     const markedHeight = Math.max(0, ...points.map(p => Math.abs(p.y)));
     const height = Math.max(1.8, markedHeight * 1.6, boundedHeight * 1.18, span * .4);
-    return {coefficients, roots, branches, points, xRange, yRange: [-height, height]};
+    return {coefficients, roots, branches, points, xRange, yRange: [-height, height],
+      infinity: support.filter(P => P.infinity && P.real), nonreal: support.filter(P => !P.real)};
   }
 
   return {rational, rationalTex, parsePolynomial, equationTex, evaluate, realLocus};

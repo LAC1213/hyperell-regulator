@@ -24,18 +24,24 @@ def test_matches_independent_plane_integrals(expression, periods, regulator):
 
 
 def test_entire_saved_survey_at_twenty_digits():
-    from hyperell_regulator.experiments.beilinson import beilinson_determinant_stokes
+    from hyperell_regulator.motivic import DivisorRegulators
+    from hyperell_regulator.experiments.geometric_torsion import decode_point
+    from hyperell_regulator.experiments._survey_divisors import decimal_value
     rows=json.loads((Path(__file__).parents[1]/'reports/beilinson_100_digits.json').read_text())
     R=RealField(150)
     successful=[r for r in rows if r.get('status')=='ok']
-    assert len(successful)==22
+    assert len(successful)==41
     for row in successful:
         F=ring()(row['model'].replace('u','x'))
-        det,M,_=beilinson_determinant_stokes(F,(row['u_P'],0),(row['u_Q'],0),
-                                           digits=20,pole=row.get('pole','infinity'))
-        error=max(abs(R(a)-R(b)) for rr,ss in zip(M,row['matrix']) for a,b in zip(rr,ss))
-        assert error<R('1e-18'),(row['label'],error)
-        assert abs(R(det)-R(row['det']))<R('1e-17'),row['label']
+        data=row['divisor_data']
+        points=data['support']
+        abscissae=[decode_point(P['point'])[0] for P in points]
+        divisors=[[P['coefficients'][name] for P in points] for name in data['matrix_divisor_ids']]
+        det,M=DivisorRegulators(F,abscissae,digits=20).determinant(*divisors)
+        error=max(abs(R(a)-R(decimal_value(b)))/max(1,abs(R(decimal_value(b))))
+                  for rr,ss in zip(M,row['matrix']) for a,b in zip(rr,ss))
+        assert error<R('1e-16'),(row['label'],error)
+        assert abs(R(det)/R(decimal_value(row['det']))-1)<R('1e-16'),row['label']
 
 
 def test_precision_growth_and_rational_logarithmic_center():

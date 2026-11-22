@@ -124,7 +124,7 @@ def test_frobenius_worker_count(cpus, nthreads, expected, monkeypatch):
     monkeypatch.delenv('HYPELLFROB_THREADS', raising=False)
     with patch.object(frobenius, 'euler_binary', return_value='/euler'), \
             patch.object(frobenius.os, 'cpu_count', return_value=cpus), \
-            patch.object(frobenius.subprocess, 'run') as run:
+            patch('hyperell_regulator._subprocess.run') as run:
         run.return_value.stdout = '101 1 1 7\n'
         result = frobenius._run([1, 0, 0, 1, 0, 1], [(101, 1)], nthreads)
     assert run.call_args.args[0] == ['/euler', str(expected), 'rforest']

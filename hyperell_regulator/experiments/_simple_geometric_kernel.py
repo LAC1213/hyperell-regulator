@@ -188,4 +188,9 @@ def simple_nodal_kernel(packet):
     result = _kernel_record([encode_point(P) for P in points], integral, complete, orbit_sum,
                             lift, check, places, traces)
     result['rank_upper_bound'] = upper
+    # The full packet contains distinct Weierstrass points, hence a
+    # difference of order two. If ord(2P-kappa)=n, adjoining that order-two
+    # difference makes the exponent exactly 2*lcm(n), including odd n.
+    result.update(packet_torsion_order=str(2*lcm(n for _, n in packet.factors)),
+                  packet_torsion_order_exact=True)
     return result

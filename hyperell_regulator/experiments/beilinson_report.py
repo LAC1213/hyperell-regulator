@@ -1,7 +1,6 @@
-"""Export the saved 100-digit survey for conductor strictly below 1300."""
+"""Export Beilinson survey divisors, packet orders and numerical comparisons."""
 
 import argparse
-from collections import Counter
 from copy import deepcopy
 from decimal import Decimal, localcontext
 from fractions import Fraction
@@ -10,6 +9,10 @@ import json
 from pathlib import Path
 import re
 
+from ._survey_divisors import (
+    comparison_error, decimal_value, divisor_metadata, endomorphism_type,
+)
+
 
 BOUND = 1000
 DIGITS = 100
@@ -17,43 +20,42 @@ EXCLUDED_DISPLAY_CONDUCTORS = frozenset({1116})
 NORMALISATION = "pi c+ c- L''(std,1) / D"
 
 
-def select_results(results):
-    """Select 100-digit survey records, including failed attempts."""
+def select_results(results, *, bound=BOUND, digits=DIGITS):
+    """Select survey records at the requested precision, including failed attempts."""
     from .beilinson import REPORT_VERSION
 
     selected = []
     for original in results:
         settings = original.get("settings", {})
-        if not (0 < int(original["cond"]) < BOUND
+        if not (0 < int(original["cond"]) < bound
                 and original.get("regulator_method") != "isogeny_transport"
                 and settings.get("report_version") in (9, 10, 11, 12, REPORT_VERSION)
-                and settings.get("regulator_digits") == DIGITS
-                and settings.get("lvalue_digits") == DIGITS
+                and settings.get("regulator_digits") == digits
+                and settings.get("lvalue_digits") == digits
                 and settings.get("with_lvalue") is True):
             continue
         row = deepcopy(original)
         if row.get("status") == "ok":
-            if row.get("regulator_digits") != DIGITS:
+            if row.get("regulator_digits") != digits:
                 raise ValueError("Successful regulator has the wrong precision: " + row["label"])
             comparison = row.get("comparison", {})
             if comparison and comparison.get("normalisation") != NORMALISATION:
                 raise ValueError("Unexpected comparison convention: " + row["label"])
-            if comparison and (int(row.get("L_digits", 0)) < DIGITS
-                               or not isinstance(row.get("L_second_derivative"), str)):
-                raise ValueError("Comparison lacks a 100-digit L-value: " + row["label"])
+            if comparison and (int(row.get("L_digits", 0)) < digits
+                               or row.get("L_second_derivative") is None):
+                    raise ValueError("Comparison lacks a %d-digit L-value: %s" % (digits, row["label"]))
             ratio, rational = comparison.get("ratio"), comparison.get("rational")
             if ratio is not None and rational is not None:
                 with localcontext() as ctx:
                     ctx.prec = 180
                     q = Fraction(rational)
-                    difference = abs(Decimal(ratio) - Decimal(q.numerator)/Decimal(q.denominator))
+                    difference = abs(Decimal(decimal_value(ratio)) - Decimal(q.numerator)/Decimal(q.denominator))
                 row["absolute_ratio_error"] = str(difference)
         selected.append(row)
     labels = [row["label"] for row in selected]
     if len(labels) != len(set(labels)):
         raise ValueError("Duplicate curve labels in the saved results")
     return sorted(selected, key=lambda row: (int(row["cond"]), row["label"]))
-
 
 
 def _parse_point(v):
@@ -185,7 +187,7 @@ def number_tex(value, digits=10):
         return r"\text{--}"
     with localcontext() as ctx:
         ctx.prec = 180
-        text = format(Decimal(str(value)), f".{digits}g")
+        text = format(Decimal(decimal_value(value)), f".{digits}g")
     if "e" in text.lower():
         mantissa, exponent = text.lower().split("e")
         return mantissa + r"\times 10^{" + str(int(exponent)) + "}"
@@ -251,263 +253,177 @@ def model_pole_tex(row):
     return point_tex(("infinity", str(eta)))
 
 
-def render(rows, source_hash):
-    """Three LaTeX tables from saved values and integration coordinates."""
-    rows = [row for row in rows if int(row.get("cond", 0)) not in EXCLUDED_DISPLAY_CONDUCTORS]
-    ok = [row for row in rows if row.get("status") == "ok"]
-    divisor_rows = any('divisors' in row for row in ok)
-    lines = [r"\documentclass[10pt]{article}",
-             r"\usepackage[a4paper,margin=12mm]{geometry}",
-             r"\usepackage{amsmath,amssymb,booktabs,arydshln}",
-             r"\usepackage[hidelinks]{hyperref}",
-             r"\begin{document}",
-             r"\noindent\textbf{Beilinson survey: conductor $<1300$, 100-digit targets.}",
-             r"Conductor $1116$ is retained in the JSON and omitted from these tables.",
-             r"We use $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$, full cycle periods,",
-             r"and determinant weights $(1,2\operatorname{Re}(z),|z|^2)$.",
-             r"Displayed decimals have 10 significant digits; errors use the full saved values.",
-             r"\begin{table}[htbp]",
-             r"\centering\small",
-             r"\renewcommand{\arraystretch}{1.5}",
-             r"\setlength{\tabcolsep}{6pt}",
-             r"\begin{tabular}{@{}cccccc@{}}",
-             r"\toprule",
-             (r"Curve & Divisor or point & Order of point & Integral? & Factor $q$ & Error \\"
-              if divisor_rows else
-              r"Curve & Point $P$ & Order of $P$ & $\alpha_P$ integral? & Factor $q$ & Error \\"),
-             r"\midrule"]
-    for index, row in enumerate(ok):
-        data = row["algebraic_data"]
-        comparison = row.get("comparison", {})
-        if 'divisors' in row:
-            classes = stacked([r'D_{%d}' % (i+1) for i in row['basis_indices']])
-            orders = r"$\text{--}$"
-            integral = '$' + integrality_tex(row.get('integral')) + '$'
-        else:
-            triple = row["triple"]
-            classes = stacked([point_tex(point) for point in data["image_points"][:2]])
-            orders = stacked([rational_tex(triple[key]) for key in ("order_P", "order_Q")])
-            integral = stacked([integrality_tex(triple.get(key)) for key in ("verdict_P", "verdict_Q")])
-        cells = [
-            curve_link(row["label"]), classes, orders, integral,
-            "$" + rational_tex(comparison.get("rational")) + "$",
-            "$" + number_tex(comparison.get("relative_agreement"), 2) + "$",
-        ]
-        lines.append(" & ".join(cells) + r" \\")
-        if index + 1 < len(ok):
-            lines.append(r"\hdashline")
-    lines += [
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"\caption{Torsion divisor classes for " + str(len(ok)) +
-        r" genus 2 curves. Each stacked cell lists the two classes in the order of the regulator columns.",
-        r"Points are given in the integration coordinates of Table~\ref{tab:curve-models}.",
-        r"The order of a displayed point is the order of $[P]-[R]$, with common pole $R$ given there.",
-        (r"Rows with $D_i$ use the graph kernel and list the exact divisor basis in the JSON."
-         if divisor_rows else r"The integrality column records the component criterion."),
-        r"Factor $q$ is the saved rational guess. The error is",
-        r"$|\pi c^+c^-L^{\prime\prime}(M_{\mathrm{std}},1)/(qD)-1|$,",
-        r"computed from unrounded values. Numerical targets are not certified error bounds.}",
-        r"\label{tab:torsion-integrality}",
-        r"\end{table}",
-        r"\clearpage",
-        r"\begin{table}[htbp]\centering\small",
-        r"\renewcommand{\arraystretch}{1.35}",
-        r"\setlength{\tabcolsep}{6pt}",
-        r"\begin{tabular}{@{}ll@{}}",
-        r"\toprule",
-        r"Curve & $f(x)$ in $y^2=f(x)$; common pole $R$ \\",
-        r"\midrule"]
+def relation_tex(row):
+    terms = row.get('linear_comparison', {}).get('terms', [])
+    if len(terms) > 1:
+        return '+'.join(rational_tex(term['coefficient'])+r'\det(D_{%d},D_{%d})' %
+                        tuple(i+1 for i in term['basis_indices']) for term in terms).replace('+-', '-')
+    return rational_tex(row.get('comparison', {}).get('rational'))
+
+
+def render(rows, source_hash, *, bound=BOUND, digits=DIGITS):
+    """Three multipage tables, with exact selected divisors in LMFDB coordinates."""
+    rows = [row for row in rows if int(row.get('cond', 0)) < bound
+            and int(row.get('cond', 0)) not in EXCLUDED_DISPLAY_CONDUCTORS]
+    ok = [row for row in rows if row.get('status') == 'ok']
+    metadata = {row['label']: row.get('divisor_data') or divisor_metadata(row) for row in ok}
+    lines = [r'\documentclass[10pt]{article}', r'\usepackage[a4paper,margin=12mm]{geometry}',
+             r'\usepackage{amsmath,amssymb,booktabs,longtable,array,pdflscape}',
+             r'\usepackage[hidelinks]{hyperref}', r'\begin{document}', r'\begin{landscape}',
+             rf'\noindent\textbf{{Beilinson survey: conductor $<{bound}$, {digits}-digit targets.}}',
+             r'We use $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$ and full cycle periods,',
+             r'with determinant weights $(1,2\operatorname{Re}(z),|z|^2)$.',
+             r'The divisors below are the actual coefficient rows of the regulator columns,',
+             r'in the original LMFDB coordinates of Table~\ref{tab:curve-models}.',
+             r'Packet order means $N=\mathop{\mathrm{lcm}}_P\operatorname{ord}(P-P_0)$ in the Jacobian,',
+             r'not the number of packet points. A dash means the exact order was not recorded.',
+             r'The endomorphism column is the LMFDB rational endomorphism algebra label;',
+             r'\texttt{CM} does not by itself assert that the Jacobian is of CM type.',
+             r'\begin{longtable}{@{}lcrp{16cm}c@{}}',
+             r'\caption{Selected torsion-packet divisors and integrality.}\label{tab:torsion-integrality}\\',
+             r'\toprule Curve & $\mathrm{End}_{\mathbf Q}^0(J)$ & Packet $N$ & Selected divisors & Integral? \\',
+             r'\midrule\endfirsthead',
+             r'\toprule Curve & $\mathrm{End}_{\mathbf Q}^0(J)$ & Packet $N$ & Selected divisors & Integral? \\',
+             r'\midrule\endhead', r'\bottomrule\endfoot']
     for row in ok:
-        data = row["algebraic_data"]
-        model = re.sub(r"\bu\b", "x", data["model_latex"])
-        description = model
-        if 'divisors' not in row:
-            description += r";\quad R=" + model_pole_tex(row)
-        changed = data["shift"] is not None
-        if changed:
-            description += r";\quad(s,d)=(" + rational_tex(data["shift"]) + "," + rational_tex(data["scale"]) + ")"
-        lines.append(curve_link(row["label"], changed) + " & $" + description + r"$ \\")
-    lines += [
-        r"\bottomrule\end{tabular}",
-        r"\caption{Integration models for the " + str(len(ok)) +
-        r" displayed curves; points in Table~\ref{tab:torsion-integrality} use these coordinates.",
-        r"Write the LMFDB equation as $y_{\mathrm L}^2+h(x_{\mathrm L})y_{\mathrm L}=f_{\mathrm L}(x_{\mathrm L})$.",
-        r"For unmarked rows, $x=x_{\mathrm L}$ and $y=2y_{\mathrm L}+h(x_{\mathrm L})$.",
-        r"Rows marked $\dagger$ use $x=(x_{\mathrm L}-s)^{-1}$ and",
-        r"$y=d(2y_{\mathrm L}+h(x_{\mathrm L}))/(x_{\mathrm L}-s)^3$,",
-        r"with the displayed $(s,d)$. In odd degree the point at infinity is unique;",
-        r"in even degree $\infty_\eta$ denotes $y/x^3\to\eta$.}",
-        r"\label{tab:curve-models}",
-        r"\end{table}",
-        r"\clearpage",
-        r"\begin{table}[htbp]",
-        r"\centering",
-        r"\scriptsize",
-        r"\setlength{\tabcolsep}{3pt}",
-        r"\renewcommand{\arraystretch}{1.3}",
-        r"\begin{tabular}{@{}lrrrrr@{}}",
-        r"\toprule",
-        r"Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & Relative error \\",
-        r"\midrule"]
+        data = metadata[row['label']]
+        verdicts = (None if len(row.get('linear_comparison', {}).get('terms', [])) > 1
+                    else row.get('divisor_integrality'))
+        if 'triple' in row:
+            verdicts = [row['triple'].get(k) for k in ('verdict_P', 'verdict_Q')]
+        integral = stacked([integrality_tex(v) for v in verdicts]) if verdicts else '$'+integrality_tex(row.get('integral'))+'$'
+        lines.append(' & '.join([curve_link(row['label']),
+            r'\texttt{'+escape_tex(data.get('end_alg') or '--')+'}',
+            '$'+rational_tex(data.get('packet_torsion_order'))+'$',
+            stacked([D['tex'] for D in data['divisors']]), integral])+r' \\')
+    lines += [r'\end{longtable}', r'\clearpage',
+              r'\begin{longtable}{@{}lp{22cm}@{}}',
+              r'\caption{LMFDB models, integration charts and exact algebraic support definitions.}\label{tab:curve-models}\\',
+              r'\toprule Curve & $y^2+h(x)y=f(x)$; integration chart and LMFDB support definitions \\ \midrule\endfirsthead',
+              r'\toprule Curve & $y^2+h(x)y=f(x)$; integration chart and LMFDB support definitions \\ \midrule\endhead',
+              r'\bottomrule\endfoot']
     for row in ok:
-        values = [number_tex(row.get(key)) for key in ("det", "c_plus", "c_minus", "L_second_derivative")]
-        values.append(number_tex(row.get("comparison", {}).get("relative_agreement"), 2))
-        lines.append(curve_link(row["label"]) + " & " +
-                     " & ".join("$" + value + "$" for value in values) + r" \\")
-    lines += [
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"\caption{Numerical data for Table~\ref{tab:torsion-integrality}.",
-        r"Real values are rounded to 10 significant digits; relative errors are calculated from the unrounded data.",
-        r"The columns $c^+$ and $c^-$ use full cycle periods.}",
-        r"\label{tab:data}",
-        r"\end{table}"]
-    issues = [row for row in rows if row.get("status") not in ("ok", "no_admissible_triple")
-              or (row.get("status") == "ok" and not row.get("comparison"))]
+        a, d = row['algebraic_data'], metadata[row['label']]
+        model = re.sub(r'\bu\b', 'x', a['model_latex'])
+        display_model = d.get('lmfdb_model')
+        descriptions = ([display_model['equation_tex'], r'\text{Cut model: }v^2='+re.sub(r'\bu\b', 'u', a['model_latex'])]
+                        if display_model else [model])
+        if a.get('shift') is not None:
+            descriptions.append(r'(s,d)=('+rational_tex(a['shift'])+','+rational_tex(a.get('scale', '1'))+')')
+        descriptions += [P['definition_tex'] for P in d['support'] if P['point']['field_polynomial'] is not None]
+        lines.append(curve_link(row['label'], a.get('shift') is not None)+' & '+stacked(descriptions)+r' \\')
+    lines += [r'\end{longtable}',
+              r'\noindent All displayed divisor points use the original LMFDB equation $y^2+h(x)y=f(x)$.',
+              r'The cut model uses $(u,v)=(x,2y+h(x))$ in unmarked rows.',
+              r'Rows marked $\dagger$ use $u=(x-s)^{-1}$ and $v=d(2y+h(x))/(x-s)^3$.',
+              r'The notation $\infty_{Y=\eta}$ means $Y=\lim_{x\to\infty}y/x^3=\eta$ on the LMFDB model. Algebraic root indices are zero-based,',
+              r'ordered by real then imaginary part, and fix the exact embeddings retained in JSON.',
+              r'\clearpage', r'\begin{longtable}{@{}lrrrrrr@{}}',
+              r'\caption{Numerical data. The factor is a rational guess; a multi-determinant comparison is shown as a sum.}\label{tab:data}\\',
+              r'\toprule Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & $q$ or comparison & Relative error \\ \midrule\endfirsthead',
+              r'\toprule Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & $q$ or comparison & Relative error \\ \midrule\endhead',
+              r'\bottomrule\endfoot']
+    for row in ok:
+        values = [number_tex(row.get(k)) for k in ('det', 'c_plus', 'c_minus', 'L_second_derivative')]
+        values += [relation_tex(row), number_tex(comparison_error(row), 2)]
+        lines.append(curve_link(row['label'])+' & '+' & '.join('$'+v+'$' for v in values)+r' \\')
+    lines += [r'\end{longtable}', r'\noindent Displayed values have 10 significant digits.',
+              r'Certified interval endpoints and analytic assumptions are retained in the JSON;',
+              r'the error column uses an interval upper bound when available. Numerical targets alone are not certified bounds.',
+              r'Numerical agreement does not prove exact rational equality.']
+    issues = [row for row in rows if row.get('status') != 'ok' or not row.get('comparison')]
     if issues:
-        lines.append(r"\par\noindent\textbf{Incomplete computations (full records in JSON).}")
+        lines.append(r'\par\noindent\textbf{Incomplete computations (full records in JSON).}')
         for row in issues:
-            reason = row.get("error") or row.get("L_error") or row.get("L_status") or row.get("periods_error") or row["status"]
-            reason = str(reason).partition("; state=")[0]
-            lines.append(r"\par\noindent\texttt{" + escape_tex(row["label"]) + "}: " + escape_tex(reason))
-    lines += [r"\par\noindent Source: \texttt{results/beilinson\_results.json}.",
-              r"\par\noindent\texttt{SHA-256: " + source_hash + "}", r"\end{document}"]
-    return "\n".join(lines) + "\n"
+            reason = row.get('error') or row.get('L_status') or row.get('periods_error') or row['status']
+            lines.append(r'\par\noindent\texttt{'+escape_tex(row['label'])+'}: '+escape_tex(str(reason).partition('; state=')[0]))
+    lines += [r'\par\noindent\texttt{Source SHA-256: '+source_hash+'}', r'\end{landscape}', r'\end{document}']
+    return '\n'.join(lines)+'\n'
 
 
-def export(source, output, cache):
+def export(source, output, cache, *, bound=BOUND, digits=DIGITS):
     raw = Path(source).read_bytes()
-    rows = select_results(json.loads(raw))
+    rows = select_results(json.loads(raw), bound=bound, digits=digits)
     if not rows:
-        raise ValueError("No current 100-digit results below conductor 1300")
-    needs_models = any(row.get('status') == 'ok' and not row.get('algebraic_data') for row in rows)
-    curves = {r["label"]: r for r in json.loads(Path(cache).read_text())} if needs_models else {}
+        raise ValueError('No current %d-digit results below conductor %d' % (digits, bound))
+    curves = {r['label']: r for r in json.loads(Path(cache).read_text())} if Path(cache).exists() else {}
     for row in rows:
-        if row.get("status") == "ok" and not row.get('algebraic_data'):
-            row["algebraic_data"] = algebraic_data(row, curves[row["label"]])
+        curve_row = row.get('input_curve') or curves.get(row['label'])
+        row['end_alg'] = endomorphism_type(row, curve_row)
+        if row.get('status') == 'ok':
+            if not row.get('algebraic_data'):
+                if curve_row is None:
+                    raise ValueError('Missing original curve equation for '+row['label'])
+                row['algebraic_data'] = algebraic_data(row, curve_row)
+            row['divisor_data'] = divisor_metadata(row, curve_row)
     checksum = hashlib.sha256(raw).hexdigest()
-    tex = render(rows, checksum)
-    counts = Counter(row["status"] for row in rows)
-    compared = sum(bool(row.get("comparison")) for row in rows)
-    displayed = sum(row.get("status") == "ok" and int(row["cond"]) not in EXCLUDED_DISPLAY_CONDUCTORS
-                    for row in rows)
-    source_name = Path(source)
-    if source_name.is_absolute() and source_name.is_relative_to(Path.cwd()):
-        source_name = source_name.relative_to(Path.cwd())
-    readme = f"""# Beilinson survey: conductor < 1300, 100 digits
-
-This directory contains the current 100-digit Beilinson survey:
-
-- [Full saved data and integration models](beilinson_100_digits.json).
-- [Three LaTeX tables: torsion/integrality, models, and numerical data](beilinson_100_digits.tex).
-
-The snapshot has {len(rows)} curve records, {counts.get('ok', 0)} successful
-regulators and {compared} numerical comparisons. Unsuccessful attempts and their
-reasons are retained in the JSON. The three tables display completed
-comparisons. This is a survey of locally cached geometrically simple
-curves, without a claim of completeness over all curves.
-The conductor-1116 record is retained in the JSON, but omitted from the LaTeX
-tables and explorer.
-The LaTeX tables and explorer include {displayed} successful regulators.
-
-Regulators and L-values target 100 decimal digits. The determinant uses weights
-`(1, 2 Re(z), |z|^2)`, full cycle periods, and
-`q = pi*c_plus*c_minus*L_second_derivative/D`. The comparison error is
-`abs(q/rational - 1)`. An undecided component verdict is displayed as
-`Undecided` in the integrality column. Precision targets are not certified
-error bounds.
-
-Full cycle periods use the MST cycle basis recorded in each successful row.
-The current code computes D and the signed period minors at a 100-digit target.
-L-values use the precision-validated coefficient cache. The quotient uses
-these ingredients in the same integration model as its displayed points.
-
-The numerical table displays 10 significant digits. The JSON preserves the
-complete saved decimal strings, matrices, precision settings, component
-verdicts and integration models. Table points use the displayed integration
-models. Reciprocal coordinate changes are marked by a dagger in the model
-table, with their shift and scale given explicitly. The JSON retains both
-the original points and their integration-model images.
-
-From the repository root in SageMath, recompute the survey (network access is
-needed to fetch curve data; cached L-values are reused after validation):
-
-```sh
-sage -python -m hyperell_regulator.experiments.beilinson 1300 --packet geometric --fetch --force --digits 100 --reg-digits 100 --edge-seconds 600
-sage -python -m hyperell_regulator.experiments.beilinson_report
-```
-
-The bound is strict: conductor < 1300. A fresh cache also recomputes L-values
-and can take substantially longer. Component/reduction computations require
-the package's Sage dependencies. The command retains failed attempts and
-does not claim that the locally cached curves form a complete list.
-
-To rebuild the tables from the versioned JSON without repeating numerical
-calculations or requiring local curve caches:
-
-```sh
-sage -python -m hyperell_regulator.experiments.beilinson_report --input reports/beilinson_100_digits.json
-```
-
-To typeset the survey, install the LaTeX packages in its preamble, including
-`arydshln`. Compile into a separate directory to keep this folder tidy.
-Run the final command twice to resolve cross-references:
-
-```sh
-mkdir -p /tmp/beilinson-survey
-pdflatex -interaction=nonstopmode -halt-on-error -output-directory=/tmp/beilinson-survey reports/beilinson_100_digits.tex
-```
-
-Source: `{source_name}` (read without modification).
-Source SHA-256: `{checksum}`.
-"""
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    for filename, contents in (("beilinson_100_digits.json", json.dumps(rows, indent=2, allow_nan=False)+"\n"),
-                               ("beilinson_100_digits.tex", tex), ("README.md", readme)):
-        path = output/filename
-        temporary = path.with_suffix(path.suffix + ".tmp")
+    readme = f"""# Beilinson survey: conductor < {bound}, {digits} digits
+
+- [Saved data, exact divisor coefficients and interval endpoints](beilinson_100_digits.json).
+- [Tables of divisors, packet torsion orders, endomorphism types and numerical comparisons](beilinson_100_digits.tex).
+
+The snapshot contains {len(rows)} records and {sum(r.get('status') == 'ok' for r in rows)} completed regulators.
+Failed attempts remain in the JSON. Q and CM refer to rational endomorphism algebra labels.
+Divisors use the original LMFDB coordinates; the integration charts are recorded separately. Packet order is the exponent of point differences,
+not packet cardinality. Unknown exact orders are left blank rather than inferred from Jacobian torsion.
+
+Regulator determinants use weights `(1, 2 Re(z), |z|^2)` and full cycle periods.
+Certified interval endpoints and their analytic assumptions are retained; numerical agreement does not prove equality.
+
+Regenerate from a completed experiment without repeating integrations:
+
+```sh
+sage -python -m hyperell_regulator.experiments.beilinson_report --input {source} --bound {bound} --digits {digits}
+```
+
+Source SHA-256: `{checksum}`.
+"""
+    for name, contents in [('beilinson_100_digits.json', json.dumps(rows, indent=2, allow_nan=False)+'\n'),
+                           ('beilinson_100_digits.tex', render(rows, checksum, bound=bound, digits=digits)),
+                           ('README.md', readme)]:
+        path = output/name
+        temporary = path.with_suffix(path.suffix+'.tmp')
         temporary.write_text(contents)
         temporary.replace(path)
-    print(f"Exported {len(rows)} records, {counts.get('ok', 0)} regulators, {compared} comparisons to {output}")
+    print('Exported %d records to %s' % (len(rows), output))
 
 
-def explorer_inputs(report, output):
-    """The exact survey models, marked points and 100-digit reference values."""
+def explorer_inputs(report, output, *, bound=BOUND, digits=DIGITS):
+    """Export exact divisor support and every center used on the shared cut."""
     raw = Path(report).read_bytes()
-    rows = json.loads(raw)
     curves = []
-    x_expression = lambda value: re.sub(r"\bu\b", "x", value)
-    for row in rows:
-        if row.get("status") != "ok" or int(row["cond"]) in EXCLUDED_DISPLAY_CONDUCTORS or 'triple' not in row:
+    for row in json.loads(raw):
+        if (row.get('status') != 'ok' or not 0 < int(row['cond']) < bound
+                or int(row['cond']) in EXCLUDED_DISPLAY_CONDUCTORS):
             continue
-        a, t = row["algebraic_data"], row["triple"]
-        comparison = row.get("comparison", {})
-        agreement = comparison.get("relative_agreement")
-        verified = bool(comparison.get("rational")) and agreement is not None and Decimal(str(agreement)) < Decimal('1e-95')
-        curves.append(dict(label=row["label"], cond=int(row["cond"]),
-                           F=x_expression(a["model"]), points=a["image_points"][:2],
-                           orders=[int(t["order_P"]), int(t["order_Q"])],
-                           pole=a["pole"],
-                           original_triple=t,
-                           q=comparison.get("rational") if verified else None,
-                           quotient=comparison.get("ratio"), rational_guess=comparison.get("rational"),
-                           numerical={key: row.get(key) for key in
-                                      ("det", "c_plus", "c_minus", "L_second_derivative")},
-                           relative_agreement=comparison.get("relative_agreement"),
-                           regulator_digits=row["regulator_digits"], L_digits=row.get("L_digits"),
-                           comparison_verified=verified,
-                           integrality_verified=all(t.get(key) is True for key in ("verdict_P", "verdict_Q"))))
-    snapshot = dict(source=dict(title="Beilinson survey: conductor < 1300, 100-digit targets",
-                                input_snapshot=str(output), report_snapshot=str(report),
-                                report_sha256=hashlib.sha256(raw).hexdigest(),
-                                marked_points=["P", "R"],
-                                pole_convention="Q is the report's common pole R; viewer zeros P,R are report zeros P,Q.",
-                                conductor_bound=BOUND, regulator_digits=DIGITS, lvalue_digits=DIGITS,
-                                excluded_conductors=sorted(EXCLUDED_DISPLAY_CONDUCTORS)),
-                    curves=curves)
-    Path(output).write_text(json.dumps(snapshot, indent=2, allow_nan=False)+"\n")
+        if any(row.get(k) is None for k in ('matrix', 'det', 'c_plus', 'c_minus', 'L_second_derivative')):
+            continue
+        data = row.get('divisor_data') or divisor_metadata(row)
+        comparison = row.get('comparison', {})
+        error = comparison_error(row)
+        verified = bool(comparison.get('rational')) and error is not None and Decimal(error) < Decimal(10)**(-digits+5)
+        curves.append(dict(label=row['label'], cond=int(row['cond']),
+            F=re.sub(r'\bu\b', 'x', row['algebraic_data']['model']), **data,
+            q=comparison.get('rational') if verified else None,
+            quotient=decimal_value(comparison.get('ratio')), rational_guess=comparison.get('rational'),
+            numerical={k: decimal_value(row.get(k)) for k in ('det', 'c_plus', 'c_minus', 'L_second_derivative')},
+            reference_matrix=[[decimal_value(v) for v in line] for line in row.get('matrix', [])],
+            reference_intervals={k: row.get(k) for k in ('matrix', 'det', 'c_plus', 'c_minus', 'L_second_derivative')},
+            L_num_coeffs=row.get('L_num_coeffs'), feq_check=row.get('feq_check'),
+            L_certified=row.get('L_certified', False), L_analytic_assumptions=row.get('L_analytic_assumptions'),
+            relative_agreement=error, regulator_digits=row['regulator_digits'], L_digits=row.get('L_digits'),
+            comparison_verified=verified, certified=row.get('certified', False),
+            integrality_verified=row.get('integral', all(row.get('triple', {}).get(k) is True for k in ('verdict_P', 'verdict_Q'))),
+            linear_comparison=row.get('linear_comparison'), original_curve=row.get('input_curve')))
+    snapshot = dict(schema_version=3, source=dict(title=f'Beilinson survey: conductor < {bound}, {digits}-digit targets',
+        input_snapshot=str(output), report_snapshot=str(report), report_sha256=hashlib.sha256(raw).hexdigest(),
+        conductor_bound=bound, regulator_digits=digits, lvalue_digits=digits,
+        excluded_conductors=sorted(EXCLUDED_DISPLAY_CONDUCTORS)), curves=curves)
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(snapshot, indent=2, allow_nan=False)+'\n')
     return snapshot
 
 
@@ -519,10 +435,12 @@ def main(argv=None):
     parser.add_argument("--out", type=Path, default=Path("reports"))
     parser.add_argument("--explorer-inputs", type=Path,
                         help="also write an explorer input catalog from the new report")
+    parser.add_argument('--bound', type=int, default=BOUND)
+    parser.add_argument('--digits', type=int, default=DIGITS)
     args = parser.parse_args(argv)
-    export(args.input, args.out, args.cache)
+    export(args.input, args.out, args.cache, bound=args.bound, digits=args.digits)
     if args.explorer_inputs:
-        explorer_inputs(args.out/"beilinson_100_digits.json", args.explorer_inputs)
+        explorer_inputs(args.out/"beilinson_100_digits.json", args.explorer_inputs, bound=args.bound, digits=args.digits)
 
 
 if __name__ == "__main__":

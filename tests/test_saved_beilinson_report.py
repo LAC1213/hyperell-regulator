@@ -14,6 +14,7 @@ from hyperell_regulator.experiments import beilinson_report as report
 def saved_row(label="249.a.249.1", cond=249):
     return dict(label=label, cond=cond, status="ok", regulator_digits=100,
                 L_digits=100, L_second_derivative="5.067627040347058713642075941",
+                matrix=[["1", "0", "0"], ["0", "1", "0"], ["0", "0", "33.48773151266455986457282728"]],
                 det="33.48773151266455986457282728", c_plus="6.445925843562459201",
                 c_minus="9.137006586242914998", model="u^6 + 4*u^5 + 4*u^4 + 2*u^3 + 1",
                 triple=dict(P=["-1", "0"], Q=["infinity", "-1"], R=["0", "-1"],
@@ -95,16 +96,13 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
     assert r"q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D" in tex
     assert r"2\operatorname{Re}(z)" in tex
     assert hashlib.sha256(original).hexdigest() in tex
-    assert tex.count(r"\begin{table}") == tex.count(r"\end{table}") == 3
-    assert tex.count(r"\begin{tabular}") == tex.count(r"\end{tabular}") == 3
-    assert r"\begin{longtable}" not in tex
-    assert r"\begin{tabular}{@{}cccccc@{}}" in tex
-    assert r"\begin{tabular}{@{}ll@{}}" in tex
-    assert r"\begin{tabular}{@{}lrrrrr@{}}" in tex
+    assert tex.count(r"\begin{longtable}") == tex.count(r"\end{longtable}") == 3
+    assert r"\begin{table}" not in tex
+    assert "Packet $N$" in tex and r"\mathrm{End}_{\mathbf Q}^0(J)" in tex
     assert r"https://www.lmfdb.org/Genus2Curve/Q/249/a/249/1" in tex
-    # Use the integration-model images, not the original LMFDB points.
-    assert r"\begin{gathered}(-1,0)\\(0,-1)\end{gathered}" in tex
-    assert r"\begin{gathered}7\\14\end{gathered}" in tex
+    assert r"D_{1}=\left(-1,0\right)-\left(0,-1\right)" in tex
+    assert r"D_{2}=\infty_{Y=-1}-\left(0,-1\right)" in tex
+    assert exported["divisor_data"]["packet_torsion_order"] == "14"
     assert r"\label{tab:torsion-integrality}" in tex
     assert r"\label{tab:curve-models}" in tex
     assert r"\label{tab:data}" in tex
@@ -115,7 +113,7 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
     assert entry["q"] is None and not entry["comparison_verified"]
     assert entry["rational_guess"] == "28"
     assert entry["quotient"] == row["comparison"]["ratio"]
-    assert entry["pole"] == "infinity" and "exact_functions" not in entry
+    assert entry["support"][2]["infinity"] and "exact_functions" not in entry
     assert "u" not in entry["F"]
     rows[0]["comparison"]["relative_agreement"] = "1e-101"
     (out/"beilinson_100_digits.json").write_text(json.dumps(rows))

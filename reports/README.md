@@ -1,15 +1,20 @@
-# Beilinson survey
+# Beilinson survey: conductor < 1000, 100 digits
 
-This directory retains the Beilinson survey snapshot:
+- [Saved data, exact divisor coefficients and interval endpoints](beilinson_100_digits.json).
+- [Tables of divisors, packet torsion orders, endomorphism types and numerical comparisons](beilinson_100_digits.tex).
 
-- [Saved data and integration models](beilinson_100_digits.json).
-- [LaTeX tables](beilinson_100_digits.tex).
+The snapshot contains 87 records and 41 completed regulators.
+Failed attempts remain in the JSON. Q and CM refer to rational endomorphism algebra labels.
+Divisors use the original LMFDB coordinates; the integration charts are recorded separately. Packet order is the exponent of point differences,
+not packet cardinality. Unknown exact orders are left blank rather than inferred from Jacobian torsion.
 
-The snapshot targets 100 decimal digits and predates the new experiments
-using integral Galois-trace divisor bases. Once those computations are
-complete, the survey will be updated to use the new divisor notation and
-include curves with rational endomorphism algebra labelled `CM`, alongside
-those labelled `Q`.
+Regulator determinants use weights `(1, 2 Re(z), |z|^2)` and full cycle periods.
+Certified interval endpoints and their analytic assumptions are retained; numerical agreement does not prove equality.
 
-The saved JSON and LaTeX tables are retained unchanged while the new
-experiments are running.
+Regenerate from a completed experiment without repeating integrations:
+
+```sh
+sage -python -m hyperell_regulator.experiments.beilinson_report --input results/beilinson_results_certified.json --bound 1000 --digits 100
+```
+
+Source SHA-256: `37e3fedbf704d45cdd920707f77ad3c1746099ffb6e47a6c25e6d91a477fa682`.

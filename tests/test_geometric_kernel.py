@@ -77,6 +77,7 @@ def test_certified_survey_uses_only_integral_traces_on_277(tmp_path, monkeypatch
     assert result['integral_rank'] == 1 and result['geometric_points'] == 10
     kernel, = result['integral_kernels']
     assert kernel['places']['277']['method'] == 'simple_node_galois_pairs'
+    assert kernel['packet_torsion_order_exact'] and kernel['packet_torsion_order'] == '30'
     assert all(not any(map(int, D[:5])) for D in kernel['basis'])
     assert result['status'] == 'insufficient_integral_rank'
 

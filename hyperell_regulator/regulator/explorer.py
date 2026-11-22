@@ -64,7 +64,7 @@ def parse_expression(source, field):
 
 
 def parse_request(request):
-    """Validate the curve polynomial, rational centers and precision."""
+    """Validate the curve polynomial, exact algebraic centers and precision."""
     from sage.all import PolynomialRing, QQ
     if not isinstance(request, dict):
         raise ValueError('Expected an object with F, centers and prec')
@@ -76,9 +76,11 @@ def parse_request(request):
     if not 5 <= F.degree() <= 12 or F.gcd(F.derivative()).degree() > 0:
         raise ValueError('F must be squarefree with degree 5 through 12')
     centers = request.get('centers', ['0'])
-    if not isinstance(centers, list) or not 1 <= len(centers) <= 8:
-        raise ValueError('Provide one through eight rational centers')
-    centers = [QQ(parse_expression(str(a), S.fraction_field())) for a in centers]
+    if not isinstance(centers, list) or not 1 <= len(centers) <= 128:
+        raise ValueError('Provide one through 128 logarithmic centers')
+    from .._algebraic import decode_algebraic
+    centers = [decode_algebraic(a) if isinstance(a, dict) else
+               QQ(parse_expression(str(a), S.fraction_field())) for a in centers]
     prec = request.get('prec', 15)
     if type(prec) is not int or not 10 <= prec <= 100:
         raise ValueError('prec must be an integer from 10 through 100')
@@ -91,6 +93,8 @@ def cut_system_data(F, centers=(0,), prec=15, *, samples=40):
     """Export the common cut, bank gluing, periods and logarithmic integrals."""
     import numpy as np
     from .stokes import compute, prod
+    from .._algebraic import encode_algebraic, complex_coordinates
+    from sage.all import QQ
     details = {}
     periods, regulators = compute(F, centers, prec, details=details)
     cut, u, ell = details['cut'], details['u'], details['ell']
@@ -134,8 +138,12 @@ def cut_system_data(F, centers=(0,), prec=15, *, samples=40):
                 pairings.append(dict(forms=[i+1, j+1], period=str(periods[k]),
                                      regulator=str(reg[k]), pairing=number(-4*ar.R(reg[k])/ar.R.pi())))
                 k += 1
-        weights.append(dict(center=str(a), label='log|x - (%s)|' % a, pairings=pairings))
-    return dict(schema_version=2, input=dict(F=str(cut.F), centers=[str(a) for a in cut.centers], prec=prec, cut="mst"),
+        label = str(a) if a in QQ else 'a%d' % (len(weights)+1)
+        weights.append(dict(center=label, center_exact=encode_algebraic(a),
+                            center_position=complex_coordinates(a),
+                            label='log|x - (%s)|' % label, pairings=pairings))
+    return dict(schema_version=2, input=dict(F=str(cut.F),
+                centers=[str(a) if a in QQ else encode_algebraic(a) for a in cut.centers], prec=prec, cut="mst"),
                 degree=2, genus=g, precision=prec, weights=weights, edges=edges,
                 nodes=[point(complex(z)) for z in cut.nodes],
                 roots=[point(complex(z)) for z in cut.roots],

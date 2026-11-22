@@ -8,7 +8,7 @@ from tempfile import NamedTemporaryFile
 
 from ..paths import data_path
 
-KERNEL_CACHE_VERSION = 3  # Only Galois-trace divisor directions over QQ.
+KERNEL_CACHE_VERSION = 4  # Galois traces over QQ with exact packet torsion orders.
 
 
 def cached_kernel(f, h, support, compute, *, incomplete_revision=None):

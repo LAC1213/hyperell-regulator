@@ -106,6 +106,7 @@ def test_beilinson_caches_rank_one_basis_on_two_abscissae(tmp_path, monkeypatch)
     assert result['status'] == 'insufficient_integral_rank'
     kernel, = result['integral_kernels']
     assert len(kernel['basis']) == 1
+    assert kernel['packet_torsion_order_exact'] and kernel['packet_torsion_order'] == '15'
     saved, = (tmp_path/'results'/'integral_bases').glob('*.json')
     assert json.loads(saved.read_text()) == kernel
 

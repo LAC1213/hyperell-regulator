@@ -12,6 +12,7 @@ from sage.all import PolynomialRing, QQ, RealField
 from hyperell_regulator._source_hash import SOURCE_HASH_METHOD
 from hyperell_regulator.experiments.small_conductor_explorer import numerical_source_hashes
 from hyperell_regulator.regulator.explorer import parse_request
+from hyperell_regulator.experiments._survey_divisors import decimal_value
 from hyperell_regulator.regulator.surfaces import _bank_radius, _ray_endpoint
 
 
@@ -96,13 +97,13 @@ def test_catalog_has_one_two_sheet_plot_per_curve_and_reassembles_all_weights():
     root=Path(__file__).resolve().parents[1];site=root/'docs/_extra/explorer'
     catalog=json.loads((site/'catalog.json').read_text())
     inputs=json.loads((root/'docs/explorer_inputs.json').read_text())
-    assert catalog['schema_version']==2
+    assert catalog['schema_version']==3
     assert catalog['period_basis']=='mst' and catalog['table_digits']==100
     assert catalog['numerical_source_hash_method']==SOURCE_HASH_METHOD
     assert catalog['numerical_source_sha256']==numerical_source_hashes()
     assert [c['label'] for c in catalog['curves']]==[c['label'] for c in inputs['curves']]
-    assert len(catalog['curves'])==21
-    assert len({c['file'] for c in catalog['curves']})==21
+    assert len(catalog['curves'])==41
+    assert len({c['file'] for c in catalog['curves']})==41
     assert catalog['source']['report_sha256']==hashlib.sha256((root/'reports/beilinson_100_digits.json').read_bytes()).hexdigest()
     for curve in catalog['curves']:
         assert 'functions' not in curve and 'exact_functions' not in curve
@@ -112,7 +113,29 @@ def test_catalog_has_one_two_sheet_plot_per_curve_and_reassembles_all_weights():
         assert data['input']['cut']=='mst'
         assert len(data['boundary_word'])==2*len(data['edges'])
         assert len(data['edges'])==len(data['nodes'])
-        assert len(data['weights'])>=2
+        assert len(data['weights']) == len(curve['logarithmic_centers'])
+        assert curve['packet_torsion_order'] and curve['end_alg'] in ('Q', 'CM')
+        assert curve['centers_source'] == 'computation'
+        assert data['collection']['experiment']['reference_intervals'] == curve['reference_intervals']
+        assert data['collection']['support'] == curve['support']
+        assert data['collection']['coordinate_system'] == 'lmfdb'
+        assert data['collection']['lmfdb_model'] == curve['lmfdb_model']
+        from hyperell_regulator.experiments.geometric_torsion import decode_point
+        S=PolynomialRing(QQ, 'x')
+        f,h=S(curve['lmfdb_model']['f']),S(curve['lmfdb_model']['h'])
+        for P in curve['support']:
+            x,y=decode_point(P['lmfdb']['point'])
+            assert y*y+(h[3] if x=='infinity' else h(x))*y == (f[6] if x=='infinity' else f(x))
+        assert data['collection']['divisors'] == curve['divisors']
+        assert [w['center_exact'] for w in data['weights']] == [a['exact'] for a in curve['logarithmic_centers']]
+        # Assemble the actual divisor columns, including multiplicities and
+        # contributions from more than two logarithmic centers.
+        by_id = dict(zip((D['id'] for D in curve['divisors']), data['collection']['divisor_center_coefficients']))
+        for j, name in enumerate(curve['matrix_divisor_ids']):
+            column = sum(float(Fraction(c))*np.array([float(p['regulator']) for p in w['pairings']])
+                         for c, w in zip(by_id[name], data['weights']))
+            np.testing.assert_allclose(column*[1, 2, 1], np.array(curve['normalized_matrix'], float)[:, j],
+                                       atol=1e-8, rtol=1e-8, err_msg=curve['label'])
         expected_periods=[float(p['period']) for p in data['weights'][0]['pairings']]
         np.testing.assert_allclose(_assemble_export(data,False),expected_periods,atol=1e-10,rtol=1e-10)
         for k,weight in enumerate(data['weights']):
@@ -142,11 +165,15 @@ def test_table_uses_current_mst_periods_and_recomputed_quotients():
         reference=periods[curve['label']]
         assert curve['period_basis']=='mst' and curve['regulator_digits']==100
         assert curve['L_digits']>=100 and curve['validation']['L_num_coeffs']>0
-        assert curve['validation']['feq_check']<1e-100
+        if curve['certified']:
+            assert reference['L_certified'] and curve['L_certified']
+            assert curve['L_analytic_assumptions'] == reference['L_analytic_assumptions']
+        else:
+            assert curve['validation']['feq_check']<1e-100
         for key in ('c_plus','c_minus'):
-            assert abs(R(curve['numerical'][key])/R(reference[key])-1)<R('1e-97'),curve['label']
+            assert abs(R(curve['numerical'][key])/R(decimal_value(reference[key]))-1)<R('1e-97'),curve['label']
         q=R.pi()*R(curve['numerical']['c_plus'])*R(curve['numerical']['c_minus'])*R(curve['numerical']['L_second_derivative'])/R(curve['numerical']['det'])
         assert abs(q/R(curve['quotient'])-1)<R('1e-99')
         assert curve['q']==reference['comparison']['rational'] and curve['comparison_verified']
         assert abs(q/R(QQ(curve['q']))-1)<R('1e-95')
-    assert catalog['curves'][0]['q']=='14'
+    assert sum(c['end_alg']=='CM' for c in catalog['curves'])==5

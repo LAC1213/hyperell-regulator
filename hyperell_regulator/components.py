@@ -562,7 +562,7 @@ def affine_model(C, points):
 
 
 # ---------------------------------------------------------------------------
-# the order of [P] - [Q] in the Jacobian
+# the order of P - Q in the Jacobian
 # ---------------------------------------------------------------------------
 
 def odd_degree_model(C):
@@ -667,7 +667,7 @@ def _order_by_principality(C, P, Q, primes):
 
 
 def divisor_class_order(C, P, Q, primes=30):
-    r"""The order of `[P]-[Q]` in `J(\QQ)`.
+    r"""The order of `P-Q` in `J(\QQ)`.
 
     Return ``+Infinity`` for nontorsion and ``None`` if undetermined.
     Points use `y^2+h(x)y=f(x)`; ``("infinity", eta)`` means

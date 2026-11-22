@@ -82,7 +82,8 @@ def test_python_default_monicizes_even_models(binary, monkeypatch):
     from hyperell_regulator import frobenius
     monkeypatch.setenv("HYPELLFROB_EULER", binary)
     monkeypatch.delenv("HYPELLFROB_BACKEND", raising=False)
-    real_run = subprocess.run
+    from hyperell_regulator import _subprocess
+    real_run = _subprocess.run
     calls = []
 
     def capture(command, **kwargs):
@@ -90,7 +91,7 @@ def test_python_default_monicizes_even_models(binary, monkeypatch):
             calls.append((command, kwargs["input"].splitlines()[0]))
         return real_run(command, **kwargs)
 
-    monkeypatch.setattr(frobenius.subprocess, "run", capture)
+    monkeypatch.setattr(_subprocess, "run", capture)
     q = 2*(x**6-2*x**4+2*x**3+9*x**2+6*x+1)
     ps = [41, 43]
     expected = sage_polynomials(q, ps)

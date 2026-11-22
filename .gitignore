@@ -21,3 +21,6 @@ config.mk
 /reports/*.log
 /reports/*.out
 /reports/*.toc
+/reports/*.fdb_latexmk
+/reports/*.fls
+/reports/*.synctex.gz

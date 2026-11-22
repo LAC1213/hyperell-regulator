@@ -66,6 +66,7 @@ class DivisorRegulators:
             digits = digits_value(digits)+12
         options = {'certified': True} if self.certified else {}
         xs = list(dict.fromkeys([*self._column_cache, *xs]))
+        self.logarithmic_centers = tuple(xs)
         per, raw = regulators_stokes(self.polynomial, xs, prec=digits, **options)
         # Whenever the cut changes, recompute all columns used together.
         ring = (per[0].parent() if self.certified else

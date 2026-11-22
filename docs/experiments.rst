@@ -241,3 +241,24 @@ survey report. Numerical retries and ``--force`` reuse these bases.
 The `saved 100-digit survey
 <https://github.com/LAC1213/hyperell-regulator/tree/main/reports>`_
 contains tables, full-precision values and integration models.
+
+Survey report and explorer
+--------------------------
+
+Generate the survey tables from a completed run without recomputing
+regulators or L-values:
+
+.. code-block:: sh
+
+   sage -python -m hyperell_regulator.experiments.beilinson_report \
+       --input results/beilinson_results_certified.json \
+       --bound 1000 --digits 100 --explorer-inputs docs/explorer_inputs.json
+
+The three multipage tables list the selected divisors with their exact
+coefficients in the original LMFDB coordinates, the LMFDB models,
+integration charts and algebraic support definitions,
+and the numerical comparisons. They also record the packet torsion
+exponent and the rational endomorphism algebra label. Unknown packet
+orders are left blank. Saved certified intervals remain in the JSON.
+The explorer regeneration and support display are described in
+:doc:`explorer-guide`.

@@ -1,151 +1,219 @@
 \documentclass[10pt]{article}
 \usepackage[a4paper,margin=12mm]{geometry}
-\usepackage{amsmath,amssymb,booktabs,arydshln}
+\usepackage{amsmath,amssymb,booktabs,longtable,array,pdflscape}
 \usepackage[hidelinks]{hyperref}
 \begin{document}
-\noindent\textbf{Beilinson survey: conductor $<1300$, 100-digit targets.}
-Conductor $1116$ is retained in the JSON and omitted from these tables.
-We use $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$, full cycle periods,
-and determinant weights $(1,2\operatorname{Re}(z),|z|^2)$.
-Displayed decimals have 10 significant digits; errors use the full saved values.
-\begin{table}[htbp]
-\centering\small
-\renewcommand{\arraystretch}{1.5}
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{@{}cccccc@{}}
-\toprule
-Curve & Point $P$ & Order of $P$ & $\alpha_P$ integral? & Factor $q$ & Error \\
-\midrule
-\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/249/1}{\texttt{249.a.249.1}} & $\begin{gathered}(1,-1)\\(0,-1)\end{gathered}$ & $\begin{gathered}7\\14\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $14$ & $5.7\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/277/a/277/1}{\texttt{277.a.277.1}} & $\begin{gathered}(-1,0)\\(0,-1)\end{gathered}$ & $\begin{gathered}15\\3\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $30$ & $4.2\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/295/a/295/1}{\texttt{295.a.295.1}} & $\begin{gathered}(0,-1)\\(1,0)\end{gathered}$ & $\begin{gathered}14\\14\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-14$ & $2.9\times 10^{-102}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/349/a/349/1}{\texttt{349.a.349.1}} & $\begin{gathered}(1,-1)\\(0,-1)\end{gathered}$ & $\begin{gathered}13\\13\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $13$ & $7.2\times 10^{-102}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/388/a/776/1}{\texttt{388.a.776.1}} & $\begin{gathered}(-1,1)\\(0,-1)\end{gathered}$ & $\begin{gathered}7\\7\end{gathered}$ & $\begin{gathered}\text{Undecided}\\\text{Undecided}\end{gathered}$ & $14$ & $6.9\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/1}{\texttt{389.a.389.1}} & $\begin{gathered}(-2,0)\\(2,0)\end{gathered}$ & $\begin{gathered}10\\5\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $80$ & $8.7\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/2}{\texttt{389.a.389.2}} & $\begin{gathered}(-1,0)\\(0,-1)\end{gathered}$ & $\begin{gathered}2\\10\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $10$ & $5.2\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/523/a/523/1}{\texttt{523.a.523.1}} & $\begin{gathered}(0,-1)\\(1,0)\end{gathered}$ & $\begin{gathered}10\\2\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-20$ & $2.1\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/1}{\texttt{603.a.603.1}} & $\begin{gathered}(-4,0)\\(0,0)\end{gathered}$ & $\begin{gathered}5\\10\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-10$ & $4.0\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/2}{\texttt{603.a.603.2}} & $\begin{gathered}(-1,0)\\(0,0)\end{gathered}$ & $\begin{gathered}10\\5\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-5$ & $7.0\times 10^{-102}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/691/a/691/1}{\texttt{691.a.691.1}} & $\begin{gathered}(0,-1)\\(1,0)\end{gathered}$ & $\begin{gathered}8\\2\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-16$ & $1.5\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/709/a/709/1}{\texttt{709.a.709.1}} & $\begin{gathered}(-1,0)\\(0,0)\end{gathered}$ & $\begin{gathered}8\\8\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $16$ & $2.7\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/763/a/763/1}{\texttt{763.a.763.1}} & $\begin{gathered}(0,0)\\(1,0)\end{gathered}$ & $\begin{gathered}5\\10\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $40$ & $4.0\times 10^{-102}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/909/1}{\texttt{909.a.909.1}} & $\begin{gathered}(0,-1)\\(1,0)\end{gathered}$ & $\begin{gathered}8\\2\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-8$ & $2.3\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/925/1}{\texttt{925.a.925.1}} & $\begin{gathered}(1,0)\\(0,0)\end{gathered}$ & $\begin{gathered}8\\8\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-4$ & $4.4\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/1}{\texttt{997.a.997.1}} & $\begin{gathered}(0,0)\\(4,0)\end{gathered}$ & $\begin{gathered}2\\2\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $64$ & $4.6\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/2}{\texttt{997.a.997.2}} & $\begin{gathered}(-1,0)\\(0,-1)\end{gathered}$ & $\begin{gathered}2\\8\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-16$ & $1.3\times 10^{-100}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/1051/b/1051/1}{\texttt{1051.b.1051.1}} & $\begin{gathered}(-1,0)\\(0,0)\end{gathered}$ & $\begin{gathered}8\\8\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-16$ & $3.5\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/1051/b/1051/2}{\texttt{1051.b.1051.2}} & $\begin{gathered}(-4,0)\\(0,0)\end{gathered}$ & $\begin{gathered}2\\2\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $-16$ & $5.5\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/1123/a/1123/1}{\texttt{1123.a.1123.1}} & $\begin{gathered}(-1,0)\\(0,-1)\end{gathered}$ & $\begin{gathered}2\\8\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $48$ & $3.3\times 10^{-101}$ \\
-\hdashline
-\href{https://www.lmfdb.org/Genus2Curve/Q/1147/a/35557/2}{\texttt{1147.a.35557.2}} & $\begin{gathered}(-4,0)\\(0,0)\end{gathered}$ & $\begin{gathered}2\\2\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ & $64$ & $6.1\times 10^{-101}$ \\
-\bottomrule
-\end{tabular}
-\caption{Torsion point classes for 21 genus 2 curves. Each stacked cell lists the two marked points in the order of the regulator columns,
-in the integration coordinates of Table~\ref{tab:curve-models}.
-The order of a displayed point is the order of $[P]-[R]$, with common pole $R$ given there.
-The integrality column records the component criterion: Yes, No, or Undecided;
-Undecided makes no integrality assertion.
-Factor $q$ is the saved rational guess. The error is
-$|\pi c^+c^-L^{\prime\prime}(M_{\mathrm{std}},1)/(qD)-1|$,
-computed from unrounded values. Numerical targets are not certified error bounds.}
-\label{tab:torsion-integrality}
-\end{table}
+\begin{landscape}
+\noindent\textbf{Beilinson survey: conductor $<1000$, 100-digit targets.}
+We use $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$ and full cycle periods,
+with determinant weights $(1,2\operatorname{Re}(z),|z|^2)$.
+The divisors below are the actual coefficient rows of the regulator columns,
+in the original LMFDB coordinates of Table~\ref{tab:curve-models}.
+Packet order means $N=\mathop{\mathrm{lcm}}_P\operatorname{ord}(P-P_0)$ in the Jacobian,
+not the number of packet points. A dash means the exact order was not recorded.
+The endomorphism column is the LMFDB rational endomorphism algebra label;
+\texttt{CM} does not by itself assert that the Jacobian is of CM type.
+\begin{longtable}{@{}lcrp{16cm}c@{}}
+\caption{Selected torsion-packet divisors and integrality.}\label{tab:torsion-integrality}\\
+\toprule Curve & $\mathrm{End}_{\mathbf Q}^0(J)$ & Packet $N$ & Selected divisors & Integral? \\
+\midrule\endfirsthead
+\toprule Curve & $\mathrm{End}_{\mathbf Q}^0(J)$ & Packet $N$ & Selected divisors & Integral? \\
+\midrule\endhead
+\bottomrule\endfoot
+\href{https://www.lmfdb.org/Genus2Curve/Q/169/a/169/1}{\texttt{169.a.169.1}} & \texttt{CM} & $19$ & $\begin{gathered}D_{1}=\left(-1,0\right)+\left(-1,1\right)-\infty_{Y=-1}-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-\infty_{Y=-1}-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/249/1}{\texttt{249.a.249.1}} & \texttt{Q} & $14$ & $\begin{gathered}D_{1}=2\,\left(-1,0\right)-\infty_{Y=-1}-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-\infty_{Y=-1}-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/6723/1}{\texttt{249.a.6723.1}} & \texttt{Q} & $28$ & $\begin{gathered}D_{1}=2\,\left(-1,0\right)-\infty_{Y=-1}-\infty_{Y=0}\\D_{2}=4\,\left(0,-2\right)+4\,\left(0,1\right)-\infty_{Y=-1}-\infty_{Y=0}-6\,\left(3,-14\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/256/a/512/1}{\texttt{256.a.512.1}} & \texttt{CM} & $10$ & $\begin{gathered}D_{1}=\left(0,-1\right)+\left(0,0\right)-\left(1,-1\right)-\left(1,0\right)\\D_{2}=\left(\frac{1}{2},-\frac{1}{2}\right)-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/277/a/277/1}{\texttt{277.a.277.1}} & \texttt{Q} & $15$ & $\begin{gathered}D_{1}=2\,\left(-1,0\right)-\infty_{Y=-1}-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-\infty_{Y=-1}-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/295/a/295/1}{\texttt{295.a.295.1}} & \texttt{Q} & $14$ & $\begin{gathered}D_{1}=\left(0,-1\right)+\left(0,0\right)-2\,\left(1,-1\right)\\D_{2}=\infty_{Y=-1}-2\,\left(1,-1\right)+\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/324/a/648/1}{\texttt{324.a.648.1}} & \texttt{CM} & $21$ & $\begin{gathered}D_{1}=\left(-1,0\right)+\left(-1,1\right)-\infty_{Y=-1}-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-\infty_{Y=-1}-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/349/a/349/1}{\texttt{349.a.349.1}} & \texttt{Q} & $13$ & $\begin{gathered}D_{1}=2\,\left(-1,0\right)-\infty_{Y=-1}-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-\infty_{Y=-1}-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/388/a/776/1}{\texttt{388.a.776.1}} & \texttt{Q} & $21$ & $\begin{gathered}D_{1}=\left(-1,0\right)+\left(-1,1\right)-\infty_{Y=-1}-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-\infty_{Y=-1}-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/1}{\texttt{389.a.389.1}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=\left(-2,5\right)-\left(2,-5\right)\\D_{2}=\infty_{Y=-1}+\infty_{Y=0}-2\,\left(2,-5\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/2}{\texttt{389.a.389.2}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=\left(-1,0\right)-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/394/a/3152/1}{\texttt{394.a.3152.1}} & \texttt{Q} & $20$ & $\begin{gathered}D_{1}=2\,\left(-1,-1\right)+2\,\left(-1,1\right)-3\,\left(1,-1\right)-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/464/a/29696/1}{\texttt{464.a.29696.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(-\frac{1}{2},-\frac{1}{4}\right)-\left(\frac{1}{2},-\frac{3}{4}\right)\\D_{2}=\left(0,-1\right)+\left(0,0\right)-6\,\left(\frac{1}{2},-\frac{3}{4}\right)+4\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/464/a/464/1}{\texttt{464.a.464.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=-2\,\left(-1,0\right)+5\,P_{2}+5\,P_{3}-4\,P_{7}-4\,P_{8}\\D_{2}=-2\,\left(-1,0\right)+\left(0,0\right)+\left(0,-1\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/472/a/944/1}{\texttt{472.a.944.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(-1,-1\right)-\left(1,-1\right)\\D_{2}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/523/a/523/1}{\texttt{523.a.523.1}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\\D_{2}=\left(1,-1\right)-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/574/a/293888/1}{\texttt{574.a.293888.1}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=7\,\left(0,-1\right)+7\,\left(0,1\right)-8\,\infty_{Y=0}-3\,\left(2,-7\right)-3\,\left(2,1\right)\\D_{2}=\left(1,-1\right)-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/576/a/576/1}{\texttt{576.a.576.1}} & \texttt{CM} & $10$ & $\begin{gathered}D_{3}=\infty_{Y=0}+\infty_{Y=-1}-\left(0,0\right)-\left(0,-1\right)\\D_{4}=P_{9}+P_{10}-P_{13}-P_{14}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/1}{\texttt{603.a.603.1}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=\left(-\frac{1}{4},-\frac{17}{32}\right)-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/2}{\texttt{603.a.603.2}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=\left(-1,-1\right)-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/604/a/9664/2}{\texttt{604.a.9664.2}} & \texttt{Q} & $27$ & $\begin{gathered}D_{1}=6\,\left(-1,0\right)-4\,\left(1,-2\right)+\infty_{Y=-1}+\infty_{Y=0}-4\,\left(1,0\right)\\D_{2}=\left(0,-1\right)+\left(0,0\right)-\infty_{Y=-1}-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/2752/1}{\texttt{688.a.2752.1}} & \texttt{Q} & $20$ & $\begin{gathered}D_{1}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\\D_{3}=\left(1,-1\right)-2\,\infty_{Y=0}+\left(1,0\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/704512/1}{\texttt{688.a.704512.1}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=-P_{1}-P_{2}+2\,\infty_{Y=0}\\D_{2}=-P_{1}-P_{2}+\left(0,1\right)+\left(0,-1\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/704512/2}{\texttt{688.a.704512.2}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=\left(-\frac{1}{2},0\right)-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,1\right)-2\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/691/a/691/1}{\texttt{691.a.691.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\\D_{2}=\left(1,-1\right)-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/704/a/45056/1}{\texttt{704.a.45056.1}} & \texttt{Q} & $6$ & $\begin{gathered}D_{1}=\left(-\frac{1}{2},-\frac{1}{2}\right)-\left(\frac{1}{2},-\frac{1}{2}\right)\\D_{2}=\left(0,-1\right)+\left(0,0\right)+4\,\left(\frac{1}{2},-\frac{1}{2}\right)-6\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/709/a/709/1}{\texttt{709.a.709.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(0,0\right)-\infty_{Y=0}\\D_{2}=\left(1,-1\right)-2\,\infty_{Y=0}+\left(1,0\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/763/a/763/1}{\texttt{763.a.763.1}} & \texttt{Q} & $10$ & $\begin{gathered}D_{1}=\left(0,0\right)-\left(1,-1\right)\\D_{2}=\infty_{Y=-1}-2\,\left(1,-1\right)+\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/768/a/1536/1}{\texttt{768.a.1536.1}} & \texttt{Q} & $6$ & $\begin{gathered}D_{1}=-4\,\left(-\frac{1}{2},-\frac{1}{2}\right)+P_{4}+P_{5}+\left(0,0\right)+\left(0,-1\right)\\D_{2}=-\left(-\frac{1}{2},-\frac{1}{2}\right)+\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/768/a/4608/1}{\texttt{768.a.4608.1}} & \texttt{Q} & $6$ & $\begin{gathered}D_{1}=2\,\left(1,-2\right)+2\,P_{3}+2\,P_{4}-2\,P_{5}-2\,P_{6}-\infty_{Y=0}-\infty_{Y=-1}\\D_{2}=6\,\left(-1,0\right)-2\,P_{3}-2\,P_{4}-\infty_{Y=0}-\infty_{Y=-1}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/784/c/614656/1}{\texttt{784.c.614656.1}} & \texttt{CM} & $2$ & $\begin{gathered}D_{1}=\left(-1,0\right)-\infty_{Y=0}\\D_{2}=\left(0,0\right)-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/816/a/39168/1}{\texttt{816.a.39168.1}} & \texttt{Q} & $6$ & $\begin{gathered}D_{1}=2\,\left(-\frac{1}{3},-\frac{5}{9}\right)+\left(0,-1\right)+\left(0,0\right)-2\,\left(1,-1\right)-2\,\infty_{Y=0}\\D_{2}=\left(-1,-1\right)-\left(1,-1\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/856/a/1712/1}{\texttt{856.a.1712.1}} & \texttt{Q} & $6$ & $\begin{gathered}D_{1}=\left(-1,1\right)-\left(1,-1\right)\\D_{2}=2\,\left(0,0\right)-\infty_{Y=-1}-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/862/a/6896/1}{\texttt{862.a.6896.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(-1,0\right)-\left(0,0\right)\\D_{2}=2\,\left(-\frac{1}{2},0\right)+2\,\left(-\frac{1}{2},\frac{1}{4}\right)-\left(0,0\right)-3\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/8181/1}{\texttt{909.a.8181.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(0,0\right)-\left(1,-1\right)-\left(1,0\right)+\left(\frac{4}{3},-\frac{2}{3}\right)\\D_{2}=\infty_{Y=0}-\left(\frac{4}{3},-\frac{2}{3}\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/909/1}{\texttt{909.a.909.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(0,0\right)-\left(1,-1\right)\\D_{2}=\infty_{Y=-1}-2\,\left(1,-1\right)+\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/23125/1}{\texttt{925.a.23125.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(0,0\right)-\left(1,-1\right)-\left(1,0\right)+\left(\frac{4}{5},-\frac{2}{5}\right)\\D_{2}=\infty_{Y=0}-\left(\frac{4}{5},-\frac{2}{5}\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/925/1}{\texttt{925.a.925.1}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\\D_{2}=\left(1,-1\right)-\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/976/a/999424/1}{\texttt{976.a.999424.1}} & \texttt{Q} & $29$ & $\begin{gathered}D_{1}=66\,\left(-1,0\right)-49\,\left(1,-2\right)+16\,\infty_{Y=-1}-49\,\left(1,0\right)+16\,\infty_{Y=1}\\D_{2}=33\,\left(0,-1\right)+33\,\left(0,0\right)-13\,\left(1,-2\right)-20\,\infty_{Y=-1}-13\,\left(1,0\right)-20\,\infty_{Y=1}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/1}{\texttt{997.a.997.1}} & \texttt{Q} & $2$ & $\begin{gathered}D_{1}=\left(0,0\right)-\left(4,-2\right)\\D_{2}=\infty_{Y=0}-\left(4,-2\right)\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/2}{\texttt{997.a.997.2}} & \texttt{Q} & $8$ & $\begin{gathered}D_{1}=\left(-1,0\right)-\infty_{Y=0}\\D_{2}=\left(0,-1\right)+\left(0,0\right)-2\,\infty_{Y=0}\end{gathered}$ & $\begin{gathered}\text{Yes}\\\text{Yes}\end{gathered}$ \\
+\end{longtable}
 \clearpage
-\begin{table}[htbp]\centering\small
-\renewcommand{\arraystretch}{1.35}
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{@{}ll@{}}
-\toprule
-Curve & $f(x)$ in $y^2=f(x)$; common pole $R$ \\
-\midrule
-\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/249/1}{\texttt{249.a.249.1}}$^{\dagger}$ & $-4 x^{5} + 13 x^{4} - 18 x^{3} + 15 x^{2} - 6 x + 1;\quad R=\infty;\quad(s,d)=(-1,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/277/a/277/1}{\texttt{277.a.277.1}} & $x^{6} + 2 x^{5} + 3 x^{4} + 4 x^{3} - x^{2} - 2 x + 1;\quad R=\infty_{-1}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/295/a/295/1}{\texttt{295.a.295.1}}$^{\dagger}$ & $x^{6} - 4 x^{4} + 2 x^{3} + 1;\quad R=\infty_{-1};\quad(s,d)=(0,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/349/a/349/1}{\texttt{349.a.349.1}}$^{\dagger}$ & $-4 x^{5} + 12 x^{4} - 12 x^{3} + 8 x^{2} - 4 x + 1;\quad R=\infty;\quad(s,d)=(-1,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/388/a/776/1}{\texttt{388.a.776.1}}$^{\dagger}$ & $x^{6} + 6 x^{5} + 9 x^{4} + 2 x^{3} - 2 x^{2} + 1;\quad R=\infty_{-1};\quad(s,d)=(0,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/1}{\texttt{389.a.389.1}} & $x^{6} + 4 x^{5} - 6 x^{4} - 32 x^{3} + x^{2} + 64 x + 28;\quad R=\infty_{-1}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/2}{\texttt{389.a.389.2}} & $4 x^{5} + 8 x^{4} + 8 x^{3} + 5 x^{2} + 2 x + 1;\quad R=\infty$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/523/a/523/1}{\texttt{523.a.523.1}} & $4 x^{5} - 4 x^{4} - 4 x^{3} + x^{2} + 2 x + 1;\quad R=\infty$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/1}{\texttt{603.a.603.1}}$^{\dagger}$ & $x^{6} + 8 x^{5} + 18 x^{4} + 16 x^{3} + 33 x^{2} + 4 x;\quad R=\infty_{-1};\quad(s,d)=(0,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/2}{\texttt{603.a.603.2}}$^{\dagger}$ & $x^{6} + 4 x^{5} + 2 x^{4} - 4 x^{3} + x^{2} + 4 x;\quad R=\infty_{-1};\quad(s,d)=(0,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/691/a/691/1}{\texttt{691.a.691.1}} & $4 x^{5} - 4 x^{3} - 3 x^{2} + 2 x + 1;\quad R=\infty$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/709/a/709/1}{\texttt{709.a.709.1}}$^{\dagger}$ & $x^{6} + 10 x^{5} + 33 x^{4} + 40 x^{3} + 20 x^{2} + 4 x;\quad R=\infty_{-1};\quad(s,d)=(1,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/763/a/763/1}{\texttt{763.a.763.1}} & $x^{6} - 6 x^{4} + 9 x^{2} - 4 x;\quad R=\infty_{-1}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/909/1}{\texttt{909.a.909.1}}$^{\dagger}$ & $-4 x^{5} + 5 x^{4} - 2 x^{2} + 1;\quad R=\infty;\quad(s,d)=(0,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/925/1}{\texttt{925.a.925.1}}$^{\dagger}$ & $x^{6} + 2 x^{5} - 3 x^{4} - 4 x^{3} + 8 x^{2} - 4 x;\quad R=\infty_{-1};\quad(s,d)=(0,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/1}{\texttt{997.a.997.1}} & $4 x^{5} - 32 x^{4} + 64 x^{3} + x^{2} - 4 x;\quad R=\infty$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/2}{\texttt{997.a.997.2}} & $4 x^{5} + 4 x^{4} + x^{2} + 2 x + 1;\quad R=\infty$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/1051/b/1051/1}{\texttt{1051.b.1051.1}}$^{\dagger}$ & $x^{6} + 2 x^{5} + x^{4} - 4 x^{2} - 4 x;\quad R=\infty_{-1};\quad(s,d)=(0,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/1051/b/1051/2}{\texttt{1051.b.1051.2}} & $4 x^{5} + 32 x^{4} + 64 x^{3} + x^{2} + 4 x;\quad R=\infty$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/1123/a/1123/1}{\texttt{1123.a.1123.1}}$^{\dagger}$ & $-4 x^{5} - 3 x^{4} - 2 x^{2} + 1;\quad R=\infty;\quad(s,d)=(0,1)$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/1147/a/35557/2}{\texttt{1147.a.35557.2}} & $4 x^{5} + 24 x^{4} - 127 x^{2} + 4 x;\quad R=\infty$ \\
-\bottomrule\end{tabular}
-\caption{Integration models for the 21 displayed curves; points in Table~\ref{tab:torsion-integrality} use these coordinates.
-Write the LMFDB equation as $y_{\mathrm L}^2+h(x_{\mathrm L})y_{\mathrm L}=f_{\mathrm L}(x_{\mathrm L})$.
-For unmarked rows, $x=x_{\mathrm L}$ and $y=2y_{\mathrm L}+h(x_{\mathrm L})$.
-Rows marked $\dagger$ use $x=(x_{\mathrm L}-s)^{-1}$ and
-$y=d(2y_{\mathrm L}+h(x_{\mathrm L}))/(x_{\mathrm L}-s)^3$,
-with the displayed $(s,d)$. In odd degree the point at infinity is unique;
-in even degree $\infty_\eta$ denotes $y/x^3\to\eta$.}
-\label{tab:curve-models}
-\end{table}
+\begin{longtable}{@{}lp{22cm}@{}}
+\caption{LMFDB models, integration charts and exact algebraic support definitions.}\label{tab:curve-models}\\
+\toprule Curve & $y^2+h(x)y=f(x)$; integration chart and LMFDB support definitions \\ \midrule\endfirsthead
+\toprule Curve & $y^2+h(x)y=f(x)$; integration chart and LMFDB support definitions \\ \midrule\endhead
+\bottomrule\endfoot
+\href{https://www.lmfdb.org/Genus2Curve/Q/169/a/169/1}{\texttt{169.a.169.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x + 1\right)y=x^{5} + x^{4}\\\text{Cut model: }v^2=9881 u^{6} + 12906 u^{5} + 7001 u^{4} + 2018 u^{3} + 326 u^{2} + 28 u + 1\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/249/1}{\texttt{249.a.249.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + 1\right)y=x^{2} + x\\\text{Cut model: }v^2=4305 u^{6} + 6276 u^{5} + 3868 u^{4} + 1282 u^{3} + 240 u^{2} + 24 u + 1\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/6723/1}{\texttt{249.a.6723.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + 1\right)y=-x^{5} + x^{3} + x^{2} + 3 x + 2\\\text{Cut model: }v^2=7833 u^{6} - 10996 u^{5} + 6332 u^{4} - 1914 u^{3} + 320 u^{2} - 28 u + 1\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/256/a/512/1}{\texttt{256.a.512.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(1\right)y=2 x^{5} - 3 x^{4} + x^{3} + x^{2} - x\\\text{Cut model: }v^2=-11439 u^{6} + 13468 u^{5} - 6316 u^{4} + 1476 u^{3} - 172 u^{2} + 8 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/277/a/277/1}{\texttt{277.a.277.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x^{2} + x + 1\right)y=-x^{2} - x\\\text{Cut model: }v^2=7145 u^{6} + 9654 u^{5} + 5455 u^{4} + 1652 u^{3} + 283 u^{2} + 26 u + 1\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/295/a/295/1}{\texttt{295.a.295.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + 1\right)y=-x^{2}\\\text{Cut model: }v^2=4161 u^{6} + 6208 u^{5} + 3860 u^{4} + 1282 u^{3} + 240 u^{2} + 24 u + 1\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/324/a/648/1}{\texttt{324.a.648.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x + 1\right)y=x^{5} + 2 x^{4} + 2 x^{3} + x^{2}\\\text{Cut model: }v^2=11481 u^{6} + 14346 u^{5} + 7485 u^{4} + 2090 u^{3} + 330 u^{2} + 28 u + 1\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/349/a/349/1}{\texttt{349.a.349.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x^{2} + x + 1\right)y=-x^{3} - x^{2}\\\text{Cut model: }v^2=6905 u^{6} + 9466 u^{5} + 5407 u^{4} + 1648 u^{3} + 283 u^{2} + 26 u + 1\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/388/a/776/1}{\texttt{388.a.776.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x + 1\right)y=-x^{4} + 2 x^{2} + x\\\text{Cut model: }v^2=3577 u^{6} - 5602 u^{5} + 3633 u^{4} - 1246 u^{3} + 238 u^{2} - 24 u + 1\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/1}{\texttt{389.a.389.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x\right)y=x^{5} - 2 x^{4} - 8 x^{3} + 16 x + 7\\\text{Cut model: }v^2=28 u^{6} + 64 u^{5} + u^{4} - 32 u^{3} - 6 u^{2} + 4 u + 1\\(s,d)=(0,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/2}{\texttt{389.a.389.2}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=x^{5} + 2 x^{4} + 2 x^{3} + x^{2}\\\text{Cut model: }v^2=6745 u^{6} + 7594 u^{5} + 3429 u^{4} + 776 u^{3} + 88 u^{2} + 4 u\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/394/a/3152/1}{\texttt{394.a.3152.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=-x^{5}\\\text{Cut model: }v^2=4105 u^{6} - 5126 u^{5} + 2561 u^{4} - 640 u^{3} + 80 u^{2} - 4 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/464/a/29696/1}{\texttt{464.a.29696.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=8 x^{5} + 3 x^{4} - 4 x^{3} - 2 x^{2}\\\text{Cut model: }v^2=-28791 u^{6} + 37178 u^{5} - 19143 u^{4} + 4912 u^{3} - 628 u^{2} + 32 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/464/a/464/1}{\texttt{464.a.464.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=-x^{6} - 2 x^{5} - 2 x^{4} - x^{3}\\\text{Cut model: }v^2=-26855 u^{6} - 37046 u^{5} - 21295 u^{4} - 6532 u^{3} - 1128 u^{2} - 104 u - 4\\(s,d)=(4,1)\\P_{2}=\left(\frac{1}{2} \theta_{2} - \frac{1}{2},-\frac{1}{4} \theta_{2} - \frac{1}{4}\right),\quad \theta_{2}^{2} + 1=0\;\text{(root index 0)}\\P_{3}=\left(\frac{1}{2} \theta_{3} - \frac{1}{2},-\frac{1}{4} \theta_{3} - \frac{1}{4}\right),\quad \theta_{3}^{2} + 1=0\;\text{(root index 1)}\\P_{7}=\infty_{Y=\theta_{7}},\quad \theta_{7}^{2} + 1=0\;\text{(root index 1)}\\P_{8}=\infty_{Y=-\theta_{8}},\quad \theta_{8}^{2} + 1=0\;\text{(root index 1)}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/472/a/944/1}{\texttt{472.a.944.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{2} + 1\right)y=x^{5} - x^{4} - 2 x^{3} + x\\\text{Cut model: }v^2=-4335 u^{6} + 5492 u^{5} - 2750 u^{4} + 680 u^{3} - 83 u^{2} + 4 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/523/a/523/1}{\texttt{523.a.523.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=x^{5} - x^{4} - x^{3}\\\text{Cut model: }v^2=-4855 u^{6} + 5946 u^{5} - 2895 u^{4} + 700 u^{3} - 84 u^{2} + 4 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/574/a/293888/1}{\texttt{574.a.293888.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{2} + x\right)y=x^{5} - x^{4} - 3 x^{2} + x + 1\\\text{Cut model: }v^2=-5180 u^{6} + 6076 u^{5} - 2883 u^{4} + 690 u^{3} - 83 u^{2} + 4 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/576/a/576/1}{\texttt{576.a.576.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x^{2} + x + 1\right)y=-x^{3} - x\\\text{Cut model: }v^2=6953 u^{6} + 9494 u^{5} + 5411 u^{4} + 1648 u^{3} + 283 u^{2} + 26 u + 1\\(s,d)=(4,1)\\P_{9}=\left(1,\theta_{9} - 2\right),\quad \theta_{9}^{2} - 2=0\;\text{(root index 1)}\\P_{10}=\left(1,-\theta_{10} - 2\right),\quad \theta_{10}^{2} - 2=0\;\text{(root index 1)}\\P_{13}=\left(-1,\theta_{13}\right),\quad \theta_{13}^{2} - 2=0\;\text{(root index 1)}\\P_{14}=\left(-1,-\theta_{14}\right),\quad \theta_{14}^{2} - 2=0\;\text{(root index 1)}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/1}{\texttt{603.a.603.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{2} + 1\right)y=x^{5} + 8 x^{4} + 4 x^{3} + 4 x^{2} + 2 x\\\text{Cut model: }v^2=13889 u^{6} + 14488 u^{5} + 5938 u^{4} + 1184 u^{3} + 113 u^{2} + 4 u\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/2}{\texttt{603.a.603.2}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{2} + 1\right)y=x^{5} - x^{3} + x\\\text{Cut model: }v^2=4145 u^{6} + 5204 u^{5} + 2610 u^{4} + 652 u^{3} + 81 u^{2} + 4 u\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/604/a/9664/2}{\texttt{604.a.9664.2}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + 1\right)y=-x^{4} + x^{3} + x^{2} - x\\\text{Cut model: }v^2=3505 u^{6} + 5436 u^{5} + 3532 u^{4} + 1222 u^{3} + 236 u^{2} + 24 u + 1\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/2752/1}{\texttt{688.a.2752.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(1\right)y=2 x^{5} - 5 x^{4} + 4 x^{3} - x\\\text{Cut model: }v^2=-14319 u^{6} + 16124 u^{5} - 7232 u^{4} + 1616 u^{3} - 180 u^{2} + 8 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/704512/1}{\texttt{688.a.704512.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2=2 x^{5} + 4 x^{3} + x^{2} + 2 x + 1\\\text{Cut model: }v^2=9316 u^{6} + 11048 u^{5} + 5316 u^{4} + 1296 u^{3} + 160 u^{2} + 8 u\\(s,d)=(4,1)\\P_{1}=\left(\theta_{1},0\right),\quad \theta_{1}^{2} + 1=0\;\text{(root index 0)}\\P_{2}=\left(\theta_{2},0\right),\quad \theta_{2}^{2} + 1=0\;\text{(root index 1)}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/704512/2}{\texttt{688.a.704512.2}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2=2 x^{5} - 7 x^{4} - 8 x^{3} + 2 x^{2} + 4 x + 1\\\text{Cut model: }v^2=-13244 u^{6} + 15824 u^{5} - 7416 u^{4} + 1696 u^{3} - 188 u^{2} + 8 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/691/a/691/1}{\texttt{691.a.691.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=x^{5} - x^{3} - x^{2}\\\text{Cut model: }v^2=-3895 u^{6} + 4954 u^{5} - 2515 u^{4} + 636 u^{3} - 80 u^{2} + 4 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/704/a/45056/1}{\texttt{704.a.45056.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(1\right)y=4 x^{5} + 4 x^{4} - x^{3} - 2 x^{2}\\\text{Cut model: }v^2=20097 u^{6} + 24320 u^{5} + 11720 u^{4} + 2812 u^{3} + 336 u^{2} + 16 u\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/709/a/709/1}{\texttt{709.a.709.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x\right)y=x^{5} - 2 x^{2} + x\\\text{Cut model: }v^2=-4224 u^{6} + 5180 u^{5} - 2567 u^{4} + 640 u^{3} - 80 u^{2} + 4 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/763/a/763/1}{\texttt{763.a.763.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x\right)y=-2 x^{4} + 2 x^{2} - x\\\text{Cut model: }v^2=8 u^{6} - 4 u^{5} - 12 u^{4} + 4 u^{3} + 9 u^{2} - 6 u + 1\\(s,d)=(-1,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/768/a/1536/1}{\texttt{768.a.1536.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(1\right)y=2 x^{5} - x^{4} - 3 x^{3} + x\\\text{Cut model: }v^2=-8463 u^{6} + 10692 u^{5} - 5360 u^{4} + 1332 u^{3} - 164 u^{2} + 8 u\\(s,d)=(-4,1)\\P_{4}=\left(\frac{1}{2} \theta_{4},-\frac{1}{2}\right),\quad \theta_{4}^{2} - 2=0\;\text{(root index 0)}\\P_{5}=\left(\frac{1}{2} \theta_{5},-\frac{1}{2}\right),\quad \theta_{5}^{2} - 2=0\;\text{(root index 1)}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/768/a/4608/1}{\texttt{768.a.4608.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x^{2} + x + 1\right)y=-x^{3} - x^{2} - x - 1\\\text{Cut model: }v^2=-3 u^{6} - 2 u^{5} - u^{4} + 3 u^{2} + 2 u + 1\\(s,d)=(0,1)\\P_{3}=\left(\theta_{3},0\right),\quad \theta_{3}^{2} + 1=0\;\text{(root index 0)}\\P_{4}=\left(\theta_{4},0\right),\quad \theta_{4}^{2} + 1=0\;\text{(root index 1)}\\P_{5}=\left(\theta_{5} - 1,-2\right),\quad \theta_{5}^{2} + 2=0\;\text{(root index 0)}\\P_{6}=\left(\theta_{6} - 1,-2\right),\quad \theta_{6}^{2} + 2=0\;\text{(root index 1)}\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/784/c/614656/1}{\texttt{784.c.614656.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2=x^{5} - 4 x^{4} - 13 x^{3} - 9 x^{2} - x\\\text{Cut model: }v^2=-2064 u^{6} - 1732 u^{5} - 288 u^{4} + 116 u^{3} + 44 u^{2} + 4 u\\(s,d)=(3,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/816/a/39168/1}{\texttt{816.a.39168.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{2} + 1\right)y=3 x^{5} - 4 x^{3} - x^{2} + x\\\text{Cut model: }v^2=-11055 u^{6} + 14356 u^{5} - 7394 u^{4} + 1888 u^{3} - 239 u^{2} + 12 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/856/a/1712/1}{\texttt{856.a.1712.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x\right)y=-x^{4} - x^{3} + x\\\text{Cut model: }v^2=3840 u^{6} - 5828 u^{5} + 3697 u^{4} - 1252 u^{3} + 238 u^{2} - 24 u + 1\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/862/a/6896/1}{\texttt{862.a.6896.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{2} + x\right)y=4 x^{5} + 6 x^{4} - 3 x^{2} - x\\\text{Cut model: }v^2=22720 u^{6} + 26884 u^{5} + 12653 u^{4} + 2962 u^{3} + 345 u^{2} + 16 u\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/8181/1}{\texttt{909.a.8181.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x\right)y=3 x^{5} - 7 x^{4} + x^{3} + 6 x^{2} - 3 x\\\text{Cut model: }v^2=-19264 u^{6} + 22508 u^{5} - 10391 u^{4} + 2372 u^{3} - 268 u^{2} + 12 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/909/1}{\texttt{909.a.909.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x^{3} + x\right)y=-x^{4} + x^{2} - x\\\text{Cut model: }v^2=3648 u^{6} + 5668 u^{5} + 3653 u^{4} + 1248 u^{3} + 238 u^{2} + 24 u + 1\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/23125/1}{\texttt{925.a.23125.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x\right)y=5 x^{5} + x^{4} - 19 x^{3} + 18 x^{2} - 5 x\\\text{Cut model: }v^2=17728 u^{6} + 23540 u^{5} + 12345 u^{4} + 3188 u^{3} + 404 u^{2} + 20 u\\(s,d)=(4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/925/1}{\texttt{925.a.925.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=-x^{5} + 2 x^{4} - x^{3} - x^{2}\\\text{Cut model: }v^2=6345 u^{6} - 7334 u^{5} + 3373 u^{4} - 772 u^{3} + 88 u^{2} - 4 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/976/a/999424/1}{\texttt{976.a.999424.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=x^{6} - 2 x^{5} + 2 x^{3} - x^{2}\\\text{Cut model: }v^2=24009 u^{6} - 34406 u^{5} + 20381 u^{4} - 6392 u^{3} + 1120 u^{2} - 104 u + 4\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/1}{\texttt{997.a.997.1}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x\right)y=x^{5} - 8 x^{4} + 16 x^{3} - x\\\text{Cut model: }v^2=-16352 u^{6} + 16372 u^{5} - 6399 u^{4} + 1216 u^{3} - 112 u^{2} + 4 u\\(s,d)=(-4,1)\end{gathered}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/2}{\texttt{997.a.997.2}}$^{\dagger}$ & $\begin{gathered}C:\quad y^2+\left(x + 1\right)y=x^{5} + x^{4}\\\text{Cut model: }v^2=5145 u^{6} + 6154 u^{5} + 2945 u^{4} + 704 u^{3} + 84 u^{2} + 4 u\\(s,d)=(4,1)\end{gathered}$ \\
+\end{longtable}
+\noindent All displayed divisor points use the original LMFDB equation $y^2+h(x)y=f(x)$.
+The cut model uses $(u,v)=(x,2y+h(x))$ in unmarked rows.
+Rows marked $\dagger$ use $u=(x-s)^{-1}$ and $v=d(2y+h(x))/(x-s)^3$.
+The notation $\infty_{Y=\eta}$ means $Y=\lim_{x\to\infty}y/x^3=\eta$ on the LMFDB model. Algebraic root indices are zero-based,
+ordered by real then imaginary part, and fix the exact embeddings retained in JSON.
 \clearpage
-\begin{table}[htbp]
-\centering
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.3}
-\begin{tabular}{@{}lrrrrr@{}}
-\toprule
-Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & Relative error \\
-\midrule
-\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/249/1}{\texttt{249.a.249.1}} & $-33.48773151$ & $6.445925844$ & $-4.568503293$ & $5.067627040$ & $5.7\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/277/a/277/1}{\texttt{277.a.277.1}} & $35.86163468$ & $8.051437156$ & $6.496306744$ & $6.547289332$ & $4.2\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/295/a/295/1}{\texttt{295.a.295.1}} & $36.14638843$ & $7.314150075$ & $-3.726085112$ & $5.910530138$ & $2.9\times 10^{-102}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/349/a/349/1}{\texttt{349.a.349.1}} & $-34.33688383$ & $6.997121031$ & $-3.959606701$ & $5.128412170$ & $7.2\times 10^{-102}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/388/a/776/1}{\texttt{388.a.776.1}} & $26.39268631$ & $-7.283875324$ & $-6.170086887$ & $2.617025628$ & $6.9\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/1}{\texttt{389.a.389.1}} & $3.915511941$ & $4.949655033$ & $2.697953166$ & $7.466538845$ & $8.7\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/2}{\texttt{389.a.389.2}} & $31.32409552$ & $4.949655033$ & $2.697953166$ & $7.466538845$ & $5.2\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/523/a/523/1}{\texttt{523.a.523.1}} & $36.74563328$ & $6.204976032$ & $-3.413758900$ & $11.04365690$ & $2.1\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/1}{\texttt{603.a.603.1}} & $4.711154150$ & $6.727503891$ & $-0.8350887455$ & $2.669259848$ & $4.0\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/2}{\texttt{603.a.603.2}} & $37.68923320$ & $6.727503891$ & $-3.340354982$ & $2.669259848$ & $7.0\times 10^{-102}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/691/a/691/1}{\texttt{691.a.691.1}} & $35.30562627$ & $-4.703142228$ & $4.257791974$ & $8.979279253$ & $1.5\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/709/a/709/1}{\texttt{709.a.709.1}} & $31.47035466$ & $-4.590290408$ & $-3.769678897$ & $9.262478789$ & $2.7\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/763/a/763/1}{\texttt{763.a.763.1}} & $34.85952966$ & $7.621437511$ & $5.050562172$ & $11.53068285$ & $4.0\times 10^{-102}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/909/1}{\texttt{909.a.909.1}} & $32.34255616$ & $-5.451387108$ & $4.051669190$ & $3.728837465$ & $2.3\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/925/1}{\texttt{925.a.925.1}} & $-31.62487202$ & $5.219733499$ & $3.771107569$ & $2.045604378$ & $4.4\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/1}{\texttt{997.a.997.1}} & $7.918945733$ & $5.397405264$ & $2.086222682$ & $14.32688507$ & $4.6\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/2}{\texttt{997.a.997.2}} & $31.67578293$ & $5.397405264$ & $-2.086222682$ & $14.32688507$ & $1.3\times 10^{-100}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/1051/b/1051/1}{\texttt{1051.b.1051.1}} & $31.29684206$ & $-5.832929876$ & $3.786737022$ & $7.216368916$ & $3.5\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/1051/b/1051/2}{\texttt{1051.b.1051.2}} & $7.824210515$ & $1.458232469$ & $-3.786737022$ & $7.216368916$ & $5.5\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/1123/a/1123/1}{\texttt{1123.a.1123.1}} & $31.23094426$ & $-5.372961125$ & $-3.776830941$ & $23.51447226$ & $3.3\times 10^{-101}$ \\
-\href{https://www.lmfdb.org/Genus2Curve/Q/1147/a/35557/2}{\texttt{1147.a.35557.2}} & $2.751578182$ & $0.7161605275$ & $4.451310140$ & $17.58384002$ & $6.1\times 10^{-101}$ \\
-\bottomrule
-\end{tabular}
-\caption{Numerical data for Table~\ref{tab:torsion-integrality}.
-Real values are rounded to 10 significant digits; relative errors are calculated from the unrounded data.
-The columns $c^+$ and $c^-$ use full cycle periods.}
-\label{tab:data}
-\end{table}
-\par\noindent Source: \texttt{results/beilinson\_results.json}.
-\par\noindent\texttt{SHA-256: 0148c0633c63ad769b7432fb57095844240b22c4dc68ad5141059e5ba1295514}
+\begin{longtable}{@{}lrrrrrr@{}}
+\caption{Numerical data. The factor is a rational guess; a multi-determinant comparison is shown as a sum.}\label{tab:data}\\
+\toprule Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & $q$ or comparison & Relative error \\ \midrule\endfirsthead
+\toprule Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & $q$ or comparison & Relative error \\ \midrule\endhead
+\bottomrule\endfoot
+\href{https://www.lmfdb.org/Genus2Curve/Q/169/a/169/1}{\texttt{169.a.169.1}} & $-145.9059686$ & $-8.166757773$ & $-3.952322780$ & $3.417312691$ & $-\frac{19}{8}$ & $3.0\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/249/1}{\texttt{249.a.249.1}} & $-133.9509261$ & $-6.445925844$ & $-4.568503293$ & $5.067627040$ & $-\frac{7}{2}$ & $2.5\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/249/a/6723/1}{\texttt{249.a.6723.1}} & $-66.97546303$ & $6.445925844$ & $1.142125823$ & $5.067627040$ & $-\frac{7}{4}$ & $1.5\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/256/a/512/1}{\texttt{256.a.512.1}} & $-96.99489493$ & $6.710457359$ & $-3.701272167$ & $6.215353956$ & $5$ & $1.1\times 10^{-121}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/277/a/277/1}{\texttt{277.a.277.1}} & $-143.4465387$ & $8.051437156$ & $3.248153372$ & $6.547289332$ & $-\frac{15}{4}$ & $1.7\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/295/a/295/1}{\texttt{295.a.295.1}} & $144.5855537$ & $7.314150075$ & $-3.726085112$ & $5.910530138$ & $-\frac{7}{2}$ & $4.3\times 10^{-123}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/324/a/648/1}{\texttt{324.a.648.1}} & $-99.20227031$ & $6.380442126$ & $-3.921897909$ & $2.208323679$ & $\frac{7}{4}$ & $3.3\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/349/a/349/1}{\texttt{349.a.349.1}} & $-137.3475353$ & $-6.997121031$ & $3.959606701$ & $5.128412170$ & $\frac{13}{4}$ & $2.2\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/388/a/776/1}{\texttt{388.a.776.1}} & $-105.5707452$ & $7.283875324$ & $6.170086887$ & $2.617025628$ & $-\frac{7}{2}$ & $7.9\times 10^{-123}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/1}{\texttt{389.a.389.1}} & $7.831023881$ & $4.949655033$ & $2.697953166$ & $7.466538845$ & $40$ & $1.5\times 10^{-123}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/389/a/389/2}{\texttt{389.a.389.2}} & $-62.64819105$ & $4.949655033$ & $-5.395906331$ & $7.466538845$ & $10$ & $1.8\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/394/a/3152/1}{\texttt{394.a.3152.1}} & $-190.9856069$ & $-5.019568591$ & $-7.065595889$ & $8.570488628$ & $-5$ & $1.4\times 10^{-123}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/464/a/29696/1}{\texttt{464.a.29696.1}} & $32.08446991$ & $-3.605357708$ & $-1.665043130$ & $13.61009433$ & $8$ & $3.2\times 10^{-119}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/464/a/464/1}{\texttt{464.a.464.1}} & $-256.6757592$ & $-3.605357708$ & $3.330086259$ & $13.61009433$ & $2$ & $3.3\times 10^{-119}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/472/a/944/1}{\texttt{472.a.944.1}} & $-105.3371747$ & $-7.278318326$ & $-5.109262385$ & $14.42655127$ & $-16$ & $2.7\times 10^{-118}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/523/a/523/1}{\texttt{523.a.523.1}} & $-73.49126657$ & $-6.204976032$ & $-3.413758900$ & $11.04365690$ & $-10$ & $2.1\times 10^{-109}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/574/a/293888/1}{\texttt{574.a.293888.1}} & $-90.30026640$ & $-5.773175086$ & $2.019401450$ & $14.79288962$ & $6$ & $7.0\times 10^{-108}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/576/a/576/1}{\texttt{576.a.576.1}} & $80.94355529$ & $-5.599063042$ & $-4.226648545$ & $3.402286883$ & $\frac{25}{8}$ & $1.5\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/1}{\texttt{603.a.603.1}} & $-9.422308299$ & $6.727503891$ & $-1.670177491$ & $2.669259848$ & $10$ & $2.6\times 10^{-121}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/603/a/603/2}{\texttt{603.a.603.2}} & $-75.37846639$ & $-6.727503891$ & $-6.680709964$ & $2.669259848$ & $-5$ & $2.7\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/604/a/9664/2}{\texttt{604.a.9664.2}} & $-308.3280878$ & $5.908707690$ & $-4.534706313$ & $5.494305511$ & $\frac{3}{2}$ & $9.2\times 10^{-124}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/2752/1}{\texttt{688.a.2752.1}} & $-69.07133053$ & $-6.426824537$ & $2.575667352$ & $1.897420957$ & $\frac{10}{7}$ & $1.0\times 10^{-121}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/704512/1}{\texttt{688.a.704512.1}} & $-0.6167083083$ & $-1.606706134$ & $-2.575667352$ & $1.897420957$ & $-40$ & $3.5\times 10^{-121}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/688/a/704512/2}{\texttt{688.a.704512.2}} & $-4.933666467$ & $-3.213412269$ & $2.575667352$ & $1.897420957$ & $10$ & $9.7\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/691/a/691/1}{\texttt{691.a.691.1}} & $-70.61125255$ & $-9.406284456$ & $4.257791974$ & $8.979279253$ & $16$ & $5.8\times 10^{-114}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/704/a/45056/1}{\texttt{704.a.45056.1}} & $-71.76759080$ & $2.994006776$ & $-2.431792131$ & $18.82567329$ & $6$ & $6.4\times 10^{-107}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/709/a/709/1}{\texttt{709.a.709.1}} & $-62.94070932$ & $-9.180580816$ & $3.769678897$ & $9.262478789$ & $16$ & $3.0\times 10^{-106}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/763/a/763/1}{\texttt{763.a.763.1}} & $69.71905933$ & $7.621437511$ & $5.050562172$ & $11.53068285$ & $20$ & $1.0\times 10^{-105}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/768/a/1536/1}{\texttt{768.a.1536.1}} & $-60.12933826$ & $-6.286687354$ & $-5.082148909$ & $28.75468009$ & $-48$ & $8.6\times 10^{-106}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/768/a/4608/1}{\texttt{768.a.4608.1}} & $240.5173530$ & $3.143343677$ & $2.541074455$ & $28.75468009$ & $3$ & $8.6\times 10^{-106}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/784/c/614656/1}{\texttt{784.c.614656.1}} & $-7.079925205$ & $-1.432871322$ & $4.754402604$ & $0.5040879718$ & $\frac{32}{21}$ & $4.8\times 10^{-123}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/816/a/39168/1}{\texttt{816.a.39168.1}} & $49.39686190$ & $-5.541674232$ & $-2.619403782$ & $12.99832199$ & $12$ & $1.5\times 10^{-119}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/856/a/1712/1}{\texttt{856.a.1712.1}} & $-92.19920549$ & $-5.663461417$ & $-3.343538732$ & $9.299085733$ & $-6$ & $3.8\times 10^{-120}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/862/a/6896/1}{\texttt{862.a.6896.1}} & $-98.72137192$ & $-5.981651274$ & $3.926626935$ & $21.40624838$ & $16$ & $4.0\times 10^{-109}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/8181/1}{\texttt{909.a.8181.1}} & $-4.042819519$ & $-5.451387108$ & $-2.025834595$ & $3.728837465$ & $-32$ & $8.1\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/909/a/909/1}{\texttt{909.a.909.1}} & $64.68511231$ & $-5.451387108$ & $-8.103338380$ & $3.728837465$ & $8$ & $5.5\times 10^{-123}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/23125/1}{\texttt{925.a.23125.1}} & $3.953109002$ & $-5.219733499$ & $1.885553785$ & $2.045604378$ & $-16$ & $6.7\times 10^{-121}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/925/a/925/1}{\texttt{925.a.925.1}} & $-63.24974403$ & $-5.219733499$ & $-3.771107569$ & $2.045604378$ & $-2$ & $5.2\times 10^{-122}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/976/a/999424/1}{\texttt{976.a.999424.1}} & $-21282.33711$ & $-3.225091265$ & $1.680512438$ & $18.93833392$ & $\frac{1}{66}$ & $5.9\times 10^{-120}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/1}{\texttt{997.a.997.1}} & $7.918945733$ & $-5.397405264$ & $2.086222682$ & $14.32688507$ & $-64$ & $9.4\times 10^{-108}$ \\
+\href{https://www.lmfdb.org/Genus2Curve/Q/997/a/997/2}{\texttt{997.a.997.2}} & $-63.35156586$ & $5.397405264$ & $4.172445365$ & $14.32688507$ & $-16$ & $6.8\times 10^{-111}$ \\
+\end{longtable}
+\noindent Displayed values have 10 significant digits.
+Certified interval endpoints and analytic assumptions are retained in the JSON;
+the error column uses an interval upper bound when available. Numerical targets alone are not certified bounds.
+Numerical agreement does not prove exact rational equality.
+\par\noindent\textbf{Incomplete computations (full records in JSON).}
+\par\noindent\texttt{277.a.277.2}: insufficient\_integral\_rank
+\par\noindent\texttt{295.a.295.2}: insufficient\_integral\_rank
+\par\noindent\texttt{353.a.353.1}: insufficient\_integral\_rank
+\par\noindent\texttt{394.a.394.1}: insufficient\_integral\_rank
+\par\noindent\texttt{427.a.2989.1}: insufficient\_integral\_rank
+\par\noindent\texttt{461.a.461.1}: insufficient\_integral\_rank
+\par\noindent\texttt{461.a.461.2}: insufficient\_integral\_rank
+\par\noindent\texttt{464.a.29696.2}: insufficient\_integral\_rank
+\par\noindent\texttt{472.a.60416.1}: integral\_rank\_undecided
+\par\noindent\texttt{523.a.523.2}: insufficient\_integral\_rank
+\par\noindent\texttt{555.a.8325.1}: insufficient\_integral\_rank
+\par\noindent\texttt{587.a.587.1}: insufficient\_integral\_rank
+\par\noindent\texttt{597.a.597.1}: insufficient\_integral\_rank
+\par\noindent\texttt{604.a.9664.1}: insufficient\_integral\_rank
+\par\noindent\texttt{644.b.14812.1}: insufficient\_integral\_rank
+\par\noindent\texttt{708.a.181248.1}: insufficient\_integral\_rank
+\par\noindent\texttt{708.a.19116.1}: insufficient\_integral\_rank
+\par\noindent\texttt{708.a.2832.1}: insufficient\_integral\_rank
+\par\noindent\texttt{713.a.713.1}: insufficient\_integral\_rank
+\par\noindent\texttt{713.b.713.1}: insufficient\_integral\_rank
+\par\noindent\texttt{731.a.12427.1}: insufficient\_integral\_rank
+\par\noindent\texttt{741.a.28899.1}: insufficient\_integral\_rank
+\par\noindent\texttt{743.a.743.1}: insufficient\_integral\_rank
+\par\noindent\texttt{745.a.745.1}: insufficient\_integral\_rank
+\par\noindent\texttt{762.a.3048.1}: insufficient\_integral\_rank
+\par\noindent\texttt{762.a.82296.1}: insufficient\_integral\_rank
+\par\noindent\texttt{797.a.797.1}: insufficient\_integral\_rank
+\par\noindent\texttt{807.a.2421.1}: insufficient\_integral\_rank
+\par\noindent\texttt{816.a.13872.1}: integral\_rank\_undecided
+\par\noindent\texttt{826.a.11564.1}: insufficient\_integral\_rank
+\par\noindent\texttt{830.a.6640.1}: insufficient\_integral\_rank
+\par\noindent\texttt{830.a.830000.1}: insufficient\_integral\_rank
+\par\noindent\texttt{832.a.832.1}: integral\_rank\_undecided
+\par\noindent\texttt{834.a.1668.1}: insufficient\_integral\_rank
+\par\noindent\texttt{847.c.9317.1}: insufficient\_integral\_rank
+\par\noindent\texttt{862.a.862.1}: insufficient\_integral\_rank
+\par\noindent\texttt{862.b.862.1}: insufficient\_integral\_rank
+\par\noindent\texttt{886.a.3544.1}: insufficient\_integral\_rank
+\par\noindent\texttt{893.a.893.1}: insufficient\_integral\_rank
+\par\noindent\texttt{932.a.3728.1}: insufficient\_integral\_rank
+\par\noindent\texttt{953.a.953.1}: insufficient\_integral\_rank
+\par\noindent\texttt{966.a.834624.1}: insufficient\_integral\_rank
+\par\noindent\texttt{970.a.1940.1}: insufficient\_integral\_rank
+\par\noindent\texttt{971.a.971.1}: insufficient\_integral\_rank
+\par\noindent\texttt{975.a.63375.1}: insufficient\_integral\_rank
+\par\noindent\texttt{997.b.997.1}: insufficient\_integral\_rank
+\par\noindent\texttt{Source SHA-256: 37e3fedbf704d45cdd920707f77ad3c1746099ffb6e47a6c25e6d91a477fa682}
+\end{landscape}
 \end{document}

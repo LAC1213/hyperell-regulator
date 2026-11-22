@@ -13,7 +13,7 @@ from hyperell_regulator.regulator.balls import CertificationError
 
 def test_bulk_native_crash_is_reported():
     with patch.object(frobenius,'euler_binary',return_value='/euler'), \
-         patch.object(frobenius.subprocess,'run',side_effect=subprocess.CalledProcessError(-11,['/euler'],stderr='failed')):
+         patch('hyperell_regulator._subprocess.run',side_effect=subprocess.CalledProcessError(-11,['/euler'],stderr='failed')):
         with pytest.raises(frobenius.FrobeniusBackendError,match='refusing bulk Sage fallback'):
             frobenius._run([1,1],[(101,2)]*1001,1)
         assert frobenius._run([1,1],[(101,2)],1)=={}
@@ -35,7 +35,7 @@ def test_mass_declines_do_not_enter_sage_frobenius():
 
 def test_native_lvalue_timeout_is_a_certification_failure(monkeypatch):
     monkeypatch.setenv('HYPERELL_CERTIFIED_TIMEOUT','12')
-    with patch('hyperell_regulator.ball_lfunction.subprocess.run',
+    with patch('hyperell_regulator.ball_lfunction._native_run',
                side_effect=subprocess.TimeoutExpired(['/backend'],12)):
         with pytest.raises(CertificationError,match='exceeded 12 seconds'):
             _run(['/backend'])

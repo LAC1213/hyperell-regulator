@@ -10,6 +10,7 @@ from ..certified import display_float, encode_ball, encode_result
 from ..components import curve_points
 from ..integrality import _integer_matrix, torsion_packets
 from .._galois import galois_trace_basis
+from .._algebraic import encode_algebraic
 from ..motivic import MotivicPacket, _divisor_evaluator
 from ..regulator import c_invariants
 from ._determinant_relation import determinant_relation, single_determinant_comparison
@@ -63,10 +64,13 @@ def _integral_kernel(packet, *, cache=True):
         solver = packet.integrality
         places = {str(q): dict(method=data.method, unresolved=list(data.unresolved), exact=data.exact)
                   for q, data in solver.projected_local_data.items()}
-        return _kernel_record(points, [d.coefficients for d in basis], complete,
+        record = _kernel_record(points, [d.coefficients for d in basis], complete,
                               solver._orbit_sum, solver.abscissa_divisor,
                               lambda D: solver.check(D)['q_integral'], places,
                               galois_trace_basis(solver.abscissae))
+        record.update(packet_torsion_order=str(lcm(solver.orders)),
+                      packet_torsion_order_exact=True, orders_to_base=list(map(str, solver.orders)))
+        return record
 
     return cached_kernel(packet.f, packet.h, support, compute) if cache else compute()
 
@@ -198,8 +202,13 @@ def _analyse_packet(record, C, row, selection, *, verbose, with_periods,
             continue
         if pairs:
             pairs.sort(key=lambda p: abs(display_float(p[0])), reverse=True)
+            integration_input = dict(
+                centers=[encode_algebraic(x) for x in evaluator.logarithmic_centers],
+                abscissae=['infinity' if x == 'infinity' else encode_algebraic(x)
+                           for x in evaluator.abscissae],
+                divisors=[list(map(str, D)) for D in rows])
             attempts.append((kernel, evaluator.polynomial, shift, pairs,
-                             time.monotonic()-clock))
+                             time.monotonic()-clock, integration_input))
     if not attempts:
         if errors:
             return dict(result, status='numerical_failure', error='; '.join(errors))
@@ -224,7 +233,7 @@ def _analyse_packet(record, C, row, selection, *, verbose, with_periods,
     choices, pair_searches = [], []
     n_pairs = n_integral = 0
     numeric = lambda x: _number(x, reg_digits, certified)
-    for kernel, F, shift, pairs, seconds in attempts:
+    for kernel, F, shift, pairs, seconds, integration_input in attempts:
         cp = cm = None
         periods_error = None
         if with_periods:
@@ -272,6 +281,9 @@ def _analyse_packet(record, C, row, selection, *, verbose, with_periods,
                 basis_complete=kernel['complete'] and full_support,
                 basis_indices=(i, j), points=kernel['points'],
                 divisors=(kernel[basis_key][i], kernel[basis_key][j]),
+                packet_torsion_order=kernel.get('packet_torsion_order'),
+                packet_torsion_order_exact=kernel.get('packet_torsion_order_exact', False),
+                end_alg=row.get('end_alg'), regulator_input=integration_input,
                 model=str(F), shift=shift, det=numeric(det),
                 matrix=[[numeric(x) for x in r] for r in mat], comparison=comparison,
                 c_plus=None if cp is None else numeric(cp), c_minus=None if cm is None else numeric(cm),
