@@ -35,6 +35,13 @@ from hyperell_regulator.projected_integrality import ProjectedTorsionPacketInteg
 from hyperell_regulator.motivic import MotivicDivisor, MotivicPacket
 from hyperell_regulator.graph_boundary import FibreGraph, GraphBoundary
 from hyperell_regulator.stable_model import StableModel, stable_model
+from hyperell_regulator.components import load_curve
+
+
+def beilinson_experiment(curve, **options):
+    """Run the Beilinson experiment for one curve with reduction or LMFDB label."""
+    from hyperell_regulator.experiments.beilinson import run_curve
+    return run_curve(curve, **options)
 
 __version__ = "0.1.0"
 
@@ -61,4 +68,6 @@ __all__ = [
     "GraphBoundary",
     "StableModel",
     "stable_model",
+    "load_curve",
+    "beilinson_experiment",
 ]

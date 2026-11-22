@@ -1,7 +1,5 @@
 """Exact divisor-class orders in odd and even degree."""
 
-from unittest.mock import patch
-
 import pytest
 from sage.all import Infinity, PolynomialRing, QQ
 
@@ -9,7 +7,6 @@ from hyperell_regulator.components import (
     HyperellipticCurveWithReduction, divisor_class_order, odd_degree_model,
     _order_by_principality,
 )
-from hyperell_regulator.experiments import beilinson as b
 from hyperell_regulator.regulator import torsion_order
 
 
@@ -95,31 +92,3 @@ def test_invalid_or_nonrational_infinity_is_rejected():
         torsion_order(curve_388().F, (0, 1), ('infinity', 0))
     with pytest.raises(ValueError, match='rational points'):
         torsion_order(2*x**6+1, (0, 1), 'infinity')
-
-
-def test_even_orders_recover_old_pair_records_without_rank_zero():
-    C = curve_388()
-    record = dict(pairs=[dict(P=P, Q=Q, same_component_everywhere=True,
-                             order_of_P_minus_Q=None)
-                        for P, Q in [((0, 0), ('infinity', 0)),
-                                     ((-1, 1), ('infinity', 0))]])
-    triples = b.find_triples(record, C, row=dict(mw_invs=[0, 21]))
-    assert len(triples) == 1
-    assert (triples[0]['order_P'], triples[0]['order_Q']) == (7, 7)
-    assert triples[0]['torsion_certified_by'] == 'order in J(Q)'
-    assert triples[0]['mw_rank'] == 1
-
-
-def test_rank_zero_remains_a_fallback_for_unavailable_exact_orders():
-    C = curve_388()
-    record = dict(pairs=[dict(P=P, Q=Q, same_component_everywhere=True,
-                             order_of_P_minus_Q=None)
-                        for P, Q in [((0, 0), ('infinity', 0)),
-                                     ((-1, 1), ('infinity', 0))]])
-    with patch.object(b, 'divisor_class_order', return_value=None):
-        triples = b.find_triples(record, C, row=dict(mw_invs=[21]))
-        assert len(triples) == 1
-        assert triples[0]['torsion_certified_by'] == 'LMFDB rank 0'
-        assert triples[0]['torsion_exponent'] == 21
-    with patch.object(b, 'divisor_class_order', return_value=Infinity):
-        assert b.find_triples(record, C, row=dict(mw_invs=[21])) == []

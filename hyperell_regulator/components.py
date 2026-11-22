@@ -1,8 +1,4 @@
-r"""Torsion pairs satisfying the integrality criterion on genus two curves.
-
-The criterion requires smooth reduction on the same component of the
-stable special fibre at every prime. Component tests at 2 are undecided.
-"""
+r"""LMFDB curves, rational points and exact torsion orders for genus two."""
 
 import json
 import os
@@ -24,7 +20,6 @@ from hyperell_regulator.paths import data_path, ensure_parent
 from hyperell_regulator.reduction import HyperellipticCurveWithReduction
 
 CACHE = data_path("lmfdb_cache", "g2c.json")
-RESULTS = data_path("results", "same_component_results.json")
 
 
 # ---------------------------------------------------------------------------
@@ -345,7 +340,78 @@ def curve_from_row(row, prec=250):
     eqn = _as_list(row["eqn"])
     f = S([ZZ(c) for c in eqn[0]])
     h = S([ZZ(c) for c in eqn[1]])
-    return HyperellipticCurveWithReduction(f, h, prec=prec)
+    C = HyperellipticCurveWithReduction(f, h, prec=prec)
+    C.lmfdb_record = dict(row)
+    C.lmfdb_label = row.get('label')
+    return C
+
+
+def load_curve(label, *, cache=None, fetch=True, refresh=False, prec=250):
+    r"""Load one LMFDB genus-two curve over QQ with reduction methods.
+
+    Reuse the local curve cache. If the label is absent, query only that
+    label in the LMFDB curve and rational-point tables and merge the result
+    atomically into the cache. ``fetch=False`` requires cached data;
+    ``refresh=True`` refreshes a cached label. The returned curve retains
+    its label and metadata as ``lmfdb_label`` and ``lmfdb_record``.
+    """
+    import re
+    import tempfile
+    from pathlib import Path
+    from urllib.parse import urlencode
+    from urllib.request import Request, urlopen
+
+    if not isinstance(label, str) or not re.fullmatch(r'[1-9][0-9]*\.[a-z]+\.[1-9][0-9]*\.[1-9][0-9]*', label):
+        raise ValueError('expected an LMFDB genus-two curve label, e.g. 394.a.394.1')
+    destination = Path(cache if cache is not None else data_path('lmfdb_cache', 'g2c.json'))
+    try:
+        rows = json.loads(destination.read_text())
+    except FileNotFoundError:
+        rows = []
+    have = {r['label']: r for r in rows}
+    if label in have and not refresh:
+        return curve_from_row(have[label], prec=prec)
+    if not fetch:
+        raise ValueError('%s is not available without fetching from LMFDB' % label)
+
+    def query(table, fields):
+        params = dict(label='s'+label, _format='json', _fields=fields, _limit=2)
+        request = Request('https://www.lmfdb.org/api/%s/?%s' % (table, urlencode(params)),
+                          headers={'User-Agent': 'hyperell-regulator/0.1 (genus-two research)'})
+        with urlopen(request, timeout=120) as response:
+            raw = response.read()
+        if raw.lstrip().startswith(b'<'):
+            raise RuntimeError('LMFDB returned HTML instead of JSON (possibly a CAPTCHA)')
+        records = json.loads(raw)['data']
+        if len(records) > 1 or any(r.get('label') != label for r in records):
+            raise ValueError('LMFDB returned an unexpected curve for label '+label)
+        return records
+
+    curves = query('g2c_curves', 'label,cond,eqn,end_alg,is_simple_base,is_simple_geom')
+    if not curves:
+        raise ValueError('LMFDB genus-two curve not found: '+label)
+    row = dict(have.get(label, {}), **curves[0])
+    points = query('g2c_ratpts', 'label,num_rat_pts,rat_pts,rat_pts_v,mw_invs')
+    if points:
+        for key in ('num_rat_pts', 'rat_pts', 'mw_invs'):
+            row[key] = points[0].get(key)
+        row['rat_pts_verified'] = points[0].get('rat_pts_v')
+    C = curve_from_row(row, prec=prec)
+    if C.genus() != 2 or int(row['cond']) != int(label.split('.')[0]):
+        raise ValueError('LMFDB returned inconsistent genus-two curve data for '+label)
+    have[label] = row
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', dir=destination.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            json.dump(sorted(have.values(), key=lambda r: (int(r['cond']), r['label'])), stream, indent=2)
+            stream.write('\n')
+        temporary.replace(destination)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    return C
 
 
 def _as_list(v):
@@ -647,208 +713,3 @@ def divisor_class_order(C, P, Q, primes=30):
         if k * cls == zero:
             return ZZ(k)
     return Infinity
-
-
-# ---------------------------------------------------------------------------
-# the question
-# ---------------------------------------------------------------------------
-
-def same_component_all_primes(C, P, Q):
-    r"""Test smooth reduction on the same stable component at every prime.
-
-    Return ``(verdict, per_prime)``, with ``verdict=None`` if undecided.
-    """
-    per_prime = {}
-    verdict = True
-    for p in C.bad_primes():
-        if p == 2:
-            per_prime[p] = None
-            continue
-        per_prime[p] = C.same_component(P, Q, p)["answer"]
-    if any(v is False for v in per_prime.values()):
-        verdict = False
-    elif any(v is None for v in per_prime.values()):
-        verdict = None
-    return verdict, per_prime
-
-
-def report_curve(row, verbose=True):
-    r"""Torsion orders and component tests for one LMFDB curve."""
-    C = curve_from_row(row)
-    pts = curve_points(C, row)
-    n_inf = sum(1 for p in pts if p is None)
-
-    # work on a model where every point is affine
-    D, dpts, a = affine_model(C, pts)
-    usable = [(i, p) for i, p in enumerate(dpts) if p is not None]
-
-    res = {"label": row["label"], "cond": row["cond"], "genus": C.genus(),
-           "curve": C, "model": D, "shift": a,
-           "bad_primes": D.bad_primes(), "points": pts,
-           "n_points": len(pts), "n_infinity": n_inf,
-           "n_unusable": len(dpts) - len(usable), "pairs": []}
-
-    if verbose:
-        print("=" * 74)
-        print("%s   conductor %s   genus %s   Jacobian %s"
-              % (row["label"], row["cond"], C.genus(),
-                 "geometrically simple" if row.get("is_simple_geom")
-                 else "simple over Q, not geometrically simple"))
-        print("   %s" % C)
-        print("   %s known rational points (%s at infinity)"
-              % (len(pts), n_inf))
-        print("   working model v^2 = %s   [u = 1/(x - %s)]" % (D.f, a))
-        print("   bad primes of that model: %s" % D.bad_primes())
-
-    for k in range(len(usable)):
-        for l in range(k + 1, len(usable)):
-            (i, P), (j, Qp) = usable[k], usable[l]
-            verdict, per = same_component_all_primes(D, P, Qp)
-            check = None
-            if (pts[i] is not None and pts[i][0] != "infinity"
-                    and pts[j] is not None and pts[j][0] != "infinity"):
-                # both affine on the original model too: the answer must agree,
-                # since the two models are isomorphic over QQ
-                try:
-                    v0, _ = same_component_all_primes(C, pts[i], pts[j])
-                    check = (v0 == verdict)
-                except Exception as exc:
-                    check = "err: %s" % exc
-            order = None
-            if verdict is True:
-                order = divisor_class_order(C, pts[i], pts[j])
-            res["pairs"].append({"i": i, "j": j, "P": pts[i], "Q": pts[j],
-                                 "verdict": verdict, "per_prime": per,
-                                 "cross_model": check, "order": order})
-    if verbose:
-        good = [d for d in res["pairs"] if d["verdict"] is True]
-        unk = [d for d in res["pairs"] if d["verdict"] is None]
-        checks = [d["cross_model"] for d in res["pairs"]
-                  if d["cross_model"] is not None]
-        print("   %s pairs tested: %s same-component everywhere, %s undecided"
-              % (len(res["pairs"]), len(good), len(unk)))
-        if checks:
-            print("   cross-model check on the %s pairs affine in both "
-                  "models: %s" % (len(checks),
-                                  "all agree" if all(c is True for c in checks)
-                                  else "MISMATCH %s" % checks))
-        for d in res["pairs"]:
-            mark = {True: "YES", False: "no ", None: "?  "}[d["verdict"]]
-            print("      %s  %-22s %-22s  %s"
-                  % (mark, _fmt(d["P"]), _fmt(d["Q"]),
-                     ", ".join("p=%s:%s" % (q, {True: "same", False: "diff",
-                                               None: "?"}[v])
-                               for q, v in sorted(d["per_prime"].items()))))
-    return res
-
-
-def _fmt(P):
-    if P is None:
-        return "??"
-    if P[0] == "infinity":
-        return "oo(Y=%s)" % P[1]
-    return "(%s, %s)" % (P[0], P[1])
-
-
-def _jsonable(v):
-    r"""Convert exact numbers and points to JSON values."""
-    if v is None or isinstance(v, bool) or isinstance(v, str):
-        return v
-    if v is Infinity:
-        return "Infinity"
-    if v in ZZ:
-        return int(v)
-    if isinstance(v, (tuple, list)):
-        return [_jsonable(t) for t in v]
-    return str(v)
-
-
-def _result_record(r):
-    r"""One curve record in JSON form."""
-    return {
-        "label": r["label"],
-        "cond": int(r["cond"]),
-        "genus": int(r["genus"]),
-        "bad_primes": [int(q) for q in r["bad_primes"]],
-        "working_model": str(r["model"].f),
-        "shift": int(r["shift"]),
-        "n_points": int(r["n_points"]),
-        "n_infinity": int(r["n_infinity"]),
-        "pairs": [{"P": _jsonable(d["P"]),
-                   "Q": _jsonable(d["Q"]),
-                   "same_component_everywhere": d["verdict"],
-                   "per_prime": {str(q): v for q, v in
-                                 sorted(d["per_prime"].items())},
-                   "order_of_P_minus_Q": _jsonable(d["order"]),
-                   "cross_model_check": _jsonable(d["cross_model"])}
-                  for d in r["pairs"]],
-    }
-
-
-def save_results(results, results_path=RESULTS):
-    r"""Merge results by curve label and return the full saved dictionary."""
-    try:
-        with open(results_path) as fh:
-            have = {r["label"]: r for r in json.load(fh)}
-    except (IOError, OSError, ValueError):
-        have = {}
-    before = len(have)
-    for r in results:
-        have[r["label"]] = _result_record(r)
-    out = sorted(have.values(), key=lambda r: (r["cond"], r["label"]))
-    with open(ensure_parent(results_path), "w") as fh:
-        json.dump(out, fh, indent=2)
-    print("results: %s curve(s) written to %s (%s new, %s updated)"
-          % (len(out), results_path, len(out) - before,
-             len(results) - (len(out) - before)))
-    return out
-
-
-def enumerate_all(max_cond=None, path=CACHE, geom_simple=True,
-                  results_path=RESULTS):
-    r"""Compute component records in conductor order.
-
-    By default the Jacobians are geometrically simple.
-    """
-    rows = load_curves(path=path, max_cond=max_cond, simple_only=True,
-                       geom_simple=geom_simple)
-    if not rows:
-        print("No curves in %s.  See fetch_lmfdb's docstring for how to "
-              "populate it." % path)
-        return []
-    print("%s curve(s) with %s Jacobian, conductors %s-%s   [from %s]"
-          % (len(rows), "geometrically simple" if geom_simple
-             else "simple (over Q)", min(r["cond"] for r in rows),
-             max(r["cond"] for r in rows), path))
-    print("To enumerate more, fetch more first:  "
-          "fetch_lmfdb(limit=%s)   (merges into the same cache,\n"
-          "skipping curves already there; ~20s per new curve, so be patient)\n"
-          % (len(rows) + 30))
-    out = [report_curve(r) for r in rows]
-    if results_path is not None:
-        print()
-        save_results(out, results_path)
-    print()
-    print("=" * 74)
-    print("SUMMARY")
-    for r in out:
-        good = [d for d in r["pairs"] if d["verdict"] is True]
-        print("  %-16s cond %-6s %s/%s pairs same-component at every prime"
-              % (r["label"], r["cond"], len(good), len(r["pairs"])))
-        for d in good:
-            o = d["order"]
-            otxt = ("order of [P]-[Q] unknown" if o is None else
-                    "[P]-[Q] not torsion" if o == Infinity else
-                    "[P]-[Q] has order %s" % o)
-            print("        %-22s and  %-22s  %s"
-                  % (_fmt(d["P"]), _fmt(d["Q"]), otxt))
-    return out
-
-
-def main():
-    r"""Run the component enumeration."""
-    return enumerate_all()
-
-
-if __name__ == "__main__":
-    main()

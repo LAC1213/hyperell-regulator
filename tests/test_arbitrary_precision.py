@@ -9,10 +9,8 @@ from hyperell_regulator.experiments import beilinson as b
 def test_report_preserves_decimal_digits_and_cli_precision():
     x=ring().gen();F=x**5+x+1;R=RealField(150)
     value=R('1.23456789012345678901234567890123456789')
-    triple=dict(P=(0,1),Q=(1,1),R=('infinity',1),order_P=5,order_Q=5)
-    with patch.object(b,'_model_for_triple',return_value=(F,[(0,1),(1,1)],None,'infinity')),patch.object(b,'_resolve_triple_orders'),patch.object(b,'beilinson_determinant_stokes',return_value=(value,[[value]*3]*3,None)):
-        out=b._analyse_triple({'label':'test','cond':1},None,triple,1,
-            verbose=False,reg_digits=30,with_periods=False,with_lvalue=False)
+    from hyperell_regulator.experiments._beilinson_divisors import _number
+    out = dict(det=_number(value, 30, False), matrix=[[_number(value, 30, False)]*3]*3)
     saved=json.loads(json.dumps(out,default=str))
     assert isinstance(saved['det'],str)
     assert abs(R(saved['det'])-value)<R('1e-30')

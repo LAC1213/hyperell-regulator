@@ -135,26 +135,3 @@ def test_live_upstream_algorithm_when_backend_is_installed():
     C = curve_from_row(dict(eqn=[[1, 0, 0, 0, 0, 0, 1], []]))
     T = geometric_torsion_packet(C, backend=backend, cache=False, timeout=120)
     assert T.complete and T.size == 10 and len(T.points()) == 10
-
-
-def test_saved_geometric_experiment_exact_coordinates_orders_and_numerical_evidence():
-    from hyperell_regulator.experiments.geometric_torsion import decode_point, encode_point
-    path = Path(__file__).resolve().parents[1]/'reports'/'geometric_torsion.json'
-    saved = json.loads(path.read_text())
-    for record in saved['curves']:
-        C = curve_from_row(record['input_curve'])
-        T = GeometricTorsionPacket(C, record['backend']['data'],
-                                  basepoint=decode_point(record['basepoint']),
-                                  metadata=record['backend'])
-        assert T.complete and T.size == record['size']
-        decoded = [decode_point(p['point']) for p in record['points']]
-        assert set(decoded) == set(T.points())
-        assert sum(not p['previously_known'] for p in record['points']) == record['new_points']
-        for point, row in zip(decoded, record['points']):
-            assert decode_point(encode_point(point)) == point
-            assert T.order(point) == row['order']
-        comparison = record['regulator_comparison']
-        assert not comparison['certified']
-        assert comparison['old_regulator_rank'] == 1
-        assert comparison['combined_regulator_rank'] == 2
-        assert all(abs(float(d)) > 0.4 for row in comparison['determinants_old_new_period'] for d in row)

@@ -1,69 +1,12 @@
-"""Survey precision and nonconjugacy of marked points."""
+"""Divisor survey cache policies, formatting and numerical comparisons."""
 import contextlib
-import inspect
 import io
-import itertools
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from types import SimpleNamespace
 from unittest.mock import patch
-from hyperell_regulator.experiments import beilinson as b
-from hyperell_regulator.regulator.polynomials import ring
 from sage.all import RealField
-
-
-def test_float64_and_conductor_cli_defaults():
-    for fn in (b.run,b.analyse,b._analyse_triple):
-        assert inspect.signature(fn).parameters['reg_digits'].default is None
-    with patch.object(b,'run',return_value=[]) as run:
-        b.main([])
-        assert run.call_args.args==(1000,)
-        assert run.call_args.kwargs['reg_digits'] is None
-        assert run.call_args.kwargs['digits']==15
-        assert run.call_args.kwargs['allow_undecided'] is True
-        b.main(['500','--no-lvalue','--verbose'])
-        assert run.call_args.args==(500,)
-        assert not run.call_args.kwargs['with_lvalue']
-        b.main(['--exclude-undecided'])
-        assert run.call_args.kwargs['allow_undecided'] is False
-        b.main(['--allow-undecided'])
-        assert run.call_args.kwargs['allow_undecided'] is True
-
-
-def test_388_undecided_triple_reaches_analysis_by_default(tmp_path):
-    for fn in (b.find_triples, b.analyse, b.run):
-        assert inspect.signature(fn).parameters['allow_undecided'].default is True
-    row = dict(label='388.a.776.1', cond=388, is_simple_geom=True, end_alg="Q", mw_invs=[21],
-               eqn=[[0, 1, 2, 0, -1], [1, 1, 0, 1]])
-    P, R, Q = (0, 0), (-1, 1), ('infinity', 0)
-    pairs = [dict(P=p, Q=q, same_component_everywhere=verdict, order_of_P_minus_Q=7)
-             for p, q, verdict in ((P, Q, None), (R, Q, None), ((0, -1), Q, False))]
-    record = dict(label=row['label'], cond=388, pairs=pairs)
-    C = b.curve_from_row(row)
-    triples = b.find_triples(record, C, row=row)
-    assert len(triples) == 1
-    assert triples[0]['R'] == Q
-    assert triples[0]['verdict_P'] is triples[0]['verdict_Q'] is None
-    assert b.find_triples(record, C, row=row, allow_undecided=False) == []
-    cache = tmp_path/'curves.json'
-    cache.write_text(json.dumps([row]))
-    with patch.object(b, 'rank_triples', side_effect=lambda C, ts, **kw: ts), \
-            patch.object(b, '_analyse_triple', return_value=dict(status='ok')) as calculate:
-        assert b.analyse(record, cache=cache, verbose=False)['status'] == 'ok'
-        assert calculate.call_args.args[2]['verdict_P'] is None
-        calculate.reset_mock()
-        assert b.analyse(record, cache=cache, allow_undecided=False,
-                         verbose=False)['status'] == 'no_admissible_triple'
-        calculate.assert_not_called()
-
-
-def test_component_policy_change_invalidates_cached_reports():
-    settings = dict(report_version=b.REPORT_VERSION, regulator_digits=15,
-                    lvalue_digits=15, with_lvalue=True, allow_undecided=True)
-    old = dict(status='ok', settings=dict(settings, allow_undecided=False))
-    assert not b._stored_result_satisfies(old, settings)
-    assert b._stored_result_satisfies(old, dict(settings, allow_undecided=False))
+from hyperell_regulator.experiments import beilinson as b
 
 
 def test_completed_regulator_with_failed_lvalue_is_retried():
@@ -77,34 +20,6 @@ def test_completed_regulator_with_failed_lvalue_is_retried():
     assert b._stored_result_satisfies(recovered, settings)
 
 
-def test_triples_exclude_conjugate_pairs_including_infinity():
-    x=ring().gen()
-    C=SimpleNamespace(F=x**6+x+1,h=ring()(0),genus=lambda:2)
-    points=[(0,1),(0,-1),(-1,1),(-1,-1),('infinity',1),('infinity',-1)]
-    pairs=[dict(P=p,Q=q,same_component_everywhere=True,order_of_P_minus_Q=5)
-           for p,q in itertools.combinations(points,2)]
-    with patch.object(b,'odd_degree_model',return_value=object()):
-        triples=b.find_triples({'pairs':pairs},C,row={'mw_invs':[5]})
-    assert len(triples)==24
-    for t in triples:
-        assert len({t['P'][0],t['Q'][0],t['R'][0]})==3
-        assert t['pairwise_nonconjugate'] and 'sum_nontrivial' not in t
-    assert not b.pairwise_nonconjugate(C,points[0],points[1],points[2])
-    assert not b.pairwise_nonconjugate(C,points[4],points[2],points[5])
-
-
-def test_conductor_bound_is_exclusive_and_filters_before_preparation():
-    with TemporaryDirectory() as d:
-        cache=Path(d)/'curves.json';records=Path(d)/'pairs.json'
-        rows=[dict(label=str(n),cond=n,is_simple_geom=True, end_alg="Q") for n in (999,1000,1001)]
-        cache.write_text(json.dumps(rows));records.write_text(json.dumps(rows))
-        with patch('hyperell_regulator.components.fetch_lmfdb') as fetch:
-            with patch('hyperell_regulator.components.report_curve') as prepare:
-                out=b.ensure_records(1000,cache,records)
-        assert [r['cond'] for r in out]==[999]
-        fetch.assert_not_called();prepare.assert_not_called()
-
-
 def test_cache_policy_retries_failures_and_invalidates_old_reports():
     records=[dict(label='a',cond=249),dict(label='b',cond=295)]
     calls=[]
@@ -115,99 +30,46 @@ def test_cache_policy_retries_failures_and_invalidates_old_reports():
     with TemporaryDirectory() as d,contextlib.redirect_stdout(io.StringIO()):
         out=Path(d)/'report.json'
         out.write_text(json.dumps([dict(records[0],status='ok',det=999)]))
-        with patch.object(b,'ensure_records',return_value=records),patch.object(b,'analyse',side_effect=analyse):
-            first=b.run(out=out,with_lvalue=False)
+        with patch.object(b,'survey_curves',return_value=records),patch.object(b,'analyse',side_effect=analyse):
+            first=b.run(curve_seconds=0, out=out,with_lvalue=False)
             assert len(calls)==2 and first[0]['det']==1.25
             assert all(k['reg_digits'] is None and k['digits']==15 for _,k in calls)
-            calls.clear();b.run(out=out,with_lvalue=False)
+            calls.clear();b.run(curve_seconds=0, out=out,with_lvalue=False)
             assert [label for label,_ in calls]==['b']
-            calls.clear();b.run(out=out,with_lvalue=False,force=True)
+            stored = json.loads(out.read_text())
+            stored[0]['regulator_method'] = 'isogeny_transport'
+            out.write_text(json.dumps(stored))
+            calls.clear();b.run(curve_seconds=0, out=out,with_lvalue=False)
+            assert [label for label,_ in calls]==['a','b']
+            calls.clear();b.run(curve_seconds=0, out=out,with_lvalue=False,force=True)
             assert len(calls)==2
         assert len(json.loads(out.read_text()))==2
-
-
-def test_explicit_precision_failure_does_not_silently_fall_back():
-    x=ring().gen();G=x**5+x+1
-    t=dict(P=(0,1),Q=(1,1),R=('infinity',1),order_P=5,order_Q=5)
-    with patch.object(b,'_model_for_triple',return_value=(G,[(0,1),(1,1)],None,'infinity')):
-        with patch.object(b,'_resolve_triple_orders'):
-            with patch.object(b,'beilinson_determinant_stokes',side_effect=RuntimeError('failed')) as calc:
-                r=b._analyse_triple({'label':'test','cond':1},None,t,1,verbose=False,reg_digits=30)
-    assert r['status']=='numerical_failure' and r['error']=='RuntimeError: failed'
-    assert calc.call_count==1 and calc.call_args.kwargs['digits']==30
-
-
-def test_verbose_lvalue_failure_preserves_completed_regulator():
-    x = ring().gen()
-    G = x**5+x+1
-    triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5)
-    with patch.object(b, '_model_for_triple', return_value=(G, [(0, 1), (1, 1)], None, 'infinity')), \
-            patch.object(b, '_resolve_triple_orders'), \
-            patch.object(b, 'beilinson_determinant_stokes', return_value=(2.0, [[1.0]], None)), \
-            patch.object(b, 'load_lvalues', return_value={}), \
-            patch.object(b, 'save_lvalue') as save, \
-            patch.object(b, 'StandardLFunction') as lfunction, \
-            contextlib.redirect_stdout(io.StringIO()):
-        lfunction.return_value._coeffs_needed.side_effect = ArithmeticError('bad Euler factor')
-        result = b._analyse_triple(dict(label='test', cond=1), None, triple, 1,
-                                   verbose=True, with_periods=False)
-    assert result['status'] == 'ok' and result['det'] == 2.0
-    assert result['L_second_derivative'] is None
-    assert result['L_status'] == 'ArithmeticError: bad Euler factor'
-    assert result['comparison'] == {}
-    save.assert_called_once()
-
-
-def test_certified_stages_are_visible_without_verbose(capsys):
-    from sage.all import RealBallField
-    from hyperell_regulator.certified import encode_ball
-    F = RealBallField(150)
-    x = ring().gen()
-    triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5)
-
-    def lvalue(*args, **kwargs):
-        kwargs['progress']('Euler factors: 30s elapsed')
-        return dict(L_certified=True, L_second_derivative=encode_ball(F(5)))
-
-    with patch.object(b, '_model_for_triple', return_value=(x**5+x+1, [(0, 1), (1, 1)], None, 'infinity')), \
-            patch.object(b, '_resolve_triple_orders'), \
-            patch.object(b, 'beilinson_determinant_stokes', return_value=(F(2), [[F(2)]], None)), \
-            patch.object(b, 'c_invariants', return_value=(F(3), F(4))), \
-            patch.object(b, 'standard_lvalue_cached', side_effect=lvalue), \
-            patch.object(b, 'beilinson_comparison', return_value={}):
-        result = b._analyse_triple(dict(label='691.a.691.1', cond=691), None, triple, 1,
-                                   verbose=False, certified=True, reg_digits=20)
-    output = capsys.readouterr().out
-    assert '691.a.691.1: regulator: integrating (20 digits)' in output
-    assert 'computing certified periods' in output
-    assert 'L-value: Euler factors: 30s elapsed' in output
-    assert result['certified']
 
 
 def test_higher_precision_report_is_reused_without_rounding():
     record = dict(label='a', cond=249)
     def analyse(record, **kwargs):
-        return dict(record, status='ok', det='1.2345678901234567890123456789', comparison={})
+        return dict(record, status='ok', det='1.2345678901234567890123456789', comparison={}, L_second_derivative='1')
     with TemporaryDirectory() as d, contextlib.redirect_stdout(io.StringIO()):
         out = Path(d)/'report.json'
-        with patch.object(b, 'ensure_records', return_value=[record]), patch.object(b, 'analyse', side_effect=analyse) as calc:
-            b.run(out=out, reg_digits=50, digits=50, max_edge_seconds=120)
+        with patch.object(b, 'survey_curves', return_value=[record]), patch.object(b, 'analyse', side_effect=analyse) as calc:
+            b.run(curve_seconds=0, out=out, reg_digits=50, digits=50, max_edge_seconds=120)
             saved = out.read_text()
             calc.reset_mock()
-            b.run(out=out, reg_digits=30, digits=30)
-            b.run(out=out)
+            b.run(curve_seconds=0, out=out, reg_digits=30, digits=30)
+            b.run(curve_seconds=0, out=out)
             calc.assert_not_called()
             assert out.read_text() == saved
-            b.run(out=out, reg_digits=60, digits=50)
+            b.run(curve_seconds=0, out=out, reg_digits=60, digits=50)
             assert calc.call_count == 1
-            b.run(out=out, reg_digits=30, digits=30, force=True)
+            b.run(curve_seconds=0, out=out, reg_digits=30, digits=30, force=True)
             assert calc.call_count == 2
 
 
 def test_precision_cache_boundaries():
     settings = dict(report_version=b.REPORT_VERSION, regulator_digits=30,
                     lvalue_digits=30, with_lvalue=True)
-    old = dict(status='ok', settings=dict(settings, regulator_digits=50, lvalue_digits=50))
+    old = dict(status='ok', settings=dict(settings, regulator_digits=50, lvalue_digits=50), L_second_derivative='1')
     assert b._stored_result_satisfies(old, settings)
     assert not b._stored_result_satisfies(old, dict(settings, lvalue_digits=60))
     assert not b._stored_result_satisfies(old, dict(settings, report_version=-1))
@@ -220,55 +82,13 @@ def test_precision_cache_boundaries():
     assert not b._stored_result_satisfies(old, settings)
 
 
-def test_component_verdicts_distinguish_unknown_and_failed_pairs():
-    for vP, vQ in itertools.product((True, False, None), repeat=2):
-        expected = False if False in (vP, vQ) else True if (vP, vQ) == (True, True) else None
-        assert b._component_verdict(dict(verdict_P=vP, verdict_Q=vQ)) is expected
-    assert b._component_verdict({}) is None
-
-
-def test_components_are_recorded_without_warnings_for_new_or_stored_results(capsys):
-    x = ring().gen()
-    G = x**5+x+1
-    triple = dict(P=(0, 1), Q=(1, 1), R=('infinity', 1), order_P=5, order_Q=5,
-                  verdict_P=True, verdict_Q=None)
-    with patch.object(b, '_model_for_triple', return_value=(G, [(0, 1), (1, 1)], None, 'infinity')), \
-            patch.object(b, '_resolve_triple_orders'), \
-            patch.object(b, 'beilinson_determinant_stokes', return_value=(2.0, [[1.0]], None)):
-        for verdict in (True, False, None):
-            triple['verdict_Q'] = verdict
-            for verbose in (False, True):
-                result = b._analyse_triple(dict(label='test', cond=1), None, triple, 1,
-                                           verbose=verbose, with_periods=False, with_lvalue=False)
-                assert 'same-component criterion' not in capsys.readouterr().out
-                assert result['same_component_everywhere'] is verdict
-                assert result['triple']['verdict_P'] is True
-                assert result['triple']['verdict_Q'] is verdict
-                assert 'component_warning' not in result
-                label = 'yes' if verdict is True else 'no' if verdict is False else 'undecided'
-                b._report_row(result)
-                output = capsys.readouterr().out
-                assert len(output.splitlines()) == 1
-                assert output.split()[3] == label
-                assert 'WARNING' not in output
-                # Legacy reports may still contain the old warning metadata.
-                del result['same_component_everywhere']
-                result['component_warning'] = 'triple is not known to satisfy the same-component criterion'
-                b._report_row(result, stored=True)
-                output = capsys.readouterr().out
-                assert len(output.splitlines()) == 1
-                assert output.split()[3] == label
-                assert 'WARNING' not in output
-                assert 'same-component criterion' not in output
-
-
 def test_report_prints_exact_torsion_divisors_from_saved_packet(capsys):
     result = dict(label='test', cond=1, status='ok', integral=True,
                   points=[dict(field_polynomial=None, coordinates=['0', '1']),
                           dict(field_polynomial=None, coordinates=['infinity', '-1']),
                           dict(field_polynomial=['-2', '0', '1'], coordinates=[['0', '1'], ['0']])],
                   divisors=[['1', '1', '-2'], ['0', '-1', '1']])
-    b._report_header('geometric')
+    b._report_header()
     b._report_row(result, stored=True)
     header, line = capsys.readouterr().out.splitlines()
     assert header.endswith('torsion divisors')

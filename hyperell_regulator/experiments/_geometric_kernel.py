@@ -8,25 +8,33 @@ from .. import _subprocess
 from ..components import curve_from_row
 from ..geometric_torsion import GeometricTorsionPacket, geometric_torsion_packet
 from ..motivic import MotivicPacket
+from ._kernel_cache import cached_kernel
 
 
 def _kernel_in_worker(row, packet, rational_only, seconds, progress):
-    payload = json.dumps(dict(row=row, packet=packet.metadata['data'],
-                              rational_only=rational_only), default=str)
-    kind = 'rational-abscissa integral kernel' if rational_only else 'full geometric integral kernel'
-    progress('Computing the '+kind)
-    completed = _subprocess.run(
-        [sys.executable, '-m', __spec__.name], input=payload, timeout=seconds,
-        progress=progress, label=kind.capitalize(), interval=5)
-    if completed.returncode:
-        detail = completed.stderr.strip().splitlines()
-        reason = detail[-1] if detail else 'worker exited with code %s' % completed.returncode
-        raise ArithmeticError(reason)
-    return json.loads(completed.stdout)
+    data = packet.metadata['data']
+
+    def compute():
+        payload = json.dumps(dict(row=row, packet=data, rational_only=rational_only,
+                                  verified=packet.complete), default=str)
+        kind = 'rational-abscissa integral kernel' if rational_only else 'full geometric integral kernel'
+        progress('Computing the '+kind)
+        completed = _subprocess.run(
+            [sys.executable, '-m', __spec__.name], input=payload, timeout=seconds,
+            progress=progress, label=kind.capitalize(), interval=5)
+        if completed.returncode:
+            detail = completed.stderr.strip().splitlines()
+            reason = detail[-1] if detail else 'worker exited with code %s' % completed.returncode
+            raise ArithmeticError(reason)
+        return json.loads(completed.stdout)
+
+    # Revisit older incomplete results once under the reduced-support solver.
+    return cached_kernel(packet.f, packet.h, ['geometric', data, packet.complete, rational_only],
+                         compute, incomplete_revision=None if rational_only else 1)
 
 
-def geometric_kernel(C, row, *, seconds, certified, progress):
-    """Return a certified kernel on the chosen support and report its coverage."""
+def geometric_kernel(C, row, *, seconds, progress):
+    """Try the full packet before a smaller exact arithmetic fallback."""
     progress('Loading or computing the Poonen torsion packet')
     try:
         packet = geometric_torsion_packet(C, timeout=seconds, progress=progress)
@@ -39,15 +47,12 @@ def geometric_kernel(C, row, *, seconds, certified, progress):
              (packet.size, 'cached' if packet.metadata.get('cached') else 'verified'))
     info = dict(geometric_points=packet.size)
     has_algebraic_abscissae = any(g is not None and g.degree() > 1 for g, _ in packet.factors)
-    rational_only = certified and has_algebraic_abscissae
-    if rational_only:
-        info['geometric_issue'] = 'Certified integration requires rational logarithmic centres'
     try:
-        kernel = _kernel_in_worker(row, packet, rational_only, seconds, progress)
+        kernel = _kernel_in_worker(row, packet, False, seconds, progress)
     except (ArithmeticError, subprocess.TimeoutExpired) as error:
         reason = (f'The integral kernel calculation exceeded {seconds:g}s'
                   if isinstance(error, subprocess.TimeoutExpired) else str(error))
-        if rational_only or not has_algebraic_abscissae:
+        if not has_algebraic_abscissae:
             status = 'geometric_timeout' if isinstance(error, subprocess.TimeoutExpired) else 'preparation_error'
             return None, dict(info, status=status, error=reason)
         info['geometric_issue'] = reason
@@ -67,14 +72,18 @@ def geometric_kernel(C, row, *, seconds, certified, progress):
 
 def _main():
     from ._beilinson_divisors import _integral_kernel
+    from ._simple_geometric_kernel import simple_nodal_kernel
 
     data = json.load(sys.stdin)
-    packet = GeometricTorsionPacket(curve_from_row(data['row']), data['packet'])
+    packet = GeometricTorsionPacket(curve_from_row(data['row']), data['packet'],
+                                    metadata={'complete': data['verified']})
+    kernel = None if data['rational_only'] else simple_nodal_kernel(packet)
     if data['rational_only'] and not any(g is None or g.degree() == 1 for g, _ in packet.factors):
-        kernel = dict(points=[], basis=[], complete=True, places={})
-    else:
+        kernel = dict(points=[], basis=[], divisor_basis=[], divisor_integrality=[],
+                      complete=True, places={})
+    elif kernel is None:
         motivic = MotivicPacket.from_geometric_packet(packet, rational_abscissae=data['rational_only'])
-        kernel = _integral_kernel(motivic)
+        kernel = _integral_kernel(motivic, cache=False)
     json.dump(kernel, sys.stdout, default=str)
 
 

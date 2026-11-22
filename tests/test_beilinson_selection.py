@@ -15,19 +15,10 @@ def test_selection_uses_rational_endomorphisms_not_geometric_simplicity(tmp_path
           dict(label='rm',cond=2,is_simple_base=True,is_simple_geom=True,end_alg='RM'),
           dict(label='cm',cond=3,is_simple_base=True,is_simple_geom=False,end_alg='CM')]
     cache=tmp_path/'curves.json';cache.write_text(json.dumps(rows))
-    records=tmp_path/'pairs.json';records.write_text(json.dumps(rows))
     assert [r['label'] for r in load_curves(cache,end_q_z=True)] == ['q']
     assert [r['label'] for r in load_curves(cache,end_algs=('Q','CM'))] == ['q','cm']
-    assert [r['label'] for r in b.ensure_records(4,cache,records)] == ['q','cm']
-    assert [r['label'] for r in b.ensure_records(4,cache,records,end_algs=('CM',))] == ['cm']
-    with patch.object(b,'curve_from_row'),patch.object(b,'find_triples',return_value=[]) as find:
-        assert b.analyse(rows[0],cache=cache,verbose=False)['status']=='no_admissible_triple'
-        find.assert_called_once()
-        assert b.analyse(rows[2],cache=cache,verbose=False)['status']=='no_admissible_triple'
-        assert find.call_count == 2
-        find.reset_mock()
-        assert b.analyse(rows[1],cache=cache,verbose=False)['status']=='end_alg not in {CM,Q}'
-        find.assert_not_called()
+    assert [r['label'] for r in b.survey_curves(4,cache=cache)] == ['q','cm']
+    assert [r['label'] for r in b.survey_curves(4,cache=cache,end_algs=('CM',))] == ['cm']
 
 
 def test_cm_only_cli_preserves_default_and_certified_options():
@@ -44,8 +35,9 @@ def test_missing_endomorphism_evidence_is_not_geometric_simplicity(tmp_path):
     row=dict(label='q',cond=1,is_simple_geom=True)
     cache=tmp_path/'curves.json';cache.write_text(json.dumps([row]))
     with pytest.raises(ValueError,match='--fetch'):
-        b.ensure_records(3,cache,tmp_path/'pairs.json')
-    assert '--fetch' in b.analyse(row,cache=cache,verbose=False)['status']
+        b.survey_curves(3,cache=cache)
+    row['eqn'] = [[0, -1, 0, 0, 0, 1], []]
+    assert '--fetch' in b.analyse(row, verbose=False, end_algs=b.BEILINSON_END_ALGS)['status']
 
 
 def test_refresh_backfills_metadata_and_preserves_cached_points(tmp_path):

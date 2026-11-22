@@ -3,9 +3,10 @@
 Coefficients are ascending, in the Euler polynomial variable T.  The
 ``StandardLFunction.bad_factors`` API takes wedge-square factors, so the
 helper multiplies each standard polynomial by (1-p*T).  Wild conductor
-exponents are supplied separately.  See reports/beilinson_cm_bad_factors.rst
-for the local-representation derivation, including what ``CM`` means here.
-See reports/beilinson_isogeny_transport.rst for the tame factor for 688.a.
+exponents are supplied separately. The entries below retain the exact
+models, derivation summaries and associated newform labels. ``CM`` refers
+to the LMFDB rational endomorphism algebra label, not necessarily a
+Jacobian of CM type.
 
 Overrides are guarded by the exact cached equation y^2+h(x)y=f(x), rather
 than applied to arbitrary models carrying the same label.
@@ -31,6 +32,13 @@ LOCAL_DATA = {
         "conductor_exponents": {"3": 8},
         "newform": "18.2.c.a",
         "derivation": "Principal series at 3, character conductors (0,2).",
+    },
+    "576.a.576.1": {
+        "model": [[0, -1, 0, -1], [1, 1, 1, 1]],
+        "standard_factors": {"3": [1, 5, 3, -9]},
+        "conductor_exponents": {"3": 2},
+        "derivation": "The factor (1-T)(1+3T)^2 from the saved geometric survey, "
+                      "checked numerically by the functional equation.",
     },
     "784.c.614656.1": {
         "model": [[0, -1, -9, -13, -4, 1], []],

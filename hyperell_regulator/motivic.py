@@ -9,6 +9,7 @@ from sage.all import (
 )
 
 from .number_field_integrality import _curve_polynomials
+from ._galois import galois_trace_basis
 from .projected_integrality import ProjectedTorsionPacketIntegrality
 from .regulator import regulators_stokes
 
@@ -224,13 +225,18 @@ class MotivicPacket:
         return evaluator.determinant(*divisors)[0]
 
     def integral_basis(self):
-        """Return independent divisor representatives and whether the kernel is complete.
+        """Return integral Galois-trace directions over QQ and completeness.
 
-        Independence here is in the divisor space modulo the symmetric
-        ordinate identifications. Regulator determinants test independence
-        of their images in motivic cohomology.
+        Solve the local equations in the span of degree-zero Galois
+        traces, modulo the symmetric ordinate identifications. Algebraic
+        anti-invariant directions have zero trace and are excluded.
+        Regulator determinants test independence of the resulting images
+        in motivic cohomology. For the unrestricted number-field kernel,
+        use ``packet.integrality.kernel()``.
         """
-        result = self.integrality.kernel()
+        traces = galois_trace_basis(self.integrality.abscissae)
+        generators = [self.integrality.abscissa_divisor(v) for v in traces]
+        result = self.integrality.kernel(generators)
         divisors = tuple(self.divisor(self.integrality.abscissa_divisor(v))
                          for v in result['abscissa_basis'])
         return divisors, result['complete']

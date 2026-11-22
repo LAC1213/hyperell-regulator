@@ -90,3 +90,102 @@ def test_geometric_experiment_keeps_rank_one_rational_kernel_before_fallback(tmp
                                with_lvalue=False, verbose=False)
     assert result['packet_used'] == 'geometric' and result['status'] == 'packet_timeout'
     assert len(result['integral_kernels'][0]['basis']) == 1
+
+
+def test_beilinson_caches_rank_one_basis_on_two_abscissae(tmp_path, monkeypatch):
+    import json
+
+    monkeypatch.setenv('HYPERELL_REGULATOR_DATA', str(tmp_path))
+    row = dict(label='277.a.277.1', cond=277, end_alg='Q', mw_invs=[15],
+               eqn=[[0, -1, -1], [1, 1, 1, 1]],
+               rat_pts=[[0, -1, 1], [0, 0, 1], [1, -1, 0], [1, 0, 0]])
+    catalog = tmp_path/'curves.json'
+    catalog.write_text(json.dumps([row]))
+    result = beilinson.analyse(row, cache=catalog, packet='rational',
+                               with_periods=False, with_lvalue=False, verbose=False)
+    assert result['status'] == 'insufficient_integral_rank'
+    kernel, = result['integral_kernels']
+    assert len(kernel['basis']) == 1
+    saved, = (tmp_path/'results'/'integral_bases').glob('*.json')
+    assert json.loads(saved.read_text()) == kernel
+
+
+def test_ignore_integrality_reuses_basis_cached_before_failed_comparison(tmp_path, monkeypatch):
+    import json
+    from hyperell_regulator.experiments import _beilinson_divisors, _geometric_kernel
+
+    monkeypatch.setenv('HYPERELL_REGULATOR_DATA', str(tmp_path))
+    row = dict(label='464.a.29696.2', cond=464, end_alg='Q', mw_invs=[2, 2],
+               eqn=[[0, 1, 16, 72, 33, 4], [0, 1]],
+               rat_pts=[[-4, 2, 1], [0, 0, 1], [1, 0, 0]])
+    catalog = tmp_path/'curves.json'
+    catalog.write_text(json.dumps([row]))
+    options = dict(cache=catalog, packet='geometric', ignore_integrality=True,
+                   with_periods=False, with_lvalue=False, verbose=False)
+
+    def unused(*args, **kwargs):
+        raise AssertionError('geometric fallback and kernel recomputation should be skipped')
+
+    def integration_failure(*args, **kwargs):
+        saved, = (tmp_path/'results'/'integral_bases').glob('*.json')
+        assert len(json.loads(saved.read_text())['basis']) == 1
+        raise ArithmeticError('forced regulator failure')
+
+    monkeypatch.setattr(_geometric_kernel, 'geometric_kernel', unused)
+    with monkeypatch.context() as m:
+        m.setattr(_beilinson_divisors, '_divisor_evaluator', integration_failure)
+        result = beilinson.analyse(row, **options)
+        assert result['status'] == 'numerical_failure'
+
+    monkeypatch.setattr(MotivicPacket, 'integral_basis', unused)
+    result = beilinson.analyse(row, **options)
+    assert result['status'] == 'ok' and result['packet_used'] == 'rational'
+    assert result['divisor_integrality'] == [True, False]
+    assert result['integral'] is False
+    assert len(result['integral_kernels'][0]['basis']) == 1
+
+
+def test_bolza_linear_relation_uses_all_basis_pairs(tmp_path, monkeypatch, capsys):
+    import json
+
+    monkeypatch.setenv('HYPERELL_REGULATOR_DATA', str(tmp_path))
+    row = dict(label='256.a.512.1', cond=256, end_alg='CM', mw_invs=[2, 10],
+               eqn=[[0, -1, 1, 1, -3, 2], [1]], rat_pts_verified=True,
+               rat_pts=[[0, -1, 1], [0, 0, 1], [1, -4, 2], [1, -1, 1], [1, 0, 0], [1, 0, 1]])
+    catalog = tmp_path/'curves.json'
+    catalog.write_text(json.dumps([row]))
+    monkeypatch.setattr(beilinson, 'standard_lvalue_cached', lambda *args, **kwargs: dict(
+        L_second_derivative='6.215353956121647940468746', L_digits=20))
+    result = beilinson.analyse(row, cache=catalog, packet='rational', digits=20, reg_digits=20,
+                               tries=1, ignore_integrality=True, verbose=False)
+    assert result['status'] == 'ok'
+    search = result['pair_searches'][result['pair_search_index']]
+    pairs = {(0, 1), (0, 2), (1, 2)}
+    assert {pair['basis_indices'] for pair in search['determinants']} == pairs
+    linear = result['linear_comparison']
+    terms = {term['basis_indices']: QQ(term['coefficient']) for term in linear['terms']}
+    assert terms == {(0, 2): 5}
+    assert linear['relative_residual'] < QQ(10)**-17
+    assert result['comparison']['rational'] == 5
+    beilinson._report_row(result)
+    output = capsys.readouterr().out
+    assert 'D3 = ' in output
+    assert "5*det(D1,D3)" in output
+
+
+def test_geometric_relation_search_retries_an_unsuccessful_rational_packet(monkeypatch):
+    from hyperell_regulator.experiments import _beilinson_divisors
+
+    rational = dict(packet_used='rational', integral_rank=1, linear_comparison={})
+    geometric = dict(packet_used='geometric', linear_comparison={'terms': [{'coefficient': '3'}]})
+
+    def search(*args, geometric_only=False, **kwargs):
+        return geometric if geometric_only else rational
+
+    monkeypatch.setattr(_beilinson_divisors, '_analyse_packet', search)
+    options = dict(ignore_integrality=True, with_lvalue=True, with_periods=True)
+    result = _beilinson_divisors.analyse_divisors({}, None, {}, 'geometric', **options)
+    assert result == dict(geometric, rational_attempt=rational)
+
+    rational['integral_rank'] = 2
+    assert _beilinson_divisors.analyse_divisors({}, None, {}, 'geometric', **options) == rational

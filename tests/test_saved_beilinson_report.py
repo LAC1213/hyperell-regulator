@@ -33,7 +33,8 @@ def test_scope_precision_policy_and_failures():
     obsolete["settings"]["report_version"] = 8
     failure = dict(label="997.a.997.1", cond=997, status="numerical_failure",
                    error="quadrature limit", settings=deepcopy(current["settings"]))
-    selected = report.select_results([high_conductor, low_precision, failure, obsolete, current])
+    transported = dict(saved_row("277.a.277.2", 277), regulator_method="isogeny_transport")
+    selected = report.select_results([high_conductor, low_precision, failure, obsolete, transported, current])
     assert [r["label"] for r in selected] == [current["label"], failure["label"]]
     assert selected[0]["comparison"] == current["comparison"]
     assert Decimal(selected[0]["absolute_ratio_error"]) == Decimal("1e-40")
@@ -52,11 +53,11 @@ def test_rejects_stale_conventions_and_insufficient_lvalue_precision():
         report.select_results([row])
 
 
-def test_1116_is_retained_in_json_but_excluded_from_tables_and_explorer(tmp_path):
+def test_1116_is_outside_survey_bound_and_excluded_from_legacy_tables_and_explorer(tmp_path):
     included = saved_row()
     excluded = saved_row("1116.a.214272.1", 1116)
     selected = report.select_results([excluded, included])
-    assert [r['label'] for r in selected] == [included['label'], excluded['label']]
+    assert [r['label'] for r in selected] == [included['label']]
     assert excluded['label'] not in report.render([excluded], 'snapshot')
     failed = dict(excluded, status='numerical_failure', error='excluded numerical failure')
     assert 'excluded numerical failure' not in report.render([failed], 'snapshot')

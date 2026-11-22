@@ -28,9 +28,8 @@ def regulators_stokes(F, centers, *, pole=None, prec=None, details=None, certifi
                       certified_cut="tree"):
     """Periods and logarithmic vectors on a common cut.
 
-    Centers and finite poles may be exact algebraic numbers;
-    ``pole=None`` means infinity. Certified integration currently requires
-    rational centers and poles.
+    Centers and finite poles may be exact algebraic numbers.
+    ``pole=None`` means infinity.
     ``prec`` is the decimal accuracy target; ``None`` returns float64 arrays.
     With ``certified=True`` return real balls with checked absolute radii
     below ``10^-prec`` (15 digits when ``prec`` is omitted). The default
@@ -39,7 +38,7 @@ def regulators_stokes(F, centers, *, pole=None, prec=None, details=None, certifi
     """
     if certified:
         from . import balls
-        coerce = balls.rational
+        coerce = balls.algebraic_center
     else:
         def coerce(a):
             try:

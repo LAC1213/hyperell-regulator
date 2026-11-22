@@ -22,3 +22,18 @@ def test_complex_conjugate_algebraic_centers_give_equal_real_moments():
     periods, cols = regulators_stokes(x**5-x, [a, a.conjugate()], prec=20)
     assert all(abs(u-v) < 1e-17 for u, v in zip(*cols))
     assert all(abs(v) < 1e6 for v in periods+cols[0])
+
+
+def test_certified_moments_at_algebraic_centres_and_pole():
+    from hyperell_regulator.regulator.balls import narrow
+
+    x = PolynomialRing(QQ, 'x').gen()
+    F = x*(x*x-2)*(x*x-3)
+    pole = QQbar(2).sqrt()
+    a = QQbar(-1).sqrt()/2
+    per, cols = regulators_stokes(F, [pole, a, a.conjugate()], pole=pole,
+                                  prec=15, certified=True)
+    assert all(v == 0 for v in cols[0])
+    assert any(not v.contains_zero() for v in cols[1])
+    assert all(v.overlaps(w) for v, w in zip(cols[1], cols[2]))
+    assert all(narrow(v, 15) for v in per+cols[1]+cols[2])

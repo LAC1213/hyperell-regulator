@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 
 
-BOUND = 1300
+BOUND = 1000
 DIGITS = 100
 EXCLUDED_DISPLAY_CONDUCTORS = frozenset({1116})
 NORMALISATION = "pi c+ c- L''(std,1) / D"
@@ -25,7 +25,8 @@ def select_results(results):
     for original in results:
         settings = original.get("settings", {})
         if not (0 < int(original["cond"]) < BOUND
-                and settings.get("report_version") in (9, 10, 11, REPORT_VERSION)
+                and original.get("regulator_method") != "isogeny_transport"
+                and settings.get("report_version") in (9, 10, 11, 12, REPORT_VERSION)
                 and settings.get("regulator_digits") == DIGITS
                 and settings.get("lvalue_digits") == DIGITS
                 and settings.get("with_lvalue") is True):
@@ -54,11 +55,97 @@ def select_results(results):
     return sorted(selected, key=lambda row: (int(row["cond"]), row["label"]))
 
 
+
+def _parse_point(v):
+    r"""Read an affine or labelled infinite point from JSON."""
+    if v is None:
+        return None
+    from sage.all import QQ
+    a, b = v
+    if a == "infinity":
+        return ("infinity", QQ(b))
+    return (QQ(a), QQ(b))
+
+def _saved_model_with_pole(C, R, points):
+    r"""A model with common pole ``R`` at infinity.
+
+    Return ``(G, images, xR)``, using `u=1/(x-x(R))` if needed.
+    ``images`` contains affine pairs or ``"infinity"``.
+    """
+    from sage.all import PolynomialRing, QQ, ZZ, lcm
+    g = C.genus()
+    RQ = PolynomialRing(QQ, 'x')
+    hQ, FQ = RQ(C.h), RQ(C.F)
+
+    def Ycoord(P):
+        return 2 * P[1] + hQ(P[0])
+
+    if R[0] == "infinity":
+        images = []
+        for P in points:
+            images.append("infinity" if P[0] == "infinity"
+                          else (P[0], Ycoord(P)))
+        return C.F, images, None
+
+    xR = QQ(R[0])
+    SQ = PolynomialRing(QQ, 'u')
+    u = SQ.gen()
+    shifted = FQ(RQ.gen() + xR)
+    G = sum(QQ(c) * u ** (2 * g + 2 - i) for i, c in enumerate(list(shifted)))
+    d = lcm([QQ(c).denominator() for c in G] + [1])
+    G = (d ** 2 * G).change_ring(ZZ)
+
+    images = []
+    for P in points:
+        if P[0] == "infinity":
+            # x = oo -> u = 0, v = d*(2 Y_oo + h_{g+1})
+            images.append((QQ(0), d * (2 * QQ(P[1]) + QQ(C.h[g + 1]))))
+        elif QQ(P[0]) == xR:
+            images.append("infinity")
+        else:
+            t = QQ(P[0]) - xR
+            images.append((1 / t, d * Ycoord(P) / t ** (g + 1)))
+    return G, images, xR
+
+def _saved_finite_model(C, points):
+    """A rational model on which all marked points, including ``R``, are affine."""
+    from sage.all import PolynomialRing, QQ
+    if all(P[0] != "infinity" for P in points):
+        H = PolynomialRing(QQ, "x")(C.h)
+        return C.F, [(P[0], 2*P[1]+H(P[0])) for P in points], None
+    # Put the new infinity fibre at a rational x-value containing none of
+    # the marked points or Weierstrass points. Original infinities go to u=0.
+    RQ = PolynomialRing(QQ, "x")
+    F, H = RQ(C.F), RQ(C.h)
+    marked = {QQ(P[0]) for P in points if P[0] != "infinity"}
+    shift = QQ(0)
+    while shift in marked or F(shift) == 0:
+        shift += 1
+    u = PolynomialRing(QQ, "u").gen()
+    d = 2*C.genus()+2
+    G = sum(c*u**(d-i) for i,c in enumerate(F(RQ.gen()+shift).list()))
+    images = []
+    for P in points:
+        if P[0] == "infinity":
+            images.append((QQ(0), 2*QQ(P[1])+QQ(C.h[C.genus()+1])))
+        else:
+            t = QQ(P[0])-shift
+            images.append((1/t, (2*P[1]+H(P[0]))/t**(C.genus()+1)))
+    return G, images, shift
+
+def _saved_triple_model(C, t):
+    points = [t["P"], t["Q"], t["R"]]
+    G, images, shift = _saved_model_with_pole(C, t["R"], points)
+    if images[0] != "infinity" and images[1] != "infinity":
+        return G, images, shift, "infinity"
+    G, images, shift = _saved_finite_model(C, points)
+    return G, images, shift, images[2]
+
+
 def algebraic_data(row, curve_row):
     """Reconstruct the exact integration model and marked coordinates."""
     from sage.all import PolynomialRing, QQ, latex
     from hyperell_regulator.components import curve_from_row
-    from . import beilinson as b
 
     curve = curve_from_row(curve_row)
     if row.get('divisors') is not None:
@@ -74,8 +161,8 @@ def algebraic_data(row, curve_row):
                     scale='1')
     triple = dict(row["triple"])
     for key in ("P", "Q", "R"):
-        triple[key] = b._parse_point(triple[key])
-    model, images, shift, pole = b._model_for_triple(curve, triple)
+        triple[key] = _parse_point(triple[key])
+    model, images, shift, pole = _saved_triple_model(curve, triple)
     ring = PolynomialRing(QQ, "u")
     if ring(model) != ring(re.sub(r"\bx\b", "u", row["model"])):
         raise ValueError("Reconstructed integration model differs: " + row["label"])
@@ -347,7 +434,7 @@ From the repository root in SageMath, recompute the survey (network access is
 needed to fetch curve data; cached L-values are reused after validation):
 
 ```sh
-sage -python -m hyperell_regulator.experiments.beilinson 1300 --packet legacy --fetch --force --digits 100 --reg-digits 100 --edge-seconds 600
+sage -python -m hyperell_regulator.experiments.beilinson 1300 --packet geometric --fetch --force --digits 100 --reg-digits 100 --edge-seconds 600
 sage -python -m hyperell_regulator.experiments.beilinson_report
 ```
 

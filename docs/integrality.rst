@@ -69,10 +69,7 @@ Interpretation and limits
 ``check`` returns ``criterion_satisfied`` equal to ``True``, ``False`` or
 ``None``. The value ``q_integral=True`` certifies integrality by the
 multidegree criterion. A nonzero multidegree leaves the projected boundary
-undetermined by this test. The
-`conductor-below-1000 audit <../reports/relation_integrality_below_1000.md>`_
-gives the geometric argument on a resolution of the product. It also
-gives a separate Jacobian boundary argument for 256.a.512.1.
+undetermined by this test; use the projected boundary calculation below.
 
 Smooth points on a semistable stable component lie on its strict transform
 in a regular model, so their component labels suffice. At 2, the code also
@@ -101,11 +98,10 @@ Projected boundaries and integral classes
 ``ProjectedTorsionPacketIntegrality`` computes the local obstruction
 after applying the standard projector. It uses the vertical potential
 on the graph of a nodal fibre, with the diagonal Tate direction removed.
-At 2 it also uses the verified auxiliary charts for the wild equations in
-the `projected boundary audit <../reports/projected_relation_boundaries_below_1000.md>`_.
+At 2 it also uses verified auxiliary charts for supported wild equations.
 The module computes local constraints from the curve and points.
 
-For 249.a.6723.1 the previously open combination is integral::
+For 249.a.6723.1 the following combination is integral::
 
     from sage.all import QQ, PolynomialRing
     from hyperell_regulator import (
@@ -150,18 +146,8 @@ When a model is unavailable, the multidegree condition still
 certifies integral combinations. The necessary constraints give
 an upper bound and the sufficient constraints give a lower bound
 on the kernel. ``complete`` holds when those bounds agree in the
-requested span. The regression tests verify completeness on all
-52 recorded formula spans and on the whole support of each formula.
-Arbitrary new point supports on wild models can give incomplete
-kernels.
-
-The `saved kernels <../reports/projected_integral_kernels_below_1000.json>`_
-can be regenerated with the original exact packet records::
-
-    PYTHONPATH=. sage -python reports/solve_relation_integral_kernels.py
-
-The archived `multidegree survey <../reports/integrality_small_conductor.rst>`_
-records exact component constraints and kernel matrices for 162 cached curves.
+requested span. Arbitrary new point supports on wild models can give
+incomplete kernels.
 
 Divisor classes and stable models
 ---------------------------------
@@ -191,8 +177,8 @@ is :math:`\sum_i a_i\log|x-x(P_i)|` in the integration chart, with zero
 weight for a mark at infinity. Two divisor columns and the period column
 give the Beilinson determinant with weights
 :math:`(1,2\operatorname{Re}(x),|x|^2)`. The evaluator uses a common chart
-and cut for all requested columns. Certified integration currently
-requires rational abscissae in that chart.
+and cut for all requested columns. Certified integration accepts exact
+algebraic abscissae in that chart.
 
 The public ``stable_model(C, prime, field=K, points=points)`` constructor
 accepts an absolute field and a prime ideal of that field. Over
@@ -233,6 +219,36 @@ for ``integral_basis()``. By restriction and corestriction the rational
 vanishing condition can be tested after finite extension. The returned
 basis spans independent divisor directions modulo the hyperelliptic
 identifications used by the standard projection.
+
+``MotivicPacket.integral_basis()`` restricts these directions to Galois
+traces over :math:`\mathbf Q` before solving the local equations. After
+identifying the two ordinates over each abscissa, it uses normalized sums
+over complete Galois orbits of abscissae. Degree-zero differences of
+these sums span the trace space; denominators are cleared for the
+experiment's integer divisor representatives. Incomplete orbits in an
+explicitly supplied support contribute no direction. The experiment's
+optional search ignoring integrality uses this same trace space.
+
+For example, on ``394.a.394.1`` the quadratic conjugates :math:`P_2,P_3`
+give :math:`\operatorname{Tr}(P_2-P_3)=0`. This locally integral direction
+is therefore excluded from the basis over :math:`\mathbf Q`; the
+remaining integral direction is
+:math:`2(1,-1)-\infty_0-\infty_{-1}`.
+``packet.integrality.kernel()`` retains the unrestricted number-field
+kernel for local boundary calculations. The experiment invalidates
+cached bases computed before the Galois-trace restriction.
+
+At an odd prime with one thickness-one node on an irreducible fibre,
+the two Weierstrass points specializing to that node meet the midpoint
+of the loop after base change. The projected graph boundary vanishes
+exactly when their coefficients sum to zero, provided all other marked
+points specialize to smooth points of the fibre. When the colliding
+pair comes from an irreducible branch factor of prime degree, inertia
+acts by a transposition. The graph of its Galois conjugates is connected
+by primitivity, so these transpositions generate the full symmetric
+group on the factor. The experiment imposes the zero-sum condition for
+every pair in that factor. When this check applies at every bad prime,
+it gives the exact kernel without constructing a global splitting field.
 
 The split marked double-cover construction applies in odd residue
 characteristic. At 2 the model constructor handles nodal equations,

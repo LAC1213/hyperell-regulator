@@ -29,7 +29,8 @@ The same option is available on ``periods_stokes``, ``regulator_stokes``,
 ``period_matrix_mp``, ``c_invariants_mp``, ``plane.cplus`` and ``plane.cminus``.
 Plane methods select the validated Stokes algorithm when this flag is set.
 The input polynomial must be exact, squarefree, rational and of degree at
-least five. Logarithmic centres and finite poles must be rational.
+least five. Logarithmic centres and finite poles can be exact algebraic
+numbers.
 Floating-point inputs denote their exact stored binary values; use ``QQ``
 inputs to specify exact decimal fractions such as ``QQ(1)/10``.
 
@@ -208,26 +209,6 @@ This removes the need for a general second-derivative routine, or uncertified
 finite differences. It does not make the Dirichlet series at 2 absolutely
 convergent: the weight-two degree-five coefficients still require analytic
 continuation or a smoothed functional-equation method here.
-
-Archived 100-digit L-value certificate
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The certificate for 249.a.249.1 used 42861 exact prime Euler factors
-through coefficient index 517454. The corrected values-only backend
-achieved 398 bits of relative accuracy with radius below
-:math:`5.228\times10^{-120}`. Both endpoints round to the same
-100-decimal-place value under the stated analytic assumptions.
-
-The enclosure, source checksums, and provenance are in
-``reports/ball_lvalue_249_100.json``. The exact input and backend
-output are in ``reports/ball_lvalue_249_100_euler.txt.gz`` and
-``reports/ball_lvalue_249_100_run.txt``. The archived source files
-include the two upstream patches used for this certificate. The
-maintained backend vendors the corrected code.
-
-The tests in ``tests/test_saved_ball_lvalue_100.py`` verify the
-recorded hashes, the rounding, and the normalization using
-independent exact rational bounds for :math:`\pi`.
 
 Relevant interfaces and references
 -----------------------------------

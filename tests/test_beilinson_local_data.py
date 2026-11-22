@@ -21,7 +21,7 @@ def curve(label):
 
 
 @pytest.mark.parametrize('label,conductor', [
-    ('324.a.648.1', 26244), ('784.c.614656.1', 9604),
+    ('324.a.648.1', 26244), ('576.a.576.1', 36864), ('784.c.614656.1', 9604),
     ('688.a.2752.1', 29584), ('688.a.704512.1', 29584), ('688.a.704512.2', 29584),
     ('1296.a.20736.1', 26244), ('2704.a.43264.1', 114244),
     ('3969.c.35721.1', 15752961), ('4096.b.65536.1', 4096),
@@ -29,7 +29,8 @@ def curve(label):
 ])
 def test_manual_factors_and_full_standard_conductors(label, conductor):
     C = curve(label)
-    L = StandardLFunction(C, **lfunction_options(label, C))
+    h1_conductor = 576 if label == '576.a.576.1' else None
+    L = StandardLFunction(C, h1_conductor=h1_conductor, **lfunction_options(label, C))
     assert L.conductor() == conductor
     for p, a in LOCAL_DATA[label]['standard_factors'].items():
         assert L.euler_factor(int(p)) == L._RT(a)
@@ -106,12 +107,11 @@ def test_both_lvalue_paths_use_manual_data_and_invalidate_stale_caches(tmp_path,
                for kwargs in constructions)
 
 
-def test_report_cache_revalidates_local_data_for_every_triple():
+def test_report_cache_revalidates_local_data():
     label = '4096.b.65536.1'
     settings = dict(with_lvalue=True, regulator_digits=20, lvalue_digits=20)
     record = dict(label=label, status='ok', settings=settings,
-                  L_local_data=local_data_metadata(label))
+                  L_local_data=local_data_metadata(label), L_second_derivative='1')
     assert b._stored_result_satisfies(record, settings)
     stale = dict(record, L_local_data=None)
     assert not b._stored_result_satisfies(stale, settings)
-    assert not b._stored_result_satisfies(dict(record, triple_results=[record, stale]), settings)

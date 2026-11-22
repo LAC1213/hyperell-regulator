@@ -70,14 +70,13 @@ def test_ubereven_component_with_twins_of_half_depth():
     assert rP.point == (pt[0], pt[1])
 
 
-def test_report_curve_with_constant_component():
-    from hyperell_regulator.components import report_curve
 
-    # The cached curve that triggers the Beilinson report's original failure.
-    result = report_curve(dict(
-        label='3447.a.837621.1', cond=3447,
-        eqn='[[40,21,20,5,3],[0,0,1,1]]',
-        rat_pts=[[1, -1, 0], [1, 0, 0]]), verbose=False)
-    assert len(result['pairs']) == 1
-    assert result['pairs'][0]['per_prime'] == {3: False, 383: True}
-    assert result['pairs'][0]['verdict'] is False
+def test_constant_component_on_reciprocal_model():
+    from hyperell_regulator.components import affine_model, curve_from_row, curve_points
+    row = dict(label='3447.a.837621.1', cond=3447,
+               eqn=[[40, 21, 20, 5, 3], [0, 0, 1, 1]],
+               rat_pts=[[1, -1, 0], [1, 0, 0]])
+    C = curve_from_row(row)
+    D, points, _ = affine_model(C, curve_points(C, row))
+    assert D.same_component(*points, 3)['answer'] is False
+    assert D.same_component(*points, 383)['answer'] is True

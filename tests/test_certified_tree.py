@@ -117,19 +117,3 @@ def test_ray_endpoint_bounds_against_analytic_beta_integrals_at_100_digits(degre
                     3*C(2).log()/8+C(7)/16]
     for actual, value in zip(result['periods']+sum(result['logarithmic'],[]),expected):
         assert actual.overlaps(value) and narrow(actual,100)
-
-
-def test_saved_tree_100_digit_result_and_independent_intervals():
-    from fractions import Fraction
-    root = Path(__file__).parents[1]
-    data = json.loads((root/'reports/certified_tree_249_100.json').read_text())
-    previous = json.loads((root/data['reference']['path']).read_text())
-    reg, ref = data['regulator'], previous['regulator']
-    for actual, expected in zip(sum(reg['matrix'],[])+[reg['det']],
-                                sum(ref['matrix'],[])+[ref['det']]):
-        lo, hi = Fraction(actual['lower']), Fraction(actual['upper'])
-        assert lo <= hi and (hi-lo)/2 < Fraction(1,10**100)
-        assert max(lo,Fraction(expected['lower'])) <= min(hi,Fraction(expected['upper']))
-    topology = data['topology']
-    assert sum(b is None for a,b in topology['edges']) == 1
-    assert len(topology['boundary_word']) == 2*len(topology['edges'])

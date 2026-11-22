@@ -11,8 +11,8 @@ from functools import cmp_to_key
 from sage.all import QQ, QQbar, ComplexField
 
 from ._tree import minimum_spanning_tree, orient_to_root
-from .balls import (CertificationError, digits_value, fields, narrow, principal,
-                    rational, _model, edge_integrals, _assemble_walks)
+from .balls import (CertificationError, algebraic_center, digits_value, fields, narrow,
+                    principal, _model, edge_integrals, _assemble_walks)
 from .diagnostics import _active, checkpoint
 
 
@@ -282,7 +282,7 @@ def _ray(cut,digits):
 
 def compute_tree(F, centers=(), prec=15, *, details=None):
     digits = digits_value(prec)
-    F, centers = _model(F), list(dict.fromkeys(rational(c) for c in centers))
+    F, centers = _model(F), list(dict.fromkeys(algebraic_center(c) for c in centers))
     cut = TreeCut(F, centers, digits)
     for guard in (10, 25, 50):
         target = digits+guard

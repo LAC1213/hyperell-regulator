@@ -1,13 +1,11 @@
 """Exact kernels, conservative unknowns, and LMFDB arithmetic regressions."""
 
 import itertools
-import json
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
-from sage.all import Infinity, NumberField, PolynomialRing, QQ, ZZ, matrix, vector
+from sage.all import Infinity, NumberField, PolynomialRing, QQ, ZZ, vector
 
 from hyperell_regulator import HyperellipticCurveWithReduction, TorsionPacketIntegrality
 from hyperell_regulator.components import curve_from_row, curve_points
@@ -143,34 +141,6 @@ def test_nontorsion_undetermined_and_invalid_inputs():
     assert t.check({t.points[0]: 1, t.points[1]: -1})['q_integral'] is True
 
 
-REPORT = Path(__file__).resolve().parents[1] / 'reports' / 'integrality_small_conductor.json'
-
-
-@pytest.mark.parametrize('label', [
-    '169.a.169.1', '249.a.249.1', '249.a.6723.1', '256.a.512.1', '277.a.277.1', '388.a.776.1',
-])
-def test_lmfdb_saved_equations_orders_multidegrees_and_kernels(label):
-    saved = json.loads(REPORT.read_text())
-    row = next(r for r in saved['input_curves'] if r['label'] == label)
-    expected = next(r for r in saved['curves'] if r['label'] == label)
-    C = curve_from_row(row)
-    packets, unknown = torsion_packets(C, curve_points(C, row))
-    assert len(packets) == len(expected['packets'])
-    assert len(unknown) == len(expected['unresolved_torsion_comparisons'])
-    for points, packet in zip(packets, expected['packets']):
-        solver = TorsionPacketIntegrality(C, points)
-        assert solver.orders == packet['orders_to_base']
-        assert solver.complete == packet['complete']
-        for prime, local in solver.local_data.items():
-            assert local['components'] == packet['local_data'][str(prime)]['components']
-        A = matrix(QQ, packet['constraints'])
-        assert A == solver.constraints
-        basis = matrix(QQ, len(packet['balanced_divisor_basis']), len(packet['points']),
-                       packet['balanced_divisor_basis'])
-        assert (A * basis.transpose()).is_zero()
-        assert basis.rank() == solver.kernel()['basis'].nrows() == packet['formal_kernel_rank']
-
-
 def test_249_nonminimal_discriminant_retains_chain_uncertainty():
     row = dict(label='249.a.6723.1', cond=249,
                eqn=[[2, 3, 1, 1, 0, -1], [1, 0, 0, 1]],
@@ -182,32 +152,6 @@ def test_249_nonminimal_discriminant_retains_chain_uncertainty():
     assert t.local_data[3]['components'] == ['Gamma_R', None, None, 'Gamma_R', 'Gamma_R', None]
     assert t.check([1, 0, 0, -1, 0, 0])['q_integral'] is True
     assert t.check([0, 1, -1, 0, 0, 0])['criterion_satisfied'] is None
-
-
-def test_full_saved_survey_has_saturated_kernels_and_correct_alpha_weights():
-    saved = json.loads(REPORT.read_text())
-    assert len(saved['curves']) == saved['summary']['curves'] == 162
-    assert all(r['status'] == 'ok' for r in saved['curves'])
-    for row in saved['curves']:
-        for packet in row['packets']:
-            n = len(packet['points'])
-            A = matrix(ZZ, packet['constraints'])
-            basis = matrix(ZZ, len(packet['balanced_divisor_basis']), n,
-                           packet['balanced_divisor_basis'])
-            assert basis.nrows() == n - A.rank()
-            assert (A * basis.transpose()).is_zero()
-            assert basis.row_module().saturation() == basis.row_module()
-            G = matrix(ZZ, n-1, n, packet['alpha_generators'])
-            for i, N in enumerate(packet['orders_to_base'][1:]):
-                assert G[i, 0] == -N and G[i, i+1] == N
-            alpha_basis = matrix(ZZ, len(packet['alpha_combination_basis']), n-1,
-                                 packet['alpha_combination_basis'])
-            alpha_divisors = matrix(ZZ, len(packet['alpha_combination_divisors']), n,
-                                    packet['alpha_combination_divisors'])
-            assert alpha_basis * G == alpha_divisors
-            assert (A * alpha_divisors.transpose()).is_zero()
-            assert alpha_basis.nrows() == n-1 - (A * G.transpose()).rank()
-            assert alpha_basis.row_module().saturation() == alpha_basis.row_module()
 
 
 def test_256_integral_affine_points_certify_pairs_at_wild_two():

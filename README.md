@@ -31,9 +31,27 @@ Frobenius eigenvalues which uses [rforest](https://math.mit.edu/~drew/rforest.ht
 Search for pairs of integral motivic divisors and compare their regulator
 determinants with the standard L-value.
 
+Load and study one LMFDB curve at a time in Sage:
+
+```python
+from hyperell_regulator import load_curve, beilinson_experiment
+
+C = load_curve("394.a.394.1")
+C.bad_primes()  # [2, 197]
+result = beilinson_experiment(C, digits=20, reg_digits=20)
+```
+
+Loading uses cached data when available and otherwise fetches only the
+requested label. The experiment also accepts a curve constructed directly
+with `HyperellipticCurveWithReduction`. For a single curve from the command line:
+
+```sh
+sage -python -m hyperell_regulator.experiments.beilinson --label 394.a.394.1 --digits 20 --reg-digits 20
+```
+
 ```sh
 # Known rational points on cached curves below conductor 1000
-sage -python -m hyperell_regulator.experiments.beilinson 1000 --digits 20 --reg-digits 20
+sage -python -m hyperell_regulator.experiments.beilinson 1000 --packet rational --digits 20 --reg-digits 20
 
 # Search the geometric torsion packet when the rational packet has fewer than two integral directions
 sage -python -m hyperell_regulator.experiments.beilinson 1000 --packet geometric --digits 20 --reg-digits 20
@@ -49,7 +67,7 @@ use the six geometric Weierstrass points. See the
 Data are cached in `lmfdb_cache/` and `results/` under the working directory
 or under `HYPERELL_REGULATOR_DATA`.
 
-The [saved surveys](reports/README.md) give numerical candidates,
+The [saved Beilinson survey](reports/README.md) gives numerical candidates,
 integration models, and integrality checks.
 
 ## Package examples

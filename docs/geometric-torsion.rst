@@ -88,7 +88,7 @@ of previously certified rational pair classes, modulo the period vector.
 Noncertified Stokes integration now accepts exact real or complex
 algebraic logarithmic centers and poles. Algebraic centers that coincide
 with branch points are identified exactly before numerical integration.
-Certified integration continues to require rational centers and poles.
+Certified integration also accepts exact algebraic centers and poles.
 
 Run the geometric experiment::
 
@@ -96,7 +96,7 @@ Run the geometric experiment::
         --label 249.a.6723.1 --label 256.a.512.1 \
         --digits 25 --out results/geometric_torsion.json
 
-The saved ``reports/geometric_torsion.json`` contains exact number-field
+The experiment output contains exact number-field
 coordinates, specified embeddings, exact orders, backend fingerprints,
 and numerical regulator vectors. Regulator comparisons at the chosen
 complex embeddings give numerical evidence of new directions. They do

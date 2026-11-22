@@ -1,99 +1,48 @@
-r"""Regulator determinants and tests of Beilinson's conjecture.
+r"""Beilinson experiments on integral Galois-trace torsion-packet divisors.
 
-For two integral torsion-packet divisors, compare the determinant `D` with
-`\pi c^+c^-L^{\prime\prime}(M_{\mathrm{std}}(C),1)`.
-The determinant weights are `(1,2\Re(z),|z|^2)`.
-The survey selects rational endomorphism algebra labels ``Q`` and ``CM``.
+Load a curve by LMFDB label with ``hyperell_regulator.load_curve`` and call
+``run_curve(C)`` for one curve, or ``run(N)`` for a conductor-bounded survey.
 """
 
+import hashlib
 import json
+import os
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 import time
 from contextlib import contextmanager, closing, nullcontext
-from itertools import combinations
 from math import isfinite
 
-from sage.all import (
-    RealField,
-    Integer,
-    PolynomialRing,
-    QQ,
-    RR,
-    ZZ,
-    gp,
-    lcm,
-    pi,
-)
+from sage.all import RealField, Integer, QQ, RR, ZZ, gp, pi
 
-from hyperell_regulator.components import (
-    CACHE,
-    RESULTS,
-    _fmt,
-    curve_from_row,
-    divisor_class_order,
-    odd_degree_model,
-)
+from hyperell_regulator.components import CACHE, curve_from_row, load_curve, load_curves
 from hyperell_regulator.lfunction import StandardLFunction
-from hyperell_regulator.experiments.beilinson_local_data import (
-    lfunction_options, local_data_metadata,
-)
+from hyperell_regulator.experiments.beilinson_local_data import lfunction_options, local_data_metadata
 from hyperell_regulator.paths import data_path, ensure_parent
-from hyperell_regulator.regulator import c_invariants
-from hyperell_regulator.certified import (ANALYTIC_ASSUMPTIONS, BACKEND_REVISION,
-    encode_ball, decode_ball, encode_result, display_float)
+from hyperell_regulator.certified import (
+    ANALYTIC_ASSUMPTIONS, BACKEND_REVISION, encode_ball, decode_ball, encode_result, display_float,
+)
 
 DEFAULT_CONDUCTOR_BOUND = 1000
 DEFAULT_GEOMETRIC_SECONDS = 30
-REPORT_VERSION = 12  # weights (1, 2 Re(z), |z|^2); q = pi c+ c- L'' / D
+DEFAULT_CURVE_SECONDS = 180
+REPORT_VERSION = 13
 DETERMINANT_WEIGHTS = (1, 2, 1)
-BEILINSON_END_ALGS = ("Q", "CM")
-REPORT_COLUMNS = "%-18s %5s %-21s %9s %14s %12s %10s %10s"
-
-LVALUES = data_path("results", "lvalue_cache.json")
-RESULTS_OUT = data_path("results", "beilinson_results.json")
-
-
-# ---------------------------------------------------------------------------
-# reading the results file
-# ---------------------------------------------------------------------------
-
-def _parse_point(v):
-    r"""Read an affine or labelled infinite point from JSON."""
-    if v is None:
-        return None
-    a, b = v
-    if a == "infinity":
-        return ("infinity", QQ(b))
-    return (QQ(a), QQ(b))
+BEILINSON_END_ALGS = ('Q', 'CM')
+REPORT_COLUMNS = "%-18s %5s %-26s %9s %14s %12s %10s %10s"
+LVALUES = data_path('results', 'lvalue_cache.json')
+RESULTS_OUT = data_path('results', 'beilinson_results.json')
 
 
-def load_results(path=RESULTS):
-    with open(path) as fh:
-        return json.load(fh)
+def load_results(path=CACHE):
+    with open(path) as stream:
+        return json.load(stream)
 
 
-# ---------------------------------------------------------------------------
-# points, divisors and the torsion classes
-# ---------------------------------------------------------------------------
-
-def involution(C, P):
-    r"""The involution `(x,y) \mapsto (x,-y-h(x))`, including infinity."""
-    g = C.genus()
-    if P[0] == "infinity":
-        if QQ(C.F[2 * g + 2]) == 0:
-            return P
-        return ("infinity", -QQ(C.h[g + 1]) - QQ(P[1]))
-    hQ = PolynomialRing(QQ, 'x')(C.h)
-    return (P[0], -P[1] - hQ(P[0]))
-
-
-def is_weierstrass_point(C, P):
-    r"""Whether ``P`` is fixed by the hyperelliptic involution."""
-    return involution(C, P) == P
-
-
-def pairwise_nonconjugate(C, P, Q, R):
-    """Whether no two marked points are hyperelliptic conjugates."""
-    return involution(C, P) not in (Q, R) and involution(C, Q) != R
+def _fmt(point):
+    if point[0] == 'infinity':
+        return 'oo(Y=%s)' % point[1]
+    return '(%s, %s)' % tuple(point)
 
 
 def lmfdb_rank(row):
@@ -110,203 +59,6 @@ def lmfdb_rank(row):
             return None
     return sum(1 for t in inv if ZZ(t) == 0)
 
-
-# ---------------------------------------------------------------------------
-# searching for a usable triple
-# ---------------------------------------------------------------------------
-
-def find_triples(record, C, row=None, allow_undecided=True,
-                 ignore_component_criterion=False):
-    r"""Distinct, pairwise nonconjugate torsion triples, as dictionaries.
-
-    ``R`` denotes the common pole. Undecided component tests are accepted
-    by default; ``ignore_component_criterion`` skips the component condition.
-    """
-    # Exact orders are usable on either model. Recover missing even-model
-    # orders from older component caches by principality tests. Rank zero
-    # remains a fallback if the exact computation is unavailable.
-    has_weierstrass = odd_degree_model(C) is not None
-    rank = lmfdb_rank(row)
-    rank_zero = (rank == 0)
-    invariants = row.get("mw_invs", []) if row is not None else []
-    if isinstance(invariants, str):
-        invariants = json.loads(invariants)
-    exponent = int(lcm([ZZ(v) for v in invariants])) if rank_zero else None
-    ok = {}                      # R -> list of S with (S, R) usable
-    for d in record["pairs"]:
-        verdict = d["same_component_everywhere"]
-        if (not ignore_component_criterion and verdict is not True
-                and not (allow_undecided and verdict is None)):
-            continue
-        order = d["order_of_P_minus_Q"]
-        P, Q = _parse_point(d["P"]), _parse_point(d["Q"])
-        if ignore_component_criterion and (P == Q or involution(C, P) == Q):
-            continue
-        if order is None and (ignore_component_criterion or not has_weierstrass):
-            order = divisor_class_order(C, P, Q)
-        if str(order) in ("Infinity", "+Infinity"):
-            continue
-        if order is None:
-            if has_weierstrass or not rank_zero:
-                continue
-            order = "rank 0"
-        ok.setdefault(P, []).append((Q, verdict, order))
-        ok.setdefault(Q, []).append((P, verdict, order))
-
-    out = []
-    for R, partners in ok.items():
-        for i in range(len(partners)):
-            for j in range(i + 1, len(partners)):
-                (P, vP, nP), (Q, vQ, nQ) = partners[i], partners[j]
-                if P == Q or P == R or Q == R:
-                    continue
-                if not pairwise_nonconjugate(C, P, Q, R):
-                    continue
-                out.append({"P": P, "Q": Q, "R": R,
-                            "order_P": nP, "order_Q": nQ,
-                            "verdict_P": vP, "verdict_Q": vQ,
-                            "pairwise_nonconjugate": True,
-                            "torsion_certified_by": "LMFDB rank 0" if "rank 0" in (nP, nQ)
-                                                    else "order in J(Q)",
-                            "mw_rank": rank,
-                            "torsion_exponent": exponent})
-    return out
-
-
-# ---------------------------------------------------------------------------
-# moving R to infinity
-# ---------------------------------------------------------------------------
-
-def model_with_R_at_infinity(C, R, points):
-    r"""A model with common pole ``R`` at infinity.
-
-    Return ``(G, images, xR)``, using `u=1/(x-x(R))` if needed.
-    ``images`` contains affine pairs or ``"infinity"``.
-    """
-    g = C.genus()
-    RQ = PolynomialRing(QQ, 'x')
-    hQ, FQ = RQ(C.h), RQ(C.F)
-
-    def Ycoord(P):
-        return 2 * P[1] + hQ(P[0])
-
-    if R[0] == "infinity":
-        images = []
-        for P in points:
-            images.append("infinity" if P[0] == "infinity"
-                          else (P[0], Ycoord(P)))
-        return C.F, images, None
-
-    xR = QQ(R[0])
-    SQ = PolynomialRing(QQ, 'u')
-    u = SQ.gen()
-    shifted = FQ(RQ.gen() + xR)
-    G = sum(QQ(c) * u ** (2 * g + 2 - i) for i, c in enumerate(list(shifted)))
-    d = lcm([QQ(c).denominator() for c in G] + [1])
-    G = (d ** 2 * G).change_ring(ZZ)
-
-    images = []
-    for P in points:
-        if P[0] == "infinity":
-            # x = oo -> u = 0, v = d*(2 Y_oo + h_{g+1})
-            images.append((QQ(0), d * (2 * QQ(P[1]) + QQ(C.h[g + 1]))))
-        elif QQ(P[0]) == xR:
-            images.append("infinity")
-        else:
-            t = QQ(P[0]) - xR
-            images.append((1 / t, d * Ycoord(P) / t ** (g + 1)))
-    return G, images, xR
-
-
-def model_with_finite_points(C, points):
-    """A rational model on which all marked points, including ``R``, are affine."""
-    if all(P[0] != "infinity" for P in points):
-        H = PolynomialRing(QQ, "x")(C.h)
-        return C.F, [(P[0], 2*P[1]+H(P[0])) for P in points], None
-    # Put the new infinity fibre at a rational x-value containing none of
-    # the marked points or Weierstrass points. Original infinities go to u=0.
-    RQ = PolynomialRing(QQ, "x")
-    F, H = RQ(C.F), RQ(C.h)
-    marked = {QQ(P[0]) for P in points if P[0] != "infinity"}
-    shift = QQ(0)
-    while shift in marked or F(shift) == 0:
-        shift += 1
-    u = PolynomialRing(QQ, "u").gen()
-    d = 2*C.genus()+2
-    G = sum(c*u**(d-i) for i,c in enumerate(F(RQ.gen()+shift).list()))
-    images = []
-    for P in points:
-        if P[0] == "infinity":
-            images.append((QQ(0), 2*QQ(P[1])+QQ(C.h[C.genus()+1])))
-        else:
-            t = QQ(P[0])-shift
-            images.append((1/t, (2*P[1]+H(P[0]))/t**(C.genus()+1)))
-    return G, images, shift
-
-
-def _model_for_triple(C, t):
-    points = [t["P"], t["Q"], t["R"]]
-    G, images, shift = model_with_R_at_infinity(C, t["R"], points)
-    if images[0] != "infinity" and images[1] != "infinity":
-        return G, images, shift, "infinity"
-    G, images, shift = model_with_finite_points(C, points)
-    return G, images, shift, images[2]
-
-
-def _resolve_triple_orders(G, images, pole, t):
-    """Recover missing torsion orders by exact principality tests."""
-    from hyperell_regulator.regulator import torsion_order
-    for key, point in zip(("order_P", "order_Q"), images[:2]):
-        if str(t.get(key)).isdigit():
-            continue
-        exponent = t.get("torsion_exponent")
-        if not exponent:
-            raise ValueError("no exact torsion order or proven exponent")
-        order = torsion_order(G, point, pole, multiple=exponent)
-        if order is None:
-            raise ArithmeticError("recorded torsion exponent is not principal")
-        t[key] = int(order)
-
-
-def triple_conditioning(C, t):
-    """The ratio of cut span to minimum gap, and the edge count."""
-    from hyperell_regulator.regulator.stokes import Cut, cut_scale
-    try:
-        G, images, _, pole = _model_for_triple(C, t)
-        _resolve_triple_orders(G, images, pole, t)
-        centers = [p[0] for p in images[:2]]
-        if pole != "infinity":
-            centers.append(pole[0])
-        cut = Cut(G, centers)
-        span, gap = cut_scale(cut.nodes)
-        info = (2, len(cut.nodes), span, gap, 'regular' in cut.kinds)
-        return (span/gap, len(cut.nodes)), [info]
-    except (ValueError, ArithmeticError, NotImplementedError):
-        return None
-
-
-def rank_triples(C, triples, *, verbose=False, usable_only=False):
-    r"""Order triples by cut conditioning.
-
-    ``usable_only`` discards triples whose cuts cannot be constructed.
-    """
-    scored, rest = [], []
-    for k, t in enumerate(triples):
-        got = triple_conditioning(C, t)
-        (scored if got is not None else rest).append(
-            (got[0], k, t, got[1]) if got is not None else (k, t))
-    scored.sort(key=lambda r: r[0])
-    if verbose and scored:
-        print("  shared x-cuts, best first (no integrals):")
-        for key, _, t, _ in scored[:4]:
-            print("    %s / %s: span/gap %.1f, %d edges" %
-                  (_fmt(t["P"]), _fmt(t["Q"]), key[0], key[1]))
-    return [t for _, _, t, _ in scored] + ([] if usable_only else [t for _, t in rest])
-
-
-# ---------------------------------------------------------------------------
-# the regulator determinant
-# ---------------------------------------------------------------------------
 
 def regulator_column_stokes(f, point, *, digits=None, pole="infinity", certified=False):
     r"""The logarithmic column with weights `(1,2\Re(x),|x|^2)`.
@@ -358,10 +110,6 @@ def beilinson_determinant_stokes(G, imP, imQ, *, digits=None, pole="infinity", c
     return Matrix(3, 3, [x for row in M for x in row]).determinant(), M, None
 
 
-# ---------------------------------------------------------------------------
-# cached standard L-values
-# ---------------------------------------------------------------------------
-
 def load_lvalues(path=LVALUES):
     r"""Saved standard `L`-values, keyed by curve label."""
     try:
@@ -375,9 +123,22 @@ def save_lvalue(label, data, path=LVALUES):
     r"""Merge one curve's `L`-data into ``path``, keyed by label."""
     have = load_lvalues(path)
     have[label] = data
-    with open(ensure_parent(path), "w") as fh:
-        json.dump(have, fh, indent=2, sort_keys=True, default=str)
+    _save_json(path, have, sort_keys=True)
     return have
+
+
+def _save_json(path, data, *, sort_keys=False):
+    """Publish complete cache files even when a calculation is interrupted."""
+    destination = Path(ensure_parent(path))
+    with NamedTemporaryFile(mode='w', dir=destination.parent, delete=False) as stream:
+        temporary = Path(stream.name)
+        try:
+            json.dump(data, stream, indent=2, sort_keys=sort_keys, default=str)
+            stream.write('\n')
+            stream.close()
+            os.replace(temporary, destination)
+        finally:
+            temporary.unlink(missing_ok=True)
 
 
 def standard_lvalue_cached(label, C, digits=15, path=LVALUES, force=False,
@@ -483,10 +244,6 @@ def _certified_lvalue_cached(label, C, digits, path, force, h1_conductor, progre
     return dict(rec, L_cached=False)
 
 
-# ---------------------------------------------------------------------------
-# comparison with the L-value
-# ---------------------------------------------------------------------------
-
 def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None, certified=False):
     r"""A rational approximation to `q=\pi c^+c^-L^{\prime\prime}/D`.
 
@@ -548,270 +305,6 @@ def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None, certi
     except Exception as exc:
         out["relation_error"] = str(exc)
     return out
-
-
-# ---------------------------------------------------------------------------
-# driver
-# ---------------------------------------------------------------------------
-
-def _component_verdict(triple):
-    """The joint component verdict; ``None`` means undecided."""
-    verdicts = (triple.get("verdict_P"), triple.get("verdict_Q"))
-    if any(v is False for v in verdicts):
-        return False
-    return True if all(v is True for v in verdicts) else None
-
-
-def _analyse_triple(record, C, t, n_triples, cache=CACHE, verbose=True,
-                    with_periods=True, with_lvalue=True, digits=15,
-                    lindep_bound=8, reg_digits=None, certified=False):
-    r"""Compute the regulator and comparison for one triple `(P,Q,R)`."""
-    if certified and reg_digits is None:
-        reg_digits = digits
-    cert = {"certified": True} if certified else {}
-    G, images, xR, pole = _model_for_triple(C, t)
-    _resolve_triple_orders(G, images, pole, t)
-    imP, imQ = images[0], images[1]
-    if imP == "infinity" or imQ == "infinity":
-        return {"label": record["label"], "cond": record["cond"],
-                "status": "P or Q lands at infinity with R"}
-    if G.degree() not in (5, 6):
-        return {"label": record["label"], "cond": record["cond"],
-                "status": "model has degree %s, outside the integrator's "
-                          "range" % G.degree()}
-    uP, uQ = imP[0], imQ[0]
-    GQ = G.change_ring(QQ)
-    weier = [GQ(uP) == 0, GQ(uQ) == 0]
-
-    res = {"label": record["label"], "cond": record["cond"],
-           "status": "ok", "triple": t, "model": str(G),
-           "model_degree": int(G.degree()), "shift": xR, "pole": pole,
-           "u_P": uP, "u_Q": uQ, "P_weierstrass": weier[0],
-           "Q_weierstrass": weier[1],
-           "same_component_everywhere": _component_verdict(t),
-           "n_triples": n_triples}
-
-    nP, nQ = t.get("order_P"), t.get("order_Q")
-    if verbose:
-        print("%s  cond %s  %s" % (record["label"], record["cond"], C))
-        print("  P %s  Q %s  R %s   orders %s, %s%s"
-              % (_fmt(t["P"]), _fmt(t["Q"]), _fmt(t["R"]), nP, nQ,
-                 "   WARNING: %s is a Weierstrass point of this model"
-                 % ("P" if weier[0] else "Q") if any(weier) else ""))
-        print("  model  v^2 = %s   (deg %s%s)   u(P) = %s  u(Q) = %s"
-              % (G, G.degree(),
-                 "" if xR is None else ", u = 1/(x - %s)" % xR, uP, uQ))
-        print("  common pole Q = %s" % (pole,))
-
-    usable = all(isinstance(n, (int, Integer)) or
-                 (isinstance(n, str) and n.isdigit()) for n in (nP, nQ))
-    if not usable:
-        # Exact torsion metadata certifies the algebraic cycles.
-        res["status"] = "no certified torsion order for P or Q"
-        if verbose:
-            print("   skipped: %s" % res["status"])
-        return res
-    if verbose or certified:
-        print("  %s: regulator: integrating (%s) ..."
-              % (record['label'], "float64" if reg_digits is None else "%s digits" % reg_digits),
-              flush=True)
-    clock = time.time()
-    try:
-        det, M, Err = beilinson_determinant_stokes(
-            G, imP, imQ, digits=reg_digits, pole=pole, **cert)
-        res["regulator_digits"] = reg_digits
-    except Exception as exc:
-        res.update(status="numerical_failure",
-                   error="%s: %s" % (type(exc).__name__, exc))
-        if verbose:
-            print("   failed: %s" % res["error"])
-        return res
-    res["regulator_method"] = "stokes"
-    res["regulator_cut"] = "tree" if certified else "mst"
-    if certified:
-        res["certified"] = True
-        res['regulator_certified'] = True
-    res["period_basis"] = "mst"
-    res["regulator_seconds"] = round(time.time() - clock, 1)
-    number = encode_ball if certified else (float if reg_digits is None else lambda v: _sage_real(v, reg_digits).str(truncate=False))
-    res["det"] = number(det)
-    res["matrix"] = [[number(x) for x in row_] for row_ in M]
-    res["errors"] = (None if Err is None
-                     else [[float(x) for x in row_] for row_ in Err])
-
-    cp = cm = None
-    if with_periods:
-        if certified:
-            print('  %s: computing certified periods' % record['label'], flush=True)
-        try:
-            # at the regulator's precision: taken at the float64 quadrature's
-            # default tolerance instead, these are worth about ten digits and
-            # nothing else in the comparison can then be worth more
-            cp, cm = c_invariants(G, prec=res["regulator_digits"], **cert)
-            res["c_plus"], res["c_minus"] = number(cp), number(cm)
-        except Exception as exc:
-            cp = cm = None
-            res["c_plus"] = res["c_minus"] = None
-            res["periods_error"] = str(exc)
-
-    # --- the L-value: an invariant of the curve, not of the model, so it is
-    # --- cached by label and reused rather than recomputed
-    if with_lvalue:
-        clock = time.time()
-        lvalue_options = dict(cert)
-        if certified:
-            lvalue_options['progress'] = lambda message: print('  L-value: '+message,flush=True)
-        res.update(standard_lvalue_cached(record["label"], C, digits=digits,
-                                         h1_conductor=record["cond"], **lvalue_options))
-        res["lvalue_seconds"] = round(time.time() - clock, 1)
-
-    res["comparison"] = beilinson_comparison(
-        det, cp, cm, res.get("L_second_derivative"), bound=lindep_bound,
-        digits=res["regulator_digits"], **cert)
-    if certified:
-        res['certified'] = (not (with_periods and cp is None)
-                            and not (with_lvalue and not res.get('L_certified')))
-
-    if verbose:
-        print("  regulator  %-9s %6.1fs   det = % .14e"
-              % ("float64" if res.get("regulator_digits") is None
-                 else "%s digits" % res["regulator_digits"],
-                 res.get("regulator_seconds", 0.0), display_float(res["det"])))
-        if res.get("c_plus") is not None:
-            print("  periods                      c+ = % .10e  c- = % .10e"
-                  % (display_float(res["c_plus"]), display_float(res["c_minus"])))
-        if res.get("L_second_derivative") is not None:
-            print("  L''(std,1) %-2s digits %6.1fs%s  % .14e   (N = %s, feq %s)"
-                  % (res.get("L_digits"), res.get("lvalue_seconds", 0.0),
-                     " [cached]" if res.get("L_cached") else "         ",
-                     display_float(res["L_second_derivative"]), res["standard_conductor"],
-                     res["feq_check"]))
-        if res.get("L_status"):
-            print("  L''(std,1)  not computed -- %s" % res["L_status"])
-        if res.get("L_precision_warning"):
-            print("  WARNING: %s" % res["L_precision_warning"])
-        e = res.get("comparison") or {}
-        if "rational" in e:
-            print("  proposed pi c+ c- L''(std,1) = (%s) * D    residual %.2e"
-                  "    [ratio % .14e]"
-                  % (e["rational"], float(e["residual"]), float(e["ratio"])))
-        elif "ratio" in e:
-            print("  => pi c+ c- L / D = % .12e   (no relation found)"
-                  % float(e["ratio"]))
-        print("")
-    return encode_result(res) if certified else res
-
-
-def _endomorphism_filter(end_algs, geom_simple, end_q_z):
-    """Normalize the selection; preserve the former explicit filter toggles."""
-    if geom_simple is not None:
-        end_algs = BEILINSON_END_ALGS if geom_simple else None
-    if end_q_z is not None:
-        end_algs = ('Q',) if end_q_z else None
-    if isinstance(end_algs, str):
-        end_algs = (end_algs,)
-    return None if end_algs is None else tuple(sorted(set(end_algs)))
-
-
-def _endomorphism_condition(end_algs):
-    return None if end_algs is None else 'end_alg in {%s}' % ','.join(end_algs)
-
-
-def analyse(record, cache=CACHE, allow_undecided=True, verbose=True,
-            with_periods=True, with_lvalue=True, digits=15,
-            lindep_bound=8, geom_simple=None, reg_digits=None, tries=1,
-            ignore_component_criterion=False, certified=False, end_q_z=None,
-            end_algs=BEILINSON_END_ALGS, packet=None, geometric_seconds=DEFAULT_GEOMETRIC_SECONDS):
-    r"""Compute a regulator determinant and comparison for one curve.
-
-    Select ``packet='rational'``, ``'weierstrass'`` or ``'geometric'`` to
-    solve the integral divisor kernel and compare pairs of its basis vectors.
-    The original entry point without a packet tries triples. With
-    ``ignore_component_criterion``, evaluate all torsion triples up to permutation.
-    ``digits`` and ``reg_digits`` are decimal precisions; ``reg_digits=None``
-    uses float64. The result records failures and undecided component tests.
-    ``end_algs`` selects rational endomorphism labels (Q or CM by default).
-    The legacy ``end_q_z=True`` explicitly requests Q only; ``geom_simple``
-    toggles the default filter without imposing geometric simplicity.
-    """
-    end_algs = _endomorphism_filter(end_algs, geom_simple, end_q_z)
-    cert = {"certified": True} if certified else {}
-    rows = {r["label"]: r for r in load_results(cache)}
-    row = rows.get(record["label"])
-    if row is None:
-        return {"label": record["label"], "status": "not in the curve cache"}
-    if end_algs is not None and row.get('end_alg') not in end_algs:
-        status = ('End_Q(J) data missing; refresh the curve cache with --fetch'
-                  if row.get('end_alg') is None else 'end_alg not in {%s}' % ','.join(end_algs))
-        return dict(label=record['label'], cond=record['cond'], status=status)
-    C = curve_from_row(row)
-
-    if packet is not None and not ignore_component_criterion:
-        from ._beilinson_divisors import analyse_divisors
-
-        if packet == 'geometric' and not (isfinite(geometric_seconds) and geometric_seconds > 0):
-            raise ValueError('geometric seconds must be positive and finite')
-        return analyse_divisors(record, C, row, packet, verbose=verbose,
-                                with_periods=with_periods, with_lvalue=with_lvalue,
-                                digits=digits, reg_digits=reg_digits, lindep_bound=lindep_bound,
-                                tries=tries, certified=certified, geometric_seconds=geometric_seconds)
-
-    triples = find_triples(record, C, row=row, allow_undecided=allow_undecided,
-                           ignore_component_criterion=ignore_component_criterion)
-    if not triples:
-        return {"label": record["label"], "cond": record["cond"],
-                "status": "no_admissible_triple"}
-    n_triples = (len({frozenset((t["P"], t["Q"], t["R"])) for t in triples})
-                 if ignore_component_criterion else len(triples))
-    triples = rank_triples(C, triples, verbose=verbose,
-                           usable_only=not ignore_component_criterion)
-    if ignore_component_criterion:
-        seen, unique = set(), []
-        for t in triples:
-            key = frozenset((t["P"], t["Q"], t["R"]))
-            if key not in seen:
-                seen.add(key)
-                unique.append(t)
-        outcomes = []
-        for k, t in enumerate(unique):
-            if verbose:
-                print("  evaluating unordered triple %d of %d ..."
-                      % (k + 1, n_triples), flush=True)
-            try:
-                res = _analyse_triple(record, C, t, n_triples, cache=cache,
-                                      verbose=verbose, with_periods=with_periods,
-                                      with_lvalue=with_lvalue, digits=digits,
-                                      lindep_bound=lindep_bound, reg_digits=reg_digits, **cert)
-            except Exception as exc:
-                res = dict(label=record["label"], cond=record["cond"],
-                           status="preparation_error",
-                           error="%s: %s" % (type(exc).__name__, exc))
-            res.setdefault("triple", t)
-            res.setdefault("same_component_everywhere", _component_verdict(t))
-            outcomes.append(res)
-        representative = next((r for r in outcomes if r.get("status") == "ok"),
-                              outcomes[0])
-        return dict(representative, triple_results=outcomes,
-                    n_triples=n_triples, n_triples_attempted=len(outcomes))
-    if not triples:
-        return {"label": record["label"], "cond": record["cond"],
-                "status": "no_usable_model"}
-    first = None
-    for k, t in enumerate(triples[:max(1, int(tries))]):
-        res = _analyse_triple(record, C, t, n_triples, cache=cache,
-                              verbose=verbose, with_periods=with_periods,
-                              with_lvalue=with_lvalue, digits=digits,
-                              lindep_bound=lindep_bound,
-                              reg_digits=reg_digits, **cert)
-        if res.get("status") == "ok":
-            if k:
-                res["triples_skipped"] = k
-            return res
-        first = first or res
-        if verbose and k + 1 < min(len(triples), max(1, int(tries))):
-            print("   trying the next triple (%d of %d) ..."
-                  % (k + 2, len(triples)))
-    return first
 
 
 def load_stored(out=RESULTS_OUT):
@@ -884,139 +377,6 @@ def _fetch_curves(max_cond, cache, end_algs):
         worker.join(timeout=1)
 
 
-def ensure_records(max_cond=DEFAULT_CONDUCTOR_BOUND, cache=CACHE,
-                   results=RESULTS, geom_simple=None, fetch=False, verbose=False,
-                   ignore_component_criterion=False, end_q_z=None,
-                   end_algs=BEILINSON_END_ALGS, packet=None):
-    """Component records for cached curves with conductor strictly below ``N``.
-
-    Fetch only if requested. When ignoring the criterion, enumerate torsion
-    pairs without component tests.
-    """
-    from hyperell_regulator.components import fetch_lmfdb, load_curves
-
-    end_algs = _endomorphism_filter(end_algs, geom_simple, end_q_z)
-    if fetch:
-        fetch_lmfdb(max_cond=max_cond-1, path=cache, geom_simple=False, end_algs=end_algs)
-    all_rows = load_curves(path=cache, max_cond=max_cond-1, simple_only=False)
-    if end_algs is not None and any(r.get('end_alg') is None for r in all_rows):
-        raise ValueError('End_Q(J) data missing from the curve cache; rerun with --fetch')
-    rows = [r for r in all_rows if end_algs is None or r.get('end_alg') in end_algs]
-    return list(_prepare_records(rows, results, verbose, ignore_component_criterion, packet))
-
-
-def _prepare_records(rows, results, verbose, ignore_component_criterion, packet=None):
-    """Prepare and yield each component record before preparing the next curve."""
-    from hyperell_regulator.components import curve_points, report_curve, save_results
-
-    try:
-        records = {r["label"]: r for r in load_results(results)}
-    except OSError:
-        records = {}
-    for row in rows:
-        if packet is not None:
-            yield records.get(row['label'], dict(label=row['label'], cond=row['cond']))
-            continue
-        if ignore_component_criterion:
-            C = curve_from_row(row)
-            previous = records.get(row["label"], {})
-            known = {frozenset((_parse_point(d["P"]), _parse_point(d["Q"]))): d
-                     for d in previous.get("pairs", [])}
-            points = dict.fromkeys(p for p in curve_points(C, row) if p is not None)
-            for key in known:
-                points.update(dict.fromkeys(key))
-            pairs = []
-            for P, Q in combinations(points, 2):
-                old = known.get(frozenset((P, Q)), {})
-                pairs.append(dict(P=P, Q=Q,
-                                  same_component_everywhere=old.get("same_component_everywhere"),
-                                  order_of_P_minus_Q=old.get("order_of_P_minus_Q")))
-            yield dict(label=row["label"], cond=row["cond"], pairs=pairs)
-            continue
-        if row["label"] not in records:
-            try:
-                merged = save_results([report_curve(row, verbose=verbose)], results)
-                records.update({r["label"]: r for r in merged})
-            except NotImplementedError as exc:
-                if verbose:
-                    print("   %s: %s" % (row["label"], exc))
-                continue
-        yield records[row["label"]]
-
-
-def _stored_result_satisfies(old, settings):
-    """Whether a successful saved report meets the policy and precision request.
-
-    Arbitrary precision of at least 16 digits may satisfy a float64 request.
-    """
-    if old.get("status") != "ok" or not isinstance(old.get("settings"), dict):
-        return False
-    if settings.get('with_lvalue'):
-        local_data = local_data_metadata(old.get('label'))
-        if any(rec.get('L_local_data') != local_data
-               for rec in old.get('triple_results', [old])):
-            return False
-    stored = old["settings"]
-    if stored.get('packet') != settings.get('packet'):
-        return False
-    if bool(stored.get('certified', False)) != bool(settings.get('certified', False)):
-        return False
-    if settings.get('certified'):
-        from hyperell_regulator.regulator.balls import narrow
-        try:
-            for rec in old.get('triple_results', [old]):
-                if not rec.get('certified') or rec.get('regulator_cut') != 'tree' or not narrow(decode_ball(rec['det']), settings['regulator_digits']):
-                    return False
-                if settings.get('with_lvalue') and (not rec.get('L_certified') or
-                    rec.get('L_backend') != BACKEND_REVISION or
-                    not narrow(decode_ball(rec['L_second_derivative']), settings['lvalue_digits'])):
-                    return False
-                if settings.get('with_lvalue') and any(
-                    not narrow(decode_ball(rec[key]), settings['regulator_digits'])
-                    for key in ('c_plus', 'c_minus')):
-                    return False
-        except (KeyError, ValueError, TypeError):
-            return False
-    if settings.get("ignore_component_criterion") and (
-            not old.get("triple_results") or
-            any(r.get("status") != "ok" or
-                (settings.get("with_lvalue") and r.get("L_status")
-                 and r.get("L_second_derivative") is None)
-                for r in old["triple_results"])):
-        return False
-    precision_keys = {"regulator_digits", "lvalue_digits"}
-    execution_keys = {"max_edge_seconds", "max_edge_steps", "tries", "geometric_seconds"}
-    if (settings.get('packet') == 'geometric' and old.get('packet_support_complete') is False
-            and stored.get('geometric_seconds', 0) < settings.get('geometric_seconds', 0)):
-        return False
-    if settings.get('packet') and stored.get('tries', 0) < settings['tries']:
-        return False
-    if any(stored.get(k, False if k in ("ignore_component_criterion", "certified") else None) != v
-           for k, v in settings.items()
-           if k not in precision_keys | execution_keys):
-        return False
-    if not precision_keys <= stored.keys():
-        return False
-    have, want = stored["regulator_digits"], settings["regulator_digits"]
-    if have is None:
-        if want is not None:
-            return False
-    elif int(have) < (16 if want is None else int(want)):
-        return False
-    if settings.get("with_lvalue"):
-        if int(stored["lvalue_digits"]) < int(settings["lvalue_digits"]):
-            return False
-        if old.get("L_status") and old.get("L_second_derivative") is None:
-            return False
-    return True
-
-
-def _report_header(packet=None):
-    print((REPORT_COLUMNS+"  %s") % (
-        "curve", "cond", "status", "integral" if packet else "component",
-        "determinant", "q", "rational", "rel. error", "torsion divisors"))
-
-
 def _format_divisor(coefficients, labels):
     terms = []
     for coefficient, label in zip(map(QQ, coefficients), labels):
@@ -1027,55 +387,6 @@ def _format_divisor(coefficients, labels):
         sign = ' - ' if coefficient < 0 else ' + '
         terms.append(sign + term if terms else ('-' if coefficient < 0 else '') + term)
     return ''.join(terms) or '0'
-
-
-def _report_divisors(result):
-    if result.get('status') != 'ok':
-        return '-'
-    if result.get('divisors') and result.get('points'):
-        labels = [_fmt(P['coordinates']) if P['field_polynomial'] is None else 'P%d' % i
-                  for i, P in enumerate(result['points'], 1)]
-        rows = result['divisors']
-    elif all(key in (result.get('triple') or {}) for key in ('P', 'Q', 'R')):
-        labels = [_fmt(_parse_point(result['triple'][key])) for key in ('P', 'Q', 'R')]
-        rows = [(1, 0, -1), (0, 1, -1)]
-    else:
-        return '-'
-    return ' | '.join('D%d = %s' % (i, _format_divisor(row, labels))
-                      for i, row in enumerate(rows, 1))
-
-
-def _report_row(result, stored=False):
-    if result.get("triple_results"):
-        print("%s: %d unordered triples%s" % (
-            result["label"], len(result["triple_results"]), " [stored]" if stored else ""))
-        for outcome in result["triple_results"]:
-            _report_row(outcome, stored=stored)
-            t = outcome["triple"]
-            print("  P %s  Q %s  R %s"
-                  % tuple(_fmt(_parse_point(t[key])) for key in ("P", "Q", "R")))
-        return
-    comparison = result.get("comparison") or {}
-    component = "-"
-    if result.get('integral'):
-        component = 'integral'
-    if "same_component_everywhere" in result or result.get("triple"):
-        verdict = result.get("same_component_everywhere", _component_verdict(result.get("triple") or {}))
-        component = "yes" if verdict is True else "no" if verdict is False else "undecided"
-    def number(value):
-        return "-" if value is None else "%.8g" % display_float(value)
-    print((REPORT_COLUMNS+"  %s%s") % (
-        result["label"], result.get("cond", "?"), result["status"],
-        component,
-        number(result.get("det")), number(comparison.get("ratio")),
-        str(comparison.get("rational", "-")),
-        number(comparison.get("relative_agreement")),
-        _report_divisors(result),
-        " [stored]" if stored else ""), flush=True)
-    for key in ("rational_kernel_error", "geometric_issue", "error",
-                "periods_error", "L_status", "L_precision_warning"):
-        if result.get(key):
-            print("  %s: %s" % (key, result[key]), flush=True)
 
 
 @contextmanager
@@ -1104,172 +415,394 @@ def _monitored_result(result, verbose, max_edge_seconds, max_edge_steps):
                   slowest_edge_seconds=max((e["seconds"] for e in monitor.records), default=0))
 
 
-def run(max_cond=DEFAULT_CONDUCTOR_BOUND, path=RESULTS, cache=CACHE,
-        out=RESULTS_OUT, force=False, digits=15, reg_digits=None,
-        allow_undecided=True, geom_simple=None, fetch=False,
-        with_lvalue=True, tries=1, verbose=False, max_edge_seconds=15,
-        max_edge_steps=100000, ignore_component_criterion=False, certified=False, end_q_z=None,
-        end_algs=BEILINSON_END_ALGS, packet='rational', geometric_seconds=DEFAULT_GEOMETRIC_SECONDS):
-    """Report cached curves with conductor strictly below ``max_cond``.
-
-    Reuse successes of sufficient precision under the same policy; retry failures.
-    ``ignore_component_criterion`` evaluates all torsion triples up to permutation.
-    """
-    from collections import Counter
-
-    end_algs = _endomorphism_filter(end_algs, geom_simple, end_q_z)
-    if ignore_component_criterion or not allow_undecided:
-        packet = None
-    cert = {"certified": True} if certified else {}
-    if certified and reg_digits is None:
-        reg_digits = digits
-    max_cond = int(max_cond)
-    if max_cond < 1 or int(digits) < 1 or int(tries) < 1:
-        raise ValueError("conductor bound, digits and tries must be positive")
-    geometric = {'geometric_seconds': geometric_seconds} if packet == 'geometric' else {}
-    if geometric and not (isfinite(geometric_seconds) and geometric_seconds > 0):
-        raise ValueError('geometric seconds must be positive and finite')
-    if fetch:
-        row_stream = _fetch_curves(max_cond, cache, end_algs)
-        records = _prepare_records(row_stream, path,
-                                   verbose, ignore_component_criterion, packet)
-    else:
-        records = ensure_records(max_cond, cache=cache, results=path,
-                                 end_algs=end_algs, verbose=verbose,
-                                 ignore_component_criterion=ignore_component_criterion,
-                                 **({'packet': packet} if packet else {}))
-    settings = dict(report_version=REPORT_VERSION, regulator_digits=reg_digits,
-                    lvalue_digits=int(digits), with_lvalue=with_lvalue,
-                    allow_undecided=allow_undecided,
-                    endomorphism_condition=_endomorphism_condition(end_algs),
-                    ignore_component_criterion=ignore_component_criterion,
-                    tries=int(tries), max_edge_seconds=max_edge_seconds,
-                    max_edge_steps=max_edge_steps)
-    if certified:
-        settings["certified"] = True
-    if packet is not None:
-        settings['packet'] = packet
-        settings['divisor_normalization'] = 'integer'
-    settings.update(geometric)
-    have, results = load_stored(out), []
-    search = ('integral divisors on rational packets with geometric fallback'
-              if packet == 'geometric' else
-              'integral divisors on the %s packet' % packet if packet else 'torsion triples')
-    print("%s curves with conductor < %d, %s, %s"
-          % ("Fetching and analysing" if fetch else "%d cached" % len(records),
-             max_cond, "float64" if reg_digits is None
-             else "%s-digit regulator" % reg_digits, search))
-    _report_header(packet)
-    with closing(row_stream) if fetch else nullcontext():
-        for record in records:
-            label = record["label"]
-            old = have.get(label, {})
-            if not force and _stored_result_satisfies(old, settings):
-                results.append(old)
-                _report_row(old, stored=True)
-                continue
-            if verbose:
-                print("Computing %s ..." % label, flush=True)
-            res = dict(label=label, cond=record["cond"])
-            with _monitored_result(res, verbose, max_edge_seconds, max_edge_steps):
-                res.update(analyse(record, cache=cache,
-                                   allow_undecided=allow_undecided, verbose=verbose,
-                                   ignore_component_criterion=ignore_component_criterion,
-                                   with_periods=with_lvalue, with_lvalue=with_lvalue,
-                                   digits=digits, end_algs=end_algs,
-                                   reg_digits=reg_digits, tries=tries, lindep_bound=int(digits/2),
-                                   **({'packet': packet} if packet else {}), **geometric, **cert))
-            res["settings"] = settings
-            results.append(res)
-            have[label] = res
-            if out is not None:
-                with open(ensure_parent(out), "w") as fh:
-                    json.dump(sorted(have.values(), key=lambda r: (int(r["cond"]), r["label"])),
-                              fh, indent=2, default=str)
-            _report_row(res)
-    counts = Counter(r["status"] for r in results)
-    print("\n" + "; ".join("%s: %d" % item for item in sorted(counts.items())))
-    print("q = pi*c+*c-*L''(std,1) / D; rel. error = abs(q/rational - 1).")
-    if certified:
-        print("Certified interval agreement; exact rational equality is not proved.")
-        print(ANALYTIC_ASSUMPTIONS)
-    if packet is None:
-        print("no_admissible_triple: no pairwise non-conjugate torsion triple satisfies the component policy.")
-        print("no_usable_model: triples exist, but their integration models or shared cuts could not be constructed.")
-    else:
-        print('integral_rank_undecided: the certified kernel has fewer than two directions and some local constraints remain unresolved.')
-    print("numerical_failure: a shared cut failed quadrature or an integration limit.")
-    if out is not None:
-        print("Results: %s" % out)
-    return results
-
-
-def _add_report_arguments(parser, out):
-    """Add numerical and output options to an experiment command."""
-    parser.add_argument("--certified", action="store_true",
-                        help="validated Arb balls for regulators, periods and conditional L-values")
-    parser.add_argument("--force", action="store_true", help="recompute saved successful regulators")
-    parser.add_argument("--no-lvalue", action="store_true", help="only compute regulator determinants")
-    parser.add_argument("--verbose", action="store_true", help="show triples and per-edge progress")
-    parser.add_argument("--digits", type=int, default=15, help="L-value precision (default: 15 digits)")
-    parser.add_argument("--reg-digits", "--prec", type=int, default=None,
-                        help="explicit arbitrary-precision regulator (default: float64)")
-    parser.add_argument("--edge-seconds", type=float, default=15, help="time limit per edge (default: 15 seconds)")
-    parser.add_argument("--edge-steps", type=int, default=100000, help="continuation step limit per edge")
-    parser.add_argument("--out", default=None, help="JSON report path (certified mode uses a separate default file)")
-
-
 def _report_path(default, certified):
-    from pathlib import Path
     path = Path(default)
     return str(path.with_name(path.stem+'_certified'+path.suffix)) if certified else default
 
 
+def _endomorphism_filter(end_algs):
+    if isinstance(end_algs, str):
+        end_algs = (end_algs,)
+    return None if end_algs is None else tuple(sorted(set(end_algs)))
+
+
+def _endomorphism_condition(end_algs):
+    return None if end_algs is None else 'end_alg in {%s}' % ','.join(end_algs)
+
+
+def survey_curves(max_cond=DEFAULT_CONDUCTOR_BOUND, *, cache=CACHE, end_algs=BEILINSON_END_ALGS):
+    """Cached curve metadata below the strict conductor bound, without pair records."""
+    end_algs = _endomorphism_filter(end_algs)
+    rows = load_curves(path=cache, max_cond=int(max_cond)-1, simple_only=False)
+    if end_algs is not None and any(r.get('end_alg') is None for r in rows):
+        raise ValueError('End_Q(J) data missing from the curve cache; rerun with --fetch')
+    return [r for r in rows if end_algs is None or r.get('end_alg') in end_algs]
+
+
+def _curve_record(curve):
+    """Metadata for an actual curve, with a model-specific identity if unlabelled."""
+    if not all(hasattr(curve, name) for name in ('f', 'h', 'F', 'bad_primes')):
+        raise TypeError('expected a genus-two curve with reduction, or an LMFDB label')
+    if curve.genus() != 2:
+        raise ValueError('the Beilinson experiment requires a genus-two curve')
+    equation = [list(map(str, curve.f)), list(map(str, curve.h))]
+    row = dict(getattr(curve, 'lmfdb_record', {}))
+    if 'eqn' in row:
+        reference = curve_from_row(row)
+        if reference.f != curve.f or reference.h != curve.h:
+            raise ValueError('curve no longer matches its LMFDB metadata')
+    row['eqn'] = equation
+    if not row.get('label'):
+        fingerprint = hashlib.sha256(json.dumps(equation).encode()).hexdigest()
+        row['label'] = 'custom.'+fingerprint
+    if row.get('cond') is None:
+        row['cond'] = int(curve.conductor())
+    return row
+
+
+def analyse(curve, *, cache=CACHE, verbose=True, with_periods=True, with_lvalue=True,
+            digits=15, lindep_bound=8, reg_digits=None, tries=1,
+            ignore_integrality=False, certified=False, end_algs=None,
+            packet='geometric', geometric_seconds=DEFAULT_GEOMETRIC_SECONDS):
+    """Compute divisor bases, regulators and the L-value for one curve.
+
+    ``curve`` is a curve with reduction, an LMFDB label, or a complete
+    LMFDB metadata row. Explicit curves are not subject to the survey's
+    endomorphism filter unless ``end_algs`` is supplied. Divisor bases
+    contain only Galois traces over QQ.
+    """
+    if packet not in ('rational', 'weierstrass', 'geometric'):
+        raise ValueError('packet must be rational, weierstrass or geometric')
+    if not (isfinite(geometric_seconds) and geometric_seconds > 0):
+        raise ValueError('geometric seconds must be positive and finite')
+    if isinstance(curve, str):
+        curve = load_curve(curve, cache=cache)
+    if isinstance(curve, dict):
+        curve = curve_from_row(curve)
+    row = _curve_record(curve)
+    end_algs = _endomorphism_filter(end_algs)
+    if end_algs is not None and row.get('end_alg') not in end_algs:
+        status = ('End_Q(J) data missing; refresh the curve cache with --fetch'
+                  if row.get('end_alg') is None else 'end_alg not in {%s}' % ','.join(end_algs))
+        return dict(label=row['label'], cond=row['cond'], status=status)
+    from ._beilinson_divisors import analyse_divisors
+    return analyse_divisors(row, curve, row, packet, verbose=verbose,
+                           with_periods=with_periods, with_lvalue=with_lvalue,
+                           digits=digits, reg_digits=reg_digits, lindep_bound=lindep_bound,
+                           tries=tries, certified=certified, geometric_seconds=geometric_seconds,
+                           ignore_integrality=ignore_integrality)
+
+
+def _experiment_settings(*, digits, reg_digits, certified, with_lvalue, with_periods,
+                         tries, packet, geometric_seconds, max_edge_seconds, max_edge_steps,
+                         ignore_integrality, end_algs, curve_seconds=None):
+    from ._kernel_cache import KERNEL_CACHE_VERSION
+    if int(digits) < 1 or int(tries) < 1:
+        raise ValueError('digits and tries must be positive')
+    if certified and int(digits) < 5:
+        raise ValueError('certified precision must be at least 5 decimal digits')
+    if certified and reg_digits is None:
+        reg_digits = digits
+    if reg_digits is not None and int(reg_digits) < 5:
+        raise ValueError('regulator precision must be at least 5 decimal digits')
+    if packet not in ('rational', 'weierstrass', 'geometric'):
+        raise ValueError('packet must be rational, weierstrass or geometric')
+    if not (isfinite(geometric_seconds) and geometric_seconds > 0):
+        raise ValueError('geometric seconds must be positive and finite')
+    if not (isfinite(max_edge_seconds) and max_edge_seconds > 0) or int(max_edge_steps) < 1:
+        raise ValueError('edge budgets must be positive and finite')
+    if curve_seconds is None:
+        geometry_budget = 3*geometric_seconds if packet == 'geometric' else 0
+        curve_seconds = max(DEFAULT_CURVE_SECONDS, geometry_budget+2*max_edge_seconds, 6*int(digits))
+    if not isfinite(curve_seconds) or curve_seconds < 0:
+        raise ValueError('curve seconds must be nonnegative and finite')
+    settings = dict(report_version=REPORT_VERSION, regulator_digits=reg_digits,
+                    lvalue_digits=int(digits), with_lvalue=with_lvalue, with_periods=with_periods,
+                    endomorphism_condition=_endomorphism_condition(end_algs),
+                    ignore_integrality=ignore_integrality, tries=int(tries),
+                    max_edge_seconds=max_edge_seconds, max_edge_steps=int(max_edge_steps),
+                    curve_seconds=curve_seconds,
+                    packet=packet, divisor_normalization='integer',
+                    integral_basis_cache_version=KERNEL_CACHE_VERSION)
+    if certified:
+        settings['certified'] = True
+    if packet == 'geometric':
+        settings['geometric_seconds'] = geometric_seconds
+    if ignore_integrality:
+        settings['comparison_method'] = 'linear_determinant_relation_v2'
+    return settings
+
+
+def _stored_result_satisfies(old, settings):
+    """Reuse successful records only under matching policies and precision."""
+    if old.get('status') != 'ok' or not isinstance(old.get('settings'), dict):
+        return False
+    if old.get('regulator_method') == 'isogeny_transport':
+        return False
+    if settings.get('with_lvalue') and old.get('L_local_data') != local_data_metadata(old.get('label')):
+        return False
+    stored = old['settings']
+    if bool(stored.get('certified', False)) != bool(settings.get('certified', False)):
+        return False
+    if settings.get('certified'):
+        from hyperell_regulator.regulator.balls import narrow
+        try:
+            if (not old.get('certified') or old.get('regulator_cut') != 'tree'
+                    or not narrow(decode_ball(old['det']), settings['regulator_digits'])):
+                return False
+            if settings.get('with_lvalue') and (not old.get('L_certified')
+                    or old.get('L_backend') != BACKEND_REVISION
+                    or not narrow(decode_ball(old['L_second_derivative']), settings['lvalue_digits'])):
+                return False
+            if settings.get('with_periods', settings.get('with_lvalue')) and any(
+                    not narrow(decode_ball(old[key]), settings['regulator_digits'])
+                    for key in ('c_plus', 'c_minus')):
+                return False
+        except (KeyError, ValueError, TypeError):
+            return False
+    precision = {'regulator_digits', 'lvalue_digits'}
+    execution = {'max_edge_seconds', 'max_edge_steps', 'tries', 'geometric_seconds', 'curve_seconds'}
+    if (settings.get('packet') == 'geometric' and old.get('packet_support_complete') is False
+            and stored.get('geometric_seconds', 0) < settings.get('geometric_seconds', 0)):
+        return False
+    if not settings.get('ignore_integrality') and stored.get('tries', 0) < settings.get('tries', 0):
+        return False
+    if any(stored.get(k, False if k in ('ignore_integrality', 'certified') else None) != v
+           for k, v in settings.items() if k not in precision | execution):
+        return False
+    if not precision <= stored.keys():
+        return False
+    have, want = stored['regulator_digits'], settings['regulator_digits']
+    if have is None:
+        if want is not None:
+            return False
+    elif int(have) < (16 if want is None else int(want)):
+        return False
+    if settings.get('with_lvalue') and (int(stored['lvalue_digits']) < int(settings['lvalue_digits'])
+            or old.get('L_second_derivative') is None):
+        return False
+    return True
+
+
+def _report_header():
+    print((REPORT_COLUMNS+'  %s') % ('curve', 'cond', 'status', 'integral',
+          'determinant', 'q', 'rational', 'rel. error', 'torsion divisors'))
+
+
+def _report_divisors(result):
+    if result.get('status') != 'ok':
+        return '-'
+    terms = (result.get('linear_comparison') or {}).get('terms')
+    if terms:
+        search = result['pair_searches'][result['pair_search_index']]
+        kernel = result['integral_kernels'][search['kernel_index']]
+        labels = [_fmt(P['coordinates']) if P['field_polynomial'] is None else 'P%d' % i
+                  for i, P in enumerate(kernel['points'], 1)]
+        indices = sorted({i for term in terms for i in term['basis_indices']})
+        return ' | '.join('D%d = %s' % (i+1, _format_divisor(kernel['divisor_basis'][i], labels))
+                          for i in indices)
+    if result.get('divisors') and result.get('points'):
+        labels = [_fmt(P['coordinates']) if P['field_polynomial'] is None else 'P%d' % i
+                  for i, P in enumerate(result['points'], 1)]
+        rows = result['divisors']
+    else:
+        return '-'
+    return ' | '.join('D%d = %s' % (i, _format_divisor(row, labels))
+                      for i, row in enumerate(rows, 1))
+
+
+def _report_row(result, stored=False):
+    comparison = result.get("comparison") or {}
+    component = "-"
+    if 'integral' in result:
+        component = {True: 'integral', False: 'nonintegral', None: 'undecided'}[result['integral']]
+    def number(value):
+        return "-" if value is None else "%.8g" % display_float(value)
+    print((REPORT_COLUMNS+"  %s%s") % (
+        result["label"], result.get("cond", "?"), result["status"],
+        component,
+        number(result.get("det")), number(comparison.get("ratio")),
+        str(comparison.get("rational", "-")),
+        number(comparison.get("relative_agreement")),
+        _report_divisors(result),
+        " [stored]" if stored else ""), flush=True)
+    if result.get('packet_used') == 'geometric' and 'integral_rank' in result:
+        rank = result['integral_rank']
+        upper = result.get('integral_rank_upper_bound')
+        detail = (str(rank) if result['integral_rank_complete'] else
+                  '%d to %d' % (rank, upper) if upper is not None else 'at least %d' % rank)
+        print('  Geometric packet integral rank ' + detail, flush=True)
+    linear = result.get('linear_comparison') or {}
+    if linear.get('terms'):
+        terms = linear['terms']
+        expression = _format_divisor(
+            [term['coefficient'] for term in terms],
+            ['det(D%d,D%d)' % tuple(i+1 for i in term['basis_indices']) for term in terms])
+        print("  pi*c+*c-*L'' ~= %s   relative residual %s" %
+              (expression, number(linear['relative_residual'])), flush=True)
+    elif result.get('pair_searches') and result.get('L_second_derivative') is not None:
+        print('  ' + linear.get('error', 'No linear relation found'), flush=True)
+    for key in ("rational_kernel_error", "geometric_issue", "regulator_issue", "error",
+                "periods_error", "L_status", "L_precision_warning"):
+        if result.get(key):
+            print("  %s: %s" % (key, result[key]), flush=True)
+
+
+def _analyse_monitored(curve, row, settings, *, verbose, end_algs):
+    result = dict(label=row['label'], cond=row['cond'], input_curve=row)
+    with _monitored_result(result, verbose, settings['max_edge_seconds'], settings['max_edge_steps']):
+        result.update(analyse(curve, verbose=verbose, with_periods=settings['with_periods'],
+                              with_lvalue=settings['with_lvalue'], digits=settings['lvalue_digits'],
+                              reg_digits=settings['regulator_digits'], tries=settings['tries'],
+                              lindep_bound=max(1, settings['lvalue_digits']//2),
+                              packet=settings['packet'], end_algs=end_algs,
+                              geometric_seconds=settings.get('geometric_seconds', DEFAULT_GEOMETRIC_SECONDS),
+                              ignore_integrality=settings['ignore_integrality'],
+                              certified=settings.get('certified', False)))
+    return result
+
+
+def _run_one(curve, row, settings, *, out, force, verbose, end_algs, have):
+    label = row['label']
+    old = have.get(label, {})
+    if not force and _stored_result_satisfies(old, settings):
+        _report_row(old, stored=True)
+        return old
+    if verbose:
+        print('Computing %s ...' % label, flush=True)
+    if settings['curve_seconds']:
+        from ._curve_worker import run as run_worker
+
+        result = dict(label=label, cond=row['cond'], input_curve=row)
+        result.update(run_worker(row, settings, verbose=verbose, end_algs=end_algs))
+    else:
+        result = _analyse_monitored(curve, row, settings, verbose=verbose, end_algs=end_algs)
+    result['settings'] = settings
+    have[label] = result
+    if out is not None:
+        _save_json(out, sorted(have.values(), key=lambda r: (int(r['cond']), r['label'])))
+    _report_row(result)
+    return result
+
+
+def run_curve(curve, *, cache=None, fetch=True, refresh=False, out=None, force=False,
+              digits=15, reg_digits=None, with_lvalue=True, with_periods=None,
+              tries=1, verbose=False, max_edge_seconds=15, max_edge_steps=100000,
+              ignore_integrality=False, certified=False, packet='geometric',
+              geometric_seconds=DEFAULT_GEOMETRIC_SECONDS, curve_seconds=0):
+    """Run the Beilinson experiment on exactly one curve or LMFDB label.
+
+    Return one result dictionary, including timings and precision settings.
+    An optional ``out`` merges the result by label into a JSON report.
+    LMFDB labels are fetched individually if not cached. Curves constructed
+    directly from polynomials need no LMFDB entry or curve-cache lookup.
+    The Q/CM selection is a survey policy and does not restrict explicit curves.
+    Set ``curve_seconds`` to isolate the calculation under a wall-clock budget.
+    """
+    settings = _experiment_settings(digits=digits, reg_digits=reg_digits, certified=certified,
+        with_lvalue=with_lvalue, with_periods=with_lvalue if with_periods is None else with_periods,
+        tries=tries, packet=packet, geometric_seconds=geometric_seconds,
+        max_edge_seconds=max_edge_seconds, max_edge_steps=max_edge_steps,
+        ignore_integrality=ignore_integrality, end_algs=None, curve_seconds=curve_seconds)
+    if isinstance(curve, str):
+        curve = load_curve(curve, cache=cache, fetch=fetch, refresh=refresh)
+    if isinstance(curve, dict):
+        curve = curve_from_row(curve)
+    row = _curve_record(curve)
+    _report_header()
+    return _run_one(curve, row, settings, out=out, force=force, verbose=verbose,
+                    end_algs=None, have=load_stored(out))
+
+
+def run(max_cond=DEFAULT_CONDUCTOR_BOUND, *, cache=CACHE, out=RESULTS_OUT,
+        force=False, digits=15, reg_digits=None, fetch=False, with_lvalue=True,
+        tries=1, verbose=False, max_edge_seconds=15, max_edge_steps=100000,
+        ignore_integrality=False, certified=False, end_algs=BEILINSON_END_ALGS,
+        packet='geometric', geometric_seconds=DEFAULT_GEOMETRIC_SECONDS, curve_seconds=None):
+    """Run the divisor-basis survey below a strict conductor bound."""
+    from collections import Counter
+    end_algs = _endomorphism_filter(end_algs)
+    if int(max_cond) < 1:
+        raise ValueError('conductor bound must be positive')
+    settings = _experiment_settings(digits=digits, reg_digits=reg_digits, certified=certified,
+        with_lvalue=with_lvalue, with_periods=with_lvalue, tries=tries, packet=packet,
+        geometric_seconds=geometric_seconds, max_edge_seconds=max_edge_seconds,
+        max_edge_steps=max_edge_steps, ignore_integrality=ignore_integrality, end_algs=end_algs,
+        curve_seconds=curve_seconds)
+    rows = (_fetch_curves(int(max_cond), cache, end_algs) if fetch else
+            survey_curves(int(max_cond), cache=cache, end_algs=end_algs))
+    print('%s curves with conductor < %d; %s packet, Galois traces over Q' %
+          ('Fetching and analysing' if fetch else '%d cached' % len(rows), int(max_cond), packet))
+    _report_header()
+    have, results = load_stored(out), []
+    with closing(rows) if fetch else nullcontext():
+        for row in rows:
+            results.append(_run_one(row, row, settings, out=out, force=force, verbose=verbose,
+                                    end_algs=end_algs, have=have))
+    print('\n'+'; '.join('%s: %d' % item for item in sorted(Counter(r['status'] for r in results).items())))
+    print("q = pi*c+*c-*L''(std,1) / D; rel. error = abs(q/rational - 1).")
+    if certified:
+        print('Certified interval agreement; exact rational equality is not proved.')
+        print(ANALYTIC_ASSUMPTIONS)
+    if out is not None:
+        print('Results: %s' % out)
+    return results
+
+
 def main(argv=None):
-    """Run the survey with the given strict conductor bound."""
+    """Run a conductor-bounded survey or a single LMFDB label."""
     import argparse
-
-    parser = argparse.ArgumentParser(description=__doc__.split("The construction")[0])
-    parser.add_argument("N", nargs="?", type=int, default=DEFAULT_CONDUCTOR_BOUND,
-                        help="exclusive conductor bound (default: 1000)")
-    _add_report_arguments(parser, RESULTS_OUT)
-    parser.add_argument("--fetch", action="store_true", help="extend the curve cache from LMFDB")
-    parser.add_argument("--cm-only", action="store_const", dest="end_algs",
-                        const=("CM",), default=BEILINSON_END_ALGS,
-                        help="only consider curves with LMFDB end_alg='CM' (default: Q or CM)")
-    component_policy = parser.add_mutually_exclusive_group()
-    component_policy.add_argument("--allow-undecided", action="store_true", default=True,
-                                  help="include undecided component verdicts (default)")
-    component_policy.add_argument("--exclude-undecided", dest="allow_undecided", action="store_false",
-                                  help="require affirmative component verdicts")
-    component_policy.add_argument("--ignore-component-criterion", action="store_true",
-                                  help="skip component checks and evaluate all non-conjugate "
-                                       "torsion triples up to permutations (ignores --tries)")
-    parser.add_argument('--packet', choices=('rational', 'weierstrass', 'geometric', 'legacy'),
-                        default='rational', help='torsion packet for the integral divisor search')
-    parser.add_argument('--geometric-seconds', type=float, default=DEFAULT_GEOMETRIC_SECONDS,
-                        help='time budget per geometric packet or kernel attempt (default: %(default)s seconds)')
-    parser.add_argument("--tries", type=int, default=1, help="number of regulator pairs to compare per packet")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('N', nargs='?', type=int, help='exclusive survey conductor bound (default: 1000)')
+    parser.add_argument('--label', help='run only this LMFDB genus-two curve label')
+    parser.add_argument('--cache', default=None, help='LMFDB curve cache path')
+    parser.add_argument('--fetch', action='store_true', help='refresh LMFDB metadata and points')
+    parser.add_argument('--cm-only', action='store_const', dest='end_algs', const=('CM',),
+                        default=BEILINSON_END_ALGS, help='survey only: select rational end_alg=CM')
+    parser.add_argument('--certified', action='store_true', help='certified regulators and conditional L-values')
+    parser.add_argument('--force', action='store_true', help='recompute saved successful experiments')
+    parser.add_argument('--no-lvalue', action='store_true', help='only compute regulator determinants')
+    parser.add_argument('--verbose', action='store_true', help='show divisor and per-edge progress')
+    parser.add_argument('--digits', type=int, default=15, help='L-value precision (default: 15)')
+    parser.add_argument('--reg-digits', '--prec', type=int, default=None, help='regulator precision (default: float64)')
+    parser.add_argument('--edge-seconds', type=float, default=15, help='time limit per integration edge')
+    parser.add_argument('--edge-steps', type=int, default=100000, help='continuation steps per edge')
+    parser.add_argument('--out', default=None, help='JSON report destination')
+    parser.add_argument('--ignore-integrality', action='store_true', help='compare all Galois-trace divisor pairs')
+    parser.add_argument('--packet', choices=('rational', 'weierstrass', 'geometric'), default='geometric')
+    parser.add_argument('--geometric-seconds', type=float, default=DEFAULT_GEOMETRIC_SECONDS)
+    parser.add_argument('--curve-seconds', type=float, default=None,
+                        help='wall-clock budget per curve (default: at least 180s; 0 disables it)')
+    parser.add_argument('--tries', type=int, default=1, help='number of integral regulator pairs to compare')
     args = parser.parse_args(argv)
-    if args.N < 1 or args.digits < 1 or args.tries < 1 or (args.reg_digits is not None and args.reg_digits < 5):
-        parser.error("N, digits and tries must be positive; regulator precision must be at least 5")
-    if args.certified and args.digits < 5:
-        parser.error('certified precision must be at least 5 decimal digits')
-    if args.edge_seconds <= 0 or args.edge_steps < 1:
-        parser.error("edge budgets must be positive")
-    if not (isfinite(args.geometric_seconds) and args.geometric_seconds > 0):
-        parser.error('geometric seconds must be positive and finite')
-    return run(args.N, out=args.out if args.out is not None else _report_path(RESULTS_OUT, args.certified),
-               force=args.force, fetch=args.fetch, end_algs=args.end_algs,
-               with_lvalue=not args.no_lvalue, verbose=args.verbose,
-               allow_undecided=args.allow_undecided, digits=args.digits,
-               ignore_component_criterion=args.ignore_component_criterion,
-               packet=None if args.packet == 'legacy' else args.packet,
-               geometric_seconds=args.geometric_seconds,
-               reg_digits=args.reg_digits, tries=args.tries,
-               max_edge_seconds=args.edge_seconds, max_edge_steps=args.edge_steps,
-               **({"certified": True} if args.certified else {}))
+    if args.label and args.N is not None:
+        parser.error('choose either --label or a survey conductor bound')
+    if args.label and args.end_algs != BEILINSON_END_ALGS:
+        parser.error('--cm-only applies to surveys; --label selects one curve directly')
+    options = dict(force=args.force, with_lvalue=not args.no_lvalue, verbose=args.verbose,
+        digits=args.digits, reg_digits=args.reg_digits, tries=args.tries,
+        ignore_integrality=args.ignore_integrality, packet=args.packet, certified=args.certified,
+        geometric_seconds=args.geometric_seconds, max_edge_seconds=args.edge_seconds,
+        max_edge_steps=args.edge_steps, curve_seconds=args.curve_seconds)
+    default = data_path('results', 'beilinson_'+args.label+'.json') if args.label else RESULTS_OUT
+    options['out'] = args.out if args.out is not None else _report_path(default, args.certified)
+    try:
+        _experiment_settings(digits=args.digits, reg_digits=args.reg_digits, certified=args.certified,
+            with_lvalue=not args.no_lvalue, with_periods=not args.no_lvalue, tries=args.tries,
+            packet=args.packet, geometric_seconds=args.geometric_seconds,
+            max_edge_seconds=args.edge_seconds, max_edge_steps=args.edge_steps,
+            ignore_integrality=args.ignore_integrality, end_algs=_endomorphism_filter(args.end_algs),
+            curve_seconds=args.curve_seconds)
+        if args.N is not None and args.N < 1:
+            raise ValueError('conductor bound must be positive')
+    except ValueError as exc:
+        parser.error(str(exc))
+    if args.label:
+        return run_curve(args.label, cache=args.cache, refresh=args.fetch, **options)
+    return run(DEFAULT_CONDUCTOR_BOUND if args.N is None else args.N,
+               cache=CACHE if args.cache is None else args.cache,
+               fetch=args.fetch, end_algs=args.end_algs, **options)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

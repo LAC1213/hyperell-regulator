@@ -66,9 +66,8 @@ def test_fetch_publishes_cached_and_new_point_rows_before_finishing(tmp_path, fa
 
 @pytest.mark.parametrize('fail_later', [False, True])
 def test_experiment_analyses_and_saves_before_fetch_finishes(tmp_path, fail_later):
-    cache, records, out = (tmp_path/name for name in ('curves.json', 'pairs.json', 'out.json'))
+    cache, out = (tmp_path/name for name in ('curves.json', 'out.json'))
     rows = [curve('1.cm', 1), curve('2.cm', 2)]
-    records.write_text(json.dumps(rows))
     first_saved, fetch_done = Event(), Event()
     analysed = []
 
@@ -102,10 +101,10 @@ def test_experiment_analyses_and_saves_before_fetch_finishes(tmp_path, fail_late
             patch.object(b, '_report_row', side_effect=report):
         if fail_later:
             with pytest.raises(OSError, match='connection lost'):
-                b.run(3, cache=cache, path=records, out=out, fetch=True,
+                b.run(3, curve_seconds=0, cache=cache, out=out, fetch=True,
                       with_lvalue=False, end_algs=('CM',))
         else:
-            result = b.run(3, cache=cache, path=records, out=out, fetch=True,
+            result = b.run(3, curve_seconds=0, cache=cache, out=out, fetch=True,
                            with_lvalue=False, end_algs=('CM',))
             assert [r['label'] for r in result] == ['1.cm', '2.cm']
     assert analysed == (['1.cm'] if fail_later else ['1.cm', '2.cm'])
@@ -133,7 +132,7 @@ def test_empty_fetch_finishes_without_analysis(tmp_path):
     cache = tmp_path/'curves.json'
     with patch('urllib.request.urlopen', return_value=io.BytesIO(b'{"data": []}')), \
             patch.object(b, 'analyse') as analyse:
-        assert b.run(100, cache=cache, path=tmp_path/'pairs.json', out=None,
+        assert b.run(100, curve_seconds=0, cache=cache, out=None,
                      fetch=True, with_lvalue=False, end_algs=('CM',)) == []
     analyse.assert_not_called()
     assert json.loads(cache.read_text()) == []

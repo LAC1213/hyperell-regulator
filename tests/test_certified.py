@@ -1,7 +1,5 @@
 """Validated public APIs, topology, precision checks and experiment storage."""
-import gzip
 import json
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -152,44 +150,3 @@ def test_certified_lvalue_fails_closed_when_backend_missing(monkeypatch):
     with pytest.raises(NotImplementedError, match='binary64'):
         L.value(QQ(1)/3, derivative=0, certified=True)
     assert L.value(derivative=0, certified=True).is_zero()
-
-
-def test_native_standard_value_reproduces_saved_enclosure():
-    from hyperell_regulator import HyperellipticCurveWithReduction, StandardLFunction
-    from hyperell_regulator.ball_lfunction import executable
-    try:
-        executable()
-    except CertificationError:
-        pytest.skip('optional native certified backend not built')
-    L = StandardLFunction(HyperellipticCurveWithReduction(x*x+x, x**3+1))
-    root = Path(__file__).parents[1]
-    rows = gzip.decompress((root/'reports/ball_lvalue_249_100_euler.txt.gz').read_bytes()).decode().splitlines()
-    factors = {int(r.split()[0]): list(map(ZZ, r.split()[1:])) for r in rows}
-    # The fixture is the complete exact prime input used in the saved run;
-    # this test exercises the public API, native algorithm and normalization.
-    L.precompute_h1 = lambda primes, **kwargs: None
-    L.euler_factor = lambda p: L._RT(factors[int(p)])
-    result = L.value(digits=10, certified=True)
-    saved = json.loads((root/'reports/ball_lvalue_249_100.json').read_text())
-    row = saved['intervals']['L_second_derivative']
-    expected = QQ(row['lower'])*QQ(2)**row['exponent']
-    assert expected in result
-    assert narrow(result, 10)
-    assert L._certified_metadata['root_number'] == 1
-
-
-def test_saved_full_regulator_100_digit_certificate():
-    from fractions import Fraction
-    data = json.loads((Path(__file__).parents[1]/'reports/certified_regulator_249_100.json').read_text())
-    def interval(record):
-        return Fraction(record['lower']), Fraction(record['upper'])
-    reg = data['regulator']
-    for record in [reg[k] for k in ('det', 'c_plus', 'c_minus')]+sum(reg['matrix'], []):
-        lo, hi = interval(record)
-        assert (hi-lo)/2 < Fraction(1, 10**100)
-    comparison = data['comparison']
-    lo, hi = interval(comparison['ratio'])
-    assert lo <= -14 <= hi
-    assert Fraction(comparison['relative_agreement_upper']) < Fraction(1, 10**100)
-    assert comparison['exact_relation_proved'] is False
-    assert comparison['analytic_assumptions']

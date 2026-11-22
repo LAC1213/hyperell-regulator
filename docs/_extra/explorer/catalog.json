@@ -24,8 +24,8 @@
   "numerical_source_hash_method": "python-ast-no-docstrings-v1",
   "numerical_source_sha256": {
     "hyperell_regulator/_source_hash.py": "4cf0bfc59d52767475f774988c90fef08a1493289251d575cf131459fa351eb1",
-    "hyperell_regulator/experiments/beilinson.py": "c5665001b47491f3f76a31fbb94a5dfd1136786e958f31e5805210b99fa53ba9",
-    "hyperell_regulator/experiments/beilinson_local_data.py": "ef29a04143be5c2e330a266db2e5b9df5e1a084ba5d8ffefe7890a08e1692d23",
+    "hyperell_regulator/experiments/beilinson.py": "5ee2782a9efbfd326ef22a852b288fd72f1dc18f06330d3633c2279530c8b566",
+    "hyperell_regulator/experiments/beilinson_local_data.py": "72f3fdd1123c37c442c926addfd5020588ccd05258f45d64edc2c1b2f296248a",
     "hyperell_regulator/experiments/small_conductor_explorer.py": "5527adb6b8f75eb523b74d80c777850c3d25559fe5e0063455d6d2a81d4dbd5a",
     "hyperell_regulator/frobenius.py": "7398b28ea211b1574a0b8f74e08a62b1b35a2bae2920f9368f37143a5908e53b",
     "hyperell_regulator/lfunction.py": "4502e241d589cb0642cd8509e6d901dd026b8949c5312bcc7c5951af977af6b9",
@@ -1805,5 +1805,24 @@
   "surface_meshes": {
     "available": 21,
     "unavailable": 0
+  },
+  "numerical_source_compatibility": {
+    "description": "Curve loading and survey orchestration refactored; numerical evaluation helpers verified unchanged. L-value cache publication now uses atomic writes.",
+    "previous_source_sha256": {
+      "hyperell_regulator/experiments/beilinson.py": "169d53e11c00153998068f4c7dcc3608cbb715b8abb931d0e1ff48d22c4ddbe4"
+    },
+    "verified_function_sha256": {
+      "regulator_column_stokes": "7d95f7bcd10ce83d9c86a55fef8880a9e3b87931c5eeb917d4b0a55402540c6f",
+      "_regulator_column_and_periods": "a9efb443d2bb47495c761f330d0a8c29cdf17add0f596acc8d932f19f3776fbe",
+      "_sage_real": "9141a98b5636f5b4531f5e3a687f26d55b8067855819e083263eb322cdf32546",
+      "beilinson_determinant_stokes": "85dbf0995f8986cfa40f9c843cbd0699d098849c2717eb297645402d063900c2",
+      "load_lvalues": "9258b57e89f8a7fb146e091fb69e10b5a19fbd0a11bec69d69b17dd65d939095",
+      "standard_lvalue_cached": "ba18b3a7c4f0a37865192b1b90009fadf547aff9aa1601a2b9665ddaf2cc54a0",
+      "_certified_lvalue_cached": "a6efc18cd7f82e77b4d982085d2adc9e2e80a1a75432c6e6c9e00bffc1b294ab",
+      "beilinson_comparison": "bfb043a756d025535b6d90a57cf5ea0a05f90237cfe5c554fcc4c0e5b38ff805"
+    },
+    "previous_compatible_source_sha256": {
+      "hyperell_regulator/experiments/beilinson.py": "595163002cf663214f4608497bd8b10c4f3cd146651dd081c24eed070b3384d3"
+    }
   }
 }

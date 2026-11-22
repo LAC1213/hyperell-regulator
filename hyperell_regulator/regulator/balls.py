@@ -35,6 +35,14 @@ def rational(value):
     return QQ(value)
 
 
+def algebraic_center(value):
+    """Keep exact algebraic centres and preserve exact rational coercion."""
+    try:
+        return rational(value)
+    except (TypeError, ValueError):
+        return QQbar(value)
+
+
 def _polynomial(value):
     if hasattr(value, 'list'):
         return PolynomialRing(QQ, 'x')([rational(c) for c in value.list()])
@@ -221,7 +229,7 @@ def compute_parallel(F, centers=(), prec=15, *, details=None):
     """Independent certified parallel-slit regulator backend."""
     digits = digits_value(prec)
     F = _model(F)
-    centers = list(dict.fromkeys(rational(c) for c in centers))
+    centers = list(dict.fromkeys(algebraic_center(c) for c in centers))
     roots = F.roots(QQbar, multiplicities=False)
     nodes, direction, order = _parallel_geometry(roots, centers)
     for guard in (10, 25, 50):
@@ -288,7 +296,7 @@ def edge_integrals(F, a, b, *, centers=(), powers=(0, 1), digits=30):
         position = (r - aa) / (bb - aa)
         if position.imag() == 0 and 0 <= position.real() <= 1:
             raise ValueError("edge passes through another branch point")
-    centers = tuple(rational(c) for c in centers)
+    centers = tuple(algebraic_center(c) for c in centers)
     for c in centers:
         position = (QQbar(c) - aa) / (bb - aa)
         if position.imag() == 0 and 0 < position.real() < 1:
@@ -321,8 +329,9 @@ def edge_integrals(F, a, b, *, centers=(), powers=(0, 1), digits=30):
     half_pi, log_two = C.pi()/2, C(2).log()
     seed_logs = {}
     log_positions = {}
+    centre_balls = {c: C(c) for c in centers}
     for center in centers:
-        z = mid - C(center)
+        z = mid - centre_balls[center]
         exact_z = (aa + bb) / 2 - center
         if exact_z.real() < 0:
             # Select a single logarithm branch even if root enclosures
@@ -363,7 +372,8 @@ def edge_integrals(F, a, b, *, centers=(), powers=(0, 1), digits=30):
         if log_positions[center] == 1:
             return lam + log_two + 2 * principal(c, analytic, "log")
         x = a + delta * s**2
-        return lam + principal((x - center) / (mid - center), analytic, "log")
+        c = centre_balls[center]
+        return lam + principal((x - c) / (mid - c), analytic, "log")
 
     eps = QQ(1) / 10 ** (int(digits) + 10)
     tolerance = R(10) ** (-int(digits) - 5)
