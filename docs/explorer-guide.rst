@@ -63,6 +63,8 @@ The comparison box displays
 **Digits to display** selects 10–100 significant digits from the saved
 values. The path table and matrix display 10 significant digits; downloads
 retain the decimal strings and original certified interval endpoints.
+Values whose magnitude is less than half a unit in the selected decimal
+precision display as zero, suppressing tiny numerical residuals.
 Rational factors are numerical guesses, shown when their relative
 agreement exceeds 95 digits. Certified enclosures retain the experiment's
 analytic assumptions; agreement does not prove exact equality.

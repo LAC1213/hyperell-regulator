@@ -15,6 +15,8 @@ function decimal(value,digits=10) {
   if (first<0) return "0";
   let exponent=Number(match[4]||0)+match[2].length-first-1;
   const significant=raw.slice(first);
+  // Suppress residuals that round to zero at the displayed decimal precision.
+  if (exponent < -digits-1 || (exponent === -digits-1 && significant[0] < "5")) return "0";
   let rounded=significant.slice(0,digits).padEnd(digits,"0");
   if (Number(significant[digits]||0)>=5) {
     rounded=(BigInt(rounded)+1n).toString();
