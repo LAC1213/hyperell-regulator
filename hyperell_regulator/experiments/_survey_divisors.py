@@ -38,26 +38,19 @@ def comparison_error(row):
 
 def selected_divisors(row):
     """Return point records, selected coefficient rows and their saved IDs."""
-    if row.get('divisors') is not None:
-        terms = row.get('linear_comparison', {}).get('terms', [])
-        if len(terms) > 1:
-            search = row['pair_searches'][row['pair_search_index']]
-            kernel = row['integral_kernels'][search['kernel_index']]
-            indices = sorted({i for term in terms for i in term['basis_indices']})
-            return kernel['points'], [kernel['divisor_basis'][i] for i in indices], indices
-        return row['points'], row['divisors'], row.get('basis_indices', [0, 1])
-    triple = row['triple']
-    points = [triple[key] for key in ('P', 'Q', 'R')]
-    return points, [[1, 0, -1], [0, 1, -1]], [0, 1]
+    terms = row.get('linear_comparison', {}).get('terms', [])
+    if len(terms) > 1:
+        search = row['pair_searches'][row['pair_search_index']]
+        kernel = row['integral_kernels'][search['kernel_index']]
+        indices = sorted({i for term in terms for i in term['basis_indices']})
+        return kernel['points'], [kernel['divisor_basis'][i] for i in indices], indices
+    return row['points'], row['divisors'], row.get('basis_indices', [0, 1])
 
 
 def packet_order(row):
     """Exact exponent of packet differences, or None when it was not recorded."""
     if row.get('packet_torsion_order') is not None and row.get('packet_torsion_order_exact'):
         return str(row['packet_torsion_order'])
-    if 'triple' in row:
-        from math import lcm
-        return str(lcm(int(row['triple']['order_P']), int(row['triple']['order_Q'])))
     for kernel in row.get('integral_kernels', []):
         if kernel.get('points') == row.get('points') and kernel.get('packet_torsion_order_exact'):
             return str(kernel['packet_torsion_order'])
@@ -74,7 +67,7 @@ def divisor_metadata(row, curve_row=None):
     Exact point records and coefficients are retained. Approximate complex
     coordinates are supplied separately for display, never for integration.
     Each support entry retains its integration image in ``point`` and its
-    original coordinates in ``lmfdb`` for formulas and the real curve plot.
+    original coordinates in ``lmfdb`` for divisor formulas and support tables.
     """
     from sage.all import PolynomialRing, QQ, QQbar, latex
     from .geometric_torsion import decode_point, encode_point
@@ -84,46 +77,23 @@ def divisor_metadata(row, curve_row=None):
     if any(len(D) != len(raw_points) or sum(D) for D in coefficients):
         raise ValueError('invalid degree-zero divisor coefficients on '+row['label'])
     algebraic = row['algebraic_data']
-    if 'divisors' in row:
-        R = PolynomialRing(QQ, 'x')
-        h = R(algebraic['original_h'])
-        shift = None if algebraic.get('shift') is None else QQ(algebraic['shift'])
-        scale = QQ(algebraic.get('scale', 1))
+    R = PolynomialRing(QQ, 'x')
+    h = R(algebraic['original_h'])
+    shift = None if algebraic.get('shift') is None else QQ(algebraic['shift'])
+    scale = QQ(algebraic.get('scale', 1))
 
-        def image(record):
-            x, y = decode_point(record)
-            if shift is None:
-                return (('infinity', 2*y+h[3]) if x == 'infinity' else (x, 2*y+h(x)))
-            if x == 'infinity':
-                return QQbar(0), scale*(2*y+h[3])
-            if x == shift:
-                return 'infinity', scale*(2*y+h(x))
-            return 1/(x-shift), scale*(2*y+h(x))/(x-shift)**3
+    def image(record):
+        x, y = decode_point(record)
+        if shift is None:
+            return (('infinity', 2*y+h[3]) if x == 'infinity' else (x, 2*y+h(x)))
+        if x == 'infinity':
+            return QQbar(0), scale*(2*y+h[3])
+        if x == shift:
+            return 'infinity', scale*(2*y+h(x))
+        return 1/(x-shift), scale*(2*y+h(x))/(x-shift)**3
 
-        originals = [decode_point(P) for P in raw_points]
-        images = [image(P) for P in raw_points]
-    else:
-        originals = [('infinity', QQbar(QQ(P[1]))) if P[0] == 'infinity' else
-                     tuple(QQbar(QQ(v)) for v in P) for P in raw_points]
-        # Historical snapshots already retain the exact model images.
-        images = [('infinity', None) if P == 'infinity' else
-                  ('infinity', QQbar(QQ(P[1]))) if P[0] == 'infinity' else
-                  tuple(QQbar(QQ(v)) for v in P) for P in algebraic['image_points']]
-        if len(images) != 3:
-            raise ValueError('historical divisor images must include the common pole')
-        for i, (x, y) in enumerate(images):
-            if x == 'infinity' and y is None:
-                # Compute the infinity ordinate on the displayed square model.
-                R = PolynomialRing(QQ, 'x')
-                G = R(algebraic['model'].replace('u', 'x'))
-                if G.degree() % 2:
-                    images[i] = ('infinity', QQbar(0))
-                else:
-                    original_h = R(algebraic['original_h'])
-                    pole = row['triple']['R']
-                    eta = (2*QQ(pole[1])+original_h[3] if pole[0] == 'infinity' else
-                           QQ(algebraic.get('scale', 1))*(2*QQ(pole[1])+original_h(QQ(pole[0]))))
-                    images[i] = ('infinity', QQbar(eta))
+    originals = [decode_point(P) for P in raw_points]
+    images = [image(P) for P in raw_points]
 
     R = PolynomialRing(QQ, 'x')
     G = R(algebraic['model'].replace('u', 'x'))
@@ -192,9 +162,6 @@ def divisor_metadata(row, curve_row=None):
     if recorded is not None:
         centers = [decode_algebraic(c) for c in recorded]
         center_source = 'computation'
-    elif 'divisors' not in row:
-        centers = [x for x, _ in images if x != 'infinity']
-        center_source = 'historical_integration_input'
     else:
         kernel = next((k for k in row.get('integral_kernels', []) if k['points'] == raw_points), None)
         cut_rows = (kernel['divisor_basis'] if row.get('settings', {}).get('ignore_integrality') else

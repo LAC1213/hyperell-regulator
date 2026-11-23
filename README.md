@@ -106,7 +106,7 @@ Here infinity labels are the limits of `y/x**(g+1)` on the
 `TorsionPacketIntegrality(C, points)` checks the sufficient multidegree-zero
 criterion for `q_* B(sum(a_i P_i))` and computes integer kernels of linear
 combinations. See the [integrality guide](docs/integrality.rst) for point
-conventions, unresolved reductions, and the archived multidegree survey.
+conventions and unresolved reductions.
 
 `ProjectedTorsionPacketIntegrality(C, points)` solves the projected
 local boundary constraints and returns a basis of integral combinations.

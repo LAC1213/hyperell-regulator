@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const COLORS = ["#bd5034", "#267f91"];
 const POINT_COLORS = ["#bd5034", "#267f91", "#7651a0", "#488551", "#b07b25", "#b04d84"];
 const PI = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647";
-const DATA_VERSION = "lmfdb-support-7";
+const DATA_VERSION = "divisor-workflow-8";
 const HOME_CAMERA = {eye:{x:1.5,y:-1.6,z:1.2},center:{x:0,y:0,z:0},up:{x:0,y:0,z:1},projection:{type:"perspective"}};
 let catalog, current, currentCurve = null, mesh = null, version = 0, label = "";
 // Round the saved decimal strings directly: Number would discard digits after ~16.
@@ -25,7 +25,6 @@ function decimal(value,digits=10) {
   if (exponent<0) return sign+"0."+"0".repeat(-exponent-1)+rounded;
   return sign+rounded.slice(0,exponent+1)+(exponent+1<digits?"."+rounded.slice(exponent+1):"");
 }
-const polynomial = source => source.replace(/\^(\d+)/g,(_,power)=>[...power].map(d=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[d]).join("")).replace(/\*/g,"").replace(/-/g,"−");
 const rational = value => String(value).split("/").map(Number).reduce((a,b)=>a/b);
 function math(node,tex) {
   node.dataset.tex=tex;
@@ -37,9 +36,6 @@ function numberTex(value,digits=10) {
   return exponent===undefined?mantissa:mantissa+"\\times10^{"+Number(exponent)+"}";
 }
 function mathCell(row,tex) { const node=cell(row,""); math(node,tex); return node; }
-function pointTex(point) {
-  return Array.isArray(point)?"\\left("+point.map(CurveGeometry.rationalTex).join(",\\,")+"\\right)":"\\infty";
-}
 function lmfdbLink(label,text=label+" ↗") {
   const parts=/^(\d+)\.([a-z]+)\.(\d+)\.(\d+)$/.exec(label);
   const link=document.createElement(parts?"a":"span"); link.textContent=text;
@@ -472,4 +468,4 @@ window.addEventListener("pageshow",()=>{if(current){renderIntegrals();updateTree
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;$("curve-select").value="";for(const row of $("catalog-rows").children)row.classList.remove("selected");await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});
 document.querySelectorAll("[data-tex]").forEach(node=>math(node,node.dataset.tex));
-fetch("catalog.json?v="+DATA_VERSION).then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{if(![2,3].includes(data.schema_version)||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");catalog=data;renderCatalog();const saved=catalog.curves.findIndex(c=>c.label===decodeURIComponent(location.hash.slice(1)).split("/")[0]);$("curve-select").value=Math.max(0,saved);return chooseCurve(Math.max(0,saved));}).catch(e=>status(e.message,true));
+fetch("catalog.json?v="+DATA_VERSION).then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{if(data.schema_version!==3||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");catalog=data;renderCatalog();const saved=catalog.curves.findIndex(c=>c.label===decodeURIComponent(location.hash.slice(1)).split("/")[0]);$("curve-select").value=Math.max(0,saved);return chooseCurve(Math.max(0,saved));}).catch(e=>status(e.message,true));

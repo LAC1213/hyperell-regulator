@@ -29,7 +29,8 @@ def select_results(results, *, bound=BOUND, digits=DIGITS):
         settings = original.get("settings", {})
         if not (0 < int(original["cond"]) < bound
                 and original.get("regulator_method") != "isogeny_transport"
-                and settings.get("report_version") in (9, 10, 11, 12, REPORT_VERSION)
+                and settings.get("report_version") == REPORT_VERSION
+                and (original.get("status") != "ok" or original.get("divisors") is not None)
                 and settings.get("regulator_digits") == digits
                 and settings.get("lvalue_digits") == digits
                 and settings.get("with_lvalue") is True):
@@ -58,128 +59,21 @@ def select_results(results, *, bound=BOUND, digits=DIGITS):
     return sorted(selected, key=lambda row: (int(row["cond"]), row["label"]))
 
 
-def _parse_point(v):
-    r"""Read an affine or labelled infinite point from JSON."""
-    if v is None:
-        return None
-    from sage.all import QQ
-    a, b = v
-    if a == "infinity":
-        return ("infinity", QQ(b))
-    return (QQ(a), QQ(b))
-
-def _saved_model_with_pole(C, R, points):
-    r"""A model with common pole ``R`` at infinity.
-
-    Return ``(G, images, xR)``, using `u=1/(x-x(R))` if needed.
-    ``images`` contains affine pairs or ``"infinity"``.
-    """
-    from sage.all import PolynomialRing, QQ, ZZ, lcm
-    g = C.genus()
-    RQ = PolynomialRing(QQ, 'x')
-    hQ, FQ = RQ(C.h), RQ(C.F)
-
-    def Ycoord(P):
-        return 2 * P[1] + hQ(P[0])
-
-    if R[0] == "infinity":
-        images = []
-        for P in points:
-            images.append("infinity" if P[0] == "infinity"
-                          else (P[0], Ycoord(P)))
-        return C.F, images, None
-
-    xR = QQ(R[0])
-    SQ = PolynomialRing(QQ, 'u')
-    u = SQ.gen()
-    shifted = FQ(RQ.gen() + xR)
-    G = sum(QQ(c) * u ** (2 * g + 2 - i) for i, c in enumerate(list(shifted)))
-    d = lcm([QQ(c).denominator() for c in G] + [1])
-    G = (d ** 2 * G).change_ring(ZZ)
-
-    images = []
-    for P in points:
-        if P[0] == "infinity":
-            # x = oo -> u = 0, v = d*(2 Y_oo + h_{g+1})
-            images.append((QQ(0), d * (2 * QQ(P[1]) + QQ(C.h[g + 1]))))
-        elif QQ(P[0]) == xR:
-            images.append("infinity")
-        else:
-            t = QQ(P[0]) - xR
-            images.append((1 / t, d * Ycoord(P) / t ** (g + 1)))
-    return G, images, xR
-
-def _saved_finite_model(C, points):
-    """A rational model on which all marked points, including ``R``, are affine."""
-    from sage.all import PolynomialRing, QQ
-    if all(P[0] != "infinity" for P in points):
-        H = PolynomialRing(QQ, "x")(C.h)
-        return C.F, [(P[0], 2*P[1]+H(P[0])) for P in points], None
-    # Put the new infinity fibre at a rational x-value containing none of
-    # the marked points or Weierstrass points. Original infinities go to u=0.
-    RQ = PolynomialRing(QQ, "x")
-    F, H = RQ(C.F), RQ(C.h)
-    marked = {QQ(P[0]) for P in points if P[0] != "infinity"}
-    shift = QQ(0)
-    while shift in marked or F(shift) == 0:
-        shift += 1
-    u = PolynomialRing(QQ, "u").gen()
-    d = 2*C.genus()+2
-    G = sum(c*u**(d-i) for i,c in enumerate(F(RQ.gen()+shift).list()))
-    images = []
-    for P in points:
-        if P[0] == "infinity":
-            images.append((QQ(0), 2*QQ(P[1])+QQ(C.h[C.genus()+1])))
-        else:
-            t = QQ(P[0])-shift
-            images.append((1/t, (2*P[1]+H(P[0]))/t**(C.genus()+1)))
-    return G, images, shift
-
-def _saved_triple_model(C, t):
-    points = [t["P"], t["Q"], t["R"]]
-    G, images, shift = _saved_model_with_pole(C, t["R"], points)
-    if images[0] != "infinity" and images[1] != "infinity":
-        return G, images, shift, "infinity"
-    G, images, shift = _saved_finite_model(C, points)
-    return G, images, shift, images[2]
-
-
 def algebraic_data(row, curve_row):
-    """Reconstruct the exact integration model and marked coordinates."""
+    """Reconstruct the recorded divisor integration chart from the LMFDB model."""
     from sage.all import PolynomialRing, QQ, latex
     from hyperell_regulator.components import curve_from_row
+    from ..motivic import integration_chart
 
     curve = curve_from_row(curve_row)
-    if row.get('divisors') is not None:
-        from ..motivic import integration_chart
-
-        F, _, shift = integration_chart(curve.F.change_ring(QQ), (), row.get('shift'))
-        ring = PolynomialRing(QQ, 'u')
-        model = ring(F.list())
-        if model != ring(re.sub(r'\bx\b', 'u', row['model'])):
-            raise ValueError('Reconstructed integration model differs: ' + row['label'])
-        return dict(model=str(model), model_latex=latex(model), original_f=str(curve.f),
-                    original_h=str(curve.h), shift=None if shift is None else str(shift),
-                    scale='1')
-    triple = dict(row["triple"])
-    for key in ("P", "Q", "R"):
-        triple[key] = _parse_point(triple[key])
-    model, images, shift, pole = _saved_triple_model(curve, triple)
-    ring = PolynomialRing(QQ, "u")
-    if ring(model) != ring(re.sub(r"\bx\b", "u", row["model"])):
-        raise ValueError("Reconstructed integration model differs: " + row["label"])
-    scale = QQ(1)
-    if shift is not None and pole == "infinity":
-        from sage.all import lcm
-        shifted = curve.F.change_ring(QQ)(curve.F.parent().gen()+shift)
-        scale = lcm([c.denominator() for c in shifted] + [1])
-    def point_json(point):
-        return point if point == "infinity" else [str(v) for v in point]
-    return dict(model=str(ring(model)), model_latex=latex(ring(model)),
-                original_f=str(curve.f), original_h=str(curve.h),
-                image_points=[point_json(p) for p in images],
-                shift=None if shift is None else str(shift), scale=str(scale),
-                pole=point_json(pole))
+    F, _, shift = integration_chart(curve.F.change_ring(QQ), (), row.get('shift'))
+    ring = PolynomialRing(QQ, 'u')
+    model = ring(F.list())
+    if model != ring(re.sub(r'\bx\b', 'u', row['model'])):
+        raise ValueError('Reconstructed integration model differs: ' + row['label'])
+    return dict(model=str(model), model_latex=latex(model), original_f=str(curve.f),
+                original_h=str(curve.h), shift=None if shift is None else str(shift),
+                scale='1')
 
 
 def number_tex(value, digits=10):
@@ -203,14 +97,6 @@ def rational_tex(value):
     return ("-" if q < 0 else "") + rf"\frac{{{abs(q.numerator)}}}{{{q.denominator}}}"
 
 
-def point_tex(point):
-    if point == "infinity":
-        return r"\infty"
-    if point[0] == "infinity":
-        return r"\infty_{" + rational_tex(point[1]) + "}"
-    return "(" + ",".join(rational_tex(v) for v in point) + ")"
-
-
 def escape_tex(text):
     replacements = {"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%",
                     "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{",
@@ -231,26 +117,6 @@ def stacked(values):
 
 def integrality_tex(verdict):
     return r"\text{" + ("Yes" if verdict is True else "No" if verdict is False else "Undecided") + "}"
-
-
-def model_pole_tex(row):
-    """The common pole in the integration coordinates, in LaTeX."""
-    from sage.all import PolynomialRing, QQ
-
-    data = row["algebraic_data"]
-    if data["pole"] != "infinity":
-        return point_tex(data["pole"])
-    ring = PolynomialRing(QQ, "x")
-    model = ring(re.sub(r"\bu\b", "x", data["model"]))
-    if model.degree() % 2:
-        return r"\infty"
-    h = ring(data["original_h"])
-    pole = row["triple"]["R"]
-    if pole[0] == "infinity":
-        eta = 2*QQ(pole[1]) + h[model.degree()//2]
-    else:
-        eta = QQ(data["scale"])*(2*QQ(pole[1]) + h(QQ(pole[0])))
-    return point_tex(("infinity", str(eta)))
 
 
 def relation_tex(row):
@@ -289,8 +155,6 @@ def render(rows, source_hash, *, bound=BOUND, digits=DIGITS):
         data = metadata[row['label']]
         verdicts = (None if len(row.get('linear_comparison', {}).get('terms', [])) > 1
                     else row.get('divisor_integrality'))
-        if 'triple' in row:
-            verdicts = [row['triple'].get(k) for k in ('verdict_P', 'verdict_Q')]
         integral = stacked([integrality_tex(v) for v in verdicts]) if verdicts else '$'+integrality_tex(row.get('integral'))+'$'
         lines.append(' & '.join([curve_link(row['label']),
             r'\texttt{'+escape_tex(data.get('end_alg') or '--')+'}',
@@ -428,7 +292,7 @@ def explorer_inputs(report, output, *, bound=BOUND, digits=DIGITS, extra_results
             integral_rank=row.get('integral_rank'), integral_rank_field=row.get('integral_rank_field', 'Q'),
             integral_rank_space=row.get('integral_rank_space', 'galois_traces'),
             trace_rank_certificate=row.get('trace_rank_certificate'),
-            integrality_verified=row.get('integral', all(row.get('triple', {}).get(k) is True for k in ('verdict_P', 'verdict_Q'))),
+            integrality_verified=row.get('integral'),
             linear_comparison=row.get('linear_comparison'), original_curve=row.get('input_curve')))
     labels = [curve['label'] for curve in curves]
     if len(labels) != len(set(labels)):

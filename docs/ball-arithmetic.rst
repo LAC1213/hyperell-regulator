@@ -60,7 +60,7 @@ timeouts, configurable via ``HYPELLFROB_TIMEOUT`` and
 ``HYPERELL_CERTIFIED_TIMEOUT``. The certified experiment reports regulator,
 period and L-value stages even without ``--verbose``. Native computations
 report elapsed time every 30 seconds. ``--verbose`` additionally reports
-triples and integration edges; ``--edge-seconds`` applies only to quadrature.
+divisor packets and integration edges; ``--edge-seconds`` applies only to quadrature.
 
 After building::
 

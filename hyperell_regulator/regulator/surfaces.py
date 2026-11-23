@@ -2,7 +2,7 @@
 from collections import deque
 import numpy as np
 from .explorer import parse_request
-from .stokes import Cut, cut_scale
+from .stokes import Cut
 
 def _bank_radius(w, critical, cut, index):
     """A sampling radius that stays on the chosen cut bank."""

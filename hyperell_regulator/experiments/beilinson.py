@@ -20,23 +20,17 @@ from hyperell_regulator.lfunction import StandardLFunction
 from hyperell_regulator.experiments.beilinson_local_data import lfunction_options, local_data_metadata
 from hyperell_regulator.paths import data_path, ensure_parent
 from hyperell_regulator.certified import (
-    ANALYTIC_ASSUMPTIONS, BACKEND_REVISION, encode_ball, decode_ball, encode_result, display_float,
+    ANALYTIC_ASSUMPTIONS, BACKEND_REVISION, encode_ball, decode_ball, display_float,
 )
 
 DEFAULT_CONDUCTOR_BOUND = 1000
 DEFAULT_GEOMETRIC_SECONDS = 30
 DEFAULT_CURVE_SECONDS = 180
 REPORT_VERSION = 13
-DETERMINANT_WEIGHTS = (1, 2, 1)
 BEILINSON_END_ALGS = ('Q', 'CM')
 REPORT_COLUMNS = "%-18s %5s %-26s %9s %14s %12s %10s %10s"
 LVALUES = data_path('results', 'lvalue_cache.json')
 RESULTS_OUT = data_path('results', 'beilinson_results.json')
-
-
-def load_results(path=CACHE):
-    with open(path) as stream:
-        return json.load(stream)
 
 
 def _fmt(point):
@@ -60,54 +54,12 @@ def lmfdb_rank(row):
     return sum(1 for t in inv if ZZ(t) == 0)
 
 
-def regulator_column_stokes(f, point, *, digits=None, pole="infinity", certified=False):
-    r"""The logarithmic column with weights `(1,2\Re(x),|x|^2)`.
-
-    A finite pole gives the weight `\log|(x-x(P))/(x-x(R))|`.
-    """
-    return _regulator_column_and_periods(f, point, digits=digits, pole=pole,
-                                       **({'certified': True} if certified else {}))[0]
-
-
-def _regulator_column_and_periods(f, point, *, digits=None, pole="infinity", certified=False):
-    from hyperell_regulator.regulator import periods_and_regulator_stokes
-    per, reg = periods_and_regulator_stokes(f, point[0],
-                    pole=None if pole == "infinity" else pole[0], prec=digits,
-                    **({'certified': True} if certified else {}))
-    return ([w*r for w, r in zip(DETERMINANT_WEIGHTS, reg)],
-            [w*p for w, p in zip(DETERMINANT_WEIGHTS, per)])
-
-
 def _sage_real(v, digits):
     r"""Convert ``v`` to a Sage real with guard digits."""
     from sage.all import RealField
 
     R = RealField(int(3.33 * int(digits)) + 24)
     return R(v)
-
-
-def beilinson_determinant_stokes(G, imP, imQ, *, digits=None, pole="infinity", certified=False):
-    """Two logarithmic columns and one period column, integrated on a common cut."""
-    from sage.all import Matrix
-    from hyperell_regulator.regulator import regulators_stokes
-    if certified:
-        from hyperell_regulator.regulator.balls import digits_value, narrow, CertificationError
-        digits = digits_value(digits)
-        per, cols = regulators_stokes(G, [imP[0], imQ[0]],
-                    pole=None if pole == "infinity" else pole[0], prec=digits+12,
-                    certified=True)
-        M = [[w*cols[0][i], w*cols[1][i], w*per[i]]
-             for i, w in enumerate(DETERMINANT_WEIGHTS)]
-        det = Matrix(per[0].parent(), M).determinant()
-        if not narrow(det, digits):
-            raise CertificationError('determinant did not achieve the requested absolute radius')
-        return det, M, None
-    per, cols = regulators_stokes(G, [imP[0], imQ[0]],
-                    pole=None if pole == "infinity" else pole[0], prec=digits)
-    f = (lambda v: float(v)) if digits is None else (lambda v: _sage_real(v, digits))
-    M = [[f(w*cols[0][i]), f(w*cols[1][i]), f(w*per[i])]
-         for i, w in enumerate(DETERMINANT_WEIGHTS)]
-    return Matrix(3, 3, [x for row in M for x in row]).determinant(), M, None
 
 
 def load_lvalues(path=LVALUES):

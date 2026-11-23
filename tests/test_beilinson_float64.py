@@ -4,7 +4,7 @@ from collections import Counter
 
 import numpy as np
 
-from hyperell_regulator.experiments.beilinson import beilinson_determinant_stokes
+from hyperell_regulator.motivic import DivisorRegulators
 from hyperell_regulator.regulator import IntegrationMonitor
 from hyperell_regulator.regulator.polynomials import ring
 
@@ -17,8 +17,8 @@ def test_conductor_249_determinant_matches_plane_with_bounded_edges():
     plane_determinant = 2 * 16.743865748432064
     weights = np.array([1., 2., 1.])
     with IntegrationMonitor(max_edge_seconds=15) as monitor:
-        det, matrix, errors = beilinson_determinant_stokes(
-            F, (-1, 0), (0, -1), digits=None)
+        det, matrix = DivisorRegulators(F, [-1, 0, 'infinity']).determinant(
+            [1, 0, -1], [0, 1, -1])
     values = np.asarray(matrix, dtype=float)
     assert np.isfinite(values).all()
     # Compare the individual weights too: a determinant alone can conceal
@@ -31,7 +31,6 @@ def test_conductor_249_determinant_matches_plane_with_bounded_edges():
     assert np.max(abs(7 * values[:, 1] + np.log(2) * values[:, 2]
                       - weights * [-5.21685044, -4.00181129, 13.80481861])) < 2e-8
     assert abs(float(det) - plane_determinant) < 2e-7
-    assert errors is None
     # One shared two-sheet cut supplies all three determinant columns.
     from hyperell_regulator.regulator.stokes import Cut
     assert len(monitor.records) == len(Cut(F, [-1,0]).nodes)

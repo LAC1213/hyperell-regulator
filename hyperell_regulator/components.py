@@ -228,79 +228,6 @@ def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
     return out
 
 
-def lmfdb_label(C, pause=6, email="acampo@ihes.fr", verbose=True):
-    r"""The LMFDB labels matching the absolute Igusa invariants of ``C``.
-
-    EXAMPLES::
-
-        sage: from hyperell_regulator.components import HyperellipticCurveWithReduction, lmfdb_label
-        sage: R.<x> = ZZ[]
-        sage: C = HyperellipticCurveWithReduction(-x^2 - x, x^3 + x^2 + x + 1)
-        sage: lmfdb_label(C)                                    # optional - internet
-        ['277.a.277.1']
-    """
-    import time
-    import urllib.request
-    import urllib.parse
-
-    headers = {"User-Agent": "sage-research-script/1.0 (%s)" % email}
-
-    def api(**kw):
-        kw.setdefault("_format", "json")
-        url = "https://www.lmfdb.org/api/g2c_curves/?%s" % \
-            urllib.parse.urlencode(kw)
-        raw = urllib.request.urlopen(
-            urllib.request.Request(url, headers=headers), timeout=120).read()
-        if raw.lstrip()[:1] == b"<":
-            raise RuntimeError("LMFDB returned a CAPTCHA page, not JSON")
-        return json.loads(raw)
-
-    def invariants(curve):
-        return tuple(QQ(t) for t in
-                     curve.absolute_igusa_invariants_wamelen())
-
-    target = invariants(C.curve() if hasattr(C, "curve") else C)
-
-    keys = []
-    try:
-        keys.append(("abs_disc", abs(ZZ(C.minimal_discriminant()))))
-    except Exception:
-        pass
-    try:
-        keys.append(("cond", ZZ(C.conductor())))
-    except Exception:
-        pass
-
-    seen, out = set(), []
-    for field, value in keys:
-        if out:
-            break
-        try:
-            rows = api(_fields="label,cond,abs_disc,eqn",
-                       **{field: int(value)})["data"]
-        except Exception as exc:
-            if verbose:
-                print("   query on %s=%s failed: %s" % (field, value, exc))
-            continue
-        if verbose:
-            print("   %s=%s -> %s candidate(s)" % (field, value, len(rows)))
-        for r in rows:
-            if r["label"] in seen:
-                continue
-            seen.add(r["label"])
-            eqn = _as_list(r["eqn"])
-            try:
-                D = HyperellipticCurve(PolynomialRing(QQ, 'x')(
-                        [QQ(c) for c in eqn[0]]),
-                    PolynomialRing(QQ, 'x')([QQ(c) for c in eqn[1]]))
-                if invariants(D) == target:
-                    out.append(r["label"])
-            except Exception:
-                continue
-        time.sleep(pause)
-    return out
-
-
 def load_curves(path=CACHE, max_cond=None, simple_only=True, geom_simple=False, end_q_z=False,
                 end_algs=None):
     r"""Cached curves in conductor order, with conductor at most ``max_cond``.
@@ -536,7 +463,6 @@ def affine_model(C, points):
     u = S.gen()
     coeffs = list(F(F.parent().gen() + a))          # F expanded about a
     G = sum(ZZ(c) * u ** (2 * g + 2 - i) for i, c in enumerate(coeffs))
-    assert G.degree() == 2 * g + 2 and G(0) != 0 or True
 
     # Y = 2y + h(x) on the square model; v = Y/(x-a)^{g+1}, and v^2 = G(u)
     RQ = PolynomialRing(QQ, 'x')

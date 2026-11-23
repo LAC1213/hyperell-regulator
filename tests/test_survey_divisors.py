@@ -65,7 +65,7 @@ def test_old_basis_cut_reconstruction_cancels_ordinates_and_includes_unused_rows
     assert divisor_metadata(row)['logarithmic_centers'][0]['exact'] == {'rational': '0'}
 
 
-def test_complex_support_is_exact_and_never_projected_into_real_picture():
+def test_complex_support_retains_exact_coordinates_for_support_table():
     row = example()
     i = QQbar(-1).sqrt()
     row['points'][0] = encode_point((i, QQbar(0)))

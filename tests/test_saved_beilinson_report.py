@@ -18,12 +18,15 @@ def saved_row(label="249.a.249.1", cond=249):
                 matrix=[["1", "0", "0"], ["0", "1", "0"], ["0", "0", "33.48773151266455986457282728"]],
                 det="33.48773151266455986457282728", c_plus="6.445925843562459201",
                 c_minus="9.137006586242914998", model="u^6 + 4*u^5 + 4*u^4 + 2*u^3 + 1",
-                triple=dict(P=["-1", "0"], Q=["infinity", "-1"], R=["0", "-1"],
-                            order_P=7, order_Q=14, verdict_P=True, verdict_Q=True),
+                points=[dict(field_polynomial=None, root_index=None, coordinates=P)
+                        for P in (["-1", "0"], ["infinity", "-1"], ["0", "-1"])],
+                divisors=[["1", "0", "-1"], ["0", "1", "-1"]], shift="0",
+                integral=True, divisor_integrality=[True, True],
+                packet_torsion_order="14", packet_torsion_order_exact=True,
                 comparison=dict(normalisation=report.NORMALISATION, ratio="28.0000000000000000000000000000000000000001",
                                 rational="28", relative_agreement="3.57142857e-42"),
                 settings=dict(report_version=b.REPORT_VERSION, regulator_digits=100,
-                              lvalue_digits=100, with_lvalue=True, allow_undecided=True))
+                              lvalue_digits=100, with_lvalue=True))
 
 
 def test_scope_precision_policy_and_failures():
@@ -55,7 +58,7 @@ def test_rejects_stale_conventions_and_insufficient_lvalue_precision():
         report.select_results([row])
 
 
-def test_1116_is_outside_survey_bound_and_excluded_from_legacy_tables_and_explorer(tmp_path):
+def test_1116_is_outside_survey_bound_and_excluded_from_tables_and_explorer(tmp_path):
     included = saved_row()
     excluded = saved_row("1116.a.214272.1", 1116)
     selected = report.select_results([excluded, included])
@@ -71,7 +74,7 @@ def test_1116_is_outside_survey_bound_and_excluded_from_legacy_tables_and_explor
     assert inputs["source"]["excluded_conductors"] == [1116]
 
 
-def test_exports_exact_current_model_and_functions_without_integrating(tmp_path):
+def test_exports_exact_current_model_and_divisors_without_integrating(tmp_path):
     row = saved_row()
     source = tmp_path/"results.json"
     source.write_text(json.dumps([row]))
@@ -86,7 +89,9 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
     rows = json.loads((out/"beilinson_100_digits.json").read_text())
     exported = rows[0]
     assert exported["det"] == row["det"]
-    assert exported["algebraic_data"]["image_points"] == [["-1", "0"], ["0", "-1"], "infinity"]
+    from hyperell_regulator.experiments.geometric_torsion import decode_point
+    images = [decode_point(P["point"]) for P in exported["divisor_data"]["support"]]
+    assert images == [(-1, 0), (0, -1), ("infinity", -1)]
     assert exported["algebraic_data"]["shift"] == "0"
     assert exported["algebraic_data"]["scale"] == "1"
     assert "functions" not in exported["algebraic_data"]
@@ -125,10 +130,9 @@ def test_exports_exact_current_model_and_functions_without_integrating(tmp_path)
 
 def test_tex_preserves_undecided_verdict_and_reports_failure():
     row = saved_row()
-    row["triple"]["verdict_P"] = None
-    row["algebraic_data"] = dict(model="u^5+1", model_latex="u^5+1", shift=None, scale="1", pole="infinity",
-                                 image_points=[["-1", "0"], ["0", "-1"], "infinity"],
-                                 functions={k:dict(latex="u+v") for k in ("P", "Q")})
+    row["divisor_integrality"][0] = None
+    row["algebraic_data"] = report.algebraic_data(row, dict(
+        label=row["label"], cond=249, eqn=[[0, 1, 1], [1, 0, 0, 1]]))
     failure = dict(label="997.a.997.1", status="numerical_failure", error="cut_system_failed & timeout")
     tex = report.render([row, failure], "abc123")
     assert r"\begin{gathered}\text{Undecided}\\\text{Yes}\end{gathered}" in tex
@@ -136,29 +140,21 @@ def test_tex_preserves_undecided_verdict_and_reports_failure():
     assert "997.a.997.1" in tex
 
 
-def test_model_table_labels_the_selected_infinity_and_coordinate_change():
-    row = saved_row("277.a.277.1", 277)
-    row["triple"]["R"] = ["infinity", "-1"]
-    row["algebraic_data"] = dict(model="u^6+1", original_h="x^3+1",
-                                 shift=None, scale="1", pole="infinity")
-    assert report.model_pole_tex(row) == r"\infty_{-1}"
-    row["triple"]["R"] = ["0", "-1"]
-    row["algebraic_data"].update(model="4*u^6+4", shift="0", scale="2")
-    assert report.model_pole_tex(row) == r"\infty_{-2}"
-    assert report.curve_link(row["label"], changed_model=True).endswith(r"$^{\dagger}$")
-
-
-def test_unshifted_model_keeps_its_original_variable_and_infinity_pole():
+def test_unshifted_model_keeps_lmfdb_points_and_infinity_ordinate():
     row = saved_row("277.a.277.1", 277)
     row["model"] = "x^6 + 2*x^5 + 3*x^4 + 4*x^3 - x^2 - 2*x + 1"
-    row["triple"] = dict(P=["-1", "0"], Q=["0", "-1"], R=["infinity", "-1"],
-                         order_P=15, order_Q=3)
+    row["shift"] = None
+    row["points"] = [dict(field_polynomial=None, root_index=None, coordinates=P)
+                     for P in (["-1", "0"], ["0", "-1"], ["infinity", "-1"])]
     curve = dict(label=row["label"], cond=277, eqn=[[0, -1, -1], [1, 1, 1, 1]])
     data = report.algebraic_data(row, curve)
     assert data["shift"] is None and data["scale"] == "1"
-    assert data["pole"] == "infinity"
     assert data["model"].startswith("u^6 + 2*u^5")
-    assert data["image_points"] == [["-1", "0"], ["0", "-1"], "infinity"]
+    row['algebraic_data'] = data
+    displayed = report.divisor_metadata(row)
+    assert displayed['support'][2]['tex'] == r"\infty_{Y=-1}"
+    assert displayed['support'][2]['lmfdb']['infinity']
+    assert report.curve_link(row['label'], changed_model=True).endswith(r"$^{\dagger}$")
 
 
 def test_explicit_extra_curves_include_full_generators_beyond_survey_bound(tmp_path):

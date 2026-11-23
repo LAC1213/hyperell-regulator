@@ -208,16 +208,17 @@ Numerical helpers
 
 .. code-block:: python
 
-   from hyperell_regulator.experiments.beilinson import (
-       beilinson_determinant_stokes, regulator_column_stokes,
-   )
+   from hyperell_regulator.motivic import DivisorRegulators
 
-   det, matrix, errors = beilinson_determinant_stokes(F, P, Q, digits=30)
-   column = regulator_column_stokes(F, P, digits=30)
+   evaluator = DivisorRegulators(F, [-1, 0, 'infinity'], digits=30)
+   D1, D2 = (1, 0, -1), (0, 1, -1)
+   det, matrix = evaluator.determinant(D1, D2)
+   period, columns = evaluator.columns((D1, D2))
 
-Here ``P`` and ``Q`` are point coordinates on :math:`y^2=F(x)`.
-``pole`` specifies a common finite pole; the default is infinity.
-Torsion orders certify the algebraic classes independently of integration.
+Each coefficient row has degree zero and refers to the supplied abscissae
+on :math:`y^2=F(x)`. All columns use a shared integration cut.
+Use ``MotivicPacket`` for exact curve points with torsion verification
+and integral Galois-trace divisor generators.
 
 For computations at 2, ``h1_conductor`` supplies the exact Jacobian
 conductor when PARI omits its local exponent. A trivial local
