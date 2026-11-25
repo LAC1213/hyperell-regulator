@@ -82,6 +82,10 @@ window.FibreGraphPanel = (() => {
   const cache=new Map();
   function message(text,error=false) { $("fibre-status").textContent=text; $("fibre-status").classList.toggle("error",error); }
   function support() { return (collection?.support||[]).filter(p=>!Q.from(p.coefficients[selected]||0).zero); }
+  function unavailableGraph(entry) {
+    const reason=entry?.reason||entry?.places?.map(x=>x.reason).filter(Boolean).join("; ")||"The exact local model is not available.";
+    return {reason, label:/time budget|timeout|exceeded/i.test(reason)?"Graph computation unavailable":"Graph not implemented"};
+  }
   function setDivisor(id) {
     selected=id; $("fibre-divisor").value=id;
     if (graph) { renderSupport(); useDivisor(); }
@@ -111,7 +115,8 @@ window.FibreGraphPanel = (() => {
       $("fibre-prime").replaceChildren();
       for(const p of [...record.bad_primes].sort((a,b)=>a-b)) {
         const option=document.createElement("option"); option.value=p;
-        option.textContent=String(p)+(record.fibres.find(f=>f.prime===p)?.status==="available"?"":" — model unavailable");
+        const fibre=record.fibres.find(f=>f.prime===p);
+        option.textContent=String(p)+(fibre?.status==="available"?"":" — "+unavailableGraph(fibre).label.toLowerCase());
         $("fibre-prime").append(option);
       }
       if (!record.bad_primes.length) { message("No bad reduction primes are recorded for this curve."); return; }
@@ -130,12 +135,12 @@ window.FibreGraphPanel = (() => {
     $("fibre-place").replaceChildren(); $("fibre-place-label").hidden=true;
     const entry=record.fibres.find(x=>x.prime===p);
     if(!entry || entry.status!=="available") {
-      const reason=entry?.reason||entry?.places?.map(x=>x.reason).filter(Boolean).join("; ")||"The exact local model is not available.";
-      message("p = "+p+": "+reason+" Select another prime to inspect an available fibre.",true); return;
+      const issue=unavailableGraph(entry);
+      message(issue.label+" for "+curve.label+" at p = "+p+". "+issue.reason.replace(/[.\s]+$/,"")+". Select another bad prime to inspect an available fibre.",true); return;
     }
     entry.places.forEach((place,i)=>{
       const option=document.createElement("option"); option.value=i;
-      option.textContent="Place "+(i+1)+(place.status==="available"?"":" — model unavailable");
+      option.textContent="Place "+(i+1)+(place.status==="available"?"":" — "+unavailableGraph(place).label.toLowerCase());
       $("fibre-place").append(option);
     });
     $("fibre-place").value=entry.places.findIndex(x=>x.status==="available");
@@ -144,7 +149,11 @@ window.FibreGraphPanel = (() => {
   }
   function showPlace() {
     const entry=record.fibres.find(x=>x.prime===currentPrime), place=entry.places[Number($("fibre-place").value)];
-    if (place.status!=="available") { graph=null; $("fibre-workspace").hidden=true; message(place.reason,true); return; }
+    if (place.status!=="available") {
+      const issue=unavailableGraph(place);
+      graph=null; result=null; $("fibre-workspace").hidden=true;
+      message(issue.label+" for this place above p = "+currentPrime+". "+issue.reason.replace(/[.\s]+$/,"")+".",true); return;
+    }
     showGraph(place);
   }
   function showGraph(next) {

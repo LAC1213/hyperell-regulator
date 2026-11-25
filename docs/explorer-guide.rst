@@ -55,8 +55,9 @@ The graph need not be the minimal model over :math:`\mathbb Q_p`.
 The support table uses the same divisor selector and original LMFDB point
 coordinates as the first panel. Exact specializations are labelled
 :math:`Z_i`; unresolved specializations are stated explicitly. Unsupported
-wild models and computations exceeding the export budget are also shown
-as unavailable, rather than replaced by a guessed graph.
+wild graphs are labelled **Graph not implemented** in the selector and
+panel. Computations exceeding the export budget are labelled separately
+as **Graph computation unavailable**. Neither case displays a guessed graph.
 
 Enter rational charges :math:`f_Z` in the component table and select
 **Solve Lu = f**. Calculations use exact fractions, with
