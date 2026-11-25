@@ -432,6 +432,7 @@ async function display(data,name,curve=null) {
   catch (error) { $("result-model").textContent=displayEquationTex(); }
   math($("cut-model"),"v^2="+CurveGeometry.equationTex(current.input.F).split("y^2=")[1].replace(/x/g,"u"));
   renderPoints(curve);
+  const fibre=window.FibreGraphPanel?.setCurve(curve,current);
   $("show-mesh").disabled=!mesh;
   $("mesh-caption").textContent=mesh?"Drag to rotate. Use the sheet selector to view either sheet.":"Drag to rotate the lifted paths. Surface mesh unavailable.";
   $("results").hidden=false; $("export").disabled=false;
@@ -441,7 +442,7 @@ async function display(data,name,curve=null) {
   fitCurveEquation();
   fitConjectureEquation();
   renderIntegrals();
-  return Promise.all([renderTree(),renderPlot()]);
+  return Promise.all([renderTree(),renderPlot(),fibre]);
 }
 async function chooseCurve(index) {
   const token=++version, c=catalog.curves[index]; status("Loading "+c.label+"…");
@@ -475,7 +476,7 @@ function renderCatalog() {
   }); $("curve-select").disabled=false;
 }
 $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-select").value)));
-$("divisor-select").addEventListener("change",()=>renderPoints(currentCurve));
+$("divisor-select").addEventListener("change",()=>{renderPoints(currentCurve);window.FibreGraphPanel?.setDivisor($("divisor-select").value);});
 ["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();if(id==="weight-select")updateTreeSelection();}));
 $("beilinson-digits").addEventListener("input",()=>renderBeilinson(currentCurve));
 window.addEventListener("pageshow",()=>{if(current){renderIntegrals();updateTreeSelection();}});
@@ -483,4 +484,5 @@ window.addEventListener("pageshow",()=>{if(current){renderIntegrals();updateTree
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;$("curve-select").value="";for(const row of $("catalog-rows").children)row.classList.remove("selected");await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});
 document.querySelectorAll("[data-tex]").forEach(node=>math(node,node.dataset.tex));
+window.FibreGraphPanel?.init();
 fetch("catalog.json?v="+DATA_VERSION).then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{if(data.schema_version!==3||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");catalog=data;renderCatalog();const saved=catalog.curves.findIndex(c=>c.label===decodeURIComponent(location.hash.slice(1)).split("/")[0]);$("curve-select").value=Math.max(0,saved);return chooseCurve(Math.max(0,saved));}).catch(e=>status(e.message,true));

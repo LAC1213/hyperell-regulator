@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "label": "688.a.704512.1",
+  "bad_primes": [
+    2,
+    43
+  ],
+  "fibres": [
+    {
+      "prime": 2,
+      "status": "available",
+      "places": [
+        {
+          "status": "available",
+          "genera": [
+            2
+          ],
+          "edges": [],
+          "cycles": [],
+          "laplacian": [
+            [
+              "0"
+            ]
+          ],
+          "specializations": [
+            {
+              "point_id": "P1",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P2",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P6",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P7",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P8",
+              "components": [
+                0
+              ],
+              "status": "known"
+            }
+          ],
+          "source_metric_edges": [],
+          "source_vertex_count": 1,
+          "valuation_normalization": "uniformizer",
+          "regularization_scale": 1,
+          "field_polynomial": [
+            "5",
+            "-20",
+            "5",
+            "40",
+            "10",
+            "-4",
+            "10",
+            "0",
+            "5",
+            "0",
+            "1"
+          ],
+          "prime_ideal": "Fractional ideal (2, -22095/365356*s^9 + 2637/365356*s^8 - 26079/91339*s^7 + 3931/91339*s^6 - 86709/182678*s^5 + 23865/91339*s^4 - 31763/91339*s^3 - 242868/91339*s^2 + 70801/365356*s + 479659/365356)",
+          "ramification_index": 10,
+          "residue_degree": 1,
+          "input_prime_ideal": "Fractional ideal (a - 1)"
+        }
+      ],
+      "export_seconds": 45.0
+    },
+    {
+      "prime": 43,
+      "status": "available",
+      "places": [
+        {
+          "status": "available",
+          "genera": [
+            1,
+            0
+          ],
+          "edges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "cycles": [
+            [
+              "1",
+              "1"
+            ]
+          ],
+          "laplacian": [
+            [
+              "2",
+              "-2"
+            ],
+            [
+              "-2",
+              "2"
+            ]
+          ],
+          "specializations": [
+            {
+              "point_id": "P1",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P2",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P6",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P7",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P8",
+              "components": [
+                0
+              ],
+              "status": "known"
+            }
+          ],
+          "source_metric_edges": [
+            [
+              0,
+              0,
+              "1"
+            ]
+          ],
+          "source_vertex_count": 1,
+          "valuation_normalization": "uniformizer",
+          "regularization_scale": 2,
+          "field_polynomial": [
+            "1",
+            "0",
+            "1"
+          ],
+          "prime_ideal": "Fractional ideal (43)",
+          "ramification_index": 1,
+          "residue_degree": 2,
+          "input_prime_ideal": "Fractional ideal (43)"
+        }
+      ],
+      "export_seconds": 45.0
+    }
+  ]
+}

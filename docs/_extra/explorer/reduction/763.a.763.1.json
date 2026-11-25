@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "label": "763.a.763.1",
+  "bad_primes": [
+    7,
+    109
+  ],
+  "fibres": [
+    {
+      "prime": 7,
+      "status": "available",
+      "places": [
+        {
+          "status": "available",
+          "genera": [
+            1,
+            0
+          ],
+          "edges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "cycles": [
+            [
+              "1",
+              "1"
+            ]
+          ],
+          "laplacian": [
+            [
+              "2",
+              "-2"
+            ],
+            [
+              "-2",
+              "2"
+            ]
+          ],
+          "specializations": [
+            {
+              "point_id": "P1",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P2",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P3",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P4",
+              "components": [
+                0
+              ],
+              "status": "known"
+            }
+          ],
+          "source_metric_edges": [
+            [
+              0,
+              0,
+              "1"
+            ]
+          ],
+          "source_vertex_count": 1,
+          "valuation_normalization": "uniformizer",
+          "regularization_scale": 2,
+          "field_polynomial": [
+            "0",
+            "1"
+          ],
+          "prime_ideal": "Fractional ideal (7)",
+          "ramification_index": 1,
+          "residue_degree": 1,
+          "input_prime_ideal": "Fractional ideal (7)"
+        }
+      ],
+      "export_seconds": 45.0
+    },
+    {
+      "prime": 109,
+      "status": "available",
+      "places": [
+        {
+          "status": "available",
+          "genera": [
+            1,
+            0
+          ],
+          "edges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "cycles": [
+            [
+              "1",
+              "1"
+            ]
+          ],
+          "laplacian": [
+            [
+              "2",
+              "-2"
+            ],
+            [
+              "-2",
+              "2"
+            ]
+          ],
+          "specializations": [
+            {
+              "point_id": "P1",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P2",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P3",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P4",
+              "components": [
+                0
+              ],
+              "status": "known"
+            }
+          ],
+          "source_metric_edges": [
+            [
+              0,
+              0,
+              "1"
+            ]
+          ],
+          "source_vertex_count": 1,
+          "valuation_normalization": "uniformizer",
+          "regularization_scale": 2,
+          "field_polynomial": [
+            "0",
+            "1"
+          ],
+          "prime_ideal": "Fractional ideal (109)",
+          "ramification_index": 1,
+          "residue_degree": 1,
+          "input_prime_ideal": "Fractional ideal (109)"
+        }
+      ],
+      "export_seconds": 45.0
+    }
+  ]
+}

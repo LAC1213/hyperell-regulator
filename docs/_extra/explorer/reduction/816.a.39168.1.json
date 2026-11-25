@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "label": "816.a.39168.1",
+  "bad_primes": [
+    2,
+    3,
+    17
+  ],
+  "fibres": [
+    {
+      "prime": 2,
+      "status": "unavailable",
+      "places": [
+        {
+          "status": "unavailable",
+          "reason": "only the projected boundary is available for this wild fibre",
+          "input_prime_ideal": "Fractional ideal (2)"
+        }
+      ],
+      "export_seconds": 45.0
+    },
+    {
+      "prime": 3,
+      "status": "available",
+      "places": [
+        {
+          "status": "available",
+          "genera": [
+            1,
+            0
+          ],
+          "edges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "cycles": [
+            [
+              "1",
+              "1"
+            ]
+          ],
+          "laplacian": [
+            [
+              "2",
+              "-2"
+            ],
+            [
+              "-2",
+              "2"
+            ]
+          ],
+          "specializations": [
+            {
+              "point_id": "P1",
+              "components": [
+                1
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P2",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P3",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P4",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P5",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P6",
+              "components": [
+                1
+              ],
+              "status": "known"
+            }
+          ],
+          "source_metric_edges": [
+            [
+              0,
+              1,
+              "1"
+            ],
+            [
+              1,
+              0,
+              "1"
+            ]
+          ],
+          "source_vertex_count": 2,
+          "valuation_normalization": "uniformizer",
+          "regularization_scale": 1,
+          "field_polynomial": [
+            "0",
+            "1"
+          ],
+          "prime_ideal": "Fractional ideal (3)",
+          "ramification_index": 1,
+          "residue_degree": 1,
+          "input_prime_ideal": "Fractional ideal (3)"
+        }
+      ],
+      "export_seconds": 45.0
+    },
+    {
+      "prime": 17,
+      "status": "available",
+      "places": [
+        {
+          "status": "available",
+          "genera": [
+            1,
+            0
+          ],
+          "edges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "cycles": [
+            [
+              "1",
+              "1"
+            ]
+          ],
+          "laplacian": [
+            [
+              "2",
+              "-2"
+            ],
+            [
+              "-2",
+              "2"
+            ]
+          ],
+          "specializations": [
+            {
+              "point_id": "P1",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P2",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P3",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P4",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P5",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P6",
+              "components": [
+                0
+              ],
+              "status": "known"
+            }
+          ],
+          "source_metric_edges": [
+            [
+              0,
+              0,
+              "1"
+            ]
+          ],
+          "source_vertex_count": 1,
+          "valuation_normalization": "uniformizer",
+          "regularization_scale": 2,
+          "field_polynomial": [
+            "0",
+            "1"
+          ],
+          "prime_ideal": "Fractional ideal (17)",
+          "ramification_index": 1,
+          "residue_degree": 1,
+          "input_prime_ideal": "Fractional ideal (17)"
+        }
+      ],
+      "export_seconds": 45.0
+    }
+  ]
+}

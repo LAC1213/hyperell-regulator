@@ -35,6 +35,55 @@ The transformed point images determine the logarithmic centers. This is
 the paper's square model :math:`y^2=f(x)` with coordinates renamed to
 distinguish it from the original LMFDB equation.
 
+Special fibre and local obstruction
+-----------------------------------
+
+Choose a bad reduction prime :math:`p` in **Special fibre and local obstruction**.
+The selector lists only the bad primes of the chosen curve and updates
+the graph when the selection changes. The viewer uses exported exact
+local models over a finite extension. When the support field has several
+places above :math:`p`, the place selector chooses a local specialization.
+
+The displayed graph is a unit-edge resolution of the verified metric
+model after finite base change. Chains of rational components resolve
+node thicknesses, and a further quadratic base change separates a
+self-node when needed. Component indices from the marked metric model
+are retained. The local-model field, valuation normalization and resolution
+scale are recorded under **Cycle basis, Laplacian convention and Tate direction**.
+The graph need not be the minimal model over :math:`\mathbb Q_p`.
+
+The support table uses the same divisor selector and original LMFDB point
+coordinates as the first panel. Exact specializations are labelled
+:math:`Z_i`; unresolved specializations are stated explicitly. Unsupported
+wild models and computations exceeding the export budget are also shown
+as unavailable, rather than replaced by a guessed graph.
+
+Enter rational charges :math:`f_Z` in the component table and select
+**Solve Lu = f**. Calculations use exact fractions, with
+:math:`u_{Z_0}=0`; a solution exists precisely when the total charge is zero.
+**Use divisor charge** supplies :math:`f=-\sum_P a_PZ_P`, matching the
+sign in the paper's integrality proposition. It is enabled only when
+all required point specializations are known.
+
+The panel displays the full tuple from the paper:
+
+.. math::
+
+   \operatorname{ob}_{\mathfrak p}(u)
+   =\bigl(Q_u,(u_Z)_{g(Z)>0}\bigr),\qquad
+   Q_u(\gamma,\delta)=\sum_{e=(Z,W)}(u_Z+u_W)\gamma_e\delta_e.
+
+The cycle matrix uses the displayed oriented edge basis. The panel also
+tests membership in :math:`\mathbb Q\operatorname{ob}_{\mathfrak p}(\mathbf1)`;
+vanishing of the raw tuple is sufficient but is not required. This
+membership is independent of adding a constant to the potential. It is
+a local condition for the entered charge, not a global integrality
+certificate. Click a graph vertex to focus its charge; hover to inspect
+its genus, marked points, charge and potential.
+
+Regulator cut and matrix
+------------------------
+
 **The tree** :math:`\Gamma\subset\mathbb P^1` shows the complete integration cut,
 including logarithmic centers used by other basis divisors in the same
 computation. **The lift** :math:`T\subset C` shows its lift.
@@ -136,6 +185,7 @@ From the repository root:
    sage -python -m hyperell_regulator.experiments.small_conductor_explorer --jobs 4
    sage -pip install '.[visualization]'
    sage -python -m hyperell_regulator.experiments.small_conductor_surfaces --jobs 4
+   sage -python -m hyperell_regulator.experiments.fibre_explorer --jobs 3 --seconds 45
 
 The report export reads the completed run without repeating its integrations
 or L-values. The explorer checks the saved divisor matrices using fresh
@@ -143,6 +193,9 @@ lower-precision integrals on the full shared cuts; its displayed numerical
 values remain those from the successful run. The remaining commands install
 Triangle and build display meshes. Source hashes ignore docstrings,
 comments and formatting.
+The fibre exporter separately computes the marked local models; it does
+not repeat regulator or :math:`L`-value integrations. Its cached records
+are keyed by the exact input support and model implementation.
 
 Sphinx copies ``docs/_extra/explorer`` into the published site.
 Building the documentation does not repeat numerical integration.

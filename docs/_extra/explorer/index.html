@@ -7,11 +7,12 @@
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=acampo-background-10">
+  <link rel="stylesheet" href="explorer.css?v=semistable-12">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
   <script defer src="curve-geometry.js?v=divisor-workflow-8"></script>
-  <script defer src="explorer.js?v=paper-notation-9"></script>
+  <script defer src="fibre-graph.js?v=semistable-12"></script>
+  <script defer src="explorer.js?v=semistable-12"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -53,6 +54,60 @@
           <p id="support-caption" class="caption"></p>
           <div class="support-table"><table aria-label="Complete support of the selected divisor in LMFDB coordinates"><thead><tr><th scope="col">Point in LMFDB coordinates</th><th scope="col">Coefficient</th></tr></thead><tbody id="support-info"></tbody></table></div>
           <p class="caption">Algebraic root indices start at 0 and are ordered by real part, then imaginary part.</p>
+        </div>
+      </section>
+      <section class="panel fibre-panel" id="fibre-panel" aria-labelledby="fibre-title" hidden>
+        <div class="section-label"><h2 id="fibre-title">Special fibre and local obstruction</h2></div>
+        <p class="matrix-caption">Choose a bad reduction prime to see the geometric special fibre of a regular strictly semistable model after finite extension.
+          Vertices <span data-tex="Z">Z</span> are components, edges are nodes, and the vertex genus is the genus of its normalization.
+          Follow the points in the support of <span data-tex="D">D</span>, or enter your own charge and solve <span data-tex="Lu=f">Lu=f</span>.</p>
+        <form class="fibre-controls" id="fibre-prime-form">
+          <label><span>Bad prime <span data-tex="p">p</span></span><select id="fibre-prime" aria-label="Bad reduction prime p"></select></label>
+          <button type="submit">Show fibre</button>
+          <label id="fibre-place-label" hidden><span>Place above <span data-tex="p">p</span></span><select id="fibre-place"></select></label>
+          <label><span>Divisor <span data-tex="D">D</span></span><select id="fibre-divisor"></select></label>
+        </form>
+        <p id="fibre-status" class="hint" role="status" aria-live="polite"></p>
+        <div id="fibre-workspace" hidden>
+          <p id="fibre-model-note" class="caption"></p>
+          <div class="fibre-layout">
+            <div>
+              <div id="fibre-plot" class="fibre-plot" aria-label="Dual graph with component genera, point specializations and potentials"></div>
+              <p class="caption">Larger vertices have positive genus. After solving, blue means negative potential and orange means positive potential. Hover for genus, support points and the exact potential; click a vertex to edit its charge. Edge <span data-tex="e_k">eₖ</span> is oriented from its first endpoint to its second.</p>
+            </div>
+            <form id="fibre-solve" class="fibre-charge-editor">
+              <h3>Charge and potential</h3>
+              <p class="caption">Enter integers, fractions or decimals. A solution requires <span data-tex="\sum_Z f_Z=0">Σ fZ=0</span>.
+                We fix <span data-tex="u_{Z_0}=0">uZ₀=0</span>; calculations are exact over <span data-tex="\mathbb Q">ℚ</span>.</p>
+              <div class="fibre-charge-scroll"><table><thead><tr><th scope="col">Component</th><th scope="col">Genus</th><th scope="col"><span data-tex="f_Z">fZ</span></th><th scope="col"><span data-tex="u_Z">uZ</span></th></tr></thead><tbody id="fibre-charges"></tbody></table></div>
+              <div class="fibre-buttons"><button type="submit">Solve Lu = f</button><button type="button" id="fibre-divisor-charge">Use divisor charge</button><button type="button" id="fibre-zero-charge">Zero charge</button></div>
+              <p id="fibre-charge-note" class="caption"></p>
+              <p id="fibre-error" class="hint error" role="alert"></p>
+            </form>
+          </div>
+          <details class="fibre-support-details" open><summary>Reduction of the selected divisor support</summary>
+            <div class="table-scroll"><table><thead><tr><th scope="col">Point in LMFDB coordinates</th><th scope="col">Coefficient in D</th><th scope="col">Specializes to</th></tr></thead><tbody id="fibre-support"></tbody></table></div>
+          </details>
+          <div id="fibre-solution" class="fibre-solution" hidden>
+            <h3>The obstruction <span data-tex="\operatorname{ob}_{\mathfrak p}(u)">ob𝔭(u)</span></h3>
+            <p class="caption">The paper defines <span data-tex="\operatorname{ob}_{\mathfrak p}(u)=\bigl(Q_u,(u_Z)_{g(Z)>0}\bigr)">ob𝔭(u)=(Qᵤ,(uZ)g(Z)&gt;0)</span>, with
+              <span data-tex="Q_u(\gamma,\delta)=\sum_{e=(Z,W)}(u_Z+u_W)\gamma_e\delta_e">Qᵤ(γ,δ)=Σ(uZ+uW)γeδe</span>.
+              The positive-genus entries follow the component order in the charge table.</p>
+            <div class="equation-scroll"><div id="fibre-potential"></div></div>
+            <div class="fibre-obstruction"><div class="equation-scroll" id="fibre-cycle-form"></div><div class="equation-scroll" id="fibre-positive"></div></div>
+            <p id="fibre-verdict" class="fibre-verdict"></p>
+            <div class="equation-scroll" id="fibre-verdict-formula"></div>
+            <p class="caption">This is a local test for the entered charge. For the divisor charge, the paper's integrality criterion tests membership in this line at every finite place.
+              Adding a constant to <span data-tex="u">u</span> adds the corresponding multiple of <span data-tex="\operatorname{ob}_{\mathfrak p}(\mathbf1)">ob𝔭(1)</span>.</p>
+            <details><summary>Cycle basis, Laplacian convention and Tate direction</summary>
+              <p class="caption">All edges have unit thickness. Thus <span data-tex="L_{ZZ}=\deg(Z)">LZZ=deg(Z)</span> and
+                <span data-tex="L_{ZW}=-\#\{\text{edges between }Z,W\}">LZW=−#{edges between Z,W}</span> for distinct components.</p>
+              <div class="table-scroll"><table><tbody id="fibre-cycle-basis"></tbody></table></div>
+              <p id="fibre-no-cycles" class="caption">The graph is a tree: the cycle pairing is an empty matrix.</p>
+              <div class="equation-scroll" id="fibre-tate-form"></div>
+              <p id="fibre-extension" class="caption"></p>
+            </details>
+          </div>
         </div>
       </section>
       <section class="method-note" aria-label="How the regulator is computed">

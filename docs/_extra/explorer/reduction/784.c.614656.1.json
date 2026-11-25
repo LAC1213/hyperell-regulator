@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "label": "784.c.614656.1",
+  "bad_primes": [
+    2,
+    7
+  ],
+  "fibres": [
+    {
+      "prime": 2,
+      "status": "unavailable",
+      "places": [
+        {
+          "status": "unavailable",
+          "reason": "no verified wild model for this equation",
+          "input_prime_ideal": "Fractional ideal (2)"
+        }
+      ],
+      "export_seconds": 45.0
+    },
+    {
+      "prime": 7,
+      "status": "available",
+      "places": [
+        {
+          "status": "available",
+          "genera": [
+            1,
+            1,
+            0
+          ],
+          "edges": [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          "cycles": [],
+          "laplacian": [
+            [
+              "1",
+              "0",
+              "-1"
+            ],
+            [
+              "0",
+              "1",
+              "-1"
+            ],
+            [
+              "-1",
+              "-1",
+              "2"
+            ]
+          ],
+          "specializations": [
+            {
+              "point_id": "P1",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P2",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P3",
+              "components": [
+                0
+              ],
+              "status": "known"
+            }
+          ],
+          "source_metric_edges": [
+            [
+              0,
+              1,
+              "2"
+            ]
+          ],
+          "source_vertex_count": 2,
+          "valuation_normalization": "uniformizer",
+          "regularization_scale": 1,
+          "field_polynomial": [
+            "-7",
+            "0",
+            "14",
+            "0",
+            "-7",
+            "0",
+            "1"
+          ],
+          "prime_ideal": "Fractional ideal (7, s)",
+          "ramification_index": 6,
+          "residue_degree": 1,
+          "input_prime_ideal": "Fractional ideal (7)"
+        }
+      ],
+      "export_seconds": 45.0
+    }
+  ]
+}

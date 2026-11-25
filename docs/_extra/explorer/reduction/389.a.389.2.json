@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "label": "389.a.389.2",
+  "bad_primes": [
+    389
+  ],
+  "fibres": [
+    {
+      "prime": 389,
+      "status": "available",
+      "places": [
+        {
+          "status": "available",
+          "genera": [
+            1,
+            0
+          ],
+          "edges": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "cycles": [
+            [
+              "1",
+              "1"
+            ]
+          ],
+          "laplacian": [
+            [
+              "2",
+              "-2"
+            ],
+            [
+              "-2",
+              "2"
+            ]
+          ],
+          "specializations": [
+            {
+              "point_id": "P1",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P2",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P3",
+              "components": [
+                0
+              ],
+              "status": "known"
+            },
+            {
+              "point_id": "P4",
+              "components": [
+                0
+              ],
+              "status": "known"
+            }
+          ],
+          "source_metric_edges": [
+            [
+              0,
+              0,
+              "1"
+            ]
+          ],
+          "source_vertex_count": 1,
+          "valuation_normalization": "uniformizer",
+          "regularization_scale": 2,
+          "field_polynomial": [
+            "2",
+            "379",
+            "1"
+          ],
+          "prime_ideal": "Fractional ideal (389)",
+          "ramification_index": 1,
+          "residue_degree": 2,
+          "input_prime_ideal": "Fractional ideal (389)"
+        }
+      ],
+      "export_seconds": 45.0
+    }
+  ]
+}
