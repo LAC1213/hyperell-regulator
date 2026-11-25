@@ -99,7 +99,7 @@ def test_exports_exact_current_model_and_divisors_without_integrating(tmp_path):
     report.export(out/'beilinson_100_digits.json', reproduced, tmp_path/'missing-cache.json')
     assert json.loads((reproduced/'beilinson_100_digits.json').read_text()) == rows
     tex = (out/"beilinson_100_digits.tex").read_text()
-    assert r"q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D" in tex
+    assert r"\pi c^+(C)c^-(C)L^{\prime\prime}(M_{\mathrm{std}}(C),1)=q\det R(D_i,D_j)" in tex
     assert r"2\operatorname{Re}(z)" in tex
     assert hashlib.sha256(original).hexdigest() in tex
     assert tex.count(r"\begin{longtable}") == tex.count(r"\end{longtable}") == 3
@@ -128,14 +128,14 @@ def test_exports_exact_current_model_and_divisors_without_integrating(tmp_path):
     assert verified["curves"][0]["comparison_verified"]
 
 
-def test_tex_preserves_undecided_verdict_and_reports_failure():
+def test_tex_omits_integrality_and_reports_failure():
     row = saved_row()
     row["divisor_integrality"][0] = None
     row["algebraic_data"] = report.algebraic_data(row, dict(
         label=row["label"], cond=249, eqn=[[0, 1, 1], [1, 0, 0, 1]]))
     failure = dict(label="997.a.997.1", status="numerical_failure", error="cut_system_failed & timeout")
     tex = report.render([row, failure], "abc123")
-    assert r"\begin{gathered}\text{Undecided}\\\text{Yes}\end{gathered}" in tex
+    assert "Integral?" not in tex and r"\text{Undecided}" not in tex
     assert r"cut\_system\_failed \& timeout" in tex
     assert "997.a.997.1" in tex
 

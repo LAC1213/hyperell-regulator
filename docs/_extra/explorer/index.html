@@ -7,11 +7,11 @@
   <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=divisor-workflow-8">
+  <link rel="stylesheet" href="explorer.css?v=paper-notation-9">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
   <script defer src="curve-geometry.js?v=divisor-workflow-8"></script>
-  <script defer src="explorer.js?v=divisor-workflow-8"></script>
+  <script defer src="explorer.js?v=paper-notation-9"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -24,7 +24,8 @@
       <h1 id="page-title">Regulator matrix for genus 2 curve</h1>
       <p>Explore the integral Galois-trace divisors selected in the Beilinson survey,
         their complete support in LMFDB coordinates on a genus 2 curve <span data-tex="C">C</span>, and the
-        <span data-tex="3\times3">3×3</span> regulator matrix of their motivic classes and the Tate class.</p>
+        <span data-tex="3\times3">3×3</span> matrix <span data-tex="R(D_1,D_2)">R(D₁,D₂)</span>
+        associated with the integral classes <span data-tex="\alpha(D_1),\alpha(D_2)">α(D₁), α(D₂)</span> and the Tate class.</p>
     </section>
     <section class="workspace" aria-label="Choose a curve">
       <div class="catalog-controls">
@@ -55,16 +56,17 @@
         </div>
       </section>
       <section class="method-note" aria-label="How the regulator is computed">
-        <p>We view <span data-tex="C">C</span> as a double cover of <span data-tex="\mathbb P^1">ℙ¹</span> in the cut coordinates <span data-tex="(u,v)">(u,v)</span>.
+        <p>We view <span data-tex="C">C</span> as a double cover of <span data-tex="\mathbb P^1">ℙ¹</span> in the integration chart <span data-tex="v^2=F(u)">v²=F(u)</span>,
+          which is the paper's square model <span data-tex="y^2=f(x)">y²=f(x)</span> with coordinates renamed to distinguish it from the LMFDB equation.
           Using this, we cut up the hyperelliptic curve into two simply connected sheets in order to convert the
           two-dimensional regulator integral to an integral over the cut. By choosing the cut to be the preimage
-          of a convenient tree in the <span data-tex="u">u</span>-plane, we can moreover choose a path <span data-tex="B">B</span>
+          of a convenient tree <span data-tex="\Gamma">Γ</span> in the <span data-tex="u">u</span>-plane, we can moreover choose a path <span data-tex="B">B</span>
           on the tree as the branch cut for the logarithmic factor of the integrand. With this choice, the integral
           over the cut simplifies to a bilinear expression of line integrals.</p>
       </section>
       <div class="plots">
         <section class="panel">
-          <div class="section-label"><h2>The tree in <span data-tex="\mathbb P^1">ℙ¹</span></h2></div>
+          <div class="section-label"><h2>The tree <span data-tex="\Gamma\subset\mathbb P^1">Γ ⊂ ℙ¹</span></h2></div>
           <p class="panel-description">The cut model is <span id="cut-model"></span>. The tree joins its critical values of <span data-tex="u">u</span> and every finite logarithmic center used on the shared integration cut, including centers used by other divisor columns. Algebraic centers keep their complex positions.</p>
           <div class="plot-tools tree-controls">
             <label class="center-control"><span class="sr-only">Logarithm center</span><select id="weight-select" autocomplete="off" disabled></select></label>
@@ -74,7 +76,7 @@
           <p class="caption">Circles: critical values. Diamonds: all logarithmic centers. Edges in the selected logarithm's branch cut <span data-tex="B">B</span> share its diamond's colour. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
         </section>
         <section class="panel">
-          <div class="section-label"><h2>The lift to <span data-tex="C">C</span></h2></div>
+          <div class="section-label"><h2>The lift <span data-tex="T\subset C">T ⊂ C</span></h2></div>
           <p class="panel-description">Each tree edge has two lifts to <span data-tex="C">C</span>. Their orientations determine the signs in the path integrals below.</p>
           <div class="plot-tools surface-controls">
             <label class="sheet-control"><span class="sr-only">Display sheets</span><select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label>
@@ -94,25 +96,31 @@
               <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Away from ∞</option></select></label>
             </div>
             <p id="gluing" class="hint"></p>
-            <div class="table-scroll"><table class="integral-table"><thead><tr><th scope="col">Form</th><th scope="col"><span data-tex="\int_\gamma\omega_i">∫γ ωᵢ</span></th><th scope="col"><span data-tex="\int_\gamma\log(u-a)\,\omega_i">∫γ log(u−a) ωᵢ</span></th></tr></thead><tbody id="integrals"></tbody></table></div>
+            <div class="table-scroll"><table class="integral-table"><thead><tr><th scope="col">Form</th><th scope="col"><span id="ordinary-integral" data-tex="I_{n,j}^{(k)}=\int_{e_{n,j}^+}\omega_k">I⁽ᵏ⁾ₙⱼ</span></th><th scope="col"><span id="logarithmic-integral" data-tex="L_{n,j}^{(k)}=\int_{e_{n,j}^+}\log^+(u-a)\,\omega_k">L⁽ᵏ⁾ₙⱼ</span></th></tr></thead><tbody id="integrals"></tbody></table></div>
             <p id="jump" class="caption"></p>
       </section>
       <section class="panel matrix-panel" aria-labelledby="matrix-title">
         <div class="section-label"><h2 id="matrix-title"><span id="matrix-name">The regulator matrix</span></h2></div>
-        <p class="matrix-caption" id="matrix-caption">The pairing of the regulators of the displayed divisor classes
-          and the Tate class <span data-tex="\Delta C">ΔC</span> with the differential forms <span data-tex="\delta_{ij}">δij</span>.
+        <p class="matrix-caption" id="matrix-caption">The paper's plane-integral matrix
+          <span id="matrix-symbol" data-tex="R(D_1,D_2)">R(D₁,D₂)</span>, with column factors
+          <span data-tex="(L_{D_i},L_{D_j},1)">(Lᴅᵢ,Lᴅⱼ,1)</span> and row weights
+          <span data-tex="(1,2\operatorname{Re}(z),|z|^2)">(1,2 Re(z),|z|²)</span>.
+          The rows follow <span data-tex="\delta_{1,1},\delta_{1,2},\delta_{2,2}">δ₁₁, δ₁₂, δ₂₂</span>.
+          For <span data-tex="D=\sum_P a_P P">D=Σ aₚP</span>,
+          <span data-tex="L_D(z)=\sum_{P\text{ finite}}a_P\log|z-u(P)|">Lᴅ(z)=Σ aₚ log|z−u(P)|</span> in the integration chart.
           The actual values were computed to 100 digits, but we only display 10 digits.</p>
+        <div class="equation-scroll matrix-definition" id="matrix-definition"><span data-tex="R(D_i,D_j)=\int_{\mathbb C}\frac{1}{|F(z)|}\begin{pmatrix}1\\2\operatorname{Re}(z)\\|z|^2\end{pmatrix}\begin{pmatrix}L_{D_i}(z)&amp;L_{D_j}(z)&amp;1\end{pmatrix}\,\mathrm{d}x\,\mathrm{d}y,\quad z=x+iy">Definition of the plane-integral matrix R.</span></div>
         <div class="table-scroll" id="matrix-values">
           <table class="regulator-matrix">
-            <caption class="sr-only">Regulator matrix for the two selected divisor classes and the Tate class</caption>
-            <thead><tr><th scope="col"><span data-tex="\delta_{ij}">δij</span></th><th scope="col"><span id="matrix-left" data-tex="q_*B(D_1)">B(D1)</span></th><th scope="col"><span id="matrix-right" data-tex="q_*B(D_2)">B(D2)</span></th><th scope="col"><span data-tex="\Delta C">ΔC</span></th></tr></thead>
+            <caption class="sr-only">Plane-integral matrix R for the two selected divisors</caption>
+            <thead><tr><th scope="col">Row weight</th><th scope="col"><span id="matrix-left" data-tex="L_{D_1}">Lᴅ₁</span></th><th scope="col"><span id="matrix-right" data-tex="L_{D_2}">Lᴅ₂</span></th><th scope="col"><span data-tex="1">1</span></th></tr></thead>
             <tbody id="regulator-matrix"></tbody>
           </table>
         </div>
         <p id="matrix-unavailable" class="hint" hidden>This import contains logarithmic pairings; the three-class matrix is available for catalog curves.</p>
         <div id="import-pairings" hidden>
           <p class="hint" id="weight-info"></p>
-          <div class="table-scroll"><table><thead><tr><th scope="col"><span data-tex="(i,j)">(i, j)</span></th><th scope="col"><span data-tex="-4R_{ij}/\pi">−4Rᵢⱼ/π</span></th><th scope="col"><span data-tex="R_{ij}">Rᵢⱼ</span></th><th scope="col"><span data-tex="P_{ij}">Period Pᵢⱼ</span></th></tr></thead><tbody id="pairings"></tbody></table></div>
+          <div class="table-scroll"><table><thead><tr><th scope="col"><span data-tex="(i,j)">(i, j)</span></th><th scope="col"><span data-tex="\operatorname{Re}\int_{\mathbb C}\frac{\log|z-a|z^{i-1}\overline z^{j-1}}{|F(z)|}\,\mathrm{d}x\,\mathrm{d}y">Logarithmic plane integral</span></th><th scope="col"><span data-tex="\operatorname{Re}\int_{\mathbb C}\frac{z^{i-1}\overline z^{j-1}}{|F(z)|}\,\mathrm{d}x\,\mathrm{d}y">Plane integral without logarithm</span></th></tr></thead><tbody id="pairings"></tbody></table></div>
         </div>
         <p id="determinant" class="determinant"></p>
       </section>
@@ -122,7 +130,9 @@
           <label class="precision-control" for="beilinson-digits"><span>Digits to display: <output id="beilinson-digits-value" for="beilinson-digits">10</output></span><input type="range" id="beilinson-digits" min="10" max="100" step="1" value="10"></label>
         </div>
         <p class="matrix-caption">Numerical comparison from the saved experiment. Certified enclosures remain conditional on the recorded analytic assumptions; agreement does not prove exact equality.</p>
-        <div class="conjecture-equation" id="beilinson-equation" data-tex="\pi\cdot c^+(C)\cdot c^-(C)\cdot L''(M_{\mathrm{std}}(C),1)\approx q\cdot D">π · c⁺(C) · c⁻(C) · L″(Mstd(C), 1) ≈ q · D</div>
+        <p class="matrix-caption">The periods <span data-tex="c^+(C),c^-(C)">c⁺(C), c⁻(C)</span> are the signed maximal minors of
+          <span data-tex="\operatorname{Re}H,\operatorname{Im}H">Re H, Im H</span> for the full-cycle period matrix <span data-tex="H">H</span> in the integration chart.</p>
+        <div class="conjecture-equation" id="beilinson-equation" data-tex="\pi\cdot c^+(C)\cdot c^-(C)\cdot L''(M_{\mathrm{std}}(C),1)\approx q\cdot\det R(D_1,D_2)">π · c⁺(C) · c⁻(C) · L″(Mstd(C), 1) ≈ q · det R(D₁,D₂)</div>
         <p class="matrix-caption">The slider displays saved decimal midpoints; exact interval endpoints are included in the exported data.</p>
         <dl class="conjecture-values" id="beilinson-values"></dl>
       </section>
@@ -130,7 +140,7 @@
     <details class="survey">
       <summary>Full survey</summary>
       <div class="panel curve-table">
-        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col">Endomorphisms over ℚ</th><th scope="col">Packet torsion order</th><th scope="col">Rank over ℚ</th><th scope="col">Divisor generators</th><th scope="col"><span data-tex="D">D</span></th><th scope="col"><span data-tex="c^+">c⁺</span></th><th scope="col"><span data-tex="c^-">c⁻</span></th><th scope="col"><span data-tex="L''(\mathrm{std},1)">L″(std,1)</span></th><th scope="col"><span data-tex="q">q</span></th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
+        <div class="table-scroll"><table><thead><tr><th scope="col">Curve</th><th scope="col">Endomorphisms over ℚ</th><th scope="col">Packet torsion order</th><th scope="col">Computed rank over ℚ</th><th scope="col">Divisor generators</th><th scope="col"><span data-tex="\det R">det R</span></th><th scope="col"><span data-tex="c^+(C)">c⁺(C)</span></th><th scope="col"><span data-tex="c^-(C)">c⁻(C)</span></th><th scope="col"><span data-tex="L''(M_{\mathrm{std}}(C),1)">L″(Mstd(C),1)</span></th><th scope="col"><span data-tex="q">q</span></th><th scope="col">Relative error</th></tr></thead><tbody id="catalog-rows"></tbody></table></div>
       </div>
     </details>
   </main>

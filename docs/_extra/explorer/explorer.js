@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const COLORS = ["#bd5034", "#267f91"];
 const POINT_COLORS = ["#bd5034", "#267f91", "#7651a0", "#488551", "#b07b25", "#b04d84"];
 const PI = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647";
-const DATA_VERSION = "divisor-workflow-8";
+const DATA_VERSION = "paper-notation-9";
 const HOME_CAMERA = {eye:{x:1.5,y:-1.6,z:1.2},center:{x:0,y:0,z:0},up:{x:0,y:0,z:1},projection:{type:"perspective"}};
 let catalog, current, currentCurve = null, mesh = null, version = 0, label = "";
 // Round the saved decimal strings directly: Number would discard digits after ~16.
@@ -69,7 +69,7 @@ function renderPoints(curve) {
     node.classList.toggle("active",D.id===active); math(node,D.tex); $("point-info").append(node);
   });
   $("packet-info").textContent="Packet torsion order: "+(curve?.packet_torsion_order||collection.packet_torsion_order||"not recorded")+
-    " · Integral trace rank over ℚ: "+(curve?.integral_rank??collection.integral_rank??"not recorded")+
+    " · Computed integral trace rank over ℚ: "+(curve?.integral_rank??collection.integral_rank??"not recorded")+
     " · Rational endomorphism algebra: "+(curve?.end_alg||collection.end_alg||"not recorded");
   const support=(collection.support||[]).filter(P=>rational(P.coefficients[active]||0)!==0);
   $("support-caption").textContent="Complete support of "+active+" in LMFDB coordinates ("+support.length+" points).";
@@ -140,12 +140,17 @@ function validateMesh(m) {
   m.sheets.forEach(s=>{ if (!Array.isArray(s.vertices) || !s.vertices.every(p=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)) || !m.triangles.every(t=>Array.isArray(t)&&t.length===3&&t.every(i=>Number.isInteger(i)&&i>=0&&i<s.vertices.length))) throw Error("Invalid surface vertices"); });
   return m;
 }
+function matrixTex(curve) {
+  const names=curve?.matrix_divisor_ids||["D1","D2"];
+  return "R("+names.map(name=>"D_{"+name.slice(1)+"}").join(",")+")";
+}
 function renderMatrix(curve) {
   const matrix=curve?.normalized_matrix;
   const available=Array.isArray(matrix) && matrix.length===3 && matrix.every(row=>Array.isArray(row)&&row.length===3);
   $("matrix-values").hidden=!available;
   $("matrix-unavailable").hidden=available;
   $("matrix-caption").hidden=!available;
+  $("matrix-definition").hidden=!available;
   $("import-pairings").hidden=available;
   $("matrix-name").textContent=available?"The regulator matrix":"Logarithmic pairings";
   $("determinant").hidden=!available;
@@ -153,23 +158,24 @@ function renderMatrix(curve) {
   if (available) {
     const heading=document.createElement("span"), value=document.createElement("span");
     heading.className="determinant-label"; heading.textContent="Determinant:";
-    math(value,"D="+numberTex(curve.numerical.det)); $("determinant").append(heading,value);
+    math(value,"\\det "+matrixTex(curve)+"\\approx "+numberTex(curve.numerical.det)); $("determinant").append(heading,value);
   }
   $("regulator-matrix").replaceChildren();
   if (!available) return;
   const names=curve.matrix_divisor_ids||["D1","D2"];
-  math($("matrix-left"),"q_*B(D_{"+names[0].slice(1)+"})");
-  math($("matrix-right"),"q_*B(D_{"+names[1].slice(1)+"})");
+  math($("matrix-symbol"),matrixTex(curve));
+  math($("matrix-left"),"L_{D_{"+names[0].slice(1)+"}}");
+  math($("matrix-right"),"L_{D_{"+names[1].slice(1)+"}}");
   matrix.forEach((values,i)=>{
     const row=document.createElement("tr"), heading=document.createElement("th");
-    heading.scope="row"; math(heading,["\\omega_1\\wedge\\overline{\\omega_1}","\\omega_1\\wedge\\overline{\\omega_2}+\\omega_2\\wedge\\overline{\\omega_1}","\\omega_2\\wedge\\overline{\\omega_2}"][i]); row.append(heading);
+    heading.scope="row"; math(heading,["1","2\\operatorname{Re}(z)","|z|^2"][i]); row.append(heading);
     values.forEach(value=>mathCell(row,numberTex(value))); $("regulator-matrix").append(row);
   });
 }
 function linearRelationTex(curve) {
   const terms=curve?.linear_comparison?.terms||[];
   if(terms.length<2)return null;
-  return terms.map(term=>CurveGeometry.rationalTex(term.coefficient)+"\\,D_{"+term.basis_indices.map(i=>i+1).join(",")+"}").join("+").replace(/\+\-/g,"-");
+  return terms.map(term=>CurveGeometry.rationalTex(term.coefficient)+"\\,\\det R("+term.basis_indices.map(i=>"D_{"+(i+1)+"}").join(",")+")").join("+").replace(/\+\-/g,"-");
 }
 function renderBeilinson(curve) {
   const values=curve?.numerical, relation=linearRelationTex(curve);
@@ -177,7 +183,7 @@ function renderBeilinson(curve) {
   $("beilinson-panel").hidden=!available;
   $("beilinson-values").replaceChildren();
   if (!available) return;
-  conjectureFormula="\\pi\\cdot c^+(C)\\cdot c^-(C)\\cdot L''(M_{\\mathrm{std}}(C),1)\\approx "+(relation||"q\\cdot D");
+  conjectureFormula="\\pi\\cdot c^+(C)\\cdot c^-(C)\\cdot L''(M_{\\mathrm{std}}(C),1)\\approx "+(relation||"q\\cdot\\det "+matrixTex(curve));
   const maximum=Math.min(100,curve.regulator_digits||100,curve.L_digits||100);
   $("beilinson-digits").max=maximum;
   if (Number($("beilinson-digits").value)>maximum) $("beilinson-digits").value=maximum;
@@ -188,9 +194,9 @@ function renderBeilinson(curve) {
     ["\\pi",PI],
     ["c^+(C)",values.c_plus],
     ["c^-(C)",values.c_minus],
-    ["L''",values.L_second_derivative],
+    ["L''(M_{\\mathrm{std}}(C),1)",values.L_second_derivative],
     ["q",curve.comparison_verified?curve.q:curve.quotient],
-    ["D",values.det]
+    ["\\det "+matrixTex(curve),values.det]
   ];
   items.filter(([label])=>!relation||label!=="q").forEach(([label,value])=>{
     const item=document.createElement("div"), term=document.createElement("dt"), definition=document.createElement("dd");
@@ -252,19 +258,26 @@ function renderIntegrals() {
   if (!current) return;
   const k=Number($("weight-select").value), e=Number($("edge").value), s=Number($("sheet").value);
   const edge=current.edges[e], lift=edge.lifts[s], sign=$("orientation").value==="reverse"?-1:1;
+  const path="e_{"+(s+1)+","+(e+1)+"}^+", prefix=sign<0?"-":"";
+  math($("ordinary-integral"),prefix+"I_{"+(s+1)+","+(e+1)+"}^{(k)}=\\int_{"+prefix+path+"}\\omega_k");
+  const bank=$("bank").value==="plus"?"+":"-";
+  math($("logarithmic-integral"),(bank==="+"?prefix+"L_{"+(s+1)+","+(e+1)+"}^{(k)}=":"")+"\\int_{"+prefix+path+"}\\log^{"+bank+"}(u-a)\\,\\omega_k");
   $("integrals").replaceChildren(); $("pairings").replaceChildren();
   lift.ordinary.forEach((v,a)=>{
     const row=document.createElement("tr"), factor=a===0?"":a===1?"u\\,":"u^{"+a+"}\\,";
     mathCell(row,"\\omega_{"+(a+1)+"}=\\dfrac{"+factor+"\\mathrm{d}u}{v}");
     complexCell(row,v,sign); complexCell(row,lift.logs[k][$("bank").value][a],sign); $("integrals").append(row);
   });
-  current.weights[k].pairings.forEach(p=>{const row=document.createElement("tr"); mathCell(row,"("+p.forms.join(",")+")"); [p.pairing,p.regulator,p.period].forEach(v=>mathCell(row,numberTex(v))); $("pairings").append(row);});
+  current.weights[k].pairings.forEach(p=>{const row=document.createElement("tr"); mathCell(row,"("+p.forms.join(",")+")"); [p.regulator,p.period].forEach(v=>mathCell(row,numberTex(v))); $("pairings").append(row);});
   $("path-label").textContent="Edge "+(e+1)+", sheet "+(s+1);
-  $("gluing").textContent="This path borders sheet "+(s+1)+" on its positive side and sheet "+lift.minus_sheet+" on its negative side.";
+  $("gluing").replaceChildren();
+  const gluing=document.createElement("span");
+  math(gluing,"e_{"+(s+1)+","+(e+1)+"}^{-}=e_{"+lift.minus_sheet+","+(e+1)+"}^{+},\\qquad\\tau_{"+(e+1)+"}("+(s+1)+")="+lift.minus_sheet);
+  $("gluing").append(gluing,". The stored edge orientation is toward infinity; reversing it negates both integrals.");
   $("jump").replaceChildren();
   const jump=document.createElement("span");
-  math(jump,"\\Delta\\log(u-a)="+(Number(edge.jumps[k][1])===0?numberTex(edge.jumps[k][0]):numberTex(edge.jumps[k][1])+"\\,i"));
-  $("jump").append(jump,". Both sides use the selected orientation.");
+  math(jump,"\\log^-(u-a)-\\log^+(u-a)="+(Number(edge.jumps[k][1])===0?numberTex(-Number(edge.jumps[k][0])):numberTex(-Number(edge.jumps[k][1]))+"\\,i"));
+  $("jump").append(jump,". The signs refer to the two sides of the stored oriented cut.");
   $("weight-info").replaceChildren();
   const weight=document.createElement("span");
   math(weight,"a="+[...centerReferences(current.weights[k].center),centerTex(current.weights[k].center)].join("="));

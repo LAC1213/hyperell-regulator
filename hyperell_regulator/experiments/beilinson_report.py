@@ -115,14 +115,10 @@ def stacked(values):
     return r"$\begin{gathered}" + r"\\".join(values) + r"\end{gathered}$"
 
 
-def integrality_tex(verdict):
-    return r"\text{" + ("Yes" if verdict is True else "No" if verdict is False else "Undecided") + "}"
-
-
 def relation_tex(row):
     terms = row.get('linear_comparison', {}).get('terms', [])
     if len(terms) > 1:
-        return '+'.join(rational_tex(term['coefficient'])+r'\det(D_{%d},D_{%d})' %
+        return '+'.join(rational_tex(term['coefficient'])+r'\det R(D_{%d},D_{%d})' %
                         tuple(i+1 for i in term['basis_indices']) for term in terms).replace('+-', '-')
     return rational_tex(row.get('comparison', {}).get('rational'))
 
@@ -135,42 +131,54 @@ def render(rows, source_hash, *, bound=BOUND, digits=DIGITS):
     metadata = {row['label']: row.get('divisor_data') or divisor_metadata(row) for row in ok}
     lines = [r'\documentclass[10pt]{article}', r'\usepackage[a4paper,margin=12mm]{geometry}',
              r'\usepackage{amsmath,amssymb,booktabs,longtable,array,pdflscape}',
-             r'\usepackage[hidelinks]{hyperref}', r'\begin{document}', r'\begin{landscape}',
+             r'\usepackage[hidelinks]{hyperref}',
+             r'\newcommand{\entryseparator}{\noalign{\vskip3pt\hbox to\linewidth{\leaders\hbox{\kern2pt\rule{3pt}{0.3pt}\kern2pt}\hfill}\nobreak\vskip3pt\nobreak}}',
+             r'\begin{document}', r'\begin{landscape}',
              rf'\noindent\textbf{{Beilinson survey: conductor $<{bound}$, {digits}-digit targets.}}',
-             r'We use $q=\pi c^+c^-L^{\prime\prime}(\mathrm{std},1)/D$ and full cycle periods,',
-             r'with determinant weights $(1,2\operatorname{Re}(z),|z|^2)$.',
+             r'We use $\pi c^+(C)c^-(C)L^{\prime\prime}(M_{\mathrm{std}}(C),1)=q\det R(D_i,D_j)$,',
+             r'where $R(D_i,D_j)$ is the plane-integral matrix with column factors $(L_{D_i},L_{D_j},1)$',
+             r'and row weights $(1,2\operatorname{Re}(z),|z|^2)$.',
+             r'For $D=\sum_P a_P P$, $L_D(z)=\sum_{P\text{ finite}}a_P\log|z-u(P)|$ in the chart $v^2=F(u)$.',
+             r'The periods $c^+(C),c^-(C)$ are the signed maximal minors of $\operatorname{Re}H,\operatorname{Im}H$',
+             r'for the full-cycle period matrix $H$ in this chart.',
              r'The divisors below are the actual coefficient rows of the regulator columns,',
              r'in the original LMFDB coordinates of Table~\ref{tab:curve-models}.',
+             r'The associated classes $\alpha(D)$ are integral.',
              r'Packet order means $N=\mathop{\mathrm{lcm}}_P\operatorname{ord}(P-P_0)$ in the Jacobian,',
              r'not the number of packet points. A dash means the exact order was not recorded.',
              r'The endomorphism column is the LMFDB rational endomorphism algebra label;',
              r'\texttt{CM} does not by itself assert that the Jacobian is of CM type.',
-             r'\begin{longtable}{@{}lcrp{16cm}c@{}}',
-             r'\caption{Selected torsion-packet divisors and integrality.}\label{tab:torsion-integrality}\\',
-             r'\toprule Curve & $\mathrm{End}_{\mathbf Q}^0(J)$ & Packet $N$ & Selected divisors & Integral? \\',
+             r'The column $N_{\mathrm{std}}$ gives the conductor of $L(M_{\mathrm{std}}(C),s)$.',
+             r'\begin{longtable}{@{}p{.4\linewidth}>{\centering\arraybackslash}p{.2\linewidth}>{\raggedleft\arraybackslash}p{.16\linewidth}>{\raggedleft\arraybackslash}p{\dimexpr.24\linewidth-6\tabcolsep\relax}@{}}',
+             r'\caption{Selected torsion-packet divisors and standard-motive conductors.}\label{tab:torsion-integrality}\\',
+             r'\toprule Curve & $\mathrm{End}_{\mathbf Q}^0(J)$ & Packet $N$ & $N_{\mathrm{std}}$ \\',
              r'\midrule\endfirsthead',
-             r'\toprule Curve & $\mathrm{End}_{\mathbf Q}^0(J)$ & Packet $N$ & Selected divisors & Integral? \\',
+             r'\toprule Curve & $\mathrm{End}_{\mathbf Q}^0(J)$ & Packet $N$ & $N_{\mathrm{std}}$ \\',
              r'\midrule\endhead', r'\bottomrule\endfoot']
-    for row in ok:
+    for index, row in enumerate(ok):
+        if index:
+            lines.append(r'\entryseparator')
         data = metadata[row['label']]
-        verdicts = (None if len(row.get('linear_comparison', {}).get('terms', [])) > 1
-                    else row.get('divisor_integrality'))
-        integral = stacked([integrality_tex(v) for v in verdicts]) if verdicts else '$'+integrality_tex(row.get('integral'))+'$'
         lines.append(' & '.join([curve_link(row['label']),
             r'\texttt{'+escape_tex(data.get('end_alg') or '--')+'}',
             '$'+rational_tex(data.get('packet_torsion_order'))+'$',
-            stacked([D['tex'] for D in data['divisors']]), integral])+r' \\')
+            '$'+rational_tex(row.get('standard_conductor'))+'$'])+r' \\*')
+        for divisor_index, divisor in enumerate(data['divisors']):
+            ending = r' \\*' if divisor_index < len(data['divisors'])-1 else r' \\'
+            lines.append(r'\multicolumn{4}{@{}l@{}}{$'+divisor['tex']+'$}'+ending)
     lines += [r'\end{longtable}', r'\clearpage',
-              r'\begin{longtable}{@{}lp{22cm}@{}}',
+              r'\begin{longtable}{@{}p{3.4cm}p{\dimexpr\linewidth-3.4cm-2\tabcolsep\relax}@{}}',
               r'\caption{LMFDB models, integration charts and exact algebraic support definitions.}\label{tab:curve-models}\\',
               r'\toprule Curve & $y^2+h(x)y=f(x)$; integration chart and LMFDB support definitions \\ \midrule\endfirsthead',
               r'\toprule Curve & $y^2+h(x)y=f(x)$; integration chart and LMFDB support definitions \\ \midrule\endhead',
               r'\bottomrule\endfoot']
-    for row in ok:
+    for index, row in enumerate(ok):
+        if index:
+            lines.append(r'\entryseparator')
         a, d = row['algebraic_data'], metadata[row['label']]
         model = re.sub(r'\bu\b', 'x', a['model_latex'])
         display_model = d.get('lmfdb_model')
-        descriptions = ([display_model['equation_tex'], r'\text{Cut model: }v^2='+re.sub(r'\bu\b', 'u', a['model_latex'])]
+        descriptions = ([display_model['equation_tex'], r'v^2='+a['model_latex']]
                         if display_model else [model])
         if a.get('shift') is not None:
             descriptions.append(r'(s,d)=('+rational_tex(a['shift'])+','+rational_tex(a.get('scale', '1'))+')')
@@ -184,14 +192,14 @@ def render(rows, source_hash, *, bound=BOUND, digits=DIGITS):
               r'ordered by real then imaginary part, and fix the exact embeddings retained in JSON.',
               r'\clearpage', r'\begin{longtable}{@{}lrrrrrr@{}}',
               r'\caption{Numerical data. The factor is a rational guess; a multi-determinant comparison is shown as a sum.}\label{tab:data}\\',
-              r'\toprule Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & $q$ or comparison & Relative error \\ \midrule\endfirsthead',
-              r'\toprule Curve & $D$ & $c^+$ & $c^-$ & $L^{\prime\prime}(M_{\mathrm{std}},1)$ & $q$ or comparison & Relative error \\ \midrule\endhead',
+              r'\toprule Curve & $\det R$ & $c^+(C)$ & $c^-(C)$ & $L^{\prime\prime}(M_{\mathrm{std}}(C),1)$ & $q$ or comparison & Relative error \\ \midrule\endfirsthead',
+              r'\toprule Curve & $\det R$ & $c^+(C)$ & $c^-(C)$ & $L^{\prime\prime}(M_{\mathrm{std}}(C),1)$ & $q$ or comparison & Relative error \\ \midrule\endhead',
               r'\bottomrule\endfoot']
     for row in ok:
-        values = [number_tex(row.get(k)) for k in ('det', 'c_plus', 'c_minus', 'L_second_derivative')]
-        values += [relation_tex(row), number_tex(comparison_error(row), 2)]
+        values = [number_tex(row.get(k), 5) for k in ('det', 'c_plus', 'c_minus', 'L_second_derivative')]
+        values += [relation_tex(row), number_tex(comparison_error(row), 5)]
         lines.append(curve_link(row['label'])+' & '+' & '.join('$'+v+'$' for v in values)+r' \\')
-    lines += [r'\end{longtable}', r'\noindent Displayed values have 10 significant digits.',
+    lines += [r'\end{longtable}', r'\noindent Decimal values are displayed to 5 significant digits.',
               r'Certified interval endpoints and analytic assumptions are retained in the JSON;',
               r'the error column uses an interval upper bound when available. Numerical targets alone are not certified bounds.',
               r'Numerical agreement does not prove exact rational equality.']

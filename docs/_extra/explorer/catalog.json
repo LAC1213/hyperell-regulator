@@ -38,7 +38,7 @@
     "hyperell_regulator/regulator/explorer.py": "cf702287d9c4a125e5fab420def763fc483c0e873e912b44743dda3de2dc2cf2",
     "hyperell_regulator/_algebraic.py": "11924cf78a56221f32d9b0b84320f051f6a539cb61226ff618c668e9a3491e97",
     "hyperell_regulator/experiments/_survey_divisors.py": "b060cb5013317288024997a638c48737560f125c1af708caaf1be027ecfb4409",
-    "hyperell_regulator/experiments/beilinson_report.py": "cad54f357a9d00adce0d87824031e4adf17cf7d5d19d5d1a9d005ca0e1e6284a",
+    "hyperell_regulator/experiments/beilinson_report.py": "275c75ffa710f9e0690fb1670c6cc23326697a0ac0f06ffdb5b1a74e876db77e",
     "hyperell_regulator/experiments/beilinson.py": "9aff0a6b986b43e5f90ae1862786a688bc8ff57f5251408b3b1be83e0c5b4c2f",
     "hyperell_regulator/experiments/beilinson_local_data.py": "fa121265c6c66783d28c8232f9c9054f144f88868b6ea4a5a52306f331bb1a2f",
     "hyperell_regulator/lfunction.py": "4502e241d589cb0642cd8509e6d901dd026b8949c5312bcc7c5951af977af6b9",

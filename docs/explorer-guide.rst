@@ -31,26 +31,53 @@ Root indices start at zero and are ordered by real part, then imaginary part.
 
 The first panel displays the original LMFDB equation. The cut panels use
 the transformed square model :math:`v^2=F(u)`, displayed above the tree.
-The transformed point images determine the logarithmic centers.
+The transformed point images determine the logarithmic centers. This is
+the paper's square model :math:`y^2=f(x)` with coordinates renamed to
+distinguish it from the original LMFDB equation.
 
-**The tree in** :math:`\mathbb P^1` shows the complete integration cut,
+**The tree** :math:`\Gamma\subset\mathbb P^1` shows the complete integration cut,
 including logarithmic centers used by other basis divisors in the same
-computation. **The lift to** :math:`C` shows its lift.
+computation. **The lift** :math:`T\subset C` shows its lift.
 
 Select a logarithmic center in the tree panel and an edge to inspect the path integrals.
 Changing the center preserves the tree view's pan and zoom.
 Clicking a lifted path also selects its positive-side sheet.
-For :math:`\omega_j=u^{j-1}du/v`, the path table gives
+For :math:`\omega_k=u^{k-1}du/v`, the path table uses the paper's notation
 
 .. math::
 
-   I_j(e)=\int_e\omega_j,\qquad
-   L_{j,a}^{\pm}(e)=\int_e\log^{\pm}(u-a)\,\omega_j.
+   I_{n,j}^{(k)}=\int_{e_{n,j}^+}\omega_k,\qquad
+   L_{n,j}^{(k)}=\int_{e_{n,j}^+}\log^+(u-a)\,\omega_k.
 
-The regulator matrix pairs the two indicated divisor classes
-:math:`B(D_i),B(D_j)` and :math:`\Delta C` with
-:math:`\delta_{11},\delta_{12},\delta_{22}`. Its row weights are
-:math:`(1,2\operatorname{Re}(u),|u|^2)` and its determinant is :math:`D`.
+Here :math:`n` labels the positive-side sheet and :math:`j` the tree edge.
+The gluing is :math:`e_{n,j}^-=e_{\tau_j(n),j}^+`.
+The viewer stores edges oriented toward infinity; the orientation selector
+can reverse them, negating both integrals. The negative logarithm-side
+option displays the integral with :math:`\log^-` explicitly, and the jump
+is displayed as :math:`\log^--\log^+` for the stored oriented cut.
+
+The indicated divisors define the integral classes
+:math:`\alpha(D_i),\alpha(D_j)`. The displayed numerical matrix is the
+paper's plane-integral matrix :math:`R(D_i,D_j)`, rather than the matrix
+of Poincaré pairings before normalization. Write
+
+.. math::
+
+   L_D(z)=\sum_{P\text{ finite}}a_P\log|z-u(P)|,
+   \qquad D=\sum_P a_P P.
+
+Then, in the integration chart,
+
+.. math::
+
+   R(D_i,D_j)=\int_{\mathbb C}\frac{1}{|F(z)|}
+   \begin{pmatrix}1\\2\operatorname{Re}(z)\\|z|^2\end{pmatrix}
+   \begin{pmatrix}L_{D_i}(z)&L_{D_j}(z)&1\end{pmatrix}
+   \,\mathrm{d}x\,\mathrm{d}y,\qquad z=x+iy.
+
+The rows follow :math:`\delta_{1,1},\delta_{1,2},\delta_{2,2}`;
+the final column accounts for the Tate class :math:`\Delta C`.
+The determinant is denoted :math:`\det R(D_i,D_j)`.
 Each divisor column is the sum of its logarithmic columns with the exact
 saved coefficients, including multiplicities and negative terms.
 
@@ -58,7 +85,15 @@ The comparison box displays
 
 .. math::
 
-   \pi c^+(C)c^-(C)L''(M_{\mathrm{std}}(C),1)\approx qD.
+   \pi c^+(C)c^-(C)L''(M_{\mathrm{std}}(C),1)
+   \approx q\det R(D_i,D_j).
+
+As in the paper's computational convention, :math:`c^+(C),c^-(C)`
+are the signed maximal minors of :math:`\operatorname{Re}H` and
+:math:`\operatorname{Im}H`, respectively, for the full-cycle period matrix
+:math:`H` in the integration chart. The symbol :math:`D` always denotes a
+divisor. The displayed rank concerns the examined packet support;
+a rational-packet rank can be a lower bound for the full geometric packet.
 
 **Digits to display** selects 10–100 significant digits from the saved
 values. The path table and matrix display 10 significant digits; downloads
