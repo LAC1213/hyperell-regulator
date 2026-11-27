@@ -4,9 +4,18 @@ const $ = id => document.getElementById(id);
 const COLORS = ["#bd5034", "#267f91"];
 const POINT_COLORS = ["#bd5034", "#267f91", "#7651a0", "#488551", "#b07b25", "#b04d84"];
 const PI = "3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647";
-const DATA_VERSION = "paper-notation-9";
+const DATA_VERSION = "curve-summary-1";
+const MATRIX_TEX = "R(D_1,D_2)";
 const HOME_CAMERA = {eye:{x:1.5,y:-1.6,z:1.2},center:{x:0,y:0,z:0},up:{x:0,y:0,z:1},projection:{type:"perspective"}};
 let catalog, current, currentCurve = null, mesh = null, version = 0, label = "";
+
+function catalogIndex() {
+  try {
+    const curve = decodeURIComponent(location.hash.slice(1).split("/")[0]);
+    return catalog.curves.findIndex(entry => entry.label === curve);
+  } catch { return -1; }
+}
+
 // Round the saved decimal strings directly: Number would discard digits after ~16.
 function decimal(value,digits=10) {
   const match=/^([+-]?)(\d*)(?:\.(\d*))?(?:e([+-]?\d+))?$/i.exec(String(value).trim());
@@ -55,31 +64,22 @@ function complexCell(row,z,sign) {
   math(imaginary,(sign*Number(z[1])<0?"-":"+")+numberTex(Math.abs(Number(z[1])))+"\\,i");
   node.append(real,imaginary);
 }
-function renderPoints(curve) {
-  $("point-info").replaceChildren(); $("packet-info").textContent=""; $("support-info").replaceChildren();
+function renderDivisors() {
+  const container=$("curve-divisors");
+  container.replaceChildren();
   const collection=current.collection;
-  if (!collection?.divisors) {
-    $("point-info").textContent="Logarithmic centers: "+current.weights.map(w=>w.center).join(", ");
-    $("support-caption").textContent="No divisor support was supplied with this import.";
+  const ids=CurveGeometry.divisorIds(collection).slice(0,2);
+  if (!ids.length) {
+    container.textContent="No divisors were supplied with this result.";
     return;
   }
-  const active=$("divisor-select").value;
-  collection.divisors.forEach(D=>{
-    const node=document.createElement("div"); node.className="divisor-coordinate";
-    node.classList.toggle("active",D.id===active); math(node,D.tex); $("point-info").append(node);
-  });
-  $("packet-info").textContent="Packet torsion order: "+(curve?.packet_torsion_order||collection.packet_torsion_order||"not recorded")+
-    " · Computed integral trace rank over ℚ: "+(curve?.integral_rank??collection.integral_rank??"not recorded")+
-    " · Rational endomorphism algebra: "+(curve?.end_alg||collection.end_alg||"not recorded");
-  const support=(collection.support||[]).filter(P=>rational(P.coefficients[active]||0)!==0);
-  $("support-caption").textContent="Complete support of "+active+" in LMFDB coordinates ("+support.length+" points).";
-  support.forEach(P=>{
-    const row=document.createElement("tr"); row.dataset.point=P.id;
-    const point=cell(row,""); point.className="support-coordinate";
-    math(point,P.definition_tex);
-    mathCell(row,CurveGeometry.rationalTex(P.coefficients[active]));
-    $("support-info").append(row);
-  });
+  for (const id of ids) {
+    const divisor=collection.divisors.find(entry=>entry.id===id);
+    const node=document.createElement("div");
+    node.className="curve-divisor";
+    math(node,CurveGeometry.divisorTex(collection,divisor));
+    container.append(node);
+  }
 }
 
 function centerPosition(center) {
@@ -140,10 +140,6 @@ function validateMesh(m) {
   m.sheets.forEach(s=>{ if (!Array.isArray(s.vertices) || !s.vertices.every(p=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)) || !m.triangles.every(t=>Array.isArray(t)&&t.length===3&&t.every(i=>Number.isInteger(i)&&i>=0&&i<s.vertices.length))) throw Error("Invalid surface vertices"); });
   return m;
 }
-function matrixTex(curve) {
-  const names=curve?.matrix_divisor_ids||["D1","D2"];
-  return "R("+names.map(name=>"D_{"+name.slice(1)+"}").join(",")+")";
-}
 function renderMatrix(curve) {
   const matrix=curve?.normalized_matrix;
   const available=Array.isArray(matrix) && matrix.length===3 && matrix.every(row=>Array.isArray(row)&&row.length===3);
@@ -158,14 +154,10 @@ function renderMatrix(curve) {
   if (available) {
     const heading=document.createElement("span"), value=document.createElement("span");
     heading.className="determinant-label"; heading.textContent="Determinant:";
-    math(value,"\\det "+matrixTex(curve)+"\\approx "+numberTex(curve.numerical.det)); $("determinant").append(heading,value);
+    math(value,"\\det "+MATRIX_TEX+"\\approx "+numberTex(curve.numerical.det)); $("determinant").append(heading,value);
   }
   $("regulator-matrix").replaceChildren();
   if (!available) return;
-  const names=curve.matrix_divisor_ids||["D1","D2"];
-  math($("matrix-symbol"),matrixTex(curve));
-  math($("matrix-left"),"L_{D_{"+names[0].slice(1)+"}}");
-  math($("matrix-right"),"L_{D_{"+names[1].slice(1)+"}}");
   matrix.forEach((values,i)=>{
     const row=document.createElement("tr"), heading=document.createElement("th");
     heading.scope="row"; math(heading,["1","2\\operatorname{Re}(z)","|z|^2"][i]); row.append(heading);
@@ -175,7 +167,9 @@ function renderMatrix(curve) {
 function linearRelationTex(curve) {
   const terms=curve?.linear_comparison?.terms||[];
   if(terms.length<2)return null;
-  return terms.map(term=>CurveGeometry.rationalTex(term.coefficient)+"\\,\\det R("+term.basis_indices.map(i=>"D_{"+(i+1)+"}").join(",")+")").join("+").replace(/\+\-/g,"-");
+  return terms.map(term=>CurveGeometry.rationalTex(term.coefficient)+"\\,\\det R("+
+    term.basis_indices.map(i=>"D_{"+CurveGeometry.divisorLabel(curve,"D"+(i+1)).slice(1)+"}").join(",")+")")
+    .join("+").replace(/\+\-/g,"-");
 }
 function renderBeilinson(curve) {
   const values=curve?.numerical, relation=linearRelationTex(curve);
@@ -183,7 +177,7 @@ function renderBeilinson(curve) {
   $("beilinson-panel").hidden=!available;
   $("beilinson-values").replaceChildren();
   if (!available) return;
-  conjectureFormula="\\pi\\cdot c^+(C)\\cdot c^-(C)\\cdot L''(M_{\\mathrm{std}}(C),1)\\approx "+(relation||"q\\cdot\\det "+matrixTex(curve));
+  conjectureFormula="\\pi\\cdot c^+(C)\\cdot c^-(C)\\cdot L''(M_{\\mathrm{std}}(C),1)\\approx "+(relation||"q\\cdot\\det "+MATRIX_TEX);
   const maximum=Math.min(100,curve.regulator_digits||100,curve.L_digits||100);
   $("beilinson-digits").max=maximum;
   if (Number($("beilinson-digits").value)>maximum) $("beilinson-digits").value=maximum;
@@ -196,7 +190,7 @@ function renderBeilinson(curve) {
     ["c^-(C)",values.c_minus],
     ["L''(M_{\\mathrm{std}}(C),1)",values.L_second_derivative],
     ["q",curve.comparison_verified?curve.q:curve.quotient],
-    ["\\det "+matrixTex(curve),values.det]
+    ["\\det "+MATRIX_TEX,values.det]
   ];
   items.filter(([label])=>!relation||label!=="q").forEach(([label,value])=>{
     const item=document.createElement("div"), term=document.createElement("dt"), definition=document.createElement("dd");
@@ -217,7 +211,11 @@ function renderBeilinson(curve) {
   });
 }
 function displayEquationTex(multiline=false) {
-  if (current.collection?.lmfdb_model) return current.collection.lmfdb_model.equation_tex;
+  const model=current.collection?.lmfdb_model;
+  if (model) {
+    if (multiline && model.lhs_tex && model.rhs_tex) return "\\begin{aligned}C:\\quad &"+model.lhs_tex+"\\\\&="+model.rhs_tex+"\\end{aligned}";
+    return model.equation_tex;
+  }
   return CurveGeometry.equationTex(current.input.F,multiline).replace(/x/g,"u").replace(/y/g,"v");
 }
 function fitCurveEquation() {
@@ -286,6 +284,7 @@ function renderIntegrals() {
 function inspectPath(edge,sheet) {
   $("edge").value=edge;
   if (sheet!==undefined) $("sheet").value=sheet;
+  $("path-integrals").open=true;
   renderIntegrals(); highlightSelection();
 }
 function saveCamera() {
@@ -344,44 +343,85 @@ async function updateTreeSelection() {
     },current.weights.map((_,i)=>current.edges.length+1+i))
   ]);
 }
+function shortenRay(points,length) {
+  const visible=[points[0]];
+  for (let i=1;i<points.length;i++) {
+    const [x,y]=points[i-1], [nextX,nextY]=points[i];
+    const dx=nextX-x, dy=nextY-y, step=Math.hypot(dx,dy);
+    if (step>=length) {
+      visible.push([x+dx*length/step,y+dy*length/step]);
+      break;
+    }
+    visible.push(points[i]);
+    length-=step;
+  }
+  return visible;
+}
+function treeViewport(data,centers,aspect) {
+  const bases=data.edges.map(edge=>edge.base.map(point=>point.map(Number)));
+  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  function include([x,y]) {
+    minX=Math.min(minX,x); maxX=Math.max(maxX,x);
+    minY=Math.min(minY,y); maxY=Math.max(maxY,y);
+  }
+  data.roots.forEach(point=>include(point.map(Number)));
+  centers.forEach(include);
+  data.edges.forEach((edge,i)=>{
+    if (edge.infinite) include(bases[i][0]);
+    else bases[i].forEach(include);
+  });
+  // The ray represents a direction to infinity. Its displayed length follows the finite tree.
+  const rayLength=.18*(Math.max(maxX-minX,maxY-minY)||.1);
+  data.edges.forEach((edge,i)=>{
+    if (edge.infinite) {
+      bases[i]=shortenRay(bases[i],rayLength);
+      bases[i].forEach(include);
+    }
+  });
+  const midX=(minX+maxX)/2, midY=(minY+maxY)/2;
+  const halfX=.6*(Math.max(maxX-minX,(maxY-minY)*aspect)||.1);
+  const halfY=halfX/aspect;
+  return {bases,xRange:[midX-halfX,midX+halfX],yRange:[midY-halfY,midY+halfY]};
+}
 async function renderTree() {
   if (!current) return;
-  const data=current;
-  const selected=Number($("edge").value), k=selectedWeight(), center=centerPosition(current.weights[k].center);
-  const traces=current.edges.map((e,i)=>({
-    type:"scatter",mode:"lines+text",x:e.base.map(p=>Number(p[0])),y:e.base.map(p=>Number(p[1])),
-    text:e.base.map((_,j)=>j===Math.floor(e.base.length/2)?String(e.index):""),textposition:"top center",
-    line:{color:treeEdgeColor(e),width:i===selected?4:2,dash:e.infinite?"dash":"solid"},
-    customdata:e.base.map(()=>i),name:"Edge "+e.index+(e.infinite?" → ∞":""),showlegend:false,
-    hovertemplate:"Edge "+e.index+(e.infinite?" → ∞":"")+"<br>Re(u) = %{x:.10g}<br>Im(u) = %{y:.10g}<extra></extra>"
-  }));
+  const data=current, plot=$("base-plot");
+  const selected=Number($("edge").value), k=selectedWeight();
+  const centers=data.weights.map(weight=>centerPosition(weight.center));
+  const margin={l:45,r:20,t:15,b:45};
+  const aspect=Math.max(1,plot.clientWidth-margin.l-margin.r)/Math.max(1,plot.clientHeight-margin.t-margin.b);
+  const {bases,xRange,yRange}=treeViewport(data,centers,aspect);
+  const traces=data.edges.map((e,i)=>{
+    const base=bases[i];
+    return {
+      type:"scatter",mode:"lines+text",x:base.map(p=>p[0]),y:base.map(p=>p[1]),
+      text:base.map((_,j)=>j===Math.floor(base.length/2)?String(e.index):""),textposition:"top center",
+      line:{color:treeEdgeColor(e),width:i===selected?4:2,dash:e.infinite?"dash":"solid"},
+      customdata:base.map(()=>i),name:"Edge "+e.index+(e.infinite?" → ∞":""),showlegend:false,
+      hovertemplate:"Edge "+e.index+(e.infinite?" → ∞":"")+"<br>Re(u) = %{x:.10g}<br>Im(u) = %{y:.10g}<extra></extra>"
+    };
+  });
   traces.push({type:"scatter",mode:"markers",x:current.roots.map(p=>Number(p[0])),y:current.roots.map(p=>Number(p[1])),
     marker:{size:8,color:"#253d3c"},name:"Critical values of u",showlegend:false,hovertemplate:"Critical value of u<br>Re(u) = %{x:.10g}<br>Im(u) = %{y:.10g}<extra></extra>"});
   current.weights.forEach((weight,i)=>{
     const color=centerColor(weight.center), name=centerNames(weight.center)||"a = "+weight.center;
-    traces.push({type:"scatter",mode:"markers+text",x:[centerPosition(weight.center)[0]],y:[centerPosition(weight.center)[1]],
+    traces.push({type:"scatter",mode:"markers+text",x:[centers[i][0]],y:[centers[i][1]],
       text:[current.weights.length>4?"a"+(i+1):name],textposition:i%2?"bottom center":"top center",textfont:{size:11,color},
       marker:{size:i===k?16:13,symbol:"diamond-open",color,line:{width:i===k?3:2}},name,showlegend:false,
       hovertemplate:"a"+(i+1)+": "+name+"<br>Re(u)=%{x:.10g}<br>Im(u)=%{y:.10g}<extra></extra>"});
   });
-  const rays=current.edges.filter(e=>e.infinite).map(e=>e.base[e.base.length-1]);
-  traces.push({type:"scatter",mode:"text",x:rays.map(p=>Number(p[0])),y:rays.map(p=>Number(p[1])),
+  const rays=data.edges.flatMap((edge,i)=>edge.infinite?[bases[i].at(-1)]:[]);
+  traces.push({type:"scatter",mode:"text",x:rays.map(p=>p[0]),y:rays.map(p=>p[1]),
     text:rays.map(()=>"∞"),textposition:"top right",showlegend:false,hoverinfo:"skip"});
-  const plot=$("base-plot");
-  // Symmetric ranges keep a at the centre while retaining the whole finite tree.
-  const points=[...current.edges.flatMap(e=>e.base),...current.roots,...current.weights.map(w=>centerPosition(w.center))];
-  const aspect=Math.max(1,plot.clientWidth-65)/Math.max(1,plot.clientHeight-60);
-  const halfX=1.15*points.reduce((extent,p)=>Math.max(extent,Math.abs(Number(p[0])-center[0]),Math.abs(Number(p[1])-center[1])*aspect),.1);
-  const halfY=halfX/aspect;
-  await Plotly.react(plot,traces,{margin:{l:45,r:20,t:15,b:45},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
+  await Plotly.react(plot,traces,{margin,paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
     uirevision:(label||current.input.F)+"/"+current.weights[k].center,dragmode:"pan",hovermode:"closest",font:{family:"Source Serif 4, Georgia, serif",color:"#183e3b",size:13},
-    xaxis:{title:"Re(u)",range:[center[0]-halfX,center[0]+halfX],autorange:false,zeroline:false},yaxis:{title:"Im(u)",range:[center[1]-halfY,center[1]+halfY],autorange:false,scaleanchor:"x",scaleratio:1,zeroline:false},
+    xaxis:{title:"Re(u)",range:xRange,autorange:false,zeroline:false},yaxis:{title:"Im(u)",range:yRange,autorange:false,scaleanchor:"x",scaleratio:1,zeroline:false},
     legend:{orientation:"h",y:-.22}},{responsive:true,displaylogo:false});
   if (data!==current) { renderIntegrals(); return renderTree(); }
-  // Apply the selected centre even if Plotly retained a prior pan or autorange.
+  // A newly loaded tree uses its own framing even if Plotly retained a prior pan.
   await Plotly.relayout(plot,{
-    "xaxis.range":[center[0]-halfX,center[0]+halfX],"xaxis.autorange":false,
-    "yaxis.range":[center[1]-halfY,center[1]+halfY],"yaxis.autorange":false
+    "xaxis.range":xRange,"xaxis.autorange":false,
+    "yaxis.range":yRange,"yaxis.autorange":false
   });
   if (k!==selectedWeight()) { renderIntegrals(); await updateTreeSelection(); }
   plot.removeAllListeners("plotly_click");
@@ -410,34 +450,30 @@ async function renderPlot() {
 }
 async function display(data,name,curve=null) {
   current=validate(data);
+  const catalogLabel=curve?.label;
   curve=curve||(data.collection?.experiment?{...data.collection.experiment,...data.collection}:null);
   currentCurve=curve; label=name;
+  const link=lmfdbLink(curve?.label||"","LMFDB ↗");
+  link.className="lmfdb-link";
+  $("curve-lmfdb").replaceChildren(link);
+  $("curve-lmfdb").hidden=link.tagName!=="A";
   if (curve?.divisors) current.collection={...(current.collection||{}),
-    ...Object.fromEntries(["divisors","support","logarithmic_centers","matrix_divisor_ids","packet_torsion_order","end_alg","coordinate_system","lmfdb_model","integral_rank","integral_rank_field","integral_rank_space","trace_rank_certificate"].map(k=>[k,curve[k]]))};
-  $("divisor-select").replaceChildren();
-  (current.collection?.divisors||[]).forEach(D=>option($("divisor-select"),D.id,D.id));
-  $("divisor-select").disabled=!current.collection?.divisors?.length;
+    ...Object.fromEntries(["divisors","support","logarithmic_centers","matrix_divisor_ids","compact_divisors","packet_torsion_order","end_alg","coordinate_system","lmfdb_model","integral_rank","integral_rank_field","integral_rank_space","trace_rank_certificate"].map(k=>[k,curve[k]]))};
   $("weight-select").replaceChildren(); current.weights.forEach((w,k)=>option($("weight-select"),k,"a = "+[centerNames(w.center),w.center].filter(Boolean).join(" = ")));
   $("weight-select").value="0"; $("weight-select").disabled=false;
   $("edge").replaceChildren(); current.edges.forEach((e,k)=>option($("edge"),k,"Edge "+e.index+(e.infinite?" → ∞":"")));
-  $("result-source").replaceChildren();
-  if (curve) {
-    const curveName=document.createElement("strong"), link=lmfdbLink(curve.label,"LMFDB ↗");
-    curveName.textContent=curve.label; link.className="lmfdb-link";
-    $("result-source").append(curveName,link);
-  }
-  else $("result-source").textContent=name||"Imported curve";
-  $("result-model-label").textContent=current.collection?.lmfdb_model?"Curve in LMFDB coordinates":"Cut model";
   try { math($("result-model"),displayEquationTex()); }
   catch (error) { $("result-model").textContent=displayEquationTex(); }
   math($("cut-model"),"v^2="+CurveGeometry.equationTex(current.input.F).split("y^2=")[1].replace(/x/g,"u"));
-  renderPoints(curve);
+  renderDivisors();
+  $("curve-overview").hidden=false;
   const fibre=window.FibreGraphPanel?.setCurve(curve,current);
   $("show-mesh").disabled=!mesh;
   $("mesh-caption").textContent=mesh?"Drag to rotate. Use the sheet selector to view either sheet.":"Drag to rotate the lifted paths. Surface mesh unavailable.";
   $("results").hidden=false; $("export").disabled=false;
   renderMatrix(curve);
   renderBeilinson(curve);
+  if (catalogLabel) history.replaceState(null,"","#"+encodeURIComponent(catalogLabel));
   if (document.fonts) await document.fonts.ready;
   fitCurveEquation();
   fitConjectureEquation();
@@ -454,7 +490,6 @@ async function chooseCurve(index) {
     if(token!==version)return; mesh=nextMesh; await display(data,c.label,c);
     if(token!==version)return;
     for (const row of $("catalog-rows").children) row.classList.toggle("selected",row.dataset.label===c.label);
-    history.replaceState(null,"","#"+encodeURIComponent(c.label));
     status((data.warnings||[]).join(" "),Boolean(data.warnings?.length));
   } catch(e) {if(token===version)status(e.message,true);}
 }
@@ -468,7 +503,10 @@ function renderCatalog() {
     const link=lmfdbLink(c.label,"LMFDB ↗"); link.className="lmfdb-link"; cell(row,"").append(button,link);
     cell(row,c.end_alg||"—"); cell(row,c.packet_torsion_order||"—"); cell(row,c.integral_rank??"—");
     const divisors=cell(row,""); divisors.className="divisor-cell";
-    (c.divisors||[]).forEach(D=>{const node=document.createElement("div");math(node,D.tex);divisors.append(node);});
+    for (const id of CurveGeometry.divisorIds(c)) {
+      const divisor=c.divisors.find(entry=>entry.id===id), node=document.createElement("div");
+      math(node,CurveGeometry.divisorTex(c,divisor)); divisors.append(node);
+    }
     ["det","c_plus","c_minus","L_second_derivative"].forEach(k=>c.numerical[k]==null?cell(row,"—"):mathCell(row,numberTex(c.numerical[k])));
     if(linearRelationTex(c))mathCell(row,linearRelationTex(c));else if(c.comparison_verified)mathCell(row,CurveGeometry.rationalTex(c.q));else if(c.quotient)mathCell(row,numberTex(c.quotient));else cell(row,"—");
     if(c.relative_agreement)mathCell(row,numberTex(c.relative_agreement,2));else cell(row,"—");
@@ -476,13 +514,35 @@ function renderCatalog() {
   }); $("curve-select").disabled=false;
 }
 $("curve-select").addEventListener("change",()=>chooseCurve(Number($("curve-select").value)));
-$("divisor-select").addEventListener("change",()=>{renderPoints(currentCurve);window.FibreGraphPanel?.setDivisor($("divisor-select").value);});
 ["weight-select","edge","sheet","bank","orientation"].forEach(id=>$(id).addEventListener("change",()=>{renderIntegrals();if(id==="edge")highlightSelection();if(id==="weight-select")updateTreeSelection();}));
 $("beilinson-digits").addEventListener("input",()=>renderBeilinson(currentCurve));
+window.addEventListener("hashchange", () => {
+  if (!catalog) return;
+  const index=catalogIndex();
+  if (index >= 0 && $("curve-select").value !== String(index)) {
+    $("curve-select").value=index;
+    chooseCurve(index);
+  }
+});
 window.addEventListener("pageshow",()=>{if(current){renderIntegrals();updateTreeSelection();}});
 ["visible-sheet","show-mesh"].forEach(id=>$(id).addEventListener("change",renderPlot));
 $("export").addEventListener("click",()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download=(label||"curve")+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $("import").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error("Result exceeds 20 MB");const data=validate(JSON.parse(await file.text()));++version;mesh=null;$("curve-select").value="";for(const row of $("catalog-rows").children)row.classList.remove("selected");await display(data,file.name);status("Imported "+file.name);}catch(e){status(e.message,true);}event.target.value="";});
 document.querySelectorAll("[data-tex]").forEach(node=>math(node,node.dataset.tex));
 window.FibreGraphPanel?.init();
-fetch("catalog.json?v="+DATA_VERSION).then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{if(data.schema_version!==3||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");catalog=data;renderCatalog();const saved=catalog.curves.findIndex(c=>c.label===decodeURIComponent(location.hash.slice(1)).split("/")[0]);$("curve-select").value=Math.max(0,saved);return chooseCurve(Math.max(0,saved));}).catch(e=>status(e.message,true));
+fetch("catalog.json?v="+DATA_VERSION).then(r=>{if(!r.ok)throw Error("Catalog could not be loaded");return r.json();}).then(data=>{
+  if(data.schema_version!==3||!Array.isArray(data.curves)||!data.curves.length)throw Error("Unsupported catalog");
+  catalog=data;
+  renderCatalog();
+  const index=Math.max(0,catalogIndex());
+  $("curve-select").value=index;
+  return chooseCurve(index);
+}).catch(error=>{
+  const select=$("curve-select");
+  select.replaceChildren();
+  option(select,"","Curve catalog unavailable");
+  select.disabled=true;
+  status(location.protocol==="file:"
+    ? "Open the Explorer through a local web server to load the curve data."
+    : error.message,true);
+});

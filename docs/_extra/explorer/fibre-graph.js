@@ -33,7 +33,7 @@ window.FibreGraphPanel = (() => {
   function solve(graph, charges) {
     const n=graph.genera.length, f=charges.map(Q.from);
     if (f.length!==n) throw Error("Enter one charge for every component.");
-    if (!f.reduce((a,b)=>a.add(b),zero()).zero) throw Error("The charges must sum to zero: otherwise Lu=f has no solution.");
+    if (!f.reduce((a,b)=>a.add(b),zero()).zero) throw Error("The charges must sum to zero.");
     const A=graph.laplacian.slice(1).map((row,i)=>[...row.slice(1).map(Q.from),f[i+1]]);
     for (let j=0;j<n-1;j++) {
       const pivot=A.findIndex((row,i)=>i>=j && !row[j].zero);
@@ -79,6 +79,7 @@ window.FibreGraphPanel = (() => {
     return true;
   }
   let curve=null, collection=null, record=null, graph=null, selected="", currentPrime=0, request=0, result=null;
+  let markedPoints=[], diagramWidth=0;
   const cache=new Map();
   function message(text,error=false) { $("fibre-status").textContent=text; $("fibre-status").classList.toggle("error",error); }
   function support() { return (collection?.support||[]).filter(p=>!Q.from(p.coefficients[selected]||0).zero); }
@@ -87,7 +88,7 @@ window.FibreGraphPanel = (() => {
     return {reason, label:/time budget|timeout|exceeded/i.test(reason)?"Graph computation unavailable":"Graph not implemented"};
   }
   function setDivisor(id) {
-    selected=id; $("fibre-divisor").value=id;
+    selected=id;
     if (graph) { renderSupport(); useDivisor(); }
   }
   async function setCurve(next, data) {
@@ -96,11 +97,12 @@ window.FibreGraphPanel = (() => {
     $("fibre-workspace").hidden=true; $("fibre-place-label").hidden=true;
     $("fibre-panel").hidden=false;
     $("fibre-divisor").replaceChildren();
-    for (const D of collection?.divisors||[]) {
-      const option=document.createElement("option"); option.value=D.id; option.textContent=D.id; $("fibre-divisor").append(option);
+    for (const id of CurveGeometry.divisorIds(collection)) {
+      const option=document.createElement("option");
+      option.value=id; option.textContent=CurveGeometry.divisorLabel(collection,id);
+      $("fibre-divisor").append(option);
     }
-    selected=$("divisor-select").value||collection?.divisors?.[0]?.id||"";
-    $("fibre-divisor").value=selected;
+    selected=$("fibre-divisor").value;
     if (!curve?.label || !collection) { message("Special-fibre data are available for catalog curves."); return; }
     message("Loading the marked special fibres…");
     try {
@@ -159,134 +161,145 @@ window.FibreGraphPanel = (() => {
   function showGraph(next) {
     graph=next; result=null;
     $("fibre-workspace").hidden=false; $("fibre-solution").hidden=true;
-    const positive=graph.genera.filter(g=>g>0).length;
-    message("p = "+currentPrime+" · "+graph.genera.length+" components · cycle rank "+graph.cycles.length+" · "+positive+" positive-genus components.");
-    $("fibre-model-note").textContent=
-      "Geometric fibre after finite extension. All displayed edges have unit thickness; rational chains resolve the nodes."+
-      (graph.regularization_scale>1?" The verified metric graph is rescaled by "+graph.regularization_scale+" before resolution.":"");
-    $("fibre-extension").textContent=
-      "Local model: "+graph.prime_ideal+"; ramification index "+graph.ramification_index+", residue degree "+graph.residue_degree+". Normalization: "+graph.valuation_normalization+".";
+    message("");
     const rows=$("fibre-charges"); rows.replaceChildren();
-    graph.genera.forEach((g,i)=>{
-      const row=document.createElement("tr"); row.dataset.vertex=i;
-      tex(cell(row,"","th"),"Z_{"+i+"}"); cell(row,g);
+    graph.genera.forEach((_,i)=>{
+      const row=document.createElement("tr");
+      const component=cell(row,"","th"); component.scope="row"; tex(component,"Z_{"+i+"}");
       const input=document.createElement("input"); input.type="text"; input.inputMode="text"; input.value="0"; input.dataset.vertex=i;
       input.setAttribute("aria-label","Charge on component Z"+i); cell(row,"").append(input);
       cell(row,"—").className="fibre-potential"; rows.append(row);
     });
     renderSupport(); useDivisor();
+    if (document.fonts?.status==="loading") {
+      document.fonts.ready.then(()=>{if (graph===next) drawGraph();});
+    }
   }
   function renderSupport() {
-    const rows=$("fibre-support"); rows.replaceChildren(); let unresolved=false;
-    for (const P of support()) {
-      const mark=graph.specializations.find(x=>x.point_id===P.id), row=document.createElement("tr");
-      tex(cell(row,""),P.definition_tex); tex(cell(row,""),Q.from(P.coefficients[selected]).tex());
-      const target=cell(row,"");
-      if(mark?.status==="known") tex(target,"Z_{"+mark.components[0]+"}");
-      else if(mark?.components?.length) { target.textContent="Unresolved between "+mark.components.map(i=>"Z"+i).join(" and "); unresolved=true; }
-      else { target.textContent="Specialization not yet determined"; unresolved=true; }
-      rows.append(row);
+    const specializations=new Map(graph.specializations.map(mark=>[mark.point_id,mark]));
+    markedPoints=support().map(point=>{
+      const mark=specializations.get(point.id), coefficient=Q.from(point.coefficients[selected]);
+      const multiple=coefficient.toString();
+      const prefix=multiple==="1"?"":multiple==="-1"?"-":coefficient.tex()+"\\,";
+      return {id:point.id, mark, coefficient, formula:prefix+CurveGeometry.pointTex(point)};
+    });
+    const unresolved=markedPoints.filter(({mark})=>mark?.status!=="known");
+    $("fibre-divisor-charge").disabled=unresolved.length>0;
+    const note=$("fibre-unresolved");
+    note.replaceChildren();
+    note.hidden=!unresolved.length;
+    if (unresolved.length) {
+      const items=document.createElement("ul");
+      for (const {mark,formula} of unresolved) {
+        const item=document.createElement("li"), point=document.createElement("span");
+        tex(point,formula);
+        item.append(point);
+        if(mark?.components?.length) item.append(" · possible components "+mark.components.map(i=>"Z"+i).join(", "));
+        items.append(item);
+      }
+      note.append("Specialization unresolved for these points. You can enter a custom charge.",items);
     }
-    $("fibre-divisor-charge").disabled=unresolved;
-    $("fibre-charge-note").textContent=unresolved?"Some point specializations are unresolved. You can still enter a degree-zero charge below and solve on this verified graph.":
-      "Use the divisor charge sets f = −Σ aₚ Zₚ, following the sign in the paper’s integrality criterion. You can edit each charge.";
+  }
+  function divisorCharges(model) {
+    if (model.status!=="available") return null;
+    const specializations=new Map(model.specializations.map(mark=>[mark.point_id,mark]));
+    const charges=model.genera.map(zero);
+    for (const {id,coefficient} of markedPoints) {
+      const mark=specializations.get(id);
+      if (mark?.status!=="known") return null;
+      const vertex=mark.components[0];
+      charges[vertex]=charges[vertex].add(coefficient);
+    }
+    return charges;
   }
   function useDivisor() {
     if (!graph) return;
-    if($("fibre-divisor-charge").disabled) {
+    const charges=divisorCharges(graph);
+    if (!charges) {
       result=null; $("fibre-solution").hidden=true; $("fibre-error").textContent="";
       $("fibre-charges").querySelectorAll("input").forEach(input=>input.value="0");
       $("fibre-charges").querySelectorAll(".fibre-potential").forEach(cell=>cell.textContent="—");
       drawGraph(); return;
     }
-    const f=Array.from({length:graph.genera.length},zero);
-    if(!$("fibre-divisor-charge").disabled) for(const P of support()) {
-      const mark=graph.specializations.find(x=>x.point_id===P.id);
-      f[mark.components[0]]=f[mark.components[0]].sub(P.coefficients[selected]);
-    }
-    [...$("fibre-charges").querySelectorAll("input")].forEach((input,i)=>input.value=f[i].toString());
+    [...$("fibre-charges").querySelectorAll("input")].forEach((input,i)=>input.value=charges[i].toString());
     solveInputs();
+  }
+  function solveCharges(model, charges) {
+    // The editor displays f in Lu + f = 0. The solver takes the right-hand side.
+    return solve(model,charges.map(charge=>zero().sub(charge)));
+  }
+  function renderVerdict(charges) {
+    const verdict=$("fibre-verdict");
+    verdict.classList.toggle("nonzero",!result.inTateSpan);
+    if (!result.inTateSpan) {
+      verdict.textContent="The obstruction does not lie in the diagonal Tate line.";
+      return;
+    }
+    const membership="The obstruction lies in the diagonal Tate line";
+    const divisor=divisorCharges(graph);
+    if (!divisor?.every((charge,i)=>charge.sub(charges[i]).zero)) {
+      verdict.textContent=membership+" for this charge.";
+      return;
+    }
+    const fibre=record.fibres.find(entry=>entry.prime===currentPrime);
+    const passesAtPrime=fibre.places.every(place=>{
+      if (place===graph) return true;
+      const localCharges=divisorCharges(place);
+      return localCharges && solveCharges(place,localCharges).inTateSpan;
+    });
+    const prime=document.createElement("span");
+    prime.className="fibre-verdict-prime";
+    const value=document.createElement("span");
+    tex(value,"p="+currentPrime);
+    prime.append(value,".");
+    verdict.textContent=membership+(passesAtPrime
+      ? ", and hence the class is integral at "
+      : " at the selected place above ");
+    verdict.append(prime);
   }
   function solveInputs() {
     if(!graph) return;
     try {
-      result=solve(graph,[...$("fibre-charges").querySelectorAll("input")].map(input=>input.value));
+      const charges=[...$("fibre-charges").querySelectorAll("input")].map(input=>Q.from(input.value));
+      result=solveCharges(graph,charges);
       $("fibre-error").textContent=""; $("fibre-solution").hidden=false;
       [...$("fibre-charges").querySelectorAll(".fibre-potential")].forEach((cell,i)=>tex(cell,result.u[i].tex()));
-      tex($("fibre-potential"),"u="+vector(result.u)+",\\qquad u_{Z_0}=0");
-      tex($("fibre-cycle-form"),"Q_u="+matrix(result.form));
-      tex($("fibre-positive"),"(u_Z)_{g(Z)>0}="+vector(result.positive.map(x=>x.value)));
-      tex($("fibre-tate-form"),"Q_{\\mathbf1}="+matrix(result.constantForm)+",\\qquad (1)_{g(Z)>0}="+vector(result.positive.map(()=>1)));
-      $("fibre-verdict").textContent=result.inTateSpan?"The obstruction lies in the diagonal Tate line.":"The obstruction does not lie in the diagonal Tate line.";
-      tex($("fibre-verdict-formula"),result.inTateSpan?
-        "\\operatorname{ob}_{\\mathfrak p}(u)="+result.multiple.tex()+"\\,\\operatorname{ob}_{\\mathfrak p}(\\mathbf1)":
-        "\\operatorname{ob}_{\\mathfrak p}(u)\\notin\\mathbb Q\\,\\operatorname{ob}_{\\mathfrak p}(\\mathbf1)");
-      $("fibre-verdict").classList.toggle("nonzero",!result.inTateSpan);
-      renderCycles(); drawGraph();
+      tex($("fibre-cycle-form"),"Q_u="+matrix(result.form)+",");
+      tex($("fibre-positive"),"(u_Z)_{g(Z)\\geq 1}="+vector(result.positive.map(x=>x.value))+".");
+      renderVerdict(charges);
+      drawGraph();
     } catch(error) {
       result=null; $("fibre-error").textContent=error.message; $("fibre-solution").hidden=true;
       $("fibre-charges").querySelectorAll(".fibre-potential").forEach(cell=>cell.textContent="—"); drawGraph();
     }
   }
-  function renderCycles() {
-    const body=$("fibre-cycle-basis"); body.replaceChildren();
-    graph.cycles.forEach((cycle,i)=>{
-      const row=document.createElement("tr"); tex(cell(row,"","th"),"\\gamma_{"+(i+1)+"}");
-      tex(cell(row,""),cycle.map((a,k)=>Q.from(a).zero?"":Q.from(a).tex()+"e_{"+(k+1)+"}").filter(Boolean).join("+").replace(/\+\-/g,"-")||"0"); body.append(row);
-    });
-    $("fibre-no-cycles").hidden=graph.cycles.length>0;
-  }
-  function positions() {
-    const n=graph.genera.length;
-    if(n===1) return [[0,0]];
-    const pts=Array.from({length:n},(_,i)=>[Math.cos(2*Math.PI*i/n),Math.sin(2*Math.PI*i/n)]);
-    for(let step=0;step<150;step++) {
-      const forces=pts.map(()=>[0,0]);
-      for(let i=0;i<n;i++) for(let j=0;j<i;j++) {
-        const dx=pts[i][0]-pts[j][0],dy=pts[i][1]-pts[j][1],d=Math.max(.005,dx*dx+dy*dy),f=.2/d;
-        forces[i][0]+=dx*f;forces[i][1]+=dy*f;forces[j][0]-=dx*f;forces[j][1]-=dy*f;
-      }
-      for(const [a,b] of graph.edges) {
-        const dx=pts[a][0]-pts[b][0],dy=pts[a][1]-pts[b][1],d=Math.hypot(dx,dy),f=.8*(d-.55)/Math.max(.01,d);
-        forces[a][0]-=dx*f;forces[a][1]-=dy*f;forces[b][0]+=dx*f;forces[b][1]+=dy*f;
-      }
-      const rate=.1*(1-step/170);
-      for(let i=0;i<n;i++) for(let j=0;j<2;j++) pts[i][j]+=Math.max(-.15,Math.min(.15,forces[i][j]*rate));
-    }
-    return pts;
-  }
   function drawGraph() {
-    if(!graph || !window.Plotly) return;
-    const pts=positions(), traces=[], pairs=new Map();
-    graph.edges.forEach(([a,b],k)=>{const key=[Math.min(a,b),Math.max(a,b)].join(",");if(!pairs.has(key))pairs.set(key,[]);pairs.get(key).push(k);});
-    for(const indices of pairs.values()) indices.forEach((k,index)=>{
-      const [a,b]=graph.edges[k],p=pts[a],q=pts[b],dx=q[0]-p[0],dy=q[1]-p[1],d=Math.max(.01,Math.hypot(dx,dy));
-      const bend=(index-(indices.length-1)/2)*.35;
-      const x=[],y=[];
-      for(let i=0;i<=18;i++){const t=i/18,s=4*t*(1-t)*bend;x.push(p[0]+t*dx-s*dy/d);y.push(p[1]+t*dy+s*dx/d);}
-      traces.push({x,y,type:"scatter",mode:"lines",line:{color:"#82968a",width:2},text:"e"+(k+1)+": Z"+a+" → Z"+b,hoverinfo:"text",showlegend:false});
-    });
+    const host=$("fibre-plot");
+    diagramWidth=host.clientWidth;
     const marks=graph.genera.map(()=>[]);
-    for(const P of support()) {const mark=graph.specializations.find(x=>x.point_id===P.id);if(mark?.status==="known")marks[mark.components[0]].push(P.id);}
-    const potentials=result?result.u.map(v=>{const x=Number(v);return Number.isFinite(x)?x:0;}):null;
-    const limit=potentials?Math.max(1,...potentials.map(Math.abs)):1;
-    traces.push({x:pts.map(p=>p[0]),y:pts.map(p=>p[1]),type:"scatter",mode:"markers+text",text:graph.genera.map((g,i)=>"Z"+i),textposition:"top center",textfont:{family:"Inter, sans-serif",size:12},
-      marker:{size:graph.genera.map((g,i)=>g?26:marks[i].length?21:15),color:potentials||graph.genera.map(g=>g?"#267f91":"#fff8ec"),cmin:-limit,cmax:limit,colorscale:[[0,"#267f91"],[.5,"#fff8ec"],[1,"#bd5034"]],line:{color:"#183e3b",width:1.5}},
-      customdata:graph.genera.map((g,i)=>i),hovertext:graph.genera.map((g,i)=>"Z"+i+" · genus "+g+"<br>"+(marks[i].join(", ")||"No selected support points")+(result?"<br>f = "+result.f[i]+"; u = "+result.u[i]:"")),hoverinfo:"text",showlegend:false});
-    Plotly.react($("fibre-plot"),traces,{margin:{l:20,r:20,t:35,b:20},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",xaxis:{visible:false},yaxis:{visible:false,scaleanchor:"x",scaleratio:1},hovermode:"closest",uirevision:curve?.label+":"+currentPrime+":"+$("fibre-place").value},
-      {responsive:true,displayModeBar:false}).then(()=>{
-        $("fibre-plot").removeAllListeners("plotly_click");
-        $("fibre-plot").on("plotly_click",event=>{const i=event.points[0]?.customdata;if(Number.isInteger(i))$("fibre-charges").querySelector('input[data-vertex="'+i+'"]').focus();});
-      });
+    for (const {mark,formula} of markedPoints) {
+      if (mark?.status==="known") marks[mark.components[0]].push(formula);
+    }
+    const inputs=[...$("fibre-charges").querySelectorAll("input")];
+    FibreDiagram.render(host,graph,{
+      marks, charges:inputs.map(input=>input.value), potentials:result?.u, tex,
+      onSelect:index=>inputs[index].focus()
+    });
   }
   function init() {
+    if (typeof ResizeObserver !== "undefined") {
+      const host=$("fibre-plot");
+      new ResizeObserver(()=>{
+        if (graph && host.clientWidth && host.clientWidth!==diagramWidth) drawGraph();
+      }).observe(host);
+    }
     $("fibre-prime-form").addEventListener("submit",event=>{event.preventDefault();showPrime();});
     $("fibre-prime").addEventListener("change",showPrime);
     $("fibre-place").addEventListener("change",showPlace);
-    $("fibre-divisor").addEventListener("change",()=>{const selector=$("divisor-select");selector.value=$("fibre-divisor").value;selector.dispatchEvent(new Event("change"));});
+    $("fibre-divisor").addEventListener("change",()=>setDivisor($("fibre-divisor").value));
     $("fibre-solve").addEventListener("submit",event=>{event.preventDefault();solveInputs();});
     $("fibre-divisor-charge").addEventListener("click",useDivisor);
     $("fibre-zero-charge").addEventListener("click",()=>{$("fibre-charges").querySelectorAll("input").forEach(input=>input.value="0");solveInputs();});
   }
-  return {init,setCurve,setDivisor,math:{Q,solve,obstruction,isPrime}};
+  return {init,setCurve,math:{Q,solve,obstruction,isPrime}};
 })();

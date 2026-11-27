@@ -23414,6 +23414,10 @@
     },
     {
       "label": "3125.a.3125.1",
+      "compact_divisors": {
+        "D2": "-2\\sum_{x^5=-1/4}\\left(x,-\\tfrac12\\right)+5\\left(1,\\tfrac{-1+\\sqrt5}{2}\\right)+5\\left(1,\\tfrac{-1-\\sqrt5}{2}\\right)",
+        "D4": "-8\\sum_{x^5=-1/4}\\left(x,-\\tfrac12\\right)+5\\sum_{\\substack{x^5=1,\\ x\\ne1\\cr y^2+y=1}}(x,y)"
+      },
       "cond": 3125,
       "F": "-4095*x^6 + 5120*x^5 - 2560*x^4 + 640*x^3 - 80*x^2 + 4*x",
       "divisors": [
@@ -25550,6 +25554,10 @@
     },
     {
       "label": "4096.b.65536.1",
+      "compact_divisors": {
+        "D1": "8(1,0)-\\sum_{\\substack{x\\in\\{(-1\\pm\\sqrt3)(1\\pm i)/2\\}\\cr y^2=x^5-x}}(x,y)",
+        "D2": "8(0,0)-\\sum_{\\substack{x\\in\\{(-1\\pm\\sqrt3)(1\\pm i)/2\\}\\cr y^2=x^5-x}}(x,y)"
+      },
       "cond": 4096,
       "F": "-4080*x^6 + 5116*x^5 - 2560*x^4 + 640*x^3 - 80*x^2 + 4*x",
       "divisors": [
