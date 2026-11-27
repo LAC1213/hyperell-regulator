@@ -170,7 +170,7 @@ just the points that appear in those directions. This can avoid a large
 compositum while still determining the kernel on the full packet. When
 available, ``integral_rank_upper_bound`` records the bound from necessary
 local conditions.
-Conjugate logarithmic centres give equal real moments. The survey uses
+Conjugate logarithmic centers give equal real moments. The survey uses
 this equality to detect a vanishing determinant even when the integral
 divisor rank is two or higher. Columns use the individual marked points.
 See :doc:`integrality` for the local model and the graph pairing.
@@ -182,8 +182,8 @@ torsion divisor space modulo the hyperelliptic identifications.
 
 .. math::
 
-   \pi c^+c^-L^{\prime\prime}(\mathrm{std},1)
-   \approx \sum_{i<j} q_{ij}\det(D_i,D_j),
+   \pi c^+c^-L^{\prime\prime}(M_{\mathrm{std}}(C),1)
+   \approx \sum_{i<j} q_{ij}\det R(D_i,D_j),
    \qquad q_{ij}\in\mathbb Q.
 
 The survey searches separately on each packet using one integration chart

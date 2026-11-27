@@ -18,7 +18,7 @@ DETERMINANT_WEIGHTS = (1, 2, 1)
 
 
 def integration_chart(F, abscissae, shift=None):
-    """Choose a common real chart and retain the centres at infinity."""
+    """Choose a common real chart and retain the centers at infinity."""
     xs = tuple(abscissae)
     if shift is None and 'infinity' not in xs:
         return F, xs, None
@@ -228,12 +228,9 @@ class MotivicPacket:
     def integral_basis(self):
         """Return integral Galois-trace directions over QQ and completeness.
 
-        Solve the local equations in the span of degree-zero Galois
-        traces, modulo the symmetric ordinate identifications. Algebraic
-        anti-invariant directions have zero trace and are excluded.
-        Regulator determinants test independence of the resulting images
-        in motivic cohomology. For the unrestricted number-field kernel,
-        use ``packet.integrality.kernel()``.
+        We solve the local equations in the span of degree-zero Galois
+        traces. For the full number-field kernel, use
+        ``packet.integrality.kernel()``.
         """
         traces = galois_trace_basis(self.integrality.abscissae)
         generators = [self.integrality.abscissa_divisor(v) for v in traces]

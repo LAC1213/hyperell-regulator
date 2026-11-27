@@ -164,7 +164,7 @@ def nodal_model(local, points, groups):
     elif count == 2 and len(nodes) == 3 and all(len(g) == 2 for g in local.main):
         genera = [0, 0]
     else:
-        raise NotImplementedError('unsupported nodal genus-two fibre')
+        raise NotImplementedError('unsupported nodal genus 2 fibre')
     paths, edges = {}, []
     for key, (a, b, length) in nodes.items():
         start = len(genera)

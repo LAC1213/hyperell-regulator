@@ -34,16 +34,10 @@ def galois_traces(abscissae, divisors):
 def galois_trace_basis(abscissae):
     """Span degree-zero normalized traces in the supplied abscissa order.
 
-    The standard projection identifies the two ordinates over each x.
-    Its Galois orbits are therefore the roots of the minimal polynomials
-    of x over QQ, with infinity a rational singleton. A normalized orbit
-    sum is the trace of a point divided by its orbit size. Differences
-    of these sums span all degree-zero traces over QQ.
-
-    An incomplete orbit cannot support a nonzero invariant coefficient,
-    so it contributes no generator. Arithmetic is exact, including for
-    nonreal conjugates. Callers clear denominators after lifting back to
-    point divisors.
+    The standard projection identifies the two ordinates over each x, so
+    the orbits are the roots of the minimal polynomials of x over QQ, with
+    infinity a singleton. Differences of orbit sums divided by orbit size
+    span the degree-zero traces. Incomplete orbits contribute nothing.
     """
     xs = tuple('infinity' if x == 'infinity' else QQbar(x) for x in abscissae)
     if len(set(xs)) != len(xs):

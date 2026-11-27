@@ -324,9 +324,7 @@ class HyperellipticReduction:
         return self._cache["reduction_data"]
 
     def conductor(self):
-        r"""
-        The conductor of the Jacobian of `C`.
-        """
+        r"""The conductor of the Jacobian of `C`."""
         return ZZ(self.reduction_data().conductor)
 
     def minimal_discriminant(self):
@@ -647,9 +645,7 @@ class HyperellipticReduction:
         return "; ".join(bad) if bad else "not semistable"
 
     def is_semistable_at(self, p):
-        r"""
-        Whether `C` is semistable at ``p`` (``None`` if undecided).
-        """
+        r"""Whether `C` is semistable at ``p`` (``None`` if undecided)."""
         return self.semistability_at(p)["semistable"]
 
     def is_semistable(self):
@@ -670,9 +666,7 @@ class HyperellipticReduction:
         return True
 
     def semistability(self):
-        r"""
-        The dictionary ``p -> semistability_at(p)`` over all bad primes.
-        """
+        r"""The dictionary ``p -> semistability_at(p)`` over all bad primes."""
         return {p: self.semistability_at(p) for p in self.bad_primes()}
 
     # -- components of the special fibre -----------------------------------

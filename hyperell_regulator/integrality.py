@@ -1,16 +1,12 @@
 r"""Sufficient integrality criterion for sums of torsion-packet classes.
 
-For a degree-zero divisor ``D = sum(n_i P_i)`` supported on a rational
-torsion packet, test ``sum_{P_i -> Z} n_i = 0`` on every component at every
-bad prime. This implements the supplied cocycle/multidegree criterion for
-the projection ``q_* B(D)`` to the standard motive, subject to its geometric
-proof. It does not compute the exact Chow-valued boundary obstruction.
+For a degree-zero divisor ``D = sum(n_i P_i)`` on a rational torsion packet,
+we test ``sum_{P_i -> Z} n_i = 0`` on every component ``Z`` at every bad
+prime. This is sufficient for ``q_* B(D)`` to be integral.
 
-Smooth points on semistable stable components are labelled, as are smooth
-integral affine points on the original model at 2. These smooth patches
-persist in a regular proper model. Other points (including contracted
-chains) and unavailable nonsemistable fibres remain unknown. Kernel computations force their
-coefficients to zero, yielding a certified sublattice when data are partial.
+Points are labelled when they reduce smoothly to a semistable component, or
+to the smooth locus of the original model at 2. Other points are unknown;
+kernels force their coefficients to zero, giving a certified sublattice.
 """
 
 from collections.abc import Mapping
@@ -87,22 +83,17 @@ def _smooth_affine_components(C, points, p):
 class TorsionPacketIntegrality:
     r"""Multidegrees and balanced combinations on one verified torsion packet.
 
-    ``points`` are rational points on ``y^2+h*y=f``; infinity is represented
-    by ``('infinity', eta)`` with ``eta=lim(y/x^(g+1))``. All differences
-    from the first point are checked for torsion by exact principality or
-    Jacobian arithmetic. A non-torsion difference raises ``ValueError``;
-    an undetermined order raises ``NotImplementedError``.
+    ``points`` are rational points on ``y^2+h*y=f``, with ``('infinity', eta)``
+    for ``eta=lim(y/x^(g+1))``. Differences from the first point must be
+    torsion: otherwise we raise ``ValueError``, or ``NotImplementedError``
+    if the order is undetermined.
 
-    ``check(D)`` accepts a coefficient vector in point order, or a mapping
-    from points to rational coefficients. ``kernel()`` computes a saturated
-    integer lattice of degree-zero divisors. ``kernel(generators)`` instead
-    finds integer combinations of the given degree-zero divisors, for
-    example the columns ``N_i(P_i-Q_i)`` representing ``alpha_phi_i``.
+    ``check(D)`` takes a coefficient vector in point order or a mapping from
+    points to coefficients. ``kernel()`` returns a saturated lattice of
+    integral degree-zero divisors; ``kernel(generators)`` returns integer
+    combinations of the given divisors instead.
 
-    A failed sufficient criterion never asserts nonintegrality. A nonzero
-    formal divisor need not give a nonzero or independent motivic class.
-    No assertion about the additional Tate/mean-log condition for ``p'_*``
-    is made here.
+    A failed criterion does not prove nonintegrality.
     """
 
     def __init__(self, C, points, torsion_primes=30):
@@ -195,11 +186,8 @@ class TorsionPacketIntegrality:
     def check(self, coefficients):
         r"""Test multidegree zero; only ``q_integral=True`` is a certificate.
 
-        ``criterion_satisfied`` is true, false, or unknown. Local
-        multidegrees omit unresolved points, whose nonzero coefficients
-        make that local answer unknown. Known nonzero multidegrees in a
-        fully resolved fibre give false, meaning only that this sufficient
-        criterion fails. Missing components have multidegree zero.
+        ``criterion_satisfied`` is true, false, or ``None``. A nonzero
+        coefficient on an unresolved point makes the local answer ``None``.
         """
         D = self.divisor(coefficients)
         local = {}
@@ -222,11 +210,9 @@ class TorsionPacketIntegrality:
     def kernel(self, generators=None):
         r"""A saturated integer lattice of combinations certified by the criterion.
 
-        Basis vectors give coefficients of ``generators`` (point divisors
-        when omitted); ``divisors`` gives their actual point coefficients.
+        Rows of ``basis`` are coefficients of ``generators`` (point divisors
+        by default); rows of ``divisors`` are the resulting point divisors.
         ``complete=False`` means unresolved support was forced to zero.
-        Formal relations giving the zero divisor are retained and identified
-        by their zero rows in ``divisors``.
         """
         n = len(self.points)
         G = (identity_matrix(QQ, n) if generators is None else
@@ -246,9 +232,8 @@ class TorsionPacketIntegrality:
 def torsion_packets(C, points, torsion_primes=30):
     """Partition points by verified torsion differences, retaining unknown pairs.
 
-    Return ``(packets, unresolved)``; singleton packets are included. The
-    latter lists comparisons with undetermined order, so a partial torsion
-    computation cannot silently be presented as a complete partition.
+    Return ``(packets, unresolved)``, where ``unresolved`` lists the pairs
+    whose order is undetermined.
     """
     packets, unresolved = [], []
     for P in dict.fromkeys(_point(C, P) for P in points):

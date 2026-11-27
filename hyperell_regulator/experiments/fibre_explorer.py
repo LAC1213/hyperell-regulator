@@ -276,7 +276,7 @@ def encode_model(model, support):
     if len(model.specializations) != len(support):
         raise ValueError('the local model must retain every marked section')
     if sum(graph.genera)+graph.cycles.nrows() != 2:
-        raise ArithmeticError('the geometric fibre must have arithmetic genus two')
+        raise ArithmeticError('the geometric fibre must have arithmetic genus 2')
     marks = []
     for point, positions in zip(support, model.specializations):
         positions = sorted(set(positions)) if positions is not None else []

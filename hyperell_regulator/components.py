@@ -1,4 +1,4 @@
-r"""LMFDB curves, rational points and exact torsion orders for genus two."""
+r"""LMFDB curves, rational points and exact torsion orders for genus 2."""
 
 import json
 import os
@@ -31,13 +31,10 @@ def fetch_lmfdb(max_cond=None, path=CACHE, pause=6, limit=None,
                 on_curve=None, _cancel_event=None):
     r"""Fetch and merge LMFDB curve and rational-point data into ``path``.
 
-    Requests are paginated, with ``pause`` seconds between requests.
-    The rational-point scan offset is saved in ``_scan_state.json``.
-    ``end_q_z=True`` selects End_Q(J)=Z using rational endomorphism metadata,
-    including Jacobians that are not geometrically simple.
-    ``end_algs`` selects a specified collection of LMFDB algebra labels.
-    ``on_curve`` receives each selected curve once its metadata and rational
-    points are cached, without waiting for the entire fetch to finish.
+    Requests are paginated with ``pause`` seconds between them; the scan
+    offset is saved in ``_scan_state.json``. ``end_q_z=True`` selects
+    End_Q(J)=Z and ``end_algs`` selects LMFDB algebra labels. ``on_curve``
+    is called with each curve as soon as it is cached.
     """
     import time
     import urllib.request
@@ -274,13 +271,11 @@ def curve_from_row(row, prec=250):
 
 
 def load_curve(label, *, cache=None, fetch=True, refresh=False, prec=250):
-    r"""Load one LMFDB genus-two curve over QQ with reduction methods.
+    r"""Load one LMFDB genus 2 curve over QQ with reduction methods.
 
-    Reuse the local curve cache. If the label is absent, query only that
-    label in the LMFDB curve and rational-point tables and merge the result
-    atomically into the cache. ``fetch=False`` requires cached data;
-    ``refresh=True`` refreshes a cached label. The returned curve retains
-    its label and metadata as ``lmfdb_label`` and ``lmfdb_record``.
+    Uncached labels are fetched individually and merged into the cache.
+    ``fetch=False`` requires cached data; ``refresh=True`` refetches. The
+    curve carries ``lmfdb_label`` and ``lmfdb_record``.
     """
     import re
     import tempfile
@@ -289,7 +284,7 @@ def load_curve(label, *, cache=None, fetch=True, refresh=False, prec=250):
     from urllib.request import Request, urlopen
 
     if not isinstance(label, str) or not re.fullmatch(r'[1-9][0-9]*\.[a-z]+\.[1-9][0-9]*\.[1-9][0-9]*', label):
-        raise ValueError('expected an LMFDB genus-two curve label, e.g. 394.a.394.1')
+        raise ValueError('expected an LMFDB genus 2 curve label, e.g. 394.a.394.1')
     destination = Path(cache if cache is not None else data_path('lmfdb_cache', 'g2c.json'))
     try:
         rows = json.loads(destination.read_text())
@@ -316,7 +311,7 @@ def load_curve(label, *, cache=None, fetch=True, refresh=False, prec=250):
 
     curves = query('g2c_curves', 'label,cond,eqn,end_alg,is_simple_base,is_simple_geom')
     if not curves:
-        raise ValueError('LMFDB genus-two curve not found: '+label)
+        raise ValueError('LMFDB genus 2 curve not found: '+label)
     row = dict(have.get(label, {}), **curves[0])
     points = query('g2c_ratpts', 'label,num_rat_pts,rat_pts,rat_pts_v,mw_invs')
     if points:
@@ -325,7 +320,7 @@ def load_curve(label, *, cache=None, fetch=True, refresh=False, prec=250):
         row['rat_pts_verified'] = points[0].get('rat_pts_v')
     C = curve_from_row(row, prec=prec)
     if C.genus() != 2 or int(row['cond']) != int(label.split('.')[0]):
-        raise ValueError('LMFDB returned inconsistent genus-two curve data for '+label)
+        raise ValueError('LMFDB returned inconsistent genus 2 curve data for '+label)
     have[label] = row
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = None

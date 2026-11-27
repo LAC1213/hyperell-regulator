@@ -3,7 +3,7 @@ from .stokes import Cut
 
 
 def plot_cut_system(F, centers=(0,), path=None):
-    """Draw one branch diagram, marking optional logarithmic zeros."""
+    """Draw the tree cut, marking the logarithmic centers."""
     import matplotlib.pyplot as plt
     cut = Cut(F, centers)
     fig, ax = plt.subplots(figsize=(8, 6))

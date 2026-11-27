@@ -1,6 +1,6 @@
 r"""Periods and logarithmic regulator integrals on `y^2=F(x)`.
 
-Genus two vectors use the weights `(1,\Re(x),|x|^2)`.
+Genus 2 vectors use the weights `(1,\Re(x),|x|^2)`.
 """
 from .api import (c_invariants, periods_plane, periods_stokes,
                   periods_and_regulator_stokes, regulators_stokes,

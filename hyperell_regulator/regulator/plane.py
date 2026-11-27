@@ -274,7 +274,7 @@ def regulator_integral(f, a=1, G=lambda z: 1, tol=1e-12, cluster_threshold=0.4):
 
 
 def _weight_vector(integrate, f, **kwds):
-    """Genus-two weights, in the order (1, Re(z), |z|^2)."""
+    """Genus 2 weights, in the order (1, Re(z), |z|^2)."""
     values = [integrate(f, G=weight, **kwds)
               for weight in (lambda z: 1, np.real, lambda z: np.abs(z)**2)]
     return [np.real(v) for v, _, _ in values], [err for _, err, _ in values]

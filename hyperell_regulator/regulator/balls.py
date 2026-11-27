@@ -36,7 +36,7 @@ def rational(value):
 
 
 def algebraic_center(value):
-    """Keep exact algebraic centres and preserve exact rational coercion."""
+    """Keep exact algebraic centers and preserve exact rational coercion."""
     try:
         return rational(value)
     except (TypeError, ValueError):

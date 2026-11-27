@@ -1,6 +1,7 @@
-r"""Periods, regulators and standard `L`-functions of genus two curves.
+r"""Beilinson's conjecture for the square of a genus 2 curve.
 
-The regulators arise from classes in `H^3_{\mathcal M}(C^2, \QQ(2))`.
+We compute regulators of classes in `H^3_{\mathcal M}(C^2, \QQ(2))`,
+Deligne periods and `L^{\prime\prime}(M_{\mathrm{std}}(C),1)`.
 
 EXAMPLES::
 

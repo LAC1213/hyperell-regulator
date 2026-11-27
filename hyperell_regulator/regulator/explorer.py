@@ -1,4 +1,4 @@
-"""Export branch diagrams and logarithmic integrals."""
+"""Export the tree cut, its lifts and logarithmic integrals for the explorer."""
 import argparse
 import ast
 import json

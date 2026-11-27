@@ -1,4 +1,4 @@
-"""Verified auxiliary models for specific wild genus-two equations at 2.
+"""Verified auxiliary models for specific wild genus 2 equations at 2.
 
 The chart parameters refer to equations, independently of database labels.
 Every chart used for a constraint is checked by exact arithmetic.

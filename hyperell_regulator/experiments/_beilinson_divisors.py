@@ -115,7 +115,7 @@ def _kernel_trace_rank(kernel, basis_key='basis'):
 
 
 def _real_logarithm_rank(abscissae, rows):
-    """Upper bound using equality of the real moments at conjugate centres."""
+    """Upper bound using equality of the real moments at conjugate centers."""
     groups = {}
     for i, x in enumerate(abscissae):
         centre = x.conjugate() if x != 'infinity' and x.imag() < 0 else x
@@ -239,7 +239,7 @@ def _analyse_packet(record, C, row, selection, *, verbose, with_periods,
         if eligible:
             if len(symmetry_bounds) == eligible:
                 result.update(regulator_rank_upper_bound=max(symmetry_bounds),
-                              regulator_issue='Conjugate logarithmic centres give dependent real regulator columns')
+                              regulator_issue='Conjugate logarithmic centers give dependent real regulator columns')
             return dict(result, status='no_nonzero_determinant')
         if ignore_integrality:
             complete = full_support and (result['packet_used'] == 'geometric'

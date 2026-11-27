@@ -1,4 +1,4 @@
-r"""Curve and standard `L`-functions of genus two curves over `\QQ`.
+r"""Curve and standard `L`-functions of genus 2 curves over `\QQ`.
 
 The standard motive is `\ker(\wedge^2 h^1(C) \to \QQ(-1))`, so
 `L(\wedge^2 h^1(C),s)=L(M_{\mathrm{std}}(C),s)\zeta(s-1)`.
@@ -179,10 +179,8 @@ class StandardLFunction(SageObject):
     Its local factor is `P_p^{\wedge^2}(T)/(1-pT)`. Bad factors use
     monodromy and inertia data; unsupported cases require ``bad_factors``.
     ``h1_conductor`` supplies the exact Jacobian conductor when needed at 2.
-    ``conductor_exponents`` supplies exact local standard conductor exponents;
-    these include the Swan contribution and cannot in general be read off
-    from a manually supplied Euler polynomial.
-    The functional equation is `s \leftrightarrow 3-s`, with sign `+1`.
+    ``conductor_exponents`` supplies exact local standard conductor exponents,
+    including Swan contributions. The functional equation is `s \leftrightarrow 3-s`, with sign `+1`.
 
     EXAMPLES::
 
@@ -337,9 +335,7 @@ class StandardLFunction(SageObject):
         return ZZ(exponent)
 
     def wedge2_euler_factor(self, p):
-        r"""
-        The `\wedge^2 h^1` Euler factor at ``p``.
-        """
+        r"""The `\wedge^2 h^1` Euler factor at ``p``."""
         if p in self.bad_factors and self.bad_factors[p] is not None:
             return self._RT(self.bad_factors[p])
         T = self._RT.gen()
@@ -415,9 +411,7 @@ class StandardLFunction(SageObject):
             % (p, p, fp, P, p))
 
     def euler_factor(self, p):
-        r"""
-        The standard Euler factor `P_p^{\wedge^2}(T)/(1 - pT)`.
-        """
+        r"""The standard Euler factor `P_p^{\wedge^2}(T)/(1 - pT)`."""
         p = ZZ(p)
         if p in self._cache:
             return self._cache[p]
@@ -504,15 +498,7 @@ class StandardLFunction(SageObject):
         return None
 
     def value(self, s=1, derivative=2, num_coeffs=None, digits=10, certified=False, progress=None):
-        r"""`L^{(k)}(M_{\mathrm{std}}(C),s)`; by default `L^{\prime\prime}(M_{\mathrm{std}}(C),1)`.
-
-        EXAMPLES::
-
-            sage: from hyperell_regulator.lfunction import StandardLFunction
-            sage: from hyperell_regulator.reduction import HyperellipticCurveWithReduction
-            sage: R.<x> = ZZ[]
-            sage: C = HyperellipticCurveWithReduction(x^5 + x^3 + 1)
-        """
+        r"""`L^{(k)}(M_{\mathrm{std}}(C),s)`; by default `L^{\prime\prime}(M_{\mathrm{std}}(C),1)`."""
         if certified:
             from .ball_lfunction import value
             return value(self, s, derivative, num_coeffs, digits, progress=progress)
@@ -705,8 +691,7 @@ class CurveLFunction(SageObject):
                 pari.lfuncheckfeq, L, precision=_bits(digits)))
 
     def value(self, s=1, derivative=0, num_coeffs=None, digits=10, certified=False, progress=None):
-        r"""
-        `L^{(k)}(C, s)` at ``digits`` decimal digits.
+        r"""`L^{(k)}(C, s)` at ``digits`` decimal digits.
 
         EXAMPLES::
 

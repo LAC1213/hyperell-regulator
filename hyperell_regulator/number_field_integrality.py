@@ -1,16 +1,11 @@
 r"""Sufficient multidegree integrality over a number field.
 
-At every prime ideal of bad reduction, follow K-rational sections through
-the original finite/infinite hyperelliptic charts and through successive
-blowups at points of singular reduction. Arithmetic and valuations are exact in K.
-The uniformizer chart of a blowup suffices for a section through the
-centre: both local coordinates are divisible by the uniformizer.
-For ``uv=pi^n`` this chart is ``UV=pi^(n-2)``; smooth special-fibre points
-identify components of a regular resolution. See Stacks Project 0CDB.
-
-Exhausted blowup budgets remain unknown.
-Nonzero multidegrees fail a sufficient criterion, not integrality itself.
-The projected Chow-valued boundary map is not implemented.
+At every bad prime ideal we follow K-rational sections through the
+hyperelliptic charts and successive blowups at singular reductions, with
+exact arithmetic in K. A blowup of ``uv=pi^n`` at a section through its
+center is ``UV=pi^(n-2)`` in the uniformizer chart (Stacks Project 0CDB).
+Smooth special-fibre points then identify components of a regular model.
+Sections still singular after ``max_blowups`` remain unknown.
 """
 
 from sage.all import (
@@ -26,7 +21,7 @@ def _curve_polynomials(C, K):
     f, h = (R(C.f), R(C.h)) if hasattr(C, 'f') else map(R, C.hyperelliptic_polynomials())
     F = h*h+4*f
     if F.degree() not in (5, 6) or not F.is_squarefree():
-        raise ValueError('a smooth genus-two hyperelliptic curve is required')
+        raise ValueError('a smooth genus 2 hyperelliptic curve is required')
     if f.degree() > 6 or h.degree() > 3:
         raise NotImplementedError('use a hyperelliptic model with deg(f)<=6 and deg(h)<=3')
     return f, h
@@ -147,27 +142,20 @@ class _LocalSections:
 
 
 class NumberFieldTorsionPacketIntegrality(TorsionPacketIntegrality):
-    r"""Multidegree criterion for K-rational sections of a genus-two curve.
+    r"""Multidegree criterion for K-rational sections of a genus 2 curve.
 
     ``field`` is an absolute number field containing the curve coefficients
-    and every point coordinate. Points use the original ``y^2+h*y=f``
-    model, including ``('infinity', eta)`` with ``eta=lim(y/x^3)``.
+    and all point coordinates. Points use the original ``y^2+h*y=f`` model,
+    with ``('infinity', eta)`` for ``eta=lim(y/x^3)``.
 
-    Optional ``torsion_multiples`` are positive integers annihilating each
-    ``P_i-P_0`` (one integer for all points, or one per point). They are
-    verified by exact Jacobian arithmetic, then reduced to exact
-    orders. If omitted, a proved rational-torsion bound over K is obtained
-    from good unramified reductions, never from a bound over QQ.
+    ``torsion_multiples`` (one integer, or one per point) annihilate each
+    ``P_i-P_0``; we verify them and reduce to exact orders. If omitted, we
+    bound torsion over K using good unramified reductions.
 
-    All primes above bad rational primes are checked for a curve supplied
-    over QQ with reduction data. Otherwise a discriminant of an integral
-    model gives a conservative superset of bad prime ideals, including 2.
-    No user-supplied subset of primes can yield a global certificate.
-
-    Inherited ``check``, ``combine`` and ``kernel`` have the same semantics
-    as the rational checker. Prime-ideal valuations normalize v_q(pi)=1;
-    ramification is therefore included automatically. A failed sufficient
-    criterion never asserts nonintegrality of the projected motivic class.
+    We check every prime above a bad rational prime, or, without reduction
+    data, every prime dividing the discriminant of an integral model.
+    ``check``, ``combine`` and ``kernel`` behave as in
+    :class:`TorsionPacketIntegrality`.
     """
 
     def __init__(self, C, points, *, field, torsion_multiples=None,

@@ -1,7 +1,7 @@
 r"""Plane periods and integrals weighted by `\log|x-a|` on `y^2=F(x)`.
 
 Entries have weights `\Re(x^i\bar x^j)/|F(x)|`, with `i\le j`.
-In genus two the order is `(1,\Re(x),|x|^2)`; double the middle entry
+In genus 2 the order is `(1,\Re(x),|x|^2)`; double the middle entry
 for the Beilinson determinant. A finite pole `b` gives `\log|(x-a)/(x-b)|`.
 """
 import numpy as np

@@ -1,9 +1,8 @@
 r"""Exact local constraints for the standard projection of torsion-packet classes.
 
-The semistable test uses the vertical potential on the reduction graph.
-The dyadic tests use verified auxiliary models for the wild equations in
-the small-conductor survey. At other places a component-multidegree
-certificate may still establish integrality.
+At semistable places we solve the Laplace equation on the graph of the
+special fibre. At 2 we use verified auxiliary models for the wild equations
+in the small-conductor survey. Elsewhere the multidegree criterion applies.
 """
 
 from sage.all import (
@@ -22,20 +21,14 @@ from .number_field_integrality import (
 class ProjectedTorsionPacketIntegrality(NumberFieldTorsionPacketIntegrality):
     r"""Decide integrality of :math:`q_*B(D)` and solve for integral combinations.
 
-    Input points use the original equation ``y^2+h*y=f``, including
-    ``('infinity', eta)`` for ``eta=lim(y/x^3)``. They are checked to lie
-    in one torsion packet. Set ``field`` for nonrational coordinates or
-    use :meth:`from_abscissae` to construct their common number field.
+    Points lie in one torsion packet on ``y^2+h*y=f``, with
+    ``('infinity', eta)`` for ``eta=lim(y/x^3)``. Pass ``field`` for
+    nonrational coordinates, or use :meth:`from_abscissae`.
 
-    ``check(D)['q_integral']`` is true, false, or unknown. A false value
-    requires a nonzero projected boundary at a specific place.
-    ``kernel(generators)`` returns a saturated integer lattice in the
-    supplied generator coefficients (in point coefficients if omitted).
-    Its ``complete`` flag concerns that span. The ``necessary_constraints``
-    matrix gives an upper bound when a local model is unavailable.
-
-    This computes a subspace of formal divisors whose images are
-    integral. Its dimension need not equal the motivic rank.
+    ``check(D)['q_integral']`` is true, false, or ``None``; false means a
+    nonzero projected boundary at some place. ``kernel(generators)`` returns
+    a saturated lattice of integral combinations of the generators (points
+    by default). Its dimension need not equal the motivic rank.
     """
 
     def __init__(self, C, points, *, field=QQ, torsion_multiples=None,
@@ -142,9 +135,8 @@ class ProjectedTorsionPacketIntegrality(NumberFieldTorsionPacketIntegrality):
     def from_abscissae(cls, C, abscissae, **kwargs):
         """Use both ordinates above each exact abscissa of a rational model.
 
-        Use ``None`` or ``'infinity'`` for infinity. Algebraic abscissae
-        may be supplied as exact Sage ``QQbar`` elements. The order of
-        the first occurrence of each abscissa is preserved.
+        Abscissae may be rational or ``QQbar``; use ``None`` or
+        ``'infinity'`` for infinity. First-occurrence order is kept.
         """
         f, h = _curve_polynomials(C, QQ)
         F = h*h+4*f
@@ -210,12 +202,10 @@ class ProjectedTorsionPacketIntegrality(NumberFieldTorsionPacketIntegrality):
     def kernel(self, generators=None):
         r"""Solve the local conditions and return integral divisor combinations.
 
-        Each row of ``basis`` gives coefficients of the supplied generators.
-        The corresponding row of ``divisors`` is a point divisor for
-        :math:`q_*B(D)`. Formal relations between supplied generators
-        give zero divisors and are kept in the coefficient kernel.
-        The rows in ``abscissa_basis`` give independent rational
-        directions after the verified hyperelliptic identifications.
+        Rows of ``basis`` are coefficients of the generators and rows of
+        ``divisors`` the resulting point divisors. ``abscissa_basis`` gives
+        independent directions after identifying the two ordinates over each
+        abscissa.
         """
         n = len(self.points)
         G = (identity_matrix(QQ, n) if generators is None else

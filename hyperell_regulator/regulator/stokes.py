@@ -1,7 +1,9 @@
 r"""Stokes integration on the two sheets of `y^2=F(x)`.
 
-A minimum spanning tree joins branch values and logarithmic zeros,
-with an outward ray at its rightmost vertex. All weights share edge periods.
+We cut the curve along the preimage of a tree Γ: the minimum spanning tree
+joining the critical values and logarithmic centers, with a ray to infinity
+from its rightmost vertex. The regulator integral becomes a bilinear
+expression in line integrals along the edges of Γ.
 """
 import numpy as np
 from contextlib import nullcontext

@@ -197,9 +197,9 @@ def _certified_lvalue_cached(label, C, digits, path, force, h1_conductor, progre
 
 
 def beilinson_comparison(det, c_plus, c_minus, lval, bound=8, digits=None, certified=False):
-    r"""A rational approximation to `q=\pi c^+c^-L^{\prime\prime}/D`.
+    r"""A rational approximation to `q=\pi c^+c^-L^{\prime\prime}/\det R`.
 
-    Return ``{}`` for missing data or `D=0`. A relation ``[m,n]`` means
+    Return ``{}`` for missing data or `\det R=0`. A relation ``[m,n]`` means
     ``m*norm+n*det=0``, giving ``q=-n/m``.
     """
     if lval is None or c_plus is None or c_minus is None:
@@ -642,14 +642,11 @@ def run_curve(curve, *, cache=None, fetch=True, refresh=False, out=None, force=F
               tries=1, verbose=False, max_edge_seconds=15, max_edge_steps=100000,
               ignore_integrality=False, certified=False, packet='geometric',
               geometric_seconds=DEFAULT_GEOMETRIC_SECONDS, curve_seconds=0):
-    """Run the Beilinson experiment on exactly one curve or LMFDB label.
+    """Run the Beilinson experiment on one curve or LMFDB label.
 
-    Return one result dictionary, including timings and precision settings.
-    An optional ``out`` merges the result by label into a JSON report.
-    LMFDB labels are fetched individually if not cached. Curves constructed
-    directly from polynomials need no LMFDB entry or curve-cache lookup.
-    The Q/CM selection is a survey policy and does not restrict explicit curves.
-    Set ``curve_seconds`` to isolate the calculation under a wall-clock budget.
+    Return a result dictionary with timings and precision settings; ``out``
+    merges it by label into a JSON report. Uncached labels are fetched
+    individually. ``curve_seconds`` sets a wall-clock budget.
     """
     settings = _experiment_settings(digits=digits, reg_digits=reg_digits, certified=certified,
         with_lvalue=with_lvalue, with_periods=with_lvalue if with_periods is None else with_periods,

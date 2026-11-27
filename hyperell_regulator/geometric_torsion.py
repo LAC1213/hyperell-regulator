@@ -1,15 +1,11 @@
-r"""Complete genus-two hyperelliptic torsion packets via Poonen's algorithm.
+r"""Complete genus 2 hyperelliptic torsion packets via Poonen's algorithm.
 
-Uses the author's PARI/GP implementation of ``Computing torsion points on
-curves`` (2001), with the 2024 verification update, as an external backend.
-Its successful result includes exact verification and a p-adic completeness
-argument, rather than a bounded search for torsion orders. Download the
-backend separately with :func:`install_poonen_backend`.
+We call Poonen's PARI/GP implementation of *Computing torsion points on
+curves* (2001, updated 2024), which proves completeness p-adically rather
+than searching up to a bound. Install it with :func:`install_poonen_backend`.
 
-The supported packet is the packet containing the Weierstrass points. Any
-base point in this packet, including a non-Weierstrass algebraic point, can
-be selected. A base point outside it is explicitly unsupported: returning
-this packet for such a base point would be incorrect.
+Only the packet containing the Weierstrass points is supported; any point
+of that packet may serve as base point.
 """
 
 import hashlib
@@ -37,9 +33,8 @@ RESULT_MARKER = 'HYPERELL_TORSION_RESULT='
 def install_poonen_backend(path=None, *, source_path=None):
     """Install the pinned upstream GP file in the local results cache.
 
-    With ``source_path``, copy an already downloaded file without network
-    access. The SHA256 is checked before any destination file is written.
-    The upstream source is not redistributed as part of this package.
+    With ``source_path``, copy a downloaded file instead of fetching it.
+    The SHA256 is checked before writing.
     """
     if source_path is None:
         import urllib.request
@@ -60,7 +55,7 @@ def _polynomials(C):
     f, h = (R(C.f), R(C.h)) if hasattr(C, 'f') else map(R, C.hyperelliptic_polynomials())
     F = 4*f + h*h
     if F.degree() not in (5, 6) or not F.is_squarefree():
-        raise ValueError('a smooth genus-two curve over QQ is required')
+        raise ValueError('a smooth genus 2 curve over QQ is required')
     return f, h, F
 
 
@@ -136,10 +131,9 @@ def _validate_result(F, data):
 class GeometricTorsionPacket:
     """An exactly verified complete torsion packet, with QQbar coordinates.
 
-    ``points()`` returns coordinates on the original ``y^2+h*y=f`` model.
-    The polynomial factors compactly represent all geometric points, not
-    just rational x-coordinates. ``order(P)`` computes the exact order of
-    ``P-basepoint`` by Mumford arithmetic over an explicit number field.
+    ``points()`` returns coordinates on the original ``y^2+h*y=f`` model;
+    ``order(P)`` is the exact order of ``P-basepoint``, by Mumford arithmetic
+    over a number field.
     """
 
     def __init__(self, C, data, *, basepoint=None, metadata=None):
@@ -219,10 +213,9 @@ class GeometricTorsionPacket:
     def order(self, P, *, max_field_degree=64):
         """Exact order of P-basepoint, using a proved multiple from the backend.
 
-        The backend verifies the order of ``2P-canonical``. Thus twice the
-        lcm of the two doubled orders annihilates P-basepoint. This is a
-        rigorous bound; no finite-prime bound on rational torsion is used
-        for algebraic points. Large composita raise an explicit error.
+        The backend proves the order of ``2P-canonical``, so twice the lcm of
+        the two doubled orders annihilates ``P-basepoint``. Fields of degree
+        above ``max_field_degree`` raise ``NotImplementedError``.
         """
         P, O = self._point(P), self.basepoint
         if not self.contains(P):
@@ -280,12 +273,11 @@ class GeometricTorsionPacket:
 
 def geometric_torsion_packet(C, basepoint=None, *, backend=None, gp=None,
                              timeout=300, cache=True, progress=None):
-    """Compute a complete geometric packet; timeout/failure never means empty.
+    """The complete geometric torsion packet of the Weierstrass points.
 
-    ``backend`` is the pinned upstream ``torsion.gp`` file; it defaults to
-    ``HYPERELL_POONEN_GP`` or the installed local cache. ``gp`` can select
-    a PARI/GP executable. Successful, validated results are cached by curve
-    and backend checksum. A timeout raises ``subprocess.TimeoutExpired``.
+    ``backend`` defaults to ``HYPERELL_POONEN_GP`` or the installed copy;
+    ``gp`` selects a PARI/GP executable. Results are cached by curve and
+    backend checksum. A timeout raises ``subprocess.TimeoutExpired``.
     """
     _, _, F = _polynomials(C)
     denominator = lcm([a.denominator() for a in F])

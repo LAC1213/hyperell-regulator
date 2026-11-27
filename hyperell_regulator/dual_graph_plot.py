@@ -1,4 +1,4 @@
-"""Plot the stable reduction graph of a cached genus-two curve."""
+"""Plot the stable reduction graph of a cached genus 2 curve."""
 
 import argparse
 from pathlib import Path
