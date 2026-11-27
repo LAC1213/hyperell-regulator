@@ -4,15 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explore genus 2 torsion-packet divisors, their complete support in LMFDB coordinates, and every logarithmic center on the regulator cut.">
-  <title>Regulator matrix for genus 2 curve · hyperell-regulator</title>
+  <title>Beilinson's conjecture for the square of a genus 2 curve</title>
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="explorer.css?v=semistable-12">
+  <link rel="stylesheet" href="explorer.css?v=tree-framing-1">
   <script defer src="vendor/katex/katex.min.js"></script>
   <script defer src="plotly.min.js"></script>
-  <script defer src="curve-geometry.js?v=divisor-workflow-8"></script>
-  <script defer src="fibre-graph.js?v=semistable-13"></script>
-  <script defer src="explorer.js?v=semistable-12"></script>
+  <script defer src="curve-geometry.js?v=infinity-labels-1"></script>
+  <script defer src="fibre-diagram.js?v=integrality-1"></script>
+  <script defer src="fibre-graph.js?v=section-layout-1"></script>
+  <script defer src="explorer.js?v=tree-framing-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to explorer</a>
@@ -22,173 +23,148 @@
   </header>
   <main id="main">
     <section class="intro" aria-labelledby="page-title">
-      <h1 id="page-title">Regulator matrix for genus 2 curve</h1>
-      <p>Explore the integral Galois-trace divisors selected in the Beilinson survey,
-        their complete support in LMFDB coordinates on a genus 2 curve <span data-tex="C">C</span>, and the
-        <span data-tex="3\times3">3×3</span> matrix <span data-tex="R(D_1,D_2)">R(D₁,D₂)</span>
-        associated with the integral classes <span data-tex="\alpha(D_1),\alpha(D_2)">α(D₁), α(D₂)</span> and the Tate class.</p>
+      <h1 id="page-title">Beilinson's conjecture for the square of a genus 2 curve</h1>
+      <p>Choose a curve <span data-tex="C">C</span> below to see the associated divisors <span data-tex="D_1">D₁</span>,
+        <span data-tex="D_2">D₂</span> which give rise to two linearly-independent motivic cohomology classes
+        <span data-tex="\alpha(D_1), \alpha(D_2) \in H^3_{\mathcal M}(C^2, \mathbb Q(2))">α(D₁), α(D₂) ∈ H<sup>3</sup><sub>𝓜</sub>(C², ℚ(2))</span>.</p>
     </section>
     <section class="workspace" aria-label="Choose a curve">
       <div class="catalog-controls">
-        <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
+        <div class="curve-picker">
+          <label>Curve<select id="curve-select" disabled><option>Loading curves…</option></select></label>
+          <span id="curve-lmfdb" hidden></span>
+        </div>
         <div class="data-actions">
           <button type="button" class="secondary" id="export" disabled>Export data</button>
           <label class="file-button" for="import">Import result<input type="file" id="import" accept="application/json,.json"></label>
         </div>
       </div>
-    </section>
-    <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
-    <section id="results" hidden aria-label="Curve geometry and regulator">
-      <section class="panel curve-overview" aria-label="The equation, divisors, and complete support in LMFDB coordinates">
-        <div class="curve-definition">
-          <p class="curve-label" id="result-source"></p>
-          <h2 class="sr-only">The curve and its selected divisors</h2>
-          <p class="hint" id="result-model-label">Curve in LMFDB coordinates</p>
-          <div class="equation-scroll"><div id="result-model" class="curve-equation"></div></div>
-          <p class="hint">Divisors in LMFDB coordinates</p>
-          <div id="point-info" class="marked-points"></div>
-          <p id="packet-info" class="packet-info"></p>
-        </div>
-        <div class="divisor-support">
-          <div class="support-heading"><h2>Complete divisor support</h2><label class="divisor-control">Divisor<select id="divisor-select" disabled></select></label></div>
-          <p id="support-caption" class="caption"></p>
-          <div class="support-table"><table aria-label="Complete support of the selected divisor in LMFDB coordinates"><thead><tr><th scope="col">Point in LMFDB coordinates</th><th scope="col">Coefficient</th></tr></thead><tbody id="support-info"></tbody></table></div>
-          <p class="caption">Algebraic root indices start at 0 and are ordered by real part, then imaginary part.</p>
-        </div>
+      <section id="curve-overview" class="curve-overview" aria-label="The curve and its selected divisors" hidden>
+        <div class="equation-scroll"><div id="result-model" class="curve-equation"></div></div>
+        <div id="curve-divisors" class="curve-divisors"></div>
       </section>
+      <p id="status" role="status" aria-live="polite">Loading the curve catalog…</p>
+    </section>
+    <section id="results" hidden aria-label="Curve geometry and regulator">
+      <div class="explore">
+        <p>Explore below:</p>
+        <ol>
+          <li>The proof that the classes are integral via solving a Poisson equation on the graph of the reduction of a semistable model of <span data-tex="C">C</span>,</li>
+          <li>Our computation of the associated regulator matrix via Stokes' Theorem applied to a convenient path on <span data-tex="C">C</span>.</li>
+          <li>The resulting agreement with <span data-tex="L">L</span>-values up to small rational factors.</li>
+        </ol>
+      </div>
       <section class="panel fibre-panel" id="fibre-panel" aria-labelledby="fibre-title" hidden>
-        <div class="section-label"><h2 id="fibre-title">Special fibre and local obstruction</h2></div>
-        <p class="matrix-caption">Choose a bad reduction prime to see the geometric special fibre of a regular strictly semistable model after finite extension.
-          Vertices <span data-tex="Z">Z</span> are components, edges are nodes, and the vertex genus is the genus of its normalization.
-          Follow the points in the support of <span data-tex="D">D</span>, or enter your own charge and solve <span data-tex="Lu=f">Lu=f</span>.</p>
+        <div class="section-label"><h2 id="fibre-title">1. Integrality of <span data-tex="\alpha(D_i)">α(Dᵢ)</span></h2></div>
+        <p class="matrix-caption">Explore our proof that <span data-tex="\alpha(D_i)">α(Dᵢ)</span> is integral, based on a criterion involving the graph of the components of the reduction of <span data-tex="C">C</span> and solving the Laplace equation on it.</p>
         <form class="fibre-controls" id="fibre-prime-form">
           <label><span>Bad prime <span data-tex="p">p</span></span><select id="fibre-prime" aria-label="Bad reduction prime p"></select></label>
           <button type="submit">Show fibre</button>
           <label id="fibre-place-label" hidden><span>Place above <span data-tex="p">p</span></span><select id="fibre-place"></select></label>
-          <label><span>Divisor <span data-tex="D">D</span></span><select id="fibre-divisor"></select></label>
+          <label><span>Divisor <span data-tex="D_i">Dᵢ</span></span><select id="fibre-divisor"></select></label>
         </form>
         <p id="fibre-status" class="hint" role="status" aria-live="polite"></p>
         <div id="fibre-workspace" hidden>
-          <p id="fibre-model-note" class="caption"></p>
           <div class="fibre-layout">
             <div>
-              <div id="fibre-plot" class="fibre-plot" aria-label="Dual graph with component genera, point specializations and potentials"></div>
-              <p class="caption">Larger vertices have positive genus. After solving, blue means negative potential and orange means positive potential. Hover for genus, support points and the exact potential; click a vertex to edit its charge. Edge <span data-tex="e_k">eₖ</span> is oriented from its first endpoint to its second.</p>
+              <h3 id="fibre-graph-title">Dual graph of special fibre</h3>
+              <div id="fibre-plot" class="fibre-plot" role="group" aria-labelledby="fibre-graph-title"></div>
+              <p class="caption">Select a component to edit its charge. Blue means negative potential and orange means positive.</p>
+              <div id="fibre-unresolved" class="hint" hidden></div>
             </div>
             <form id="fibre-solve" class="fibre-charge-editor">
               <h3>Charge and potential</h3>
-              <p class="caption">Enter integers, fractions or decimals. A solution requires <span data-tex="\sum_Z f_Z=0">Σ fZ=0</span>.
-                We fix <span data-tex="u_{Z_0}=0">uZ₀=0</span>; calculations are exact over <span data-tex="\mathbb Q">ℚ</span>.</p>
-              <div class="fibre-charge-scroll"><table><thead><tr><th scope="col">Component</th><th scope="col">Genus</th><th scope="col"><span data-tex="f_Z">fZ</span></th><th scope="col"><span data-tex="u_Z">uZ</span></th></tr></thead><tbody id="fibre-charges"></tbody></table></div>
-              <div class="fibre-buttons"><button type="submit">Solve Lu = f</button><button type="button" id="fibre-divisor-charge">Use divisor charge</button><button type="button" id="fibre-zero-charge">Zero charge</button></div>
-              <p id="fibre-charge-note" class="caption"></p>
+              <p class="caption">Solve <span data-tex="Lu+f=0">Lu + f = 0</span> for <span data-tex="f=\sum_P a_P Z_P">f = Σ aₚZₚ</span> given by the divisor <span data-tex="D_i">Dᵢ</span>, or enter your own charge.</p>
+              <div class="fibre-charge-scroll"><table><thead><tr><th scope="col">Component</th><th scope="col"><span data-tex="f_Z">fZ</span></th><th scope="col"><span data-tex="u_Z">uZ</span></th></tr></thead><tbody id="fibre-charges"></tbody></table></div>
+              <div class="fibre-buttons"><button type="submit">Solve</button><button type="button" id="fibre-divisor-charge">Use divisor charge</button><button type="button" id="fibre-zero-charge">Zero charge</button></div>
               <p id="fibre-error" class="hint error" role="alert"></p>
             </form>
           </div>
-          <details class="fibre-support-details" open><summary>Reduction of the selected divisor support</summary>
-            <div class="table-scroll"><table><thead><tr><th scope="col">Point in LMFDB coordinates</th><th scope="col">Coefficient in D</th><th scope="col">Specializes to</th></tr></thead><tbody id="fibre-support"></tbody></table></div>
-          </details>
-          <div id="fibre-solution" class="fibre-solution" hidden>
-            <h3>The obstruction <span data-tex="\operatorname{ob}_{\mathfrak p}(u)">ob𝔭(u)</span></h3>
-            <p class="caption">The paper defines <span data-tex="\operatorname{ob}_{\mathfrak p}(u)=\bigl(Q_u,(u_Z)_{g(Z)>0}\bigr)">ob𝔭(u)=(Qᵤ,(uZ)g(Z)&gt;0)</span>, with
-              <span data-tex="Q_u(\gamma,\delta)=\sum_{e=(Z,W)}(u_Z+u_W)\gamma_e\delta_e">Qᵤ(γ,δ)=Σ(uZ+uW)γeδe</span>.
-              The positive-genus entries follow the component order in the charge table.</p>
-            <div class="equation-scroll"><div id="fibre-potential"></div></div>
-            <div class="fibre-obstruction"><div class="equation-scroll" id="fibre-cycle-form"></div><div class="equation-scroll" id="fibre-positive"></div></div>
-            <p id="fibre-verdict" class="fibre-verdict"></p>
-            <div class="equation-scroll" id="fibre-verdict-formula"></div>
-            <p class="caption">This is a local test for the entered charge. For the divisor charge, the paper's integrality criterion tests membership in this line at every finite place.
-              Adding a constant to <span data-tex="u">u</span> adds the corresponding multiple of <span data-tex="\operatorname{ob}_{\mathfrak p}(\mathbf1)">ob𝔭(1)</span>.</p>
-            <details><summary>Cycle basis, Laplacian convention and Tate direction</summary>
-              <p class="caption">All edges have unit thickness. Thus <span data-tex="L_{ZZ}=\deg(Z)">LZZ=deg(Z)</span> and
-                <span data-tex="L_{ZW}=-\#\{\text{edges between }Z,W\}">LZW=−#{edges between Z,W}</span> for distinct components.</p>
-              <div class="table-scroll"><table><tbody id="fibre-cycle-basis"></tbody></table></div>
-              <p id="fibre-no-cycles" class="caption">The graph is a tree: the cycle pairing is an empty matrix.</p>
-              <div class="equation-scroll" id="fibre-tate-form"></div>
-              <p id="fibre-extension" class="caption"></p>
-            </details>
-          </div>
+          <section id="fibre-solution" class="fibre-solution" aria-labelledby="fibre-solution-title" hidden>
+            <h3 id="fibre-solution-title">Local obstruction</h3>
+            <p>The obstruction is <span data-tex="\text{ob}_{\mathfrak{p}}(u) := \bigl(Q_u,(u_Z)_{g(Z)\geq 1}\bigr)">ob𝔭(u) := (Qᵤ, (uZ)g(Z) ≥ 1)</span>, where:</p>
+            <div class="equation-scroll" id="fibre-cycle-form"></div>
+            <div class="equation-scroll" id="fibre-positive"></div>
+            <p id="fibre-verdict" class="fibre-verdict" role="status"></p>
+          </section>
         </div>
       </section>
-      <section class="method-note" aria-label="How the regulator is computed">
-        <p>We view <span data-tex="C">C</span> as a double cover of <span data-tex="\mathbb P^1">ℙ¹</span> in the integration chart <span data-tex="v^2=F(u)">v²=F(u)</span>,
-          which is the paper's square model <span data-tex="y^2=f(x)">y²=f(x)</span> with coordinates renamed to distinguish it from the LMFDB equation.
+      <section class="panel regulator-panel" id="regulator-panel" aria-labelledby="regulator-title">
+        <div class="section-label"><h2 id="regulator-title">2. Regulator computation</h2></div>
+        <p class="method-note">We view <span data-tex="C">C</span> as a double cover of <span data-tex="\mathbb P^1">ℙ¹</span>, using the completed square model <span data-tex="v^2=f(u)">v² = f(u)</span>.
           Using this, we cut up the hyperelliptic curve into two simply connected sheets in order to convert the
           two-dimensional regulator integral to an integral over the cut. By choosing the cut to be the preimage
           of a convenient tree <span data-tex="\Gamma">Γ</span> in the <span data-tex="u">u</span>-plane, we can moreover choose a path <span data-tex="B">B</span>
           on the tree as the branch cut for the logarithmic factor of the integrand. With this choice, the integral
           over the cut simplifies to a bilinear expression of line integrals.</p>
-      </section>
-      <div class="plots">
-        <section class="panel">
-          <div class="section-label"><h2>The tree <span data-tex="\Gamma\subset\mathbb P^1">Γ ⊂ ℙ¹</span></h2></div>
-          <p class="panel-description">The cut model is <span id="cut-model"></span>. The tree joins its critical values of <span data-tex="u">u</span> and every finite logarithmic center used on the shared integration cut, including centers used by other divisor columns. Algebraic centers keep their complex positions.</p>
-          <div class="plot-tools tree-controls">
-            <label class="center-control"><span class="sr-only">Logarithm center</span><select id="weight-select" autocomplete="off" disabled></select></label>
-            <span class="gesture">Click an edge to inspect its integrals</span>
-          </div>
-          <div id="base-plot" class="plot" aria-label="Shared cut tree with every logarithmic center used in the computation"></div>
-          <p class="caption">Circles: critical values. Diamonds: all logarithmic centers. Edges in the selected logarithm's branch cut <span data-tex="B">B</span> share its diamond's colour. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
-        </section>
-        <section class="panel">
-          <div class="section-label"><h2>The lift <span data-tex="T\subset C">T ⊂ C</span></h2></div>
-          <p class="panel-description">Each tree edge has two lifts to <span data-tex="C">C</span>. Their orientations determine the signs in the path integrals below.</p>
-          <div class="plot-tools surface-controls">
-            <label class="sheet-control"><span class="sr-only">Display sheets</span><select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label>
-            <label class="check-control"><input id="show-mesh" type="checkbox" checked> Show surface</label>
-            <button type="button" class="text-button" id="camera-home">Reset view</button>
-          </div>
-          <div id="curve-plot" class="plot" aria-label="Two-sheeted cover C with the lifted integration graph"></div>
-          <p class="caption" id="mesh-caption">Drag to rotate. Use the sheet selector to view either sheet.</p>
-        </section>
-      </div>
-      <section class="panel integral-panel path-integrals" aria-labelledby="integral-title">
-            <div class="section-label"><h2 id="integral-title">Path integrals</h2><span id="path-label"></span></div>
-            <div class="selectors">
-              <label>Tree edge<select id="edge"></select></label>
-              <label>Positive-side sheet<select id="sheet"><option value="0">Sheet 1</option><option value="1">Sheet 2</option></select></label>
-              <label>Logarithm side<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>
-              <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Away from ∞</option></select></label>
+        <div class="plots">
+          <section class="panel" aria-labelledby="tree-title">
+            <div class="section-label"><h3 id="tree-title">The tree <span data-tex="\Gamma\subset\mathbb P^1">Γ ⊂ ℙ¹</span></h3></div>
+            <p class="panel-description">The cut model is <span id="cut-model"></span>. The tree joins its critical values of <span data-tex="u">u</span> and every finite logarithmic center used on the shared integration cut.</p>
+            <div class="plot-tools tree-controls">
+              <label class="center-control"><span class="sr-only">Logarithm center</span><select id="weight-select" autocomplete="off" disabled></select></label>
+              <span class="gesture">Click an edge to inspect its integrals</span>
             </div>
-            <p id="gluing" class="hint"></p>
-            <div class="table-scroll"><table class="integral-table"><thead><tr><th scope="col">Form</th><th scope="col"><span id="ordinary-integral" data-tex="I_{n,j}^{(k)}=\int_{e_{n,j}^+}\omega_k">I⁽ᵏ⁾ₙⱼ</span></th><th scope="col"><span id="logarithmic-integral" data-tex="L_{n,j}^{(k)}=\int_{e_{n,j}^+}\log^+(u-a)\,\omega_k">L⁽ᵏ⁾ₙⱼ</span></th></tr></thead><tbody id="integrals"></tbody></table></div>
-            <p id="jump" class="caption"></p>
-      </section>
-      <section class="panel matrix-panel" aria-labelledby="matrix-title">
-        <div class="section-label"><h2 id="matrix-title"><span id="matrix-name">The regulator matrix</span></h2></div>
-        <p class="matrix-caption" id="matrix-caption">The paper's plane-integral matrix
-          <span id="matrix-symbol" data-tex="R(D_1,D_2)">R(D₁,D₂)</span>, with column factors
-          <span data-tex="(L_{D_i},L_{D_j},1)">(Lᴅᵢ,Lᴅⱼ,1)</span> and row weights
-          <span data-tex="(1,2\operatorname{Re}(z),|z|^2)">(1,2 Re(z),|z|²)</span>.
-          The rows follow <span data-tex="\delta_{1,1},\delta_{1,2},\delta_{2,2}">δ₁₁, δ₁₂, δ₂₂</span>.
-          For <span data-tex="D=\sum_P a_P P">D=Σ aₚP</span>,
-          <span data-tex="L_D(z)=\sum_{P\text{ finite}}a_P\log|z-u(P)|">Lᴅ(z)=Σ aₚ log|z−u(P)|</span> in the integration chart.
-          The actual values were computed to 100 digits, but we only display 10 digits.</p>
-        <div class="equation-scroll matrix-definition" id="matrix-definition"><span data-tex="R(D_i,D_j)=\int_{\mathbb C}\frac{1}{|F(z)|}\begin{pmatrix}1\\2\operatorname{Re}(z)\\|z|^2\end{pmatrix}\begin{pmatrix}L_{D_i}(z)&amp;L_{D_j}(z)&amp;1\end{pmatrix}\,\mathrm{d}x\,\mathrm{d}y,\quad z=x+iy">Definition of the plane-integral matrix R.</span></div>
-        <div class="table-scroll" id="matrix-values">
-          <table class="regulator-matrix">
-            <caption class="sr-only">Plane-integral matrix R for the two selected divisors</caption>
-            <thead><tr><th scope="col">Row weight</th><th scope="col"><span id="matrix-left" data-tex="L_{D_1}">Lᴅ₁</span></th><th scope="col"><span id="matrix-right" data-tex="L_{D_2}">Lᴅ₂</span></th><th scope="col"><span data-tex="1">1</span></th></tr></thead>
-            <tbody id="regulator-matrix"></tbody>
-          </table>
+            <div id="base-plot" class="plot" aria-label="Shared cut tree with every logarithmic center used in the computation"></div>
+            <p class="caption">Circles: critical values. Diamonds: all logarithmic centers. Edges in the selected logarithm's branch cut <span data-tex="B">B</span> share its diamond's colour. The dashed ray continues to <span data-tex="\infty">∞</span>.</p>
+          </section>
+          <section class="panel" aria-labelledby="lift-title">
+            <div class="section-label"><h3 id="lift-title">The lift <span data-tex="T\subset C">T ⊂ C</span></h3></div>
+            <p class="panel-description">Each tree edge has two lifts to <span data-tex="C">C</span>. Their orientations determine the signs in the path integrals below.</p>
+            <div class="plot-tools surface-controls">
+              <label class="sheet-control"><span class="sr-only">Display sheets</span><select id="visible-sheet"><option value="0">Both sheets</option><option value="1">Sheet 1</option><option value="2">Sheet 2</option></select></label>
+              <label class="check-control"><input id="show-mesh" type="checkbox" checked> Show surface</label>
+              <button type="button" class="text-button" id="camera-home">Reset view</button>
+            </div>
+            <div id="curve-plot" class="plot" aria-label="Two-sheeted cover C with the lifted integration graph"></div>
+            <p class="caption" id="mesh-caption">Drag to rotate. Use the sheet selector to view either sheet.</p>
+          </section>
         </div>
-        <p id="matrix-unavailable" class="hint" hidden>This import contains logarithmic pairings; the three-class matrix is available for catalog curves.</p>
-        <div id="import-pairings" hidden>
-          <p class="hint" id="weight-info"></p>
-          <div class="table-scroll"><table><thead><tr><th scope="col"><span data-tex="(i,j)">(i, j)</span></th><th scope="col"><span data-tex="\operatorname{Re}\int_{\mathbb C}\frac{\log|z-a|z^{i-1}\overline z^{j-1}}{|F(z)|}\,\mathrm{d}x\,\mathrm{d}y">Logarithmic plane integral</span></th><th scope="col"><span data-tex="\operatorname{Re}\int_{\mathbb C}\frac{z^{i-1}\overline z^{j-1}}{|F(z)|}\,\mathrm{d}x\,\mathrm{d}y">Plane integral without logarithm</span></th></tr></thead><tbody id="pairings"></tbody></table></div>
-        </div>
-        <p id="determinant" class="determinant"></p>
+        <details class="panel integral-panel path-integrals" id="path-integrals">
+          <summary class="integral-summary"><h3>Path integrals <span id="path-label"></span></h3></summary>
+          <div class="selectors">
+            <label>Tree edge<select id="edge"></select></label>
+            <label>Positive-side sheet<select id="sheet"><option value="0">Sheet 1</option><option value="1">Sheet 2</option></select></label>
+            <label>Logarithm side<select id="bank"><option value="plus">Positive (+)</option><option value="minus">Negative (−)</option></select></label>
+            <label>Orientation<select id="orientation"><option value="forward">Toward ∞</option><option value="reverse">Away from ∞</option></select></label>
+          </div>
+          <p id="gluing" class="hint"></p>
+          <div class="table-scroll"><table class="integral-table"><thead><tr><th scope="col">Form</th><th scope="col"><span id="ordinary-integral" data-tex="I_{n,j}^{(k)}=\int_{e_{n,j}^+}\omega_k">I⁽ᵏ⁾ₙⱼ</span></th><th scope="col"><span id="logarithmic-integral" data-tex="L_{n,j}^{(k)}=\int_{e_{n,j}^+}\log^+(u-a)\,\omega_k">L⁽ᵏ⁾ₙⱼ</span></th></tr></thead><tbody id="integrals"></tbody></table></div>
+          <p id="jump" class="caption"></p>
+        </details>
+        <section class="matrix-result" aria-labelledby="matrix-name">
+          <div class="section-label"><h3 id="matrix-name">The regulator matrix</h3></div>
+          <p class="matrix-caption" id="matrix-caption">We compute the following regulator matrix associated with the classes
+            <span data-tex="\alpha(D_1)">α(D₁)</span>, <span data-tex="\alpha(D_2)">α(D₂)</span> and the diagonal Tate class:</p>
+          <div id="matrix-definition">
+            <div class="equation-scroll matrix-definition"><span data-tex="R(D_1,D_2)=\int_{\mathbb C}\frac{1}{|f(z)|}\begin{pmatrix}1\\2\operatorname{Re}(z)\\|z|^2\end{pmatrix}\begin{pmatrix}G_{D_1}(z)&amp;G_{D_2}(z)&amp;1\end{pmatrix}\,\mathrm{d}x\,\mathrm{d}y,\quad z=x+iy">Definition of the plane-integral matrix R(D₁,D₂).</span></div>
+            <p class="matrix-caption">where for <span data-tex="D=\sum_P a_P P">D=Σ aₚP</span>, we write
+              <span data-tex="G_D(z)=\sum\limits_{P\text{ finite}}a_P\log|z-u(P)|">Gᴅ(z)=Σ aₚ log|z−u(P)|</span>.
+              The actual values were computed to 100 digits, but we only display 10 digits.</p>
+          </div>
+          <div class="table-scroll" id="matrix-values">
+            <table class="regulator-matrix">
+              <caption class="sr-only">Plane-integral matrix R for the two selected divisors</caption>
+              <thead><tr><th scope="col">Row weight</th><th scope="col"><span id="matrix-left" data-tex="G_{D_1}">Gᴅ₁</span></th><th scope="col"><span id="matrix-right" data-tex="G_{D_2}">Gᴅ₂</span></th><th scope="col"><span data-tex="1">1</span></th></tr></thead>
+              <tbody id="regulator-matrix"></tbody>
+            </table>
+          </div>
+          <p id="matrix-unavailable" class="hint" hidden>This import contains logarithmic pairings; the three-class matrix is available for catalog curves.</p>
+          <div id="import-pairings" hidden>
+            <p class="hint" id="weight-info"></p>
+            <div class="table-scroll"><table><thead><tr><th scope="col"><span data-tex="(i,j)">(i, j)</span></th><th scope="col"><span data-tex="\operatorname{Re}\int_{\mathbb C}\frac{\log|z-a|z^{i-1}\overline z^{j-1}}{|f(z)|}\,\mathrm{d}x\,\mathrm{d}y">Logarithmic plane integral</span></th><th scope="col"><span data-tex="\operatorname{Re}\int_{\mathbb C}\frac{z^{i-1}\overline z^{j-1}}{|f(z)|}\,\mathrm{d}x\,\mathrm{d}y">Plane integral without logarithm</span></th></tr></thead><tbody id="pairings"></tbody></table></div>
+          </div>
+          <p id="determinant" class="determinant"></p>
+        </section>
       </section>
       <section class="panel beilinson-panel" id="beilinson-panel" aria-labelledby="beilinson-title" hidden>
         <div class="section-label precision-heading">
-          <h2 id="beilinson-title">Beilinson’s conjecture</h2>
+          <h2 id="beilinson-title">3. Beilinson’s conjecture</h2>
           <label class="precision-control" for="beilinson-digits"><span>Digits to display: <output id="beilinson-digits-value" for="beilinson-digits">10</output></span><input type="range" id="beilinson-digits" min="10" max="100" step="1" value="10"></label>
         </div>
-        <p class="matrix-caption">Numerical comparison from the saved experiment. Certified enclosures remain conditional on the recorded analytic assumptions; agreement does not prove exact equality.</p>
-        <p class="matrix-caption">The periods <span data-tex="c^+(C),c^-(C)">c⁺(C), c⁻(C)</span> are the signed maximal minors of
-          <span data-tex="\operatorname{Re}H,\operatorname{Im}H">Re H, Im H</span> for the full-cycle period matrix <span data-tex="H">H</span> in the integration chart.</p>
+        <p class="conjecture-intro">The numerical verification up to 100 digits of:</p>
         <div class="conjecture-equation" id="beilinson-equation" data-tex="\pi\cdot c^+(C)\cdot c^-(C)\cdot L''(M_{\mathrm{std}}(C),1)\approx q\cdot\det R(D_1,D_2)">π · c⁺(C) · c⁻(C) · L″(Mstd(C), 1) ≈ q · det R(D₁,D₂)</div>
-        <p class="matrix-caption">The slider displays saved decimal midpoints; exact interval endpoints are included in the exported data.</p>
+        <p class="matrix-caption">where <span data-tex="q">q</span> is a rational number and <span data-tex="c^+(C)">c⁺(C)</span> and <span data-tex="c^-(C)">c⁻(C)</span> are Deligne periods, computed using the path chosen above.</p>
         <dl class="conjecture-values" id="beilinson-values"></dl>
       </section>
     </section>

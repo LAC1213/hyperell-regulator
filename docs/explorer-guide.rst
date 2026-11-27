@@ -6,39 +6,36 @@ for the selected degree-zero divisors on a genus two curve
 :math:`C:y^2+h(x)y=f(x)` in its original LMFDB coordinates. The catalog contains 41 successful comparisons from the 100-digit survey
 below conductor 1000 and the individual curves ``3125.a.3125.1`` and
 ``4096.b.65536.1``. Six curves carry the rational endomorphism algebra
-label ``CM``. The two additional curves display all four and six
-integral Galois-trace generators, respectively. Their selected regulator
-columns keep their original generator indices.
+label ``CM``. The full survey lists four and six integral Galois-trace
+generators for the two additional curves, respectively. The two divisors
+selected for each regulator matrix are shown as :math:`D_1,D_2`.
 
 The viewer
 ----------
 
-Choose a curve to see its equation, selected divisors, packet torsion order
-and rational endomorphism algebra label. Packet order is the exponent
+Choose a curve to see its equation and the two divisors used for its
+regulator matrix. The LMFDB link beside the selector opens the database
+entry. The full survey lists packet torsion orders and rational
+endomorphism algebras. Packet order is the exponent
 :math:`N=\operatorname{lcm}_P\operatorname{ord}(P-P_0)` in the Jacobian, rather than
 the number of points or the order of the ambient Jacobian torsion group.
 Divisor formulas and exact support definitions use the original LMFDB
 coordinates, including the labelled points at infinity
-:math:`\infty_{Y=\eta}` with :math:`Y=\lim y/x^3`.
-The LMFDB link opens the database entry.
-
-Choose a divisor in **Complete divisor support** to list every point with
-a nonzero coefficient in the first panel. The table includes real and
-nonreal points, points at infinity, and their signed coefficients, all in
-LMFDB coordinates. Algebraic points are labelled :math:`P_i`, with their
-number field polynomial and embedding index displayed in the same row.
-Root indices start at zero and are ordered by real part, then imaginary part.
+:math:`\infty_{\eta}` with :math:`\eta=\lim y/x^3`.
+Quadratic coordinates are written with radicals. When a point is written
+using an indexed root of a polynomial, the indices start at zero and
+the roots are ordered by real part, then imaginary part.
 
 The first panel displays the original LMFDB equation. The cut panels use
-the transformed square model :math:`v^2=F(u)`, displayed above the tree.
+the completed square model :math:`v^2=f(u)`, displayed above the tree.
 The transformed point images determine the logarithmic centers. This is
 the paper's square model :math:`y^2=f(x)` with coordinates renamed to
 distinguish it from the original LMFDB equation.
 
-Special fibre and local obstruction
------------------------------------
+Integrality of the divisor classes
+----------------------------------
 
-Choose a bad reduction prime :math:`p` in **Special fibre and local obstruction**.
+Choose a bad reduction prime :math:`p` in **Integrality of α(Dᵢ)**.
 The selector lists only the bad primes of the chosen curve and updates
 the graph when the selection changes. The viewer uses exported exact
 local models over a finite extension. When the support field has several
@@ -48,39 +45,39 @@ The displayed graph is a unit-edge resolution of the verified metric
 model after finite base change. Chains of rational components resolve
 node thicknesses, and a further quadratic base change separates a
 self-node when needed. Component indices from the marked metric model
-are retained. The local-model field, valuation normalization and resolution
-scale are recorded under **Cycle basis, Laplacian convention and Tate direction**.
+are retained. The exported reduction data record the local-model field,
+valuation normalization and resolution scale.
 The graph need not be the minimal model over :math:`\mathbb Q_p`.
 
-The support table uses the same divisor selector and original LMFDB point
-coordinates as the first panel. Exact specializations are labelled
-:math:`Z_i`; unresolved specializations are stated explicitly. Unsupported
+The graph lists the selected divisor's points and signed coefficients
+beside the components where they specialize. The displayed genus is the
+genus of the component's normalization. The panel lists unresolved
+specializations below the graph. Unsupported
 wild graphs are labelled **Graph not implemented** in the selector and
 panel. Computations exceeding the export budget are labelled separately
 as **Graph computation unavailable**. Neither case displays a guessed graph.
 
 Enter rational charges :math:`f_Z` in the component table and select
-**Solve Lu = f**. Calculations use exact fractions, with
-:math:`u_{Z_0}=0`; a solution exists precisely when the total charge is zero.
-**Use divisor charge** supplies :math:`f=-\sum_P a_PZ_P`, matching the
-sign in the paper's integrality proposition. It is enabled only when
+**Solve** to solve :math:`Lu+f=0`. Calculations use exact fractions
+and fix :math:`u_{Z_0}=0`. A solution exists precisely when the total
+charge is zero. **Use divisor charge** supplies :math:`f=\sum_P a_PZ_P`.
+It is enabled only when
 all required point specializations are known.
 
-The panel displays the full tuple from the paper:
+**Local obstruction** displays the tuple from the paper.
 
 .. math::
 
    \operatorname{ob}_{\mathfrak p}(u)
-   =\bigl(Q_u,(u_Z)_{g(Z)>0}\bigr),\qquad
+   =\bigl(Q_u,(u_Z)_{g(Z)\geq 1}\bigr),\qquad
    Q_u(\gamma,\delta)=\sum_{e=(Z,W)}(u_Z+u_W)\gamma_e\delta_e.
 
-The cycle matrix uses the displayed oriented edge basis. The panel also
+The cycle matrix uses the cycle basis in the exported reduction data. The panel also
 tests membership in :math:`\mathbb Q\operatorname{ob}_{\mathfrak p}(\mathbf1)`;
 vanishing of the raw tuple is sufficient but is not required. This
 membership is independent of adding a constant to the potential. It is
 a local condition for the entered charge, not a global integrality
-certificate. Click a graph vertex to focus its charge; hover to inspect
-its genus, marked points, charge and potential.
+certificate. Select a graph vertex to focus its charge input.
 
 Regulator cut and matrix
 ------------------------
@@ -90,6 +87,7 @@ including logarithmic centers used by other basis divisors in the same
 computation. **The lift** :math:`T\subset C` shows its lift.
 
 Select a logarithmic center in the tree panel and an edge to inspect the path integrals.
+The **Path integrals** panel can be collapsed. Selecting an edge reopens it.
 Changing the center preserves the tree view's pan and zoom.
 Clicking a lifted path also selects its positive-side sheet.
 For :math:`\omega_k=u^{k-1}du/v`, the path table uses the paper's notation
@@ -113,16 +111,16 @@ of Poincaré pairings before normalization. Write
 
 .. math::
 
-   L_D(z)=\sum_{P\text{ finite}}a_P\log|z-u(P)|,
+   G_D(z)=\sum_{P\text{ finite}}a_P\log|z-u(P)|,
    \qquad D=\sum_P a_P P.
 
 Then, in the integration chart,
 
 .. math::
 
-   R(D_i,D_j)=\int_{\mathbb C}\frac{1}{|F(z)|}
+   R(D_i,D_j)=\int_{\mathbb C}\frac{1}{|f(z)|}
    \begin{pmatrix}1\\2\operatorname{Re}(z)\\|z|^2\end{pmatrix}
-   \begin{pmatrix}L_{D_i}(z)&L_{D_j}(z)&1\end{pmatrix}
+   \begin{pmatrix}G_{D_i}(z)&G_{D_j}(z)&1\end{pmatrix}
    \,\mathrm{d}x\,\mathrm{d}y,\qquad z=x+iy.
 
 The rows follow :math:`\delta_{1,1},\delta_{1,2},\delta_{2,2}`;
